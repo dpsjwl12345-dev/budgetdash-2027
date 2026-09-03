@@ -160,15 +160,16 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   background: #0a0a0a url("/manus-storage/civic-ledger-surface_4c2ab95e.png") center / cover;
   border-right: 1px solid var(--line);
   box-shadow: 14px 0 36px rgba(0, 0, 0, 0.16);
-  transition: width 300ms ease-out, margin-left 300ms ease-out;
+  transition: all 300ms ease-out;
 }
 .sidebar::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.78); pointer-events: none; }
 .sidebar > * { position: relative; z-index: 1; }
 .sidebar.collapsed {
   width: 0;
   padding: 0;
-  margin-left: -258px;
   overflow: hidden;
+  border-right: none;
+  box-shadow: none;
 }
 
 .sidebar-title {
@@ -211,11 +212,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   min-width: 942px;
   margin-left: 258px;
   background: var(--ink);
-  transition: width 300ms ease-out, margin-left 300ms ease-out;
+  transition: all 300ms ease-out;
 }
-.sidebar.collapsed ~ .main-area {
+.app-shell:has(.sidebar.collapsed) .main-area {
   width: 100%;
   margin-left: 0;
+  min-width: 100%;
 }
 .topbar { height: 65px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(164, 192, 221, 0.13); background: rgba(7, 19, 33, 0.84); }
 .breadcrumbs { display: flex; align-items: center; gap: 9px; color: #7890a8; font-size: 11.5px; letter-spacing: 0.05em; }
@@ -231,8 +233,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
 .eyebrow { display: flex; align-items: center; gap: 10px; color: #86a2be; font-size: 11.5px; font-weight: 800; letter-spacing: 0.13em; }
 .eyebrow-line { width: 18px; height: 2px; background: #e7bc4f; }
-h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter-spacing: -0.055em; font-weight: 780; }
-.context-bar { display: flex; align-items: flex-end; gap: 17px; padding-bottom: 2px; }
+h1 { margin: 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter-spacing: -0.055em; font-weight: 780; display: flex; flex-direction: column; gap: 0; }
+h1 .title-line1 { font-size: 20px; color: #afc3d7; font-weight: 600; }
+h1 .title-line2 { font-size: 36px; color: #edf4fc; font-weight: 780; }
+.context-bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 16px; border-radius: var(--radius-md); background: rgba(54, 54, 62, 0.5); border: 1px solid var(--line); }
+.action-row-secondary { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
+.action-row-secondary .action-group { display: flex; gap: 8px; }
 .select-field { display: grid; gap: 5px; color: #7890a7; font-size: 11.5px; font-weight: 650; }
 .select-wrap { min-width: 126px; height: 40px; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-xs); padding: 0 var(--spacing-md); border: 1.5px solid var(--line); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.5); color: #dbe8f5; transition: all 200ms ease-out; }
 .select-wrap:hover { border-color: rgba(255, 107, 53, 0.3); background: rgba(13, 33, 54, 0.7); }
@@ -252,7 +258,7 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .action-row { margin-top: 25px; display: flex; justify-content: space-between; align-items: center; gap: 16px; }
 .action-group { display: flex; align-items: center; gap: 8px; }
 .upload-file-field { height: 37px; display: inline-flex; align-items: center; gap: 8px; padding: 0 13px; border: 1px dashed rgba(109, 167, 219, 0.5); border-radius: 7px; background: rgba(15, 34, 55, 0.62); color: #a8c4dc; font-size: 13px; font-weight: 650; cursor: pointer; transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1); }
-.upload-file-field:hover { border-color: var(--blue); background: var(--panel-raised); color: #edf6ff; }
+.upload-file-field:hover { border-color: rgba(109, 167, 219, 0.5); background: rgba(15, 34, 55, 0.8); color: #edf6ff; }
 .upload-file-field svg { color: #75b7f2; }
 .upload-input { width: 1px; height: 1px; opacity: 0; position: absolute; pointer-events: none; }
 .app-button { height: 40px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; padding: 0 var(--spacing-md); border: 1px solid transparent; border-radius: var(--radius-md); font-size: var(--font-md); font-weight: 600; white-space: nowrap; transition: transform 150ms cubic-bezier(0.34, 1.56, 0.64, 1), background 200ms ease-out, border-color 200ms ease-out, color 200ms ease-out, box-shadow 200ms ease-out; }
@@ -260,7 +266,7 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .app-button:active { transform: scale(0.98); box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1); }
 .app-button:focus-visible { outline: 2px solid var(--blue); outline-offset: 2px; }
 .button-outline { border-color: var(--line); background: rgba(15, 34, 55, 0.62); color: #a8bbce; }
-.button-outline:hover { border-color: rgba(109, 167, 219, 0.52); background: var(--panel-raised); color: #ecf5fd; }
+.button-outline:hover { border-color: var(--line); background: rgba(15, 34, 55, 0.8); color: #ecf5fd; }
 .button-ghost { background: transparent; color: #99aec3; }
 .button-ghost:hover { background: rgba(84, 142, 197, 0.13); color: #e8f2fc; }
 .button-primary { border-color: #4D3FFF; background: #4D3FFF; color: #ffffff; box-shadow: 0 5px 16px rgba(77, 63, 255, 0.19); }
@@ -272,7 +278,7 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .metric-grid { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
 .metric-card { min-height: 105px; padding: var(--spacing-lg); border: 1px solid rgba(255, 107, 53, 0.2); border-radius: var(--radius-lg); background: rgba(13, 33, 54, 0.5); box-shadow: 0 0 20px rgba(255, 107, 53, 0.05), 0 8px 16px rgba(0, 0, 0, 0.1); transition: all 200ms ease-out; }
 .metric-card:hover { background: rgba(13, 33, 54, 0.65); border-color: rgba(255, 107, 53, 0.35); box-shadow: 0 0 30px rgba(255, 107, 53, 0.12), 0 12px 24px rgba(0, 0, 0, 0.15); }
-.metric-top { display: flex; align-items: center; justify-content: space-between; color: #afc3d7; font-size: 13.5px; font-weight: 650; line-height: 1.4; }
+.metric-top { display: flex; align-items: center; justify-content: space-between; color: #afc3d7; font-size: 15.5px; font-weight: 650; line-height: 1.4; }
 .metric-top .unit { color: #7289a0; font-size: 10.5px; font-weight: 650; }
 .metric-top svg { color: #ff8793; }
 .metric-card > strong { display: block; margin-top: 9px; color: #edf5fe; font-size: 32px; line-height: 1.1; letter-spacing: -0.045em; font-weight: 760; font-variant-numeric: tabular-nums; }
@@ -325,9 +331,9 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .filter-chip.filter-정상.selected { border-color: rgba(84, 211, 148, 0.3); background: rgba(84, 211, 148, 0.1); color: #78dfaa; }
 .chip-dot { width: 7px; height: 7px; border-radius: 50%; background: #8398ad; }
 .filter-오류 .chip-dot { background: var(--red); } .filter-주의 .chip-dot { background: var(--amber); } .filter-정상 .chip-dot { background: var(--green); }
-.result-count { margin-left: auto; display: flex; align-items: center; gap: 10px; color: #8398ad; font-size: 12px; }
-.result-count button { width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 5px; background: transparent; color: #8097ae; }
-.result-count button:hover { color: #dfeaf5; background: rgba(118, 157, 194, 0.12); }
+.result-count { display: none; }
+.result-refresh { margin-left: auto; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 5px; background: transparent; color: #8097ae; cursor: pointer; }
+.result-refresh:hover { color: #dfeaf5; background: rgba(118, 157, 194, 0.12); }
 .table-scroll { overflow-x: auto; }
 .budget-table { width: 100%; min-width: 1060px; border-collapse: collapse; table-layout: fixed; }
 .budget-table th, .budget-table td { text-align: left; border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
