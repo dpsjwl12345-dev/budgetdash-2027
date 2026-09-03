@@ -285,6 +285,7 @@ export default function Home() {
   const [capacity, setCapacity] = useState("14");
   const [current, setCurrent] = useState("12");
   const [toast, setToast] = useState("");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const filteredRows = useMemo(() => {
     return budgetRows.filter((row) => {
@@ -405,18 +406,14 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
-        <div className="brand-block">
-          <img src="/manus-storage/civic-ledger-mark_db76dd65.png" alt="" className="brand-mark" />
-          <div>
-            <strong>예산편성관리</strong>
-            <span>CIVIC LEDGER / 2027</span>
-          </div>
-        </div>
+      <aside className={`sidebar ${sidebarOpen ? "" : "collapsed"}`}>
+        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
+          <ChevronRight size={18} style={{ transform: sidebarOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }} />
+        </button>
 
-        <div className="sidebar-divider" />
-        <div className="sidebar-label">WORKSPACE</div>
-        <nav className="nav-list" aria-label="워크스페이스">
+        {sidebarOpen && <div className="sidebar-divider" />}
+        {sidebarOpen && <div className="sidebar-label">WORKSPACE</div>}
+        {sidebarOpen && <nav className="nav-list" aria-label="워크스페이스">
           {navItems.map(({ label, icon: Icon, count }) => (
             <button
               key={label}
@@ -431,30 +428,25 @@ export default function Home() {
               {count && <span className="nav-count">{count}</span>}
             </button>
           ))}
-        </nav>
+        </nav>}
 
-        <div className="sidebar-label tools-label">TOOLS</div>
-        <nav className="nav-list" aria-label="도구">
+        {sidebarOpen && <div className="sidebar-label tools-label">TOOLS</div>}
+        {sidebarOpen && <nav className="nav-list" aria-label="도구">
           {toolItems.map(({ label, icon: Icon }) => (
             <button key={label} className="nav-item" onClick={() => showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`)}>
               <Icon size={17} />
               <span>{label}</span>
             </button>
           ))}
-        </nav>
+        </nav>}
 
-        <div className="sidebar-bottom">
-          <div className="sync-line"><span className="sync-dot" />마지막 동기화</div>
-          <strong>오늘 09:42</strong>
-          <div className="profile-line"><span className="avatar">복</span><span><b>김복지</b><small>복지정책과 담당자</small></span></div>
-        </div>
+        {sidebarOpen && <div className="sidebar-bottom" />}
       </aside>
 
       <main className="main-area">
         <header className="topbar">
           <div className="breadcrumbs"><span>DASHBOARDS</span><ChevronRight size={14} /><b>예산 편성 시트</b></div>
           <div className="topbar-actions">
-            <span className="preview-pill"><span className="tiny-dot" />읽기 전용 미리보기</span>
             <button className="icon-button" aria-label="도움말" onClick={() => showToast("도움말은 준비 중입니다.")}><CircleHelp size={18} /></button>
             <button className="icon-button" aria-label="알림" onClick={() => showToast("새 알림이 없습니다.")}><Bell size={18} /></button>
             <span className="top-avatar">복</span>
