@@ -350,7 +350,7 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 @keyframes modal-in { from { opacity: 0; transform: translateY(7px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 /* 라이트 모드 */
-:root.light-mode {
+:root:not(.dark) {
   /* 배경 레이어 */
   --bg-base: #ffffff;
   --bg-layer-1: #f8fafc;
