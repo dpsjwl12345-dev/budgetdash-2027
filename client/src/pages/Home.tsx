@@ -285,7 +285,6 @@ export default function Home() {
   const [capacity, setCapacity] = useState("14");
   const [current, setCurrent] = useState("12");
   const [toast, setToast] = useState("");
-  const [sidebarOpen, setSidebarOpen] = useState(true);
 
   const filteredRows = useMemo(() => {
     return budgetRows.filter((row) => {
@@ -406,14 +405,10 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${sidebarOpen ? "" : "collapsed"}`}>
-        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)}>
-          <ChevronRight size={18} style={{ transform: sidebarOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }} />
-        </button>
-
-        {sidebarOpen && <div className="sidebar-divider" />}
-        {sidebarOpen && <div className="sidebar-label">WORKSPACE</div>}
-        {sidebarOpen && <nav className="nav-list" aria-label="워크스페이스">
+      <aside className="sidebar">
+        <div className="sidebar-divider" />
+        <div className="sidebar-label">WORKSPACE</div>
+        <nav className="nav-list" aria-label="워크스페이스">
           {navItems.map(({ label, icon: Icon, count }) => (
             <button
               key={label}
@@ -428,19 +423,19 @@ export default function Home() {
               {count && <span className="nav-count">{count}</span>}
             </button>
           ))}
-        </nav>}
+        </nav>
 
-        {sidebarOpen && <div className="sidebar-label tools-label">TOOLS</div>}
-        {sidebarOpen && <nav className="nav-list" aria-label="도구">
+        <div className="sidebar-label tools-label">TOOLS</div>
+        <nav className="nav-list" aria-label="도구">
           {toolItems.map(({ label, icon: Icon }) => (
             <button key={label} className="nav-item" onClick={() => showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`)}>
               <Icon size={17} />
               <span>{label}</span>
             </button>
           ))}
-        </nav>}
+        </nav>
 
-        {sidebarOpen && <div className="sidebar-bottom" />}
+        <div className="sidebar-bottom" />
       </aside>
 
       <main className="main-area">
