@@ -406,10 +406,8 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <aside className={`sidebar ${!sidebarOpen ? "collapsed" : ""}`}>
-        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="사이드바 토글">
-          <ChevronRight size={18} style={{ transform: sidebarOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }} />
-        </button>
+      <aside className={`sidebar ${!sidebarOpen ? "collapsed" : ""}`} onMouseEnter={() => setSidebarOpen(true)} onMouseLeave={() => setSidebarOpen(false)}>
+        <div className="sidebar-title">예산 편성 검토</div>
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">
@@ -445,32 +443,24 @@ export default function Home() {
       <main className="main-area">
         <header className="topbar">
           <div className="breadcrumbs"><span>DASHBOARDS</span><ChevronRight size={14} /><b>예산 편성 시트</b></div>
-          <div className="topbar-actions">
-            <button className="icon-button" aria-label="도움말" onClick={() => showToast("도움말은 준비 중입니다.")}><CircleHelp size={18} /></button>
-            <button className="icon-button" aria-label="알림" onClick={() => showToast("새 알림이 없습니다.")}><Bell size={18} /></button>
-            <span className="top-avatar">복</span>
-          </div>
         </header>
 
         <div className="page-content">
           <section className="page-heading">
-            <div>
-              <div className="eyebrow"><span className="eyebrow-line" />FY {year} / DRAFT REVIEW</div>
-              <h1>{year}년 본예산 편성 검토</h1>
-            </div>
+            <h1>{year}년 본예산 편성 검토</h1>
             <div className="context-bar">
               <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
-              <label className="select-field"><span>편성 부서</span><span className="text-field"><input value={department} onChange={(event) => setDepartment(event.target.value)} aria-label="편성 부서 직접 입력" placeholder="부서명을 입력하세요" /></span></label>
-              <button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{capacity}명</b></span><span>현원 <b>{current}명</b></span><em>(결원 {Math.max(0, Number(capacity) - Number(current))})</em></button>
+              <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
+              <button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{capacity}명</b></span><span>현원 <b>{current}명</b></span></button>
+              <AppButton variant="outline" onClick={() => setShowStaffModal(true)}><Pencil size={16} />편집</AppButton>
             </div>
           </section>
 
           <section className="action-row">
             <div className="action-group">
-              <AppButton variant="outline" onClick={() => setShowStaffModal(true)}><Pencil size={16} />편집</AppButton>
-              <AppButton variant="outline" onClick={downloadTemplate}><FileDown size={16} />엑셀 양식</AppButton>
-              <label className="upload-file-field"><FileSpreadsheet size={16} /><span>엑셀 파일 선택</span><input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} /></label>
-              <AppButton variant="outline" onClick={() => showToast("표시 설정을 열었습니다.")}><Settings2 size={16} />설정</AppButton>
+              <label className="upload-file-field"><Upload size={16} /><span>업로드 양식 다운</span><input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} /></label>
+              <AppButton variant="outline" onClick={() => showToast("예산요구서를 준비했습니다.")}><FileCheck2 size={16} />예산요구서</AppButton>
+              <AppButton variant="outline" onClick={() => showToast("설정을 열었습니다.")}><Settings2 size={16} />설정</AppButton>
             </div>
             <div className="action-group">
               <AppButton variant="ghost" onClick={() => showToast("CSV 내보내기를 준비했습니다.")}><Download size={16} />CSV 내보내기</AppButton>
@@ -479,24 +469,22 @@ export default function Home() {
             </div>
           </section>
 
-          <div className="last-updated"><span className="status-dot" />오늘 09:42 업데이트</div>
-
           <section className="metric-grid" aria-label="예산 요약">
             <article className="metric-card">
-              <div className="metric-top"><span>요구액</span><small>백만원</small></div>
-              <strong>{formatMillion(totals.amount)}</strong><div className="metric-sub">{formatAmount(totals.amount * 1000)}원</div><div className="metric-trend trend-blue"><span>↗ 21.5%</span><span className="mini-bars"><i /><i /><i /><i /><i /></span></div>
+              <div className="metric-top"><span>요구액</span><span className="unit">백만원</span></div>
+              <strong>{formatMillion(totals.amount)}</strong><div className="metric-sub"><span>증감액</span> ↗ 21.5%</div>
             </article>
             <article className="metric-card">
-              <div className="metric-top"><span>전년도 예산액</span><small>백만원</small></div>
-              <strong>{formatMillion(totals.previous)}</strong><div className="metric-sub">{formatAmount(totals.previous * 1000)}원</div><div className="metric-trend trend-teal"><span>↗ 21.5%</span><span className="mini-bars"><i /><i /><i /><i /><i /></span></div>
+              <div className="metric-top"><span>기정액</span><span className="unit">백만원</span></div>
+              <strong>{formatMillion(totals.previous)}</strong><div className="metric-sub"><span>증감액</span> ↗ 21.5%</div>
             </article>
             <article className="metric-card">
-              <div className="metric-top"><span>전년도 집행액</span><small>백만원</small></div>
-              <strong>1,214</strong><div className="metric-sub">1,213,550,000원</div><div className="metric-trend trend-slate"><span>집행률 8.8%</span><span className="mini-bars"><i /><i /><i /><i /><i /></span></div>
+              <div className="metric-top"><span>전년도 집행액</span><span className="unit">백만원</span></div>
+              <strong>1,214</strong><div className="metric-sub"><span>집행률</span> 8.8%</div>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
-              <strong>4건</strong><div className="metric-sub">오류 4 · 주의 1</div><div className="metric-trend trend-red"><span>사전절차 미이행 8</span><span className="alert-ring" /></div>
+              <strong>4건</strong><div className="metric-sub">오류 4 · 주의 1</div>
             </article>
           </section>
 
@@ -508,7 +496,7 @@ export default function Home() {
 
           <section className="table-panel">
             <div className="table-heading">
-              <div className="table-title"><span className="active-rule" /><div><h2>{year}년 편성 · {department}</h2><span className="live-label"><span className="live-dot" />LIVE</span></div></div>
+              <div className="table-title"><span className="active-rule" /><div><h2>{year}년 편성 · {department}</h2></div></div>
               <div className="table-tools">
                 <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
                 <div className="column-menu-wrap">
@@ -526,17 +514,17 @@ export default function Home() {
 
             <div className="table-scroll">
               <table className="budget-table">
-                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`}>{label}{key === "amount" && <span className="sort-mark">↓</span>}</th>)}<th className="col-action">작업</th></tr></thead>
+                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`}>{label}{key === "amount" && <span className="sort-mark">↓</span>}</th>)}<th className="col-action">편집</th></tr></thead>
                 <tbody>
                   <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key}>{key === "policy" ? <><b>합계</b><span className="total-caption">전체 편성 / 단위: 천원</span></> : key === "account" ? <b>{formatAmount(totals.amount)}</b> : key === "detail" ? <span className="total-caption">{budgetRows.length}개 항목 합계</span> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? <StatusBadge status="정상" /> : null}</td>)}<td /></tr>
                   {filteredRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
                     {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key}>{renderCell(row, key)}</td>)}
-                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} />편집</button></td>
+                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button></td>
                   </tr>)}
                 </tbody>
               </table>
             </div>
-            <div className="table-footer"><span>총 {budgetRows.length}개 항목 중 {budgetRows.length - filteredRows.length}개 숨김</span><span className="footer-hint"><AlertCircle size={14} />오류 항목은 왼쪽 상태선으로 우선 확인할 수 있습니다.</span></div>
+            <div className="table-footer"></div>
           </section>
         </div>
       </main>
