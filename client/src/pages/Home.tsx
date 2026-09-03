@@ -447,11 +447,12 @@ export default function Home() {
 
         <div className="page-content">
           <section className="page-heading">
-            <h1><span className="title-line1">{year} 본예산</span><span className="title-line2">편성검토</span></h1>
+            <h1>{year} 본예산 편성검토</h1>
             <div className="context-bar">
               <div className="context-group">
                 <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
                 <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
+                <AppButton variant="ghost" size="sm" onClick={() => location.reload()}><RefreshCw size={16} /></AppButton>
               </div>
               <div className="context-group">
                 <label className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{capacity}명</b></span><span>현원 <b>{current}명</b></span></button></label>
