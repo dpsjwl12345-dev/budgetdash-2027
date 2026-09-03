@@ -166,7 +166,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .sidebar::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.78); pointer-events: none; }
 .sidebar > * { position: relative; z-index: 1; }
 .sidebar.collapsed {
-  width: 12px;
+  width: 6px;
   padding: 0;
   overflow: hidden;
   border-right: none;
