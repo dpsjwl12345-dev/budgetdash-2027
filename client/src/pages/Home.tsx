@@ -219,11 +219,13 @@ const navItems = [
 const toolItems = [
   { label: "심의 기준 설정", icon: SlidersHorizontal },
   { label: "정원·현원 관리", icon: UsersRound },
-  { label: "데이터 연결", icon: Database },
+  { label: "데이터 연결", icon: Database, subItems: [
+    { label: "업로드 양식 다운", action: "upload" }
+  ]},
 ];
 
 const columns = [
-  ["policy", "정책 / 단위 / 세부사업"],
+  ["policy", "정책 · 단위 · 세부사업"],
   ["account", "편성목·통계목"],
   ["detail", "산출내역"],
   ["amount", "요구액"],
@@ -278,6 +280,7 @@ export default function Home() {
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
   const [department, setDepartment] = useState("복지정책과");
+  const [showSaveMenu, setShowSaveMenu] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"전체" | Status>("전체");
   const [search, setSearch] = useState("");
   const [showColumns, setShowColumns] = useState(false);
@@ -289,9 +292,10 @@ export default function Home() {
 
   const filteredRows = useMemo(() => {
     return budgetRows.filter((row) => {
-      const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
       const searchable = `${row.policy} ${row.program} ${row.account} ${row.detail}`;
-      return matchesStatus && searchable.toLowerCase().includes(search.toLowerCase());
+      const matchesSearch = searchable.toLowerCase().includes(search.toLowerCase());
+      const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
+      return matchesSearch && matchesStatus;
     });
   }, [budgetRows, search, statusFilter]);
 
@@ -354,7 +358,6 @@ export default function Home() {
       });
       if (!nextRows.length) throw new Error("empty");
       setBudgetRows(nextRows);
-      setStatusFilter("전체");
       setSearch("");
       showToast(`${nextRows.length}개 예산 항목을 엑셀에서 불러왔습니다.`);
     } catch {
@@ -386,15 +389,25 @@ export default function Home() {
         <div className="program-cell">
           <span className="policy-name">{row.policy}</span>
           <span className="program-name">{row.program}</span>
-          <span className="code-pill">{row.code}</span>
         </div>
       );
     }
-    if (key === "account") return <span className="account-cell">{row.account}</span>;
+    if (key === "account") {
+      return (
+        <div className="account-cell">
+          <span className="account-code">{row.code}</span>
+          <span className="account-name">{row.account}</span>
+        </div>
+      );
+    }
     if (key === "detail") {
+      const parts = row.detail.split(" · ");
+      const formula = parts[0];
+      const description = parts.slice(1).join(" · ");
       return (
         <div className="detail-cell">
-          <span>{row.detail}</span>
+          <span className="detail-formula">{formula}</span>
+          {description && <span className="detail-description">{description}</span>}
           {row.note && <span className={`row-note row-note-${row.status}`}>{row.note}</span>}
         </div>
       );
@@ -407,7 +420,12 @@ export default function Home() {
   return (
     <div className="app-shell">
       <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""}`} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
-        <div className="sidebar-title"><span>지방자체단체</span><span>예산편성검토</span></div>
+        <div className="sidebar-card">
+          <div className="card">
+            <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 16 16" fill="currentColor" className="moon"><path d="M6 .278a.768.768 0 0 1 .08.858 7.208 7.208 0 0 0-.878 3.46c0 4.021 3.278 7.277 7.318 7.277.527 0 1.04-.055 1.533-.16a.787.787 0 0 1 .81.316.733.733 0 0 1-.031.893A8.349 8.349 0 0 1 8.344 16C3.734 16 0 12.286 0 7.71 0 4.266 2.114 1.312 5.124.06A.752.752 0 0 1 6 .278z"></path></svg>
+          </div>
+          <div className="sidebar-title"><span>지방자체단체</span><span>예산편성검토</span></div>
+        </div>
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">
@@ -429,11 +447,32 @@ export default function Home() {
 
         <div className="sidebar-label tools-label">TOOLS</div>
         <nav className="nav-list" aria-label="도구">
-          {toolItems.map(({ label, icon: Icon }) => (
-            <button key={label} className="nav-item" onClick={() => showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`)}>
-              <Icon size={17} />
-              <span>{label}</span>
-            </button>
+          {toolItems.map(({ label, icon: Icon, subItems }) => (
+            <div key={label}>
+              <button className="nav-item" onClick={() => showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`)}>
+                <Icon size={17} />
+                <span>{label}</span>
+              </button>
+              {subItems && (
+                <nav className="nav-sublist">
+                  {subItems.map(({ label: subLabel, action }) => (
+                    <button
+                      key={subLabel}
+                      className="nav-subitem"
+                      onClick={() => {
+                        if (action === "upload") {
+                          fileInputRef.current?.click();
+                        } else {
+                          showToast(`${subLabel} 화면은 다음 업데이트에서 제공됩니다.`);
+                        }
+                      }}
+                    >
+                      <span>{subLabel}</span>
+                    </button>
+                  ))}
+                </nav>
+              )}
+            </div>
           ))}
         </nav>
 
@@ -452,10 +491,27 @@ export default function Home() {
                 <h1>{year} 본예산 편성검토</h1>
               </div>
               <div className="action-row">
+                <label className="upload-file-field"><Upload size={16} /><span>UPLOAD</span><input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} /></label>
                 <div className="action-group">
-                  <AppButton variant="ghost" onClick={() => showToast("CSV 내보내기를 준비했습니다.")}><Download size={16} />CSV 내보내기</AppButton>
-                  <AppButton variant="ghost" onClick={() => showToast("인쇄 미리보기를 준비했습니다.")}><FileCheck2 size={16} />인쇄 / PDF</AppButton>
-                  <AppButton variant="primary" onClick={() => showToast("새 편성 항목 입력을 준비했습니다.")}><Plus size={17} />편성 추가</AppButton>
+                  <div style={{ position: "relative" }}>
+                    <button
+                      className="upload-file-field"
+                      onClick={() => setShowSaveMenu(!showSaveMenu)}
+                    >
+                      <Download size={16} />SAVE
+                    </button>
+                    {showSaveMenu && (
+                      <div className="save-menu">
+                        <button onClick={() => { showToast("CSV 내보내기를 준비했습니다."); setShowSaveMenu(false); }}>
+                          CSV 내보내기
+                        </button>
+                        <button onClick={() => { showToast("인쇄 미리보기를 준비했습니다."); setShowSaveMenu(false); }}>
+                          인쇄 / PDF
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                  <button className="add-button-circle" title="Add New" onClick={() => showToast("새 편성 항목 입력을 준비했습니다.")} aria-label="편성 추가"><svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" viewBox="0 0 24 24" className="add-button-icon"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" strokeWidth="1.5"></path><path d="M8 12H16" strokeWidth="1.5"></path><path d="M12 16V8" strokeWidth="1.5"></path></svg></button>
                 </div>
               </div>
             </div>
@@ -463,14 +519,6 @@ export default function Home() {
               <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
               <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
               <label className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{capacity}명</b></span><span>현원 <b>{current}명</b></span></button></label>
-              <AppButton variant="outline" onClick={() => setShowStaffModal(true)}><Pencil size={16} />편집</AppButton>
-            </div>
-            <div className="action-row-secondary">
-              <div className="action-group">
-                <label className="upload-file-field"><Upload size={16} /><span>업로드 양식 다운</span><input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} /></label>
-                <AppButton variant="outline" onClick={() => showToast("예산요구서를 준비했습니다.")}><FileCheck2 size={16} />예산요구서</AppButton>
-                <AppButton variant="outline" onClick={() => showToast("설정을 열었습니다.")}><Settings2 size={16} />설정</AppButton>
-              </div>
             </div>
           </section>
 
@@ -505,15 +553,9 @@ export default function Home() {
             </article>
           </section>
 
-          <section className="review-queue">
-            <div className="queue-icon"><Gauge size={19} /></div>
-            <div className="queue-copy"><span>REVIEW QUEUE / NEXT ACTION</span><p>현재 <b>4건</b>의 오류와 <b>1건</b>의 주의 항목이 확인되었습니다. 아래 필터로 범위를 좁혀 보세요.</p></div>
-            <div className="progress-block"><div><span>검토 진척도</span><b>60%</b></div><div className="progress-track"><span /></div></div>
-          </section>
-
           <section className="table-panel">
             <div className="table-heading">
-              <div className="table-title"><span className="active-rule" /><div><h2>{year}년 · {department}</h2></div><AppButton variant="ghost" size="sm" onClick={() => location.reload()}><RefreshCw size={16} /></AppButton></div>
+              <div className="table-title"><div><h2><span className="actual-text">&nbsp;{department}&nbsp;</span><span aria-hidden="true" className="hover-text">&nbsp;{department}&nbsp;</span></h2></div></div>
               <div className="table-tools">
                 <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
                 <div className="column-menu-wrap">
@@ -525,17 +567,17 @@ export default function Home() {
 
             <div className="filter-row">
               <span className="filter-label"><Filter size={15} />필터</span>
-              {(["전체", "오류", "주의", "정상"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
+              {(["오류", "주의", "정상"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
               <button className="result-refresh" aria-label="새로고침" onClick={() => showToast("목록을 새로고침했습니다.")}><RefreshCw size={15} /></button>
             </div>
 
             <div className="table-scroll">
               <table className="budget-table">
-                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`}>{label}{key === "amount" && <span className="sort-mark">↓</span>}</th>)}<th className="col-action">편집</th></tr></thead>
+                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`}>{label}</th>)}<th className="col-action">편집</th></tr></thead>
                 <tbody>
-                  <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key}>{key === "policy" ? <b>합계</b> : key === "account" ? <b>{formatAmount(totals.amount)}</b> : key === "detail" ? "" : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? <StatusBadge status="정상" /> : null}</td>)}<td /></tr>
+                  <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}</tr>
                   {filteredRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
-                    {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key}>{renderCell(row, key)}</td>)}
+                    {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{renderCell(row, key)}</td>)}
                     <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button></td>
                   </tr>)}
                 </tbody>
