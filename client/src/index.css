@@ -34,38 +34,38 @@
   --text-muted: #9db0c5;
   --text-faint: #70859e;
 
-  /* 기본 액센트 색상 - Rig 영감 */
-  --blue: #ff6b35;
-  --blue-soft: rgba(255, 107, 53, 0.14);
-  --blue-50: #fff4f0;
-  --blue-100: #ffe8df;
-  --blue-200: #ffd4bf;
-  --blue-300: #ffb89e;
-  --blue-400: #ff9b7d;
-  --blue-500: #ff6b35;
-  --blue-600: #ff5722;
-  --blue-700: #e84c1a;
-  --blue-800: #cc3d14;
+  /* 기본 액센트 색상 - Halo Lab 스타일 */
+  --blue: #6b5bff;
+  --blue-soft: rgba(107, 91, 255, 0.14);
+  --blue-50: #f3f0ff;
+  --blue-100: #e8e0ff;
+  --blue-200: #d5c9ff;
+  --blue-300: #c2b2ff;
+  --blue-400: #af9bff;
+  --blue-500: #6b5bff;
+  --blue-600: #5a4ae6;
+  --blue-700: #4939cc;
+  --blue-800: #382ab3;
 
-  --teal: #ff6b35;
-  --teal-50: #fff4f0;
-  --teal-500: #ff6b35;
-  --teal-700: #ff5722;
+  --teal: #ffd700;
+  --teal-50: #fffaeb;
+  --teal-500: #ffd700;
+  --teal-700: #e6c200;
 
-  --red: #ff4444;
-  --red-50: #ffe5e5;
-  --red-500: #ff4444;
-  --red-700: #dd0000;
+  --red: #ff6b7d;
+  --red-50: #ffe7eb;
+  --red-500: #ff6b7d;
+  --red-700: #e63946;
 
-  --amber: #ffa726;
-  --amber-50: #fff3e0;
-  --amber-500: #ffa726;
-  --amber-700: #fb8c00;
+  --amber: #ffd700;
+  --amber-50: #fffaeb;
+  --amber-500: #ffd700;
+  --amber-700: #e6c200;
 
-  --green: #66bb6a;
-  --green-50: #e8f5e9;
-  --green-500: #66bb6a;
-  --green-700: #43a047;
+  --green: #00d98e;
+  --green-50: #e0f9f0;
+  --green-500: #00d98e;
+  --green-700: #00a86f;
 
   /* 그레이 색상 */
   --gray-50: #f8fafc;
@@ -246,8 +246,6 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   min-width: 942px;
   margin-left: 258px;
   background: var(--ink);
-  background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 400 400' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' result='noise' /%3E%3CfeColorMatrix in='noise' type='saturate' values='0'/%3E%3C/filter%3E%3Crect width='400' height='400' fill='%230a0a0a' filter='url(%23noiseFilter)' opacity='0.4'/%3E%3C/svg%3E");
-  background-attachment: fixed;
 }
 .topbar { height: 65px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(164, 192, 221, 0.13); background: rgba(7, 19, 33, 0.84); }
 .breadcrumbs { display: flex; align-items: center; gap: 9px; color: #7890a8; font-size: 11.5px; letter-spacing: 0.05em; }
@@ -295,8 +293,8 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .button-outline:hover { border-color: rgba(109, 167, 219, 0.52); background: var(--panel-raised); color: #ecf5fd; }
 .button-ghost { background: transparent; color: #99aec3; }
 .button-ghost:hover { background: rgba(84, 142, 197, 0.13); color: #e8f2fc; }
-.button-primary { border-color: #ff5722; background: #ff6b35; color: #ffffff; box-shadow: 0 5px 16px rgba(255, 107, 53, 0.19); }
-.button-primary:hover { background: #ff7d4d; }
+.button-primary { border-color: #6b5bff; background: #6b5bff; color: #ffffff; box-shadow: 0 5px 16px rgba(107, 91, 255, 0.19); }
+.button-primary:hover { background: #7d6dff; }
 .button-danger { border-color: rgba(255, 111, 125, 0.35); color: #ff9ba5; background: rgba(255, 111, 125, 0.08); }
 .last-updated { margin-top: 12px; display: flex; align-items: center; gap: 8px; color: #758aa1; font-size: 12px; }
 .status-dot { width: 6px; height: 6px; box-shadow: none; }
@@ -431,31 +429,31 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
   --panel-raised: #e8ecf1;
   --panel-hover: #dfe7f1;
 
-  /* 색상 토킹 (라이트 모드용) - Rig 영감 */
-  --blue-50: #fff4f0;
-  --blue-100: #ffe8df;
-  --blue-200: #ffd4bf;
-  --blue-500: #ff6b35;
-  --blue-600: #ff5722;
-  --blue-700: #e84c1a;
-  --blue: #ff6b35;
-  --blue-soft: rgba(255, 107, 53, 0.1);
+  /* 색상 토킹 (라이트 모드용) - Halo Lab 스타일 */
+  --blue-50: #f3f0ff;
+  --blue-100: #e8e0ff;
+  --blue-200: #d5c9ff;
+  --blue-500: #6b5bff;
+  --blue-600: #5a4ae6;
+  --blue-700: #4939cc;
+  --blue: #6b5bff;
+  --blue-soft: rgba(107, 91, 255, 0.1);
 
-  --red: #ff4444;
-  --red-50: #ffe5e5;
-  --red-500: #ff4444;
+  --red: #ff6b7d;
+  --red-50: #ffe7eb;
+  --red-500: #ff6b7d;
 
-  --amber: #ffa726;
-  --amber-50: #fff3e0;
-  --amber-500: #ffa726;
+  --amber: #ffd700;
+  --amber-50: #fffaeb;
+  --amber-500: #ffd700;
 
-  --green: #66bb6a;
-  --green-50: #e8f5e9;
-  --green-500: #66bb6a;
+  --green: #00d98e;
+  --green-50: #e0f9f0;
+  --green-500: #00d98e;
 
-  --teal: #ff6b35;
-  --teal-50: #fff4f0;
-  --teal-500: #ff6b35;
+  --teal: #ffd700;
+  --teal-50: #fffaeb;
+  --teal-500: #ffd700;
 }
 
 @media (prefers-color-scheme: light) {
