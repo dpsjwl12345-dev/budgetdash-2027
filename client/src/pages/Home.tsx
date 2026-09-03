@@ -272,6 +272,7 @@ function AppButton({
 
 export default function Home() {
   const [activeNav, setActiveNav] = useState("예산 편성 시트");
+  const [sidebarOpen, setSidebarOpen] = useState(true);
   const [budgetRows, setBudgetRows] = useState<BudgetRow[]>(rows);
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -405,7 +406,10 @@ export default function Home() {
 
   return (
     <div className="app-shell">
-      <aside className="sidebar">
+      <aside className={`sidebar ${!sidebarOpen ? "collapsed" : ""}`}>
+        <button className="sidebar-toggle" onClick={() => setSidebarOpen(!sidebarOpen)} aria-label="사이드바 토글">
+          <ChevronRight size={18} style={{ transform: sidebarOpen ? "rotate(180deg)" : "rotate(0deg)", transition: "transform 200ms" }} />
+        </button>
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">

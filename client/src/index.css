@@ -164,6 +164,57 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .sidebar::after { content: ""; position: absolute; inset: 0; background: rgba(0, 0, 0, 0.78); pointer-events: none; }
 .sidebar > * { position: relative; z-index: 1; }
 
+.sidebar-toggle {
+  position: absolute;
+  top: 20px;
+  right: 10px;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #999999;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 5;
+}
+
+.sidebar-toggle:hover {
+  color: #ffffff;
+}
+
+.sidebar.collapsed {
+  width: 0;
+  padding: 0;
+  overflow: hidden;
+  transition: width 300ms ease-out;
+}
+
+.sidebar.collapsed .sidebar-toggle {
+  position: fixed;
+  left: 0;
+  width: 40px;
+  height: 40px;
+  background: rgba(0, 0, 0, 0.8);
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  color: #ff9966;
+}
+
+.sidebar {
+  transition: width 300ms ease-out;
+}
+
+.app-shell .main-area {
+  transition: width 300ms ease-out;
+}
+
+.app-shell:has(.sidebar.collapsed) .main-area {
+  width: calc(100% - 40px);
+  margin-left: 40px;
+}
+
 .brand-block { display: flex; align-items: center; gap: 12px; padding: 0 10px; }
 .brand-mark { width: 32px; height: 32px; object-fit: contain; flex: 0 0 auto; }
 .brand-block strong { display: block; color: #ffffff; font-size: 14.5px; font-weight: 750; letter-spacing: -0.03em; }
