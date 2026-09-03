@@ -480,20 +480,32 @@ export default function Home() {
 
           <section className="metric-grid" aria-label="예산 요약">
             <article className="metric-card">
-              <div className="metric-top"><span>2027 요구액</span></div>
-              <strong>{formatMillion(totals.amount)}백만원</strong><div className="metric-sub">↗ 21.5%</div>
+              <div className="metric-header">
+                <div className="metric-top"><span>2027 요구액</span></div>
+                <div className="metric-sub">↗ 21.5%</div>
+              </div>
+              <strong>{formatMillion(totals.amount)}백만원</strong>
             </article>
             <article className="metric-card">
-              <div className="metric-top"><span>2026 예산액</span></div>
-              <strong>{formatMillion(totals.previous)}백만원</strong><div className="metric-sub">↗ 21.5%</div>
+              <div className="metric-header">
+                <div className="metric-top"><span>2026 예산액</span></div>
+                <div className="metric-sub">↗ 21.5%</div>
+              </div>
+              <strong>{formatMillion(totals.previous)}백만원</strong>
             </article>
             <article className="metric-card">
-              <div className="metric-top"><span>전년도 집행액</span></div>
-              <strong>1,214백만원</strong><div className="metric-sub">집행률 8.8%</div>
+              <div className="metric-header">
+                <div className="metric-top"><span>전년도 집행액</span></div>
+                <div className="metric-sub">집행률 8.8%</div>
+              </div>
+              <strong>1,214백만원</strong>
             </article>
             <article className="metric-card metric-alert">
-              <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
-              <strong>4건</strong><div className="metric-sub">오류 4 · 주의 1</div>
+              <div className="metric-header">
+                <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
+                <div className="metric-sub">오류 4 · 주의 1</div>
+              </div>
+              <strong>4건</strong>
             </article>
           </section>
 
