@@ -244,16 +244,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .top-avatar { width: 31px; height: 31px; margin-left: 2px; background: #1a1a1a; }
 
 .page-content { padding: 40px 45px 65px; }
-.page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
-.eyebrow { display: flex; align-items: center; gap: 10px; color: #86a2be; font-size: 11.5px; font-weight: 800; letter-spacing: 0.13em; }
-.eyebrow-line { width: 18px; height: 2px; background: #e7bc4f; }
-h1 { margin: 0 0 20px 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 42px; line-height: 1.2; letter-spacing: -0.06em; font-weight: 700; display: flex; flex-direction: column; gap: 0; }
+.page-heading { display: flex; flex-direction: column; gap: 16px; }
+h1 { margin: 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 42px; line-height: 1.15; letter-spacing: -0.06em; font-weight: 700; display: flex; flex-direction: column; gap: 0; width: fit-content; }
 h1 .title-line1 { font-size: 38px; }
 h1 .title-line2 { font-size: 42px; }
-.context-bar { display: flex; gap: 16px; padding: 14px 16px; margin-top: 16px; border-radius: var(--radius-md); background: rgba(54, 54, 62, 0.5); border: 1px solid var(--line); }
+.context-bar { display: flex; align-items: center; gap: 16px; padding: 14px 16px; margin-top: 0; border-radius: var(--radius-md); background: rgba(54, 54, 62, 0.5); border: 1px solid var(--line); }
 .context-group { display: flex; align-items: center; gap: 12px; }
-.context-bar .select-field { gap: 6px; }
-.context-bar .select-field > span:first-child { font-size: 13px; font-weight: 700; }
+.context-bar .select-field { gap: 6px; display: flex; align-items: center; }
+.context-bar .select-field > span:first-child { font-size: 13px; font-weight: 700; white-space: nowrap; }
 .context-bar .select-field > span:last-child { min-width: 140px; }
 .action-row-secondary { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
 .action-row-secondary .action-group { display: flex; gap: 8px; }
