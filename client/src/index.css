@@ -190,7 +190,27 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .profile-line b { color: #dce8f5; font-size: 13px; font-weight: 700; }
 .profile-line small { margin-top: 2px; color: #8197ad; font-size: 11.5px; }
 
-.main-area { width: calc(100% - 258px); min-width: 942px; margin-left: 258px; background: radial-gradient(circle at 90% -10%, rgba(34, 89, 146, 0.15), transparent 33%), var(--ink); }
+.main-area {
+  width: calc(100% - 258px);
+  min-width: 942px;
+  margin-left: 258px;
+  background:
+    repeating-linear-gradient(
+      90deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, .02) 2px,
+      rgba(255, 255, 255, .02) 4px
+    ),
+    repeating-linear-gradient(
+      0deg,
+      transparent,
+      transparent 2px,
+      rgba(255, 255, 255, .02) 2px,
+      rgba(255, 255, 255, .02) 4px
+    ),
+    var(--ink);
+}
 .topbar { height: 65px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(164, 192, 221, 0.13); background: rgba(7, 19, 33, 0.84); }
 .breadcrumbs { display: flex; align-items: center; gap: 9px; color: #7890a8; font-size: 11.5px; letter-spacing: 0.05em; }
 .breadcrumbs b { color: #aebfd0; font-weight: 650; }
@@ -260,7 +280,7 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .alert-ring { width: 22px; height: 22px; border: 1px solid rgba(255, 111, 125, 0.4); border-radius: 50%; position: relative; }
 .alert-ring::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: rgba(255, 111, 125, 0.7); }
 
-.review-queue { min-height: 77px; margin-top: 17px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(99, 161, 219, 0.22); border-radius: 10px; background: linear-gradient(100deg, rgba(20, 53, 84, 0.9), rgba(15, 36, 59, 0.92)); }
+.review-queue { min-height: 77px; margin-top: 17px; padding: 16px 20px; display: flex; align-items: center; gap: 14px; border: 1px solid rgba(255, 107, 53, 0.15); border-radius: 10px; background: linear-gradient(100deg, rgba(20, 20, 20, 0.9), rgba(15, 15, 15, 0.92)); }
 .queue-icon { width: 32px; height: 32px; display: inline-flex; align-items: center; justify-content: center; flex: 0 0 auto; border-radius: 50%; background: rgba(255, 107, 53, 0.14); color: #6cb2ff; }
 .queue-copy { min-width: 0; }
 .queue-copy > span { color: #88a4bf; font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; }
@@ -270,7 +290,7 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .progress-block > div:first-child { display: flex; justify-content: space-between; color: #8da6be; font-size: 11.5px; }
 .progress-block b { color: #e3edf8; font-size: 16px; }
 .progress-track { height: 5px; margin-top: 8px; overflow: hidden; border-radius: 99px; background: #244765; }
-.progress-track span { display: block; width: 60%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #3288e1, #6ab6ff); }
+.progress-track span { display: block; width: 60%; height: 100%; border-radius: inherit; background: linear-gradient(90deg, #ff6b35, #ff8f5a); }
 
 .table-panel { margin-top: 26px; border: 1px solid rgba(255, 107, 53, 0.15); border-radius: var(--radius-lg); background: rgba(10, 27, 46, 0.5); box-shadow: 0 0 20px rgba(255, 107, 53, 0.04), 0 8px 16px rgba(0, 0, 0, 0.08); overflow: visible; transition: all 200ms ease-out; }
 .table-panel:hover { background: rgba(10, 27, 46, 0.65); border-color: rgba(255, 107, 53, 0.25); box-shadow: 0 0 30px rgba(255, 107, 53, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12); }
