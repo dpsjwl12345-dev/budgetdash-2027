@@ -447,8 +447,17 @@ export default function Home() {
 
         <div className="page-content">
           <section className="page-heading">
-            <div className="title-wrapper">
-              <h1>{year} 본예산 편성검토</h1>
+            <div className="title-area">
+              <div className="title-wrapper">
+                <h1>{year} 본예산 편성검토</h1>
+              </div>
+              <div className="action-row">
+                <div className="action-group">
+                  <AppButton variant="ghost" onClick={() => showToast("CSV 내보내기를 준비했습니다.")}><Download size={16} />CSV 내보내기</AppButton>
+                  <AppButton variant="ghost" onClick={() => showToast("인쇄 미리보기를 준비했습니다.")}><FileCheck2 size={16} />인쇄 / PDF</AppButton>
+                  <AppButton variant="primary" onClick={() => showToast("새 편성 항목 입력을 준비했습니다.")}><Plus size={17} />편성 추가</AppButton>
+                </div>
+              </div>
             </div>
             <div className="context-bar">
               <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
@@ -462,14 +471,6 @@ export default function Home() {
                 <AppButton variant="outline" onClick={() => showToast("예산요구서를 준비했습니다.")}><FileCheck2 size={16} />예산요구서</AppButton>
                 <AppButton variant="outline" onClick={() => showToast("설정을 열었습니다.")}><Settings2 size={16} />설정</AppButton>
               </div>
-            </div>
-          </section>
-
-          <section className="action-row">
-            <div className="action-group">
-              <AppButton variant="ghost" onClick={() => showToast("CSV 내보내기를 준비했습니다.")}><Download size={16} />CSV 내보내기</AppButton>
-              <AppButton variant="ghost" onClick={() => showToast("인쇄 미리보기를 준비했습니다.")}><FileCheck2 size={16} />인쇄 / PDF</AppButton>
-              <AppButton variant="primary" onClick={() => showToast("새 편성 항목 입력을 준비했습니다.")}><Plus size={17} />편성 추가</AppButton>
             </div>
           </section>
 

@@ -184,12 +184,12 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   gap: 2px;
 }
 .sidebar-title span:first-child {
-  font-size: 11px;
+  font-size: 14px;
   color: #afc3d7;
   font-weight: 600;
 }
 .sidebar-title span:last-child {
-  font-size: 14px;
+  font-size: 18px;
   color: #ffffff;
   font-weight: 700;
 }
@@ -207,8 +207,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .nav-item svg { color: #888888; }
 .nav-item:hover { color: #ffffff; background: rgba(118, 157, 194, 0.08); }
 .nav-item:hover svg { color: #ff9966; }
-.nav-item.active { color: #ffffff; background: rgba(77, 63, 255, 0.15); border-color: rgba(77, 63, 255, 0.3); box-shadow: inset 3px 0 0 var(--blue); }
-.nav-item.active svg { color: var(--blue); }
+.nav-item.active { color: #ffffff; background: rgba(128, 128, 128, 0.25); border-color: rgba(128, 128, 128, 0.4); box-shadow: inset 3px 0 0 rgba(128, 128, 128, 0.6); }
+.nav-item.active svg { color: rgba(200, 200, 200, 0.8); }
 .nav-count { margin-left: auto; color: #ff9966; font-size: 11px; font-variant-numeric: tabular-nums; }
 .sidebar-bottom { margin-top: auto; padding: 16px 10px 0; border-top: 1px solid var(--line); color: var(--text-faint); font-size: 12.5px; }
 .sync-line { display: flex; align-items: center; gap: 7px; font-size: 11.5px; color: #999999; }
@@ -245,8 +245,10 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 
 .page-content { padding: 40px 45px 65px; }
 .page-heading { display: flex; flex-direction: column; gap: 16px; }
+.title-area { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .title-wrapper { display: flex; align-items: center; }
-h1 { margin: 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 42px; line-height: 1.15; letter-spacing: -0.06em; font-weight: 700; width: fit-content; }
+.action-row { margin-top: 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
+h1 { margin: 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 36px; line-height: 1.15; letter-spacing: -0.06em; font-weight: 700; width: fit-content; }
 .context-bar { display: flex; align-items: center; gap: 12px; padding: 12px 16px; margin-top: 0; border-radius: var(--radius-md); background: rgba(54, 54, 62, 0.5); border: 1px solid var(--line); flex-wrap: wrap; }
 .context-bar .select-field { gap: 6px; display: flex; align-items: center; }
 .context-bar .select-field > span:first-child { font-size: 16px; font-weight: 700; white-space: nowrap; }
