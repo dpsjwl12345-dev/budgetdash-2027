@@ -8,22 +8,22 @@
 :root {
   font-family: Pretendard, "Noto Sans KR", system-ui, sans-serif;
   color: #e5edf7;
-  background: #071321;
+  background: #0a0a0a;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
 
-  /* 배경 레이어 */
-  --bg-base: #071321;
-  --bg-layer-1: #0b1b2f;
-  --bg-layer-2: #0e2035;
-  --bg-layer-3: #132b45;
+  /* 배경 레이어 - 극도로 진한 검정색 */
+  --bg-base: #0a0a0a;
+  --bg-layer-1: #111111;
+  --bg-layer-2: #1a1a1a;
+  --bg-layer-3: #252525;
 
   /* 레거시 호환성 */
-  --ink: #071321;
-  --ink-soft: #0b1b2f;
-  --panel: #0e2035;
-  --panel-raised: #132b45;
-  --panel-hover: #173653;
+  --ink: #0a0a0a;
+  --ink-soft: #111111;
+  --panel: #1a1a1a;
+  --panel-raised: #252525;
+  --panel-hover: #303030;
 
   /* 테두리 & 라인 */
   --line: rgba(164, 192, 221, 0.16);
