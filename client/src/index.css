@@ -255,9 +255,9 @@ h1 { margin: 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 36px; li
 .context-bar .select-field > span:last-child { min-width: 140px; }
 .action-row-secondary { display: flex; align-items: center; gap: 8px; margin-top: 12px; padding: 0; }
 .action-row-secondary .action-group { display: flex; gap: 8px; }
-.select-field { display: grid; gap: 5px; color: #7890a7; font-size: 11.5px; font-weight: 650; }
+.select-field { display: grid; gap: 5px; color: #dbe8f5; font-size: 14px; font-weight: 600; }
 .select-wrap { min-width: 126px; height: 40px; display: flex; align-items: center; justify-content: space-between; gap: var(--spacing-xs); padding: 0 var(--spacing-md); border: 1.5px solid var(--line); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.5); color: #dbe8f5; transition: all 200ms ease-out; }
-.select-wrap:hover { border-color: rgba(255, 107, 53, 0.3); background: rgba(13, 33, 54, 0.7); }
+.select-wrap:hover { border-color: rgba(118, 157, 194, 0.5); background: rgba(13, 33, 54, 0.7); }
 .select-wrap:focus-within { border-color: var(--blue); background: rgba(13, 33, 54, 0.8); box-shadow: 0 0 0 3px transparent; }
 .select-wrap select { width: 100%; border: 0; outline: 0; appearance: none; background: transparent; color: inherit; font-size: 14.5px; cursor: pointer; }
 .text-field { min-width: 164px; height: 40px; display: flex; align-items: center; padding: 0 var(--spacing-md); border: 1.5px solid var(--line); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.5); color: #dbe8f5; transition: all 200ms ease-out; }
@@ -266,7 +266,7 @@ h1 { margin: 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 36px; li
 .text-field input::placeholder { color: #71879e; }
 .select-wrap select option { color: #15283c; }
 .staff-summary { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.5); color: #93a9bf; font-size: 12.5px; transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1); }
-.staff-summary:hover { border-color: rgba(255, 107, 53, 0.45); background: rgba(13, 33, 54, 0.7); }
+.staff-summary:hover { border-color: rgba(118, 157, 194, 0.5); background: rgba(13, 33, 54, 0.7); }
 .staff-summary svg { color: #7ca8d4; }
 .staff-summary b { color: #dce9f5; font-weight: 700; }
 .staff-summary em { color: var(--red); font-style: normal; font-size: 11.5px; }
