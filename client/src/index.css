@@ -174,10 +174,23 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 
 .sidebar-title {
   color: #ffffff;
-  font-size: 14px;
+  font-size: 13px;
   font-weight: 700;
   letter-spacing: -0.02em;
   margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+.sidebar-title span:first-child {
+  font-size: 11px;
+  color: #afc3d7;
+  font-weight: 600;
+}
+.sidebar-title span:last-child {
+  font-size: 14px;
+  color: #ffffff;
+  font-weight: 700;
 }
 
 
@@ -233,9 +246,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .page-heading { display: flex; align-items: flex-end; justify-content: space-between; gap: 28px; }
 .eyebrow { display: flex; align-items: center; gap: 10px; color: #86a2be; font-size: 11.5px; font-weight: 800; letter-spacing: 0.13em; }
 .eyebrow-line { width: 18px; height: 2px; background: #e7bc4f; }
-h1 { margin: 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter-spacing: -0.055em; font-weight: 780; display: flex; flex-direction: column; gap: 0; }
-h1 .title-line1 { font-size: 20px; color: #afc3d7; font-weight: 600; }
-h1 .title-line2 { font-size: 36px; color: #edf4fc; font-weight: 780; }
+h1 { margin: 0 0 14px 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter-spacing: -0.055em; font-weight: 780; }
 .context-bar { display: flex; align-items: center; gap: 12px; padding: 14px 16px; margin-top: 16px; border-radius: var(--radius-md); background: rgba(54, 54, 62, 0.5); border: 1px solid var(--line); }
 .action-row-secondary { display: flex; align-items: center; gap: 8px; margin-top: 16px; }
 .action-row-secondary .action-group { display: flex; gap: 8px; }

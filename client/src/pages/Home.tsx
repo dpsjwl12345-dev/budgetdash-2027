@@ -407,7 +407,7 @@ export default function Home() {
   return (
     <div className="app-shell">
       <aside className={`sidebar ${sidebarCollapsed ? "collapsed" : ""}`} onMouseEnter={() => setSidebarCollapsed(false)} onMouseLeave={() => setSidebarCollapsed(true)}>
-        <div className="sidebar-title">예산 편성 검토</div>
+        <div className="sidebar-title"><span>지방자체단체</span><span>예산편성검토</span></div>
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">
@@ -447,7 +447,7 @@ export default function Home() {
 
         <div className="page-content">
           <section className="page-heading">
-            <h1><span className="title-line1">지방자체단체</span><span className="title-line2">예산편성검토</span></h1>
+            <h1>{year}년 본예산 편성 검토</h1>
             <div className="context-bar">
               <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
               <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
