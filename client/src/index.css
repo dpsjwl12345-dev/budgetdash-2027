@@ -344,6 +344,92 @@ h1 { margin: 7px 0 0; color: #edf4fc; font-size: 32px; line-height: 1.35; letter
 .modal-backdrop { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(2, 9, 17, 0.72); backdrop-filter: blur(4px); }
 .modal-card { width: 480px; padding: 24px; border: 1px solid rgba(77, 156, 255, 0.25); border-radius: var(--radius-2xl); background: rgba(16, 38, 62, 0.8); backdrop-filter: blur(10px); box-shadow: 0 0 30px rgba(77, 156, 255, 0.1), 0 24px 60px rgba(0, 0, 0, 0.3); animation: modal-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 @keyframes modal-in { from { opacity: 0; transform: translateY(7px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
+
+/* 라이트 모드 */
+:root.light-mode {
+  /* 배경 레이어 */
+  --bg-base: #ffffff;
+  --bg-layer-1: #f8fafc;
+  --bg-layer-2: #f0f4f9;
+  --bg-layer-3: #e8ecf1;
+
+  /* 텍스트 색상 */
+  --text: #0f172a;
+  --text-muted: #475569;
+  --text-faint: #64748b;
+
+  /* 테두리 & 라인 */
+  --line: rgba(30, 41, 59, 0.12);
+  --line-strong: rgba(30, 41, 59, 0.2);
+
+  /* 배경 (레거시) */
+  --ink: #ffffff;
+  --ink-soft: #f8fafc;
+  --panel: #f0f4f9;
+  --panel-raised: #e8ecf1;
+  --panel-hover: #dfe7f1;
+
+  /* 색상 토킹 (라이트 모드용) */
+  --blue-50: #eff6ff;
+  --blue-100: #dbeafe;
+  --blue-200: #bfdbfe;
+  --blue-500: #3b82f6;
+  --blue-600: #2563eb;
+  --blue-700: #1d4ed8;
+  --blue: #3b82f6;
+  --blue-soft: rgba(59, 130, 246, 0.1);
+
+  --red: #ef4444;
+  --red-50: #fef2f2;
+  --red-500: #ef4444;
+
+  --amber: #f59e0b;
+  --amber-50: #fffbeb;
+  --amber-500: #f59e0b;
+
+  --green: #22c55e;
+  --green-50: #f0fdf4;
+  --green-500: #22c55e;
+
+  --teal: #14b8a6;
+  --teal-50: #f0fdfa;
+  --teal-500: #14b8a6;
+}
+
+@media (prefers-color-scheme: light) {
+  :root:not(.dark-mode) {
+    /* 배경 레이어 */
+    --bg-base: #ffffff;
+    --bg-layer-1: #f8fafc;
+    --bg-layer-2: #f0f4f9;
+    --bg-layer-3: #e8ecf1;
+
+    /* 텍스트 색상 */
+    --text: #0f172a;
+    --text-muted: #475569;
+    --text-faint: #64748b;
+
+    /* 테두리 & 라인 */
+    --line: rgba(30, 41, 59, 0.12);
+    --line-strong: rgba(30, 41, 59, 0.2);
+
+    /* 배경 (레거시) */
+    --ink: #ffffff;
+    --ink-soft: #f8fafc;
+    --panel: #f0f4f9;
+    --panel-raised: #e8ecf1;
+    --panel-hover: #dfe7f1;
+
+    /* 색상 토킹 (라이트 모드용) */
+    --blue-50: #eff6ff;
+    --blue: #3b82f6;
+    --blue-soft: rgba(59, 130, 246, 0.1);
+    --red: #ef4444;
+    --amber: #f59e0b;
+    --green: #22c55e;
+    --teal: #14b8a6;
+  }
+}
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; }
 .modal-head span { color: #7e9ab4; font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; }
 .modal-head h2 { margin: 5px 0 0; color: #ebf3fb; font-size: 21px; line-height: 1.3; letter-spacing: -0.04em; }
