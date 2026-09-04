@@ -350,7 +350,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 .table-panel { margin-top: 26px; border: 1px solid transparent; border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); box-shadow: 0 0 20px rgba(118, 157, 194, 0.04), 0 8px 16px rgba(0, 0, 0, 0.08); overflow: visible; transition: all 200ms ease-out; }
 .table-panel:hover { background: rgba(140, 155, 170, 0.18); border-color: rgba(34, 197, 94, 0.25); box-shadow: 0 0 30px rgba(118, 157, 194, 0.08), 0 12px 24px rgba(0, 0, 0, 0.12); }
-.table-heading { min-height: 78px; padding: 18px 19px 14px 30px; display: flex; align-items: center; justify-content: space-between; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
+.table-heading { min-height: 78px; padding: 18px 19px 14px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
 .active-rule { display: none !important; }
 .table-title h2 { --border-right: 6px; --text-stroke-color: rgba(255,255,255,0.6); --animation-color: #ff8c42; position: relative; display: inline-block; margin: 0; padding-left: 0; color: #e8f1fa; font-family: "ZMarket Sans", system-ui, sans-serif; font-size: 24px; line-height: 1.3; letter-spacing: -0.035em; font-weight: 700; overflow: hidden; cursor: pointer; }
