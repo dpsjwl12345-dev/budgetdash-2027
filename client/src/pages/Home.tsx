@@ -3,6 +3,7 @@
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
 import { useMemo, useRef, useState, useEffect } from "react";
+import { Dropdown } from "../components/Dropdown";
 import * as XLSX from "xlsx";
 import {
   AlertCircle,
@@ -282,7 +283,7 @@ export default function Home() {
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
-  const [department, setDepartment] = useState("복지정책과");
+  const [department, setDepartment] = useState("");
   const [showSaveMenu, setShowSaveMenu] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"전체" | Status>("전체");
   const [search, setSearch] = useState("");
@@ -292,6 +293,9 @@ export default function Home() {
   const [capacity, setCapacity] = useState("14");
   const [current, setCurrent] = useState("12");
   const [toast, setToast] = useState("");
+  const [currentPage, setCurrentPage] = useState(1);
+  const [programFilter, setProgramFilter] = useState("");
+  const [accountFilter, setAccountFilter] = useState("");
 
   // 페이지 로드 시 서버에서 데이터 불러오기 (localStorage 우선)
   useEffect(() => {
@@ -351,9 +355,37 @@ export default function Home() {
       const searchable = `${row.policy} ${row.program} ${row.account} ${row.detail}`;
       const matchesSearch = searchable.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
-      return matchesSearch && matchesStatus;
+      const matchesProgram = !programFilter || row.program === programFilter;
+      const matchesAccount = !accountFilter || row.account === accountFilter;
+      return matchesSearch && matchesStatus && matchesProgram && matchesAccount;
     });
-  }, [budgetRows, search, statusFilter]);
+  }, [budgetRows, search, statusFilter, programFilter, accountFilter]);
+
+  const itemsPerPage = 10;
+  const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
+  const paginatedRows = useMemo(() => {
+    const startIndex = (currentPage - 1) * itemsPerPage;
+    const endIndex = startIndex + itemsPerPage;
+    return filteredRows.slice(startIndex, endIndex);
+  }, [filteredRows, currentPage]);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [search, statusFilter, programFilter, accountFilter]);
+
+  const uniquePrograms = useMemo(() => {
+    const seen = new Set();
+    return budgetRows.map(r => r.program).filter(program => {
+      if (!program || seen.has(program)) return false;
+      seen.add(program);
+      return true;
+    });
+  }, [budgetRows]);
+
+  const uniqueAccounts = useMemo(() => {
+    const accounts = new Set(budgetRows.map(r => r.account).filter(Boolean));
+    return Array.from(accounts).sort();
+  }, [budgetRows]);
 
   const totals = useMemo(() => budgetRows.reduce((sum, row) => ({ amount: sum.amount + row.amount, city: sum.city + row.city, national: sum.national + row.national, province: sum.province + row.province, other: sum.other + row.other, previous: sum.previous + row.previous }), { amount: 0, city: 0, national: 0, province: 0, other: 0, previous: 0 }), [budgetRows]);
 
@@ -400,9 +432,8 @@ export default function Home() {
           const statisticalCode = String(pick(record, ["통계목코드"])) || "";
           const statisticalName = String(pick(record, ["통계목명"])) || "";
           const accountDisplay = statisticalCode && statisticalName ? `${statisticalCode} ${statisticalName}` : statisticalCode;
-          const unitProgram = String(pick(record, ["단위사업명"])) || "";
-          const subProgram = String(pick(record, ["세부사업명"])) || "";
-          const programDisplay = unitProgram && subProgram ? `${unitProgram}\n${subProgram}` : (unitProgram || subProgram || "미입력 사업");
+          const subProgram = String(pick(record, ["세부사업명"])) || "미입력 사업";
+          const programDisplay = subProgram;
           return {
             id: Date.now() + index,
             policy: String(pick(record, ["정책사업명"])) || "미분류 정책",
@@ -586,13 +617,12 @@ export default function Home() {
                       </div>
                     )}
                   </div>
-                  <button className="add-button-circle" title="Add New" onClick={() => showToast("새 편성 항목 입력을 준비했습니다.")} aria-label="편성 추가"><svg xmlns="http://www.w3.org/2000/svg" width="36px" height="36px" viewBox="0 0 24 24" className="add-button-icon"><path d="M12 22C17.5 22 22 17.5 22 12C22 6.5 17.5 2 12 2C6.5 2 2 6.5 2 12C2 17.5 6.5 22 12 22Z" strokeWidth="1.5"></path><path d="M8 12H16" strokeWidth="1.5"></path><path d="M12 16V8" strokeWidth="1.5"></path></svg></button>
                 </div>
               </div>
             </div>
             <div className="context-bar">
-              <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
-              <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="문화예술과">문화예술과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
+              <label className="select-field"><span>회계연도</span><Dropdown value={year} onChange={setYear} groups={[{label: "연도", items: [{label: "2027년", value: "2027"}, {label: "2026년", value: "2026"}]}]} showSearch={false} /></label>
+              <label className="select-field"><span>편성 부서</span><Dropdown value={department} onChange={setDepartment} groups={[{label: "문화관광국", items: [{label: "문화예술과", value: "문화예술과"}, {label: "문화유산과", value: "문화유산과"}, {label: "독립기념관", value: "독립기념관"}, {label: "관광진흥과", value: "관광진흥과"}]}, {label: "교육체육국", items: [{label: "교육지원과", value: "교육지원과"}, {label: "평생학습과", value: "평생학습과"}, {label: "도서관정책과", value: "도서관정책과"}, {label: "체육진흥과", value: "체육진흥과"}, {label: "전국체전추진단", value: "전국체전추진단"}]}]} /></label>
               <label className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{capacity}명</b></span><span>현원 <b>{current}명</b></span></button></label>
             </div>
           </section>
@@ -602,72 +632,101 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
-              <strong>{formatMillion(totals.amount)}백만원</strong>
+              <strong>{formatMillion(totals.amount)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card">
               <div className="metric-header">
                 <div className="metric-top"><span>2027 신규 사업 예산액</span></div>
               </div>
-              <strong>0백만원</strong>
+              <strong>0<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card">
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
-              <strong>{formatMillion(totals.previous)}백만원</strong>
+              <strong>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card">
               <div className="metric-header">
                 <div className="metric-top"><span>2026 최종예산액</span></div>
               </div>
-              <strong>{formatMillion(totals.previous)}백만원</strong>
+              <strong>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-header">
                 <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
                 <div className="metric-sub">오류 {budgetRows.filter(r => r.status === "오류").length} · 주의 {budgetRows.filter(r => r.status === "주의").length}</div>
               </div>
-              <strong>{budgetRows.filter(r => r.status === "오류").length}건</strong>
+              <strong>{budgetRows.filter(r => r.status === "오류").length}<span className="metric-unit">건</span></strong>
             </article>
           </section>
 
           <section className="table-panel">
             <div className="table-heading">
-              <div className="table-title"><div><h2><span className="actual-text">&nbsp;{department}&nbsp;</span><span aria-hidden="true" className="hover-text">&nbsp;{department}&nbsp;</span></h2></div></div>
+              <div className="table-title"><div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}><div style={{ fontSize: '20px', color: '#9fb0c8', fontWeight: '600' }}>세출예산요구서</div><h2 style={{ margin: 0, borderLeft: '4px solid #ff9d4d', paddingLeft: '12px' }}><span className="actual-text">&nbsp;{department}&nbsp;</span><span aria-hidden="true" className="hover-text">&nbsp;{department}&nbsp;</span></h2></div></div>
               <div className="table-tools">
                 <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
-                <div className="column-menu-wrap">
-                  <AppButton variant="outline" onClick={() => setShowColumns(!showColumns)}><ListFilter size={16} />열 설정</AppButton>
-                  {showColumns && <div className="column-menu">{columns.map(([key, label]) => <label key={key}><input type="checkbox" checked={visibleColumns.includes(key)} onChange={() => toggleColumn(key)} /><span>{label}</span></label>)}</div>}
-                </div>
               </div>
             </div>
 
             <div className="filter-row">
               <span className="filter-label"><Filter size={15} />필터</span>
               <button className={`filter-chip ${statusFilter === "전체" ? "selected" : ""}`} onClick={() => setStatusFilter("전체")}>전체</button>
-              {(["오류", "주의", "정상"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
+              {(["정상", "오류", "주의"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
               <button className="result-refresh" aria-label="새로고침" onClick={() => showToast("목록을 새로고침했습니다.")}><RefreshCw size={15} /></button>
             </div>
 
             <div className="table-scroll">
               <table className="budget-table">
-                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`}>{label}</th>)}<th className="col-action">편집</th></tr></thead>
+                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <><div style={{ position: 'absolute', top: '50%', left: key === "policy" ? '20px' : '10px', right: key === "policy" ? '50px' : '0', transform: 'translateY(-50%)', display: 'flex', alignItems: 'center', fontSize: '16px', fontWeight: '700', zIndex: 2, pointerEvents: 'none', overflow: 'hidden', whiteSpace: 'nowrap', textOverflow: 'ellipsis' }}>{key === "policy" ? "정책·단위·세부" : label}</div><select value={key === "policy" ? programFilter : accountFilter} onChange={(e) => key === "policy" ? setProgramFilter(e.target.value) : setAccountFilter(e.target.value)} style={{ padding: '6px 50px 6px 10px', borderRadius: '4px', border: 'none', background: '#0f2844', color: '#e5edf7', fontSize: '15px', cursor: 'pointer', width: '150px', boxSizing: 'border-box', accentColor: '#0a5fa6', marginRight: key === "policy" ? '40px' : '0', marginLeft: key === "policy" ? '-20px' : '0' }}><option value="" style={{ background: '#0f2844', color: '#e5edf7', fontSize: '15px' }}></option>{(key === "policy" ? uniquePrograms : uniqueAccounts).map(item => <option key={item} value={item} style={{ background: '#0f2844', color: '#e5edf7', fontSize: '15px' }}>{item}</option>)}</select></> : label}</th>)}<th className="col-action">편집</th></tr></thead>
                 <tbody>
                   <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}</tr>
-                  {filteredRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
+                  {paginatedRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
                     {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{renderCell(row, key)}</td>)}
                     <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button></td>
                   </tr>)}
                 </tbody>
               </table>
             </div>
-            <div className="table-footer"></div>
+            <div className="table-footer">
+              <div className="pagination-container">
+                <button className="pagination-btn" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>이전</button>
+                {(() => {
+                  const delta = 2;
+                  const pages = [];
+                  if (totalPages <= 7) {
+                    return Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                      <button key={page} className={`pagination-btn ${currentPage === page ? 'active' : ''}`} onClick={() => setCurrentPage(page)}>{page}</button>
+                    ));
+                  }
+                  pages.push(1);
+                  let startPage = Math.max(2, currentPage - delta);
+                  let endPage = Math.min(totalPages - 1, currentPage + delta);
+                  if (currentPage === 1) {
+                    endPage = Math.min(totalPages - 1, 1 + (delta * 2));
+                  } else if (currentPage === totalPages) {
+                    startPage = Math.max(2, totalPages - (delta * 2));
+                  }
+                  if (startPage > 2) pages.push("...");
+                  for (let i = startPage; i <= endPage; i++) {
+                    if (i !== 1 && i !== totalPages) pages.push(i);
+                  }
+                  if (endPage < totalPages - 1) pages.push("...");
+                  if (totalPages > 1) pages.push(totalPages);
+                  return pages.map((page, idx) => page === "..." ? (
+                    <span key={idx} className="pagination-ellipsis">...</span>
+                  ) : (
+                    <button key={page} className={`pagination-btn ${currentPage === page ? 'active' : ''}`} onClick={() => setCurrentPage(page as number)}>{page}</button>
+                  ));
+                })()}
+                <button className="pagination-btn" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>다음</button>
+              </div>
+            </div>
           </section>
         </div>
       </main>
 
-      {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2>정원·현원 편집</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields"><label>정원<input value={capacity} onChange={(event) => setCapacity(event.target.value)} inputMode="numeric" /><span>명</span></label><label>현원<input value={current} onChange={(event) => setCurrent(event.target.value)} inputMode="numeric" /><span>명</span></label></div><p className="modal-note"><UsersRound size={16} />현재 <b>결원 {Math.max(0, Number(capacity) - Number(current))}명</b>으로 표시됩니다.</p><div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(164, 192, 221, 0.13)" }}><p style={{ marginBottom: "12px", fontSize: "12px", color: "#7e9ab4", fontWeight: 600 }}>자금 출처별 예산</p><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13px" }}><div><span style={{ color: "#9fb0c8" }}>자체재원</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.city, 0))}백만원</div></div><div><span style={{ color: "#9fb0c8" }}>국고보조금</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.national, 0))}백만원</div></div><div><span style={{ color: "#9fb0c8" }}>광역보조금</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.province, 0))}백만원</div></div><div><span style={{ color: "#9fb0c8" }}>기타</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.other, 0))}백만원</div></div></div><div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(164, 192, 221, 0.13)" }}><span style={{ color: "#9fb0c8", fontSize: "12px" }}>전체 합계</span><div style={{ marginTop: "4px", fontSize: "18px", fontWeight: 700, color: "#ffffff" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.amount, 0))}백만원</div></div></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
+      {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2>정원·현원 편집</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields"><label style={{display: "flex", alignItems: "center", gap: "8px"}}>정원<input value={capacity} onChange={(event) => setCapacity(event.target.value)} inputMode="numeric" style={{flex: 1}} />명</label><label style={{display: "flex", alignItems: "center", gap: "8px"}}>현원<input value={current} onChange={(event) => setCurrent(event.target.value)} inputMode="numeric" style={{flex: 1}} />명</label></div><p className="modal-note"><UsersRound size={16} />현재 <b>결원 {Math.max(0, Number(capacity) - Number(current))}명</b>으로 표시됩니다.</p><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
       {editingRow && <div className="modal-backdrop" onMouseDown={() => setEditingRow(null)}><div className="modal-card edit-row-modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><span>BUDGET ITEM / EDIT</span><h2>예산 항목 편집</h2></div><button className="close-button" onClick={() => setEditingRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>정책<input value={editingRow.policy} onChange={(event) => setEditingRow({ ...editingRow, policy: event.target.value })} /></label><label>세부사업<input value={editingRow.program} onChange={(event) => setEditingRow({ ...editingRow, program: event.target.value })} /></label><label className="edit-wide">산출내역<input value={editingRow.detail} onChange={(event) => setEditingRow({ ...editingRow, detail: event.target.value })} /></label><label>요구액(천원)<input value={editingRow.amount} onChange={(event) => setEditingRow({ ...editingRow, amount: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingRow.previous} onChange={(event) => setEditingRow({ ...editingRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>시비(천원)<input value={editingRow.city} onChange={(event) => setEditingRow({ ...editingRow, city: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>국비(천원)<input value={editingRow.national} onChange={(event) => setEditingRow({ ...editingRow, national: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>도비(천원)<input value={editingRow.province} onChange={(event) => setEditingRow({ ...editingRow, province: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>기타(천원)<input value={editingRow.other} onChange={(event) => setEditingRow({ ...editingRow, other: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>상태<select value={editingRow.status} onChange={(event) => setEditingRow({ ...editingRow, status: event.target.value as Status })}><option>정상</option><option>주의</option><option>오류</option></select></label><label className="edit-wide">검토 메모<input value={editingRow.note ?? ""} onChange={(event) => setEditingRow({ ...editingRow, note: event.target.value })} placeholder="검토 메모를 입력하세요" /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveRowEdit}>저장</AppButton></div></div></div>}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </div>
