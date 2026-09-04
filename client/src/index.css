@@ -270,7 +270,7 @@ h1 { margin: 0; color: #edf4fc; font-family: 'Zmarket Sans'; font-size: 36px; li
 .text-field input { width: 100%; border: 0; outline: 0; background: transparent; color: inherit; font-size: 14.5px; }
 .text-field input::placeholder { color: #71879e; }
 .select-wrap select option { color: #15283c; }
-.staff-summary { height: 40px; display: flex; align-items: center; gap: 8px; padding: 0 12px; border: 1.5px solid rgba(118, 157, 194, 0.4); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.6); color: #b8cade; font-size: 12.5px; transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+.staff-summary { height: 40px; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 0 20px; min-width: 160px; border: 1.5px solid rgba(118, 157, 194, 0.4); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.6); color: #b8cade; font-size: 12.5px; transition: all 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 .staff-summary:hover { border-color: rgba(118, 157, 194, 0.8); background: rgba(13, 33, 54, 0.8); box-shadow: 0 0 12px rgba(77, 63, 255, 0.15); }
 .staff-summary:focus { border-color: var(--blue); background: rgba(13, 33, 54, 0.9); box-shadow: 0 0 0 3px rgba(77, 63, 255, 0.15); }
 .staff-summary svg { color: #7ca8d4; }
