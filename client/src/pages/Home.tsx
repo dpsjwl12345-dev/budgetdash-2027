@@ -293,127 +293,56 @@ export default function Home() {
   const [current, setCurrent] = useState("12");
   const [toast, setToast] = useState("");
 
-  // 페이지 로드 시 GitHub에서 데이터 불러오기 (localStorage 우선)
+  // 페이지 로드 시 서버에서 데이터 불러오기 (localStorage 우선)
   useEffect(() => {
     const saved = localStorage.getItem('budgetRows');
     if (!saved) {
-      fetchDataFromGitHub();
+      loadDataFromServer();
     }
   }, []);
 
   // localStorage에 budgetRows 저장
   useEffect(() => {
-    localStorage.setItem('budgetRows', JSON.stringify(budgetRows));
+    try {
+      localStorage.setItem('budgetRows', JSON.stringify(budgetRows));
+    } catch (error) {
+      console.warn('localStorage 저장 실패:', error);
+    }
   }, [budgetRows]);
 
-  // GitHub API 함수들
-  const fetchDataFromGitHub = async () => {
+  // 서버 API 함수들
+  const loadDataFromServer = async () => {
     try {
-      const token = import.meta.env.VITE_GITHUB_TOKEN;
-      const repo = import.meta.env.VITE_GITHUB_REPO;
-      const filePath = import.meta.env.VITE_GITHUB_FILE_PATH;
-
-      const response = await fetch(
-        `https://api.github.com/repos/${repo}/contents/${filePath}`,
-        {
-          headers: {
-            Authorization: `token ${token}`,
-            Accept: "application/vnd.github.v3.raw",
-          },
-        }
-      );
-
-      if (!response.ok) throw new Error("GitHub API error");
-      const csv = await response.text();
-
-      const lines = csv.split('\n').map(line => line.trim()).filter(Boolean);
-      const headers = lines[0].split(',').map(h => h.replace(/^"|"$/g, ''));
-      const data: BudgetRow[] = [];
-
-      for (let i = 1; i < lines.length; i++) {
-        const values = lines[i].split(',').map(v => v.replace(/^"|"$/g, ''));
-        const record: Record<string, string> = {};
-        headers.forEach((h, idx) => { record[h] = values[idx] || ''; });
-
-        const amount = parseNumber(record['요구액']);
-        if (amount <= 0) continue;
-
-        data.push({
-          id: Date.now() + i,
-          policy: record['정책'] || '미분류',
-          program: record['단위'] ? `${record['단위']}\n${record['세부사업']}` : record['세부사업'] || '',
-          code: record['편성목'] || '-',
-          account: record['계정'] || '',
-          detail: record['산출식'] || '-',
-          amount,
-          city: parseNumber(record['시비']),
-          national: parseNumber(record['국비']),
-          province: parseNumber(record['도비']),
-          other: parseNumber(record['기타']),
-          previous: parseNumber(record['전년도']),
-          status: (record['상태'] === '오류' || record['상태'] === '주의') ? record['상태'] : '정상',
-        });
-      }
-
-      if (data.length > 0) {
+      const response = await fetch('/api/budget/load');
+      if (!response.ok) throw new Error('서버 로드 실패');
+      const { data } = await response.json();
+      if (data && Array.isArray(data)) {
         setBudgetRows(data);
-        showToast(`GitHub에서 ${data.length}개 항목을 불러왔습니다.`);
       }
     } catch (error) {
-      showToast('GitHub에서 데이터를 불러오지 못했습니다.');
+      console.warn('서버에서 데이터 로드 실패:', error);
     }
   };
 
-  const saveDataToGitHub = async () => {
+  const saveDataToServer = async () => {
     try {
-      const token = import.meta.env.VITE_GITHUB_TOKEN;
-      const repo = import.meta.env.VITE_GITHUB_REPO;
-      const filePath = import.meta.env.VITE_GITHUB_FILE_PATH;
-
-      const headers = ['부서', '정책', '단위', '세부사업', '편성목', '계정', '요구액', '국비', '도비', '시비', '기타', '전년도', '상태', '부기명', '산출식'];
-      let csv = headers.join(',') + '\n';
-
-      budgetRows.forEach(row => {
-        const values = [
-          '문화예술과',
-          row.policy,
-          row.program.split('\n')[0] || '',
-          row.program.split('\n')[1] || '',
-          row.code,
-          row.account,
-          row.amount,
-          row.national,
-          row.province,
-          row.city,
-          row.other,
-          row.previous,
-          row.status,
-          '',
-          row.detail,
-        ];
-        csv += values.map(v => `"${String(v || '').replace(/"/g, '""')}"`).join(',') + '\n';
+      const response = await fetch('/api/budget/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: budgetRows }),
       });
 
-      const response = await fetch(
-        `https://api.github.com/repos/${repo}/contents/${filePath}`,
-        {
-          method: 'PUT',
-          headers: {
-            Authorization: `token ${token}`,
-            'Content-Type': 'application/json',
-          },
-          body: JSON.stringify({
-            message: `Update: ${new Date().toLocaleString('ko-KR')}에 예산 데이터 저장`,
-            content: btoa(csv),
-            committer: { name: 'Budget Dashboard', email: 'dashboard@local' },
-          }),
-        }
-      );
+      if (!response.ok) throw new Error('서버 저장 실패');
+      const result = await response.json();
 
-      if (!response.ok) throw new Error('GitHub API error');
-      showToast('GitHub에 저장되었습니다.');
+      if (result.success) {
+        showToast('클라우드에 저장되었습니다.');
+      } else {
+        showToast('로컬에만 저장되었습니다.');
+      }
     } catch (error) {
-      showToast('GitHub에 저장하지 못했습니다.');
+      console.error('서버 저장 실패:', error);
+      showToast('로컬에만 저장되었습니다.');
     }
   };
 
@@ -500,8 +429,13 @@ export default function Home() {
       setBudgetRows(nextRows);
       setSearch("");
       showToast(`${nextRows.length}개 예산 항목을 엑셀에서 불러왔습니다.`);
-      // GitHub에 자동 저장
-      setTimeout(() => saveDataToGitHub(), 500);
+      // localStorage에 저장하고 서버에도 저장
+      try {
+        localStorage.setItem('budgetRows', JSON.stringify(nextRows));
+      } catch (error) {
+        console.warn('localStorage 저장 실패:', error);
+      }
+      setTimeout(() => saveDataToServer(), 500);
     } catch {
       showToast("엑셀 파일을 읽지 못했습니다. 첫 번째 시트와 열 이름을 확인해 주세요.");
     } finally {
@@ -514,7 +448,7 @@ export default function Home() {
     setBudgetRows((currentRows) => currentRows.map((row) => row.id === editingRow.id ? editingRow : row));
     setEditingRow(null);
     showToast(`${editingRow.program} 항목을 저장했습니다.`);
-    await saveDataToGitHub();
+    await saveDataToServer();
   };
 
   const downloadTemplate = () => {
