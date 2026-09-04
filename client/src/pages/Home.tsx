@@ -2,7 +2,7 @@
  * Civic Ledger 스타일 기준: 사용자가 제공한 참조 대시보드의 어두운 네이비 행정 업무 화면을 보존한다.
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
-import { useMemo, useRef, useState } from "react";
+import { useMemo, useRef, useState, useEffect } from "react";
 import * as XLSX from "xlsx";
 import {
   AlertCircle,
@@ -275,7 +275,10 @@ function AppButton({
 export default function Home() {
   const [activeNav, setActiveNav] = useState("예산 편성 시트");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
-  const [budgetRows, setBudgetRows] = useState<BudgetRow[]>(rows);
+  const [budgetRows, setBudgetRows] = useState<BudgetRow[]>(() => {
+    const saved = localStorage.getItem('budgetRows');
+    return saved ? JSON.parse(saved) : rows;
+  });
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
@@ -289,6 +292,11 @@ export default function Home() {
   const [capacity, setCapacity] = useState("14");
   const [current, setCurrent] = useState("12");
   const [toast, setToast] = useState("");
+
+  // localStorage에 budgetRows 저장
+  useEffect(() => {
+    localStorage.setItem('budgetRows', JSON.stringify(budgetRows));
+  }, [budgetRows]);
 
   const filteredRows = useMemo(() => {
     return budgetRows.filter((row) => {
