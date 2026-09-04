@@ -367,7 +367,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .search-box input::placeholder { color: #71879e; }
 .search-box button { width: 22px; height: 22px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 4px; background: transparent; color: #839ab1; }
 .search-box button:hover { background: var(--panel-raised); color: #e2edf8; }
-.column-menu-wrap { position: relative; margin-left: -560px; }
+.column-menu-wrap { position: relative; }
 .column-menu { position: absolute; z-index: 10; top: 43px; right: 0; width: 220px; padding: 8px; border: 1px solid var(--line-strong); border-radius: 8px; background: #10273f; box-shadow: 0 16px 32px rgba(0, 0, 0, 0.35); }
 .column-menu label { display: flex; align-items: center; gap: 9px; padding: 9px 10px; border-radius: 5px; color: #b8c9d9; font-size: 13.5px; line-height: 1.4; cursor: pointer; }
 .column-menu label:hover { background: rgba(255, 107, 53, 0.11); }
