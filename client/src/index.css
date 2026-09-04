@@ -412,16 +412,16 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .budget-row { position: relative; transition: background 200ms ease-out, box-shadow 200ms ease-out; }
 .budget-row:hover { background: rgba(255, 107, 53, 0.08); box-shadow: 0 2px 8px rgba(255, 107, 53, 0.04) inset; }
 .program-cell { display: flex; flex-direction: column; gap: 2px; }
-.policy-name { color: #edf5fc; font-weight: 720; font-size: 12px; }
-.program-name { color: #aac0d4; font-size: 12px; }
-.subprogram-name { color: #8fa1b3; font-size: 12px; }
+.policy-name { color: #edf5fc; font-weight: 720; font-size: 13px; }
+.program-name { color: #aac0d4; font-size: 13px; }
+.subprogram-name { color: #8fa1b3; font-size: 13px; }
 .code-pill { justify-self: start; padding: 2px 6px; border: 1.5px solid rgba(122, 164, 205, 0.5); border-radius: 4px; color: #7994ad; font-size: 10.5px; font-weight: 600; }
 .account-cell { display: flex; flex-direction: column; gap: 4px; color: #b7c9da; font-size: 12px; }
 .account-code { color: #7994ad; font-size: 10.5px; font-weight: 600; }
 .account-name { color: #b7c9da; font-size: 12px; }
 .detail-cell { display: flex; flex-direction: column; gap: 2px; color: #b8cade; align-items: flex-start; padding-left: 12px; }
-.detail-formula { font-size: 13px; font-weight: 500; color: #9eb0c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.detail-description { font-size: 12px; font-weight: 600; color: #dbe8f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.detail-formula { font-size: 14px; font-weight: 500; color: #9eb0c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.detail-description { font-size: 13px; font-weight: 600; color: #dbe8f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .row-note { display: inline-flex; align-items: center; width: fit-content; padding: 1px 5px; border-radius: 3px; font-size: 10.5px; }
 .row-note-오류 { color: #ff949e; background: rgba(255, 111, 125, 0.1); } .row-note-주의 { color: #f0c476; background: rgba(241, 189, 99, 0.1); }
 .numeric-cell, .amount-emphasis { display: block; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
