@@ -336,26 +336,39 @@ export default function Home() {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
-      const nextRows = imported.map((record, index): BudgetRow => {
-        const rawStatus = String(pick(record, ["상태", "status"]));
-        const status: Status = rawStatus === "오류" || rawStatus === "주의" || rawStatus === "정상" ? rawStatus : "정상";
-        return {
-          id: Date.now() + index,
-          policy: String(pick(record, ["정책", "정책 / 단위 / 세부사업", "policy"])) || "미분류 정책",
-          program: String(pick(record, ["세부사업", "사업명", "program"])) || "미입력 사업",
-          code: String(pick(record, ["코드", "code"])) || "-",
-          account: String(pick(record, ["편성목·통계목", "편성목", "account"])) || "미입력",
-          detail: String(pick(record, ["산출내역", "detail"])) || "-",
-          amount: parseNumber(pick(record, ["요구액", "amount"])),
-          city: parseNumber(pick(record, ["시비", "city"])),
-          national: parseNumber(pick(record, ["국비", "national"])),
-          province: parseNumber(pick(record, ["도비", "province"])),
-          other: parseNumber(pick(record, ["기타", "other"])),
-          previous: parseNumber(pick(record, ["전년도", "previous"])),
-          status,
-          note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
-        };
-      });
+      const nextRows = imported
+        .map((record, index): BudgetRow => {
+          const rawStatus = String(pick(record, ["상태", "status"]));
+          const status: Status = rawStatus === "오류" || rawStatus === "주의" || rawStatus === "정상" ? rawStatus : "정상";
+          const code = String(pick(record, ["편성목코드"])) || "-";
+          const statisticalCode = String(pick(record, ["통계목코드"])) || "";
+          const statisticalName = String(pick(record, ["통계목명"])) || "";
+          const accountDisplay = statisticalCode && statisticalName ? `${statisticalCode} ${statisticalName}` : statisticalCode;
+          const unitProgram = String(pick(record, ["단위사업명"])) || "";
+          const subProgram = String(pick(record, ["세부사업명"])) || "";
+          const programDisplay = unitProgram && subProgram ? `${unitProgram}\n${subProgram}` : (unitProgram || subProgram || "미입력 사업");
+          return {
+            id: Date.now() + index,
+            policy: String(pick(record, ["정책사업명"])) || "미분류 정책",
+            program: programDisplay,
+            code,
+            account: accountDisplay,
+            detail: (() => {
+              const note = String(pick(record, ["요구산출근거"])) || "";
+              const expr = String(pick(record, ["요구산출근거식"])) || "";
+              return note && expr ? `${note}\n${expr}` : (note || expr || "-");
+            })(),
+            amount: parseNumber(pick(record, ["요구액"])),
+            city: parseNumber(pick(record, ["자체재원"])),
+            national: parseNumber(pick(record, ["국고보조금"])),
+            province: parseNumber(pick(record, ["광역보조금"])),
+            other: parseNumber(pick(record, ["기타"])),
+            previous: parseNumber(pick(record, ["전년도"])),
+            status,
+            note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
+          };
+        })
+        .filter((row) => row.amount > 0);
       if (!nextRows.length) throw new Error("empty");
       setBudgetRows(nextRows);
       setSearch("");
@@ -385,10 +398,13 @@ export default function Home() {
 
   const renderCell = (row: BudgetRow, key: ColumnKey) => {
     if (key === "policy") {
+      const programLines = row.program.split("\n");
       return (
         <div className="program-cell">
-          <span className="policy-name">{row.policy}</span>
-          <span className="program-name">{row.program}</span>
+          <span className="policy-name" title={row.policy}>{row.policy}</span>
+          {programLines.map((line, idx) => (
+            <span key={idx} className="program-name" title={line}>{line}</span>
+          ))}
         </div>
       );
     }
@@ -401,9 +417,9 @@ export default function Home() {
       );
     }
     if (key === "detail") {
-      const parts = row.detail.split(" · ");
+      const parts = row.detail.split("\n");
       const formula = parts[0];
-      const description = parts.slice(1).join(" · ");
+      const description = parts.slice(1).join("\n");
       return (
         <div className="detail-cell">
           <span className="detail-formula">{formula}</span>
@@ -512,7 +528,7 @@ export default function Home() {
             </div>
             <div className="context-bar">
               <label className="select-field"><span>회계연도</span><span className="select-wrap"><select value={year} onChange={(event) => setYear(event.target.value)}><option value="2027">2027년</option><option value="2026">2026년</option></select><ChevronDown size={15} /></span></label>
-              <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
+              <label className="select-field"><span>편성 부서</span><span className="select-wrap"><select value={department} onChange={(event) => setDepartment(event.target.value)}><option value="복지정책과">복지정책과</option><option value="문화예술과">문화예술과</option><option value="교육청소년과">교육청소년과</option><option value="보건의료과">보건의료과</option></select><ChevronDown size={15} /></span></label>
               <label className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{capacity}명</b></span><span>현원 <b>{current}명</b></span></button></label>
             </div>
           </section>
@@ -542,9 +558,9 @@ export default function Home() {
             <article className="metric-card metric-alert">
               <div className="metric-header">
                 <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
-                <div className="metric-sub">오류 4 · 주의 1</div>
+                <div className="metric-sub">오류 {budgetRows.filter(r => r.status === "오류").length} · 주의 {budgetRows.filter(r => r.status === "주의").length}</div>
               </div>
-              <strong>4건</strong>
+              <strong>{budgetRows.filter(r => r.status === "오류").length}건</strong>
             </article>
           </section>
 
@@ -584,7 +600,7 @@ export default function Home() {
         </div>
       </main>
 
-      {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2>정원·현원 편집</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields"><label>정원<input value={capacity} onChange={(event) => setCapacity(event.target.value)} inputMode="numeric" /><span>명</span></label><label>현원<input value={current} onChange={(event) => setCurrent(event.target.value)} inputMode="numeric" /><span>명</span></label></div><p className="modal-note"><UsersRound size={16} />현재 <b>결원 {Math.max(0, Number(capacity) - Number(current))}명</b>으로 표시됩니다.</p><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
+      {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2>정원·현원 편집</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields"><label>정원<input value={capacity} onChange={(event) => setCapacity(event.target.value)} inputMode="numeric" /><span>명</span></label><label>현원<input value={current} onChange={(event) => setCurrent(event.target.value)} inputMode="numeric" /><span>명</span></label></div><p className="modal-note"><UsersRound size={16} />현재 <b>결원 {Math.max(0, Number(capacity) - Number(current))}명</b>으로 표시됩니다.</p><div style={{ marginTop: "20px", paddingTop: "20px", borderTop: "1px solid rgba(164, 192, 221, 0.13)" }}><p style={{ marginBottom: "12px", fontSize: "12px", color: "#7e9ab4", fontWeight: 600 }}>자금 출처별 예산</p><div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: "12px", fontSize: "13px" }}><div><span style={{ color: "#9fb0c8" }}>자체재원</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.city, 0))}백만원</div></div><div><span style={{ color: "#9fb0c8" }}>국고보조금</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.national, 0))}백만원</div></div><div><span style={{ color: "#9fb0c8" }}>광역보조금</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.province, 0))}백만원</div></div><div><span style={{ color: "#9fb0c8" }}>기타</span><div style={{ marginTop: "4px", fontSize: "16px", fontWeight: 600, color: "#edf5fc" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.other, 0))}백만원</div></div></div><div style={{ marginTop: "16px", paddingTop: "12px", borderTop: "1px solid rgba(164, 192, 221, 0.13)" }}><span style={{ color: "#9fb0c8", fontSize: "12px" }}>전체 합계</span><div style={{ marginTop: "4px", fontSize: "18px", fontWeight: 700, color: "#ffffff" }}>{formatMillion(budgetRows.reduce((sum, row) => sum + row.amount, 0))}백만원</div></div></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
       {editingRow && <div className="modal-backdrop" onMouseDown={() => setEditingRow(null)}><div className="modal-card edit-row-modal" onMouseDown={(event) => event.stopPropagation()}><div className="modal-head"><div><span>BUDGET ITEM / EDIT</span><h2>예산 항목 편집</h2></div><button className="close-button" onClick={() => setEditingRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>정책<input value={editingRow.policy} onChange={(event) => setEditingRow({ ...editingRow, policy: event.target.value })} /></label><label>세부사업<input value={editingRow.program} onChange={(event) => setEditingRow({ ...editingRow, program: event.target.value })} /></label><label className="edit-wide">산출내역<input value={editingRow.detail} onChange={(event) => setEditingRow({ ...editingRow, detail: event.target.value })} /></label><label>요구액(천원)<input value={editingRow.amount} onChange={(event) => setEditingRow({ ...editingRow, amount: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingRow.previous} onChange={(event) => setEditingRow({ ...editingRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>시비(천원)<input value={editingRow.city} onChange={(event) => setEditingRow({ ...editingRow, city: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>국비(천원)<input value={editingRow.national} onChange={(event) => setEditingRow({ ...editingRow, national: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>도비(천원)<input value={editingRow.province} onChange={(event) => setEditingRow({ ...editingRow, province: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>기타(천원)<input value={editingRow.other} onChange={(event) => setEditingRow({ ...editingRow, other: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>상태<select value={editingRow.status} onChange={(event) => setEditingRow({ ...editingRow, status: event.target.value as Status })}><option>정상</option><option>주의</option><option>오류</option></select></label><label className="edit-wide">검토 메모<input value={editingRow.note ?? ""} onChange={(event) => setEditingRow({ ...editingRow, note: event.target.value })} placeholder="검토 메모를 입력하세요" /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveRowEdit}>저장</AppButton></div></div></div>}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </div>
