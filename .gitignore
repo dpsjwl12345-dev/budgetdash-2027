@@ -2,6 +2,9 @@
 **/node_modules
 .pnpm-store/
 
+# Leftover duplicate copy from zip extraction (not part of the project)
+/budgetdash-2027-main/
+
 # Build outputs
 dist/
 build/
