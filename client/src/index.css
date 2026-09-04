@@ -204,7 +204,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .brand-block strong { display: block; color: #ffffff; font-size: 14.5px; font-weight: 750; letter-spacing: -0.03em; }
 .brand-block span { display: block; margin-top: 2px; color: #999999; font-size: 10.5px; letter-spacing: 0.085em; }
 .sidebar-divider { display: none; }
-.sidebar-label { margin: 0 10px 11px; color: #777777; font-size: 10px; line-height: 1; font-weight: 800; letter-spacing: 0.12em; }
+.sidebar-label { margin: 0 10px 11px; color: #777777; font-size: 11px; line-height: 1; font-weight: 800; letter-spacing: 0.12em; }
 .tools-label { margin-top: 15px; }
 .nav-list { display: grid; gap: 4px; }
 .nav-sublist { display: grid; gap: 2px; margin-top: 4px; padding-left: 12px; }
