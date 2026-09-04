@@ -360,7 +360,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .table-title h2:hover .hover-text { width: 100%; filter: drop-shadow(0 0 8px var(--animation-color)); }
 .live-label { display: inline-flex; align-items: center; gap: 6px; margin-left: 10px; color: #79dfac; font-size: 10px; font-weight: 800; letter-spacing: 0.1em; vertical-align: 2px; }
 .live-dot { width: 6px; height: 6px; box-shadow: none; }
-.table-tools { display: flex; align-items: center; gap: 9px; max-width: 400px; }
+.table-tools { display: flex; align-items: center; gap: 9px; flex: 0 1 auto; overflow: hidden; }
 .search-box { width: 180px; max-width: 180px; height: 38px; display: flex; align-items: center; gap: 8px; padding: 0 11px; border: 1px solid var(--line); border-radius: 7px; background: rgba(7, 20, 34, 0.68); color: #728aa2; flex-shrink: 0; }
 .search-box:focus-within { border-color: rgba(255, 107, 53, 0.56); box-shadow: 0 0 0 3px rgba(255, 107, 53, 0.09); }
 .search-box input { width: 100%; min-width: 0; border: 0; outline: 0; background: transparent; color: #dbe8f4; font-size: 13.5px; }
