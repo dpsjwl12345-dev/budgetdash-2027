@@ -562,6 +562,7 @@ export default function Home() {
 
             <div className="filter-row">
               <span className="filter-label"><Filter size={15} />필터</span>
+              <button className={`filter-chip ${statusFilter === "전체" ? "selected" : ""}`} onClick={() => setStatusFilter("전체")}>전체</button>
               {(["오류", "주의", "정상"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
               <button className="result-refresh" aria-label="새로고침" onClick={() => showToast("목록을 새로고침했습니다.")}><RefreshCw size={15} /></button>
             </div>
