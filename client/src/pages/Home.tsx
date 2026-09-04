@@ -3,7 +3,6 @@
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
 import { useMemo, useRef, useState, useEffect } from "react";
-import { Dropdown } from "../components/Dropdown";
 import * as XLSX from "xlsx";
 import {
   AlertCircle,
