@@ -191,6 +191,28 @@ export default function BudgetExecution2026() {
     window.setTimeout(() => setToast(""), 2200);
   };
 
+  const downloadTemplate = () => {
+    const template = [{
+      부서명: "부서명을 입력하세요",
+      정책사업명: "정책사업명을 입력하세요",
+      단위사업명: "단위사업명을 입력하세요",
+      세부사업명: "세부사업명을 입력하세요",
+      통계목: "201-01",
+      예산현액: 0,
+      본예산: 0,
+      추경: 0,
+      성립전: 0,
+      예비비: 0,
+      이월액계: 0,
+      집행액: 0,
+    }];
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "예산집행현황");
+    XLSX.writeFile(workbook, "2026_예산집행현황_업로드양식.xlsx");
+    showToast("엑셀 양식을 다운로드했습니다.");
+  };
+
   const filteredData = useMemo(() => {
     let filtered = data.filter((row) => {
       const matchesSearch = row.department.toLowerCase().includes(search.toLowerCase()) ||
@@ -270,7 +292,8 @@ export default function BudgetExecution2026() {
           </div>
         </section>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', marginTop: '0px' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '8px', marginTop: '0px' }}>
+          <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
           <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
             <div className="icon-stack-front"><Upload size={20} /></div>
             <input
