@@ -821,7 +821,6 @@ export default function Home() {
                       type="button"
                       className="icon-stack-btn"
                       aria-label="저장"
-                      data-tooltip={showSaveMenu ? undefined : "저장"}
                       onClick={() => setShowSaveMenu(!showSaveMenu)}
                     >
                       <div className="icon-stack-front"><Download size={20} /></div>
