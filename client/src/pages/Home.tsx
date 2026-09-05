@@ -673,7 +673,7 @@ export default function Home() {
             account: accountDisplay,
             detail: (() => {
               const note = String(pick(record, ["요구산출근거"])) || "";
-              const expr = String(pick(record, ["요구산출근거식"])) || "";
+              const expr = String(pick(record, ["요구산출근거식"])).replace(/=\s*$/, "").trim();
               return note && expr ? `${note}\n${expr}` : (note || expr || "-");
             })(),
             amount: parseNumber(pick(record, ["요구액"])),
@@ -784,8 +784,7 @@ export default function Home() {
                 background: "none",
                 border: "none",
                 padding: 0,
-                font: "inherit",
-                color: "inherit",
+                fontFamily: "inherit",
                 textAlign: "left",
                 cursor: "pointer",
                 textDecoration: "underline",
@@ -807,13 +806,13 @@ export default function Home() {
       );
     }
     if (key === "detail") {
-      const dotIndex = row.detail.lastIndexOf(" · ");
-      const description = dotIndex === -1 ? row.detail : row.detail.slice(0, dotIndex).trim();
-      const formula = dotIndex === -1 ? "" : row.detail.slice(dotIndex + 3).trim();
+      const lineBreakIndex = row.detail.indexOf("\n");
+      const description = lineBreakIndex === -1 ? row.detail : row.detail.slice(0, lineBreakIndex).trim();
+      const formula = lineBreakIndex === -1 ? "" : row.detail.slice(lineBreakIndex + 1).trim();
       return (
         <div className="detail-cell">
-          <span className="detail-description">{description}</span>
-          {formula && <span className="detail-formula">· {formula}</span>}
+          <span className="detail-description">○ {description}</span>
+          {formula && <span className="detail-formula">{formula}</span>}
           {row.note && <span className={`row-note row-note-${row.status}`}>{row.note}</span>}
         </div>
       );
