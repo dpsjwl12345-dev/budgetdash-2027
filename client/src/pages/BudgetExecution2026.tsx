@@ -54,7 +54,14 @@ export default function BudgetExecution2026() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"department" | "executionRate">("department");
   const [selectedDepartment, setSelectedDepartment] = useState("");
-  const [data, setData] = useState<BudgetExecution[]>([]);
+  const [data, setData] = useState<BudgetExecution[]>(() => {
+    try {
+      const saved = localStorage.getItem("budgetExecution2026Rows");
+      return saved ? JSON.parse(saved) : [];
+    } catch {
+      return [];
+    }
+  });
   const [toast, setToast] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [page, setPage] = useState(1);
@@ -81,25 +88,25 @@ export default function BudgetExecution2026() {
 
   const loadDataFromServer = async () => {
     try {
-      const response = await fetch(`http://localhost:5000/api/budget-execution-2026/load`);
+      const response = await fetch(`/api/budget-execution-2026/load`);
       if (!response.ok) throw new Error('데이터 로드 실패');
       const { data } = await response.json();
-      if (data && Array.isArray(data)) {
+      if (data && Array.isArray(data) && data.length > 0) {
         const mapped = data.map((row: any) => ({
           id: row.id,
           department: row.department,
-          policyName: row.policy_name,
-          programName: row.program_name,
-          unitName: row.unit_name,
-          statisticsCode: row.statistics_code,
+          policyName: row.policyName ?? row.policy_name,
+          programName: row.programName ?? row.program_name,
+          unitName: row.unitName ?? row.unit_name,
+          statisticsCode: row.statisticsCode ?? row.statistics_code,
           original: row.original,
           supplementary: row.supplementary,
-          preEstablishment: row.pre_establishment,
+          preEstablishment: row.preEstablishment ?? row.pre_establishment,
           reserve: row.reserve,
           carryover: row.carryover,
           budget: row.budget,
           executed: row.executed,
-          executionRate: row.execution_rate,
+          executionRate: row.executionRate ?? row.execution_rate,
         }));
         setData(mapped);
       }
@@ -151,19 +158,25 @@ export default function BudgetExecution2026() {
       setSelectedDepartment("전체");
 
       try {
-        const response = await fetch(`http://localhost:5000/api/budget-execution-2026/save`, {
+        localStorage.setItem("budgetExecution2026Rows", JSON.stringify(nextData));
+      } catch (error) {
+        console.warn('localStorage 저장 실패:', error);
+      }
+
+      try {
+        const response = await fetch(`/api/budget-execution-2026/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ data: nextData }),
         });
         if (!response.ok) {
-          showToast('서버 저장에 실패했습니다');
+          showToast('저장에 실패했습니다 (로컬에만 저장됨)');
         } else {
           showToast(`${nextData.length}개 부서 데이터를 저장했습니다.`);
         }
       } catch (error) {
         console.warn('서버 저장 실패:', error);
-        showToast('서버 저장에 실패했습니다');
+        showToast('저장에 실패했습니다 (로컬에만 저장됨)');
       }
     } catch (error) {
       showToast('엑셀 파일을 읽지 못했습니다');
