@@ -21,7 +21,7 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "예산 편성 시트", icon: ClipboardCheck, path: "/", count: "01" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026" },
-  { label: "예산설명자료", icon: Database, path: "/", disabled: true },
+  { label: "예산설명자료", icon: Database, path: "/budget-explainer" },
 ];
 
 const toolItems = [
@@ -38,7 +38,7 @@ export default function Layout({
   const [location, setLocation] = useLocation();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
   const [activeNav, setActiveNav] = useState(
-    location === "/" ? "예산 편성 시트" : "예산집행현황"
+    navItems.find((item) => item.path === location)?.label ?? "예산 편성 시트"
   );
 
   return (

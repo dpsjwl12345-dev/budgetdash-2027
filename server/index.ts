@@ -63,6 +63,40 @@ async function startServer() {
     }
   });
 
+  // 부서별 예산설명자료 (PDF 텍스트 + 세부사업 목록) 저장/로드
+  app.post('/api/budget-explainer/save', async (req, res) => {
+    try {
+      const { department, text, fileName, sections } = req.body;
+      if (!department) {
+        res.status(400).json({ success: false, error: '부서를 선택해주세요' });
+        return;
+      }
+      const success = await saveToKV(`explainer:${department}`, {
+        text,
+        fileName,
+        sections,
+        uploadedAt: new Date().toISOString(),
+      });
+      res.json({ success, message: success ? '저장 완료' : '저장 실패 (로컬만 사용)' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/budget-explainer/load', async (req, res) => {
+    try {
+      const department = String(req.query.department || '');
+      if (!department) {
+        res.status(400).json({ error: '부서를 선택해주세요' });
+        return;
+      }
+      const data = await loadFromKV(`explainer:${department}`);
+      res.json({ data });
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
   // 2026 예산집행 데이터 로드
   app.get('/api/budget-execution-2026/load', (_req, res) => {
     try {

@@ -6,6 +6,7 @@ import ErrorBoundary from "./components/ErrorBoundary";
 import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import BudgetExecution2026 from "./pages/BudgetExecution2026";
+import BudgetExplainer from "./pages/BudgetExplainer";
 
 
 function Router() {
@@ -13,6 +14,7 @@ function Router() {
     <Switch>
       <Route path={"/"} component={Home} />
       <Route path={"/budget-execution-2026"} component={BudgetExecution2026} />
+      <Route path={"/budget-explainer"} component={BudgetExplainer} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route: keep the single-file HTML usable from a local file path. */}
       <Route component={Home} />

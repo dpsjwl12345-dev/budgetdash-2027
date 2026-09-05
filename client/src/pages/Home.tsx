@@ -3,8 +3,10 @@
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
 import { useMemo, useRef, useState, useEffect } from "react";
+import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
+import Pagination from "@/components/Pagination";
 import {
   AlertCircle,
   Bell,
@@ -468,6 +470,7 @@ function AppButton({
 }
 
 export default function Home() {
+  const [, setLocation] = useLocation();
   const [budgetRows, setBudgetRows] = useState<BudgetRow[]>(() => {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
@@ -726,7 +729,27 @@ export default function Home() {
         <div className="program-cell">
           <span className="policy-name" title={row.policy}>{row.policy}</span>
           {programLines.map((line, idx) => (
-            <span key={idx} className="program-name" title={line}>{line}</span>
+            <button
+              key={idx}
+              className="program-name"
+              title={`${line} · 설명자료 보기`}
+              onClick={() =>
+                setLocation(`/budget-explainer?dept=${encodeURIComponent(department)}&item=${encodeURIComponent(line)}`)
+              }
+              style={{
+                background: "none",
+                border: "none",
+                padding: 0,
+                font: "inherit",
+                color: "inherit",
+                textAlign: "left",
+                cursor: "pointer",
+                textDecoration: "underline",
+                textUnderlineOffset: "2px",
+              }}
+            >
+              {line}
+            </button>
           ))}
         </div>
       );
@@ -814,7 +837,7 @@ export default function Home() {
               </div>
               <strong>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
-            <article className="metric-card" style={{ "--tint": "#9d7ff0" } as React.CSSProperties}>
+            <article className="metric-card" style={{ "--tint": "#ff6b7d" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 최종예산액</span></div>
               </div>
@@ -854,39 +877,8 @@ export default function Home() {
                 </tbody>
               </table>
             </div>
-            <div className="table-footer">
-              <div className="pagination-container">
-                <button className="pagination-btn" onClick={() => setCurrentPage(Math.max(1, currentPage - 1))} disabled={currentPage === 1}>이전</button>
-                {(() => {
-                  const delta = 2;
-                  const pages = [];
-                  if (totalPages <= 7) {
-                    return Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
-                      <button key={page} className={`pagination-btn ${currentPage === page ? 'active' : ''}`} onClick={() => setCurrentPage(page)}>{page}</button>
-                    ));
-                  }
-                  pages.push(1);
-                  let startPage = Math.max(2, currentPage - delta);
-                  let endPage = Math.min(totalPages - 1, currentPage + delta);
-                  if (currentPage === 1) {
-                    endPage = Math.min(totalPages - 1, 1 + (delta * 2));
-                  } else if (currentPage === totalPages) {
-                    startPage = Math.max(2, totalPages - (delta * 2));
-                  }
-                  if (startPage > 2) pages.push("...");
-                  for (let i = startPage; i <= endPage; i++) {
-                    if (i !== 1 && i !== totalPages) pages.push(i);
-                  }
-                  if (endPage < totalPages - 1) pages.push("...");
-                  if (totalPages > 1) pages.push(totalPages);
-                  return pages.map((page, idx) => page === "..." ? (
-                    <span key={idx} className="pagination-ellipsis">...</span>
-                  ) : (
-                    <button key={page} className={`pagination-btn ${currentPage === page ? 'active' : ''}`} onClick={() => setCurrentPage(page as number)}>{page}</button>
-                  ));
-                })()}
-                <button className="pagination-btn" onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))} disabled={currentPage === totalPages}>다음</button>
-              </div>
+            <div className="table-footer" style={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
+              <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
             </div>
           </section>
         </div>

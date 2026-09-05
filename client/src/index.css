@@ -2,9 +2,13 @@
  * Civic Ledger 스타일 기준: 참조 화면의 어두운 네이비 행정 업무 대시보드를 보존한다.
  * 이번 수정 범위는 전체 가독성 향상이다. 모바일 재배치와 정보 구조 변경은 하지 않는다.
  */
-@import "tw-animate-css";
 @import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
 @import url("https://cdn.jsdelivr.net/gh/innks/zmarket-sans@v1.0/zmarket_sans.css");
+@import "tw-animate-css";
+/* Preflight(브라우저 기본 스타일 리셋)는 기존 커스텀 CSS와 충돌할 수 있어 제외하고,
+   테마 변수 + 유틸리티 클래스만 활성화한다 (shadcn/ui 컴포넌트가 이 클래스들에 의존함). */
+@import "tailwindcss/theme.css" layer(theme);
+@import "tailwindcss/utilities.css" layer(utilities);
 
 :root {
   font-family: "Pretendard", system-ui, sans-serif;
@@ -138,6 +142,7 @@ button, input, select { font: inherit; }
 button { color: inherit; }
 button:not(:disabled) { cursor: pointer; }
 button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+[cmdk-input]:focus-visible, [cmdk-input]:focus { outline: none; }
 .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0, 0, 0, 0); white-space: nowrap; border: 0; }
 
 .app-shell { min-height: 100vh; display: flex; background: var(--ink); }
@@ -278,20 +283,19 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .title-wrapper { display: flex; align-items: center; }
 .action-row { margin-top: 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
 h1 { margin: 0; color: #b0bcc9; font-family: "ZMarket Sans", system-ui, sans-serif; font-size: 36px; line-height: 1.15; letter-spacing: -0.06em; font-weight: 700; width: fit-content; }
-.context-bar { display: flex; align-items: center; gap: 16px; padding: 14px 16px; margin-top: 0; border-radius: var(--radius-md); background: linear-gradient(120deg, #7a9ac9, #5e7ba6); border: 1px solid rgba(122, 154, 201, 0.3); }
-.context-bar .select-field > span:first-child { color: #000000 !important; font-size: 16px !important; font-weight: 700 !important; }
-.context-bar .dropdown-value { font-family: "ZMarket Sans", system-ui, sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; }
+.context-bar { display: flex; align-items: center; gap: 16px; padding: 14px 16px; margin-top: 0; border-radius: var(--radius-md); background: rgba(140, 155, 170, 0.12); border: 1px solid var(--line); }
+.context-bar .dropdown-value { font-family: "ZMarket Sans", system-ui, sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
 .context-bar .staff-summary b { font-family: "ZMarket Sans", system-ui, sans-serif; font-size: 17px; font-weight: 700; }
 .context-bar .staff-summary { letter-spacing: 0.01em; }
-.context-bar .select-wrap { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.28); color: #ffffff; }
-.context-bar .select-wrap:hover { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.4); }
-.context-bar .select-wrap:focus-within { background: rgba(255, 255, 255, 0.18); border-color: rgba(255, 255, 255, 0.55); }
-.context-bar .select-chevron { color: rgba(255, 255, 255, 0.6); }
-.context-bar .select-wrap:hover .select-chevron, .context-bar .select-wrap:focus-within .select-chevron { color: #ffffff; }
-.context-bar .staff-summary { background: rgba(255, 255, 255, 0.1); border-color: rgba(255, 255, 255, 0.28); color: #ffffff; }
-.context-bar .staff-summary:hover { background: rgba(255, 255, 255, 0.16); border-color: rgba(255, 255, 255, 0.4); }
-.context-bar .staff-summary svg, .context-bar .staff-summary em { color: rgba(255, 255, 255, 0.7); }
-.context-bar .staff-summary b { color: #ffffff; }
+.context-bar .select-wrap { background: rgba(118, 157, 194, 0.1); border-color: var(--line); color: var(--text); }
+.context-bar .select-wrap:hover { background: rgba(118, 157, 194, 0.16); border-color: rgba(118, 157, 194, 0.4); }
+.context-bar .select-wrap:focus-within { background: rgba(118, 157, 194, 0.18); border-color: rgba(118, 157, 194, 0.55); }
+.context-bar .select-chevron { color: var(--text-muted); }
+.context-bar .select-wrap:hover .select-chevron, .context-bar .select-wrap:focus-within .select-chevron { color: var(--text); }
+.context-bar .staff-summary { background: rgba(118, 157, 194, 0.1); border-color: var(--line); color: var(--text); }
+.context-bar .staff-summary:hover { background: rgba(118, 157, 194, 0.16); border-color: rgba(118, 157, 194, 0.4); }
+.context-bar .staff-summary svg, .context-bar .staff-summary em { color: var(--text-muted); }
+.context-bar .staff-summary b { color: var(--text); }
 .dept-dropdown-wrap { position: relative; }
 .dept-dropdown-btn { height: 40px; padding: 0 12px; border: 1.5px solid var(--line); border-radius: var(--radius-md); background: rgba(13, 33, 54, 0.6); color: #b8cade; font-size: 13px; font-weight: 500; cursor: pointer; display: flex; align-items: center; justify-content: space-between; gap: 8px; transition: all 200ms ease-out; min-width: 180px; }
 .dept-dropdown-btn:hover { background: rgba(13, 33, 54, 0.8); }
@@ -415,7 +419,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 .table-panel { margin-top: 26px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); overflow: visible; transition: all 200ms ease-out; }
 .table-panel:hover { background: rgba(140, 155, 170, 0.18); border-color: rgba(226, 232, 240, 0.25); }
-.table-heading { min-height: 78px; padding: 18px 19px 14px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
+.table-heading { min-height: 78px; padding: 16px 19px 16px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
 .dept-pill { display: inline-flex; align-items: center; height: 26px; margin-left: 6px; padding: 0 12px; border-radius: 999px; background: rgba(203, 213, 225, 0.12); border: 1px solid rgba(203, 213, 225, 0.25); color: #dbe8f5; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .active-rule { display: none !important; }
@@ -488,8 +492,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .budget-table th:first-child, .budget-table td:first-child { padding-left: 8px; }
 .budget-table th:first-child { padding-left: 8px; }
 .budget-table th:nth-child(2) { padding-left: 0px; }
-.budget-table th:nth-child(3), .budget-table td:nth-child(3) { padding-left: 0px !important; position: relative; left: -30px; }
-.budget-table th:nth-child(4), .budget-table td:nth-child(4) { position: relative; left: -15px; }
+.budget-table th:nth-child(3), .budget-table td:nth-child(3) { padding-left: 0px !important; }
 .budget-table th:last-child, .budget-table td:last-child { padding-right: 19px; }
 .col-policy { width: 13%; text-align: left !important; } .col-account { width: 10%; text-align: left !important; padding-left: 0 !important; } .col-detail { width: 20%; text-align: center; padding-left: 0 !important; } .col-amount { width: 9%; font-size: 14px !important; font-weight: 600; text-align: left; color: #f0f5fa !important; } .col-city, .col-national, .col-province, .col-other { width: 7%; font-size: 14px !important; text-align: right; color: #d0e0f0 !important; } .col-previous { width: 8%; font-size: 14px !important; text-align: right; color: #d0e0f0 !important; } .col-status { width: 6%; text-align: center !important; } .col-action { width: 6%; text-align: center !important; }
 .sort-mark { margin-left: 4px; color: #74b8fc; }
@@ -905,8 +908,8 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 }
 
 .pagination-btn.active {
-  background: #4d3fff;
-  border-color: #4d3fff;
+  background: #5b9bf0;
+  border-color: #5b9bf0;
   color: #ffffff;
   font-weight: 600;
 }
@@ -922,6 +925,15 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
   font-size: 14px;
 }
 
+/* 브라우저는 폼 요소(button/input/select/textarea)에 폰트를 자동 상속하지 않는다.
+   Tailwind preflight를 빼면서 같이 빠진 규칙이라 직접 추가한다. */
+button,
+input,
+select,
+textarea {
+  font-family: inherit;
+}
+
 /* Select dropdown styling */
 select {
   border-radius: 16px !important;
@@ -931,4 +943,27 @@ select option {
   border-radius: 16px;
   background: #fff;
   color: #333;
+}
+
+/* 다크 테마용 스크롤바 (Combobox 목록 등) */
+.dark-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(164, 192, 221, 0.35) transparent;
+}
+
+.dark-scrollbar::-webkit-scrollbar {
+  width: 8px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb {
+  background-color: rgba(164, 192, 221, 0.35);
+  border-radius: 8px;
+}
+
+.dark-scrollbar::-webkit-scrollbar-thumb:hover {
+  background-color: rgba(164, 192, 221, 0.55);
 }
