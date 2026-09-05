@@ -3,7 +3,6 @@ import { useLocation } from "wouter";
 import {
   ClipboardCheck,
   History,
-  LayoutDashboard,
   SlidersHorizontal,
   UsersRound,
   Database,
@@ -23,13 +22,12 @@ type NavItem = {
 const navItems: NavItem[] = [
   { label: "예산 편성 시트", icon: ClipboardCheck, path: "/", count: "01" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026" },
-  { label: "예산 현황", icon: LayoutDashboard, path: "/", disabled: true },
+  { label: "예산설명자료", icon: Database, path: "/", disabled: true },
 ];
 
 const toolItems = [
   { label: "심의 기준 설정", icon: SlidersHorizontal },
   { label: "정원·현원 관리", icon: UsersRound },
-  { label: "예산설명자료", icon: Database },
 ];
 
 export default function Layout({
