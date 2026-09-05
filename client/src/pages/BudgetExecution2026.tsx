@@ -296,7 +296,7 @@ export default function BudgetExecution2026() {
         </div>
 
         <section className="table-panel">
-          <div className="table-heading">
+          <div className="table-heading" style={{ borderBottom: 'none' }}>
             <div className="table-title">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} ref={dropdownRef}>
                 <button
