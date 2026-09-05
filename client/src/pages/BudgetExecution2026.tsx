@@ -229,18 +229,6 @@ export default function BudgetExecution2026() {
     );
   }, [filteredData]);
 
-  const totals = useMemo(() => {
-    return data.reduce(
-      (sum, row) => ({
-        budget: sum.budget + row.budget,
-        executed: sum.executed + row.executed,
-      }),
-      { budget: 0, executed: 0 }
-    );
-  }, [data]);
-
-  const avgExecutionRate = totals.budget > 0 ? (totals.executed / totals.budget) * 100 : 0;
-
   const departments = useMemo(() => {
     const departmentOrder = ["문화예술과", "문화유산과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
     return departmentOrder;
@@ -269,13 +257,13 @@ export default function BudgetExecution2026() {
                 <div className="metric-header">
                   <div className="metric-top"><span>총 예산</span></div>
                 </div>
-                <strong>{formatAmount(Math.round(totals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
+                <strong>{formatAmount(Math.round(filteredTotals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
               </article>
               <article className="metric-card" style={{ "--tint": "#4fc3a1", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
                 <div className="metric-header">
                   <div className="metric-top"><span>집행액</span></div>
                 </div>
-                <strong>{formatAmount(Math.round(totals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
+                <strong>{formatAmount(Math.round(filteredTotals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
               </article>
             </div>
           </div>
