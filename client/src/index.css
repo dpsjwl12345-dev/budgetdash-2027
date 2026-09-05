@@ -220,14 +220,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   font-size: 20px;
   color: #ffffff;
   font-weight: 750;
-  letter-spacing: -0.02em;
+  letter-spacing: -0.005em;
   line-height: 1.15;
 }
 
 
 .brand-block { display: flex; align-items: center; gap: 12px; padding: 0 10px; }
 .brand-mark { width: 32px; height: 32px; object-fit: contain; flex: 0 0 auto; }
-.brand-block strong { display: block; color: #ffffff; font-size: 14.5px; font-weight: 750; letter-spacing: -0.03em; }
+.brand-block strong { display: block; color: #ffffff; font-size: 14.5px; font-weight: 750; letter-spacing: -0.005em; }
 .brand-block span { display: block; margin-top: 2px; color: #999999; font-size: 10.5px; letter-spacing: 0.085em; }
 .sidebar-divider { height: 1px; margin: 0 4px 18px; background: linear-gradient(90deg, rgba(203, 213, 225, 0.16), rgba(203, 213, 225, 0)); }
 .sidebar.collapsed .sidebar-divider { margin-left: -4px; margin-right: -4px; }
@@ -281,7 +281,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .title-area { display: flex; align-items: center; justify-content: space-between; gap: 16px; }
 .title-wrapper { display: flex; align-items: center; }
 .action-row { margin-top: 0; display: flex; justify-content: flex-end; align-items: center; gap: 8px; }
-h1 { margin: 0; color: #b0bcc9; font-family: "Pretendard", system-ui, sans-serif; font-size: 36px; line-height: 1.15; letter-spacing: -0.06em; font-weight: 700; width: fit-content; }
+h1 { margin: 0; color: #b0bcc9; font-family: "Pretendard", system-ui, sans-serif; font-size: 36px; line-height: 1.15; letter-spacing: -0.01em; font-weight: 700; width: fit-content; }
 .context-bar { display: flex; align-items: center; gap: 16px; padding: 14px 16px; margin-top: 0; border-radius: var(--radius-md); background: rgba(140, 155, 170, 0.12); border: 1px solid var(--line); }
 .context-bar .dropdown-value { font-family: "Pretendard", system-ui, sans-serif; font-size: 17px; font-weight: 700; letter-spacing: -0.01em; color: var(--text); }
 .context-bar .staff-summary b { font-family: "Pretendard", system-ui, sans-serif; font-size: 17px; font-weight: 700; }
@@ -422,7 +422,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
 .dept-pill { display: inline-flex; align-items: center; height: 26px; margin-left: 6px; padding: 0 12px; border-radius: 999px; background: rgba(203, 213, 225, 0.12); border: 1px solid rgba(203, 213, 225, 0.25); color: #dbe8f5; font-size: 13px; font-weight: 600; white-space: nowrap; }
 .active-rule { display: none !important; }
-.table-title h2 { --border-right: 6px; --text-stroke-color: rgba(255,255,255,0.6); --animation-color: #cbd5e1; position: relative; display: inline-block; margin: 0; padding-left: 0; color: #e8f1fa; font-family: "Pretendard", system-ui, sans-serif; font-size: 24px; line-height: 1.3; letter-spacing: -0.035em; font-weight: 700; overflow: hidden; cursor: pointer; }
+.table-title h2 { --border-right: 6px; --text-stroke-color: rgba(255,255,255,0.6); --animation-color: #cbd5e1; position: relative; display: inline-block; margin: 0; padding-left: 0; color: #e8f1fa; font-family: "Pretendard", system-ui, sans-serif; font-size: 24px; line-height: 1.3; letter-spacing: -0.01em; font-weight: 700; overflow: hidden; cursor: pointer; }
 .table-title h2 .actual-text { display: inline-block; transition: all 0.5s; }
 .table-title h2 .hover-text { position: absolute; left: 20px; top: 0; box-sizing: border-box; color: transparent; width: 0%; inset: 0; border-right: var(--border-right) solid var(--animation-color); overflow: hidden; transition: 0.5s; -webkit-text-stroke: 1px var(--animation-color); }
 .table-title h2:hover .actual-text { opacity: 0; }
@@ -537,7 +537,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; width: 100%; }
 .modal-head span { color: #7e9ab4; font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; }
-.modal-head h2 { margin: 5px 0 0; color: #ebf3fb; font-size: 21px; line-height: 1.3; letter-spacing: -0.04em; }
+.modal-head h2 { margin: 5px 0 0; color: #ebf3fb; font-size: 21px; line-height: 1.3; letter-spacing: -0.01em; }
 .modal-fields { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; margin-top: 18px; }
 .edit-row-modal { width: 620px; }
 .edit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 13px; margin-top: 22px; }
