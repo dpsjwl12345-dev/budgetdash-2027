@@ -713,6 +713,29 @@ export default function Home() {
     await saveDataToServer(updatedRows);
   };
 
+  const exportToExcel = () => {
+    const sheetRows = filteredRows.map((row) => ({
+      정책사업명: row.policy,
+      세부사업명: row.program,
+      편성목코드: row.code,
+      "통계목(계정)": row.account,
+      요구산출근거: row.detail,
+      요구액: row.amount,
+      자체재원: row.city,
+      국고보조금: row.national,
+      광역보조금: row.province,
+      기타: row.other,
+      전년도: row.previous,
+      상태: row.status,
+      검토메모: row.note ?? "",
+    }));
+    const worksheet = XLSX.utils.json_to_sheet(sheetRows);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "예산편성검토");
+    XLSX.writeFile(workbook, `${year}년_본예산_편성검토.xlsx`);
+    showToast("엑셀 파일을 다운로드했습니다.");
+  };
+
   const downloadTemplate = () => {
     const template = [{ 정책: "노인복지 증진", 세부사업: "사업명을 입력하세요", 코드: "300", "편성목·통계목": "302-03 민간경상보조", 산출내역: "산출근거를 입력하세요", 요구액: 0, 시비: 0, 국비: 0, 도비: 0, 기타: 0, 전년도: 0, 상태: "정상", 검토메모: "" }];
     const worksheet = XLSX.utils.json_to_sheet(template);
@@ -788,22 +811,28 @@ export default function Home() {
                 <h1>{year} 본예산 편성검토</h1>
               </div>
               <div className="action-row">
-                <label className="upload-file-field"><Upload size={16} /><span>UPLOAD</span><input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} /></label>
+                <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
+                  <div className="icon-stack-front"><Upload size={20} /></div>
+                  <input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} />
+                </label>
                 <div className="action-group">
                   <div style={{ position: "relative" }}>
                     <button
-                      className="upload-file-field"
+                      type="button"
+                      className="icon-stack-btn"
+                      aria-label="저장"
+                      data-tooltip={showSaveMenu ? undefined : "저장"}
                       onClick={() => setShowSaveMenu(!showSaveMenu)}
                     >
-                      <Download size={16} />SAVE
+                      <div className="icon-stack-front"><Download size={20} /></div>
                     </button>
                     {showSaveMenu && (
                       <div className="save-menu">
-                        <button onClick={() => { showToast("CSV 내보내기를 준비했습니다."); setShowSaveMenu(false); }}>
-                          CSV 내보내기
+                        <button onClick={() => { exportToExcel(); setShowSaveMenu(false); }}>
+                          Excel
                         </button>
                         <button onClick={() => { showToast("인쇄 미리보기를 준비했습니다."); setShowSaveMenu(false); }}>
-                          인쇄 / PDF
+                          PDF
                         </button>
                       </div>
                     )}
