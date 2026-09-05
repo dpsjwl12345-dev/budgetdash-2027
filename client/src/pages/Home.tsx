@@ -713,7 +713,7 @@ export default function Home() {
     await saveDataToServer(updatedRows);
   };
 
-  const exportToExcel = () => {
+  const exportToCsv = () => {
     const sheetRows = filteredRows.map((row) => ({
       정책사업명: row.policy,
       세부사업명: row.program,
@@ -730,18 +730,39 @@ export default function Home() {
       검토메모: row.note ?? "",
     }));
     const worksheet = XLSX.utils.json_to_sheet(sheetRows);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "예산편성검토");
-    XLSX.writeFile(workbook, `${year}년_본예산_편성검토.xlsx`);
-    showToast("엑셀 파일을 다운로드했습니다.");
+    const csv = XLSX.utils.sheet_to_csv(worksheet);
+    const blob = new Blob(["﻿" + csv], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `${year}년_본예산_편성검토.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+    showToast("CSV 파일을 다운로드했습니다.");
   };
 
   const downloadTemplate = () => {
-    const template = [{ 정책: "노인복지 증진", 세부사업: "사업명을 입력하세요", 코드: "300", "편성목·통계목": "302-03 민간경상보조", 산출내역: "산출근거를 입력하세요", 요구액: 0, 시비: 0, 국비: 0, 도비: 0, 기타: 0, 전년도: 0, 상태: "정상", 검토메모: "" }];
+    const template = [{
+      정책사업명: "노인복지 증진",
+      세부사업명: "사업명을 입력하세요",
+      편성목코드: "300",
+      통계목코드: "302-03",
+      통계목명: "민간경상보조",
+      요구산출근거: "산출근거를 입력하세요",
+      요구산출근거식: "단가 × 수량",
+      요구액: 0,
+      자체재원: 0,
+      국고보조금: 0,
+      광역보조금: 0,
+      기타: 0,
+      전년도: 0,
+      상태: "정상",
+      검토메모: "",
+    }];
     const worksheet = XLSX.utils.json_to_sheet(template);
     const workbook = XLSX.utils.book_new();
     XLSX.utils.book_append_sheet(workbook, worksheet, "예산편성");
-    XLSX.writeFile(workbook, "2027_본예산_편성양식.xlsx");
+    XLSX.writeFile(workbook, "2027_본예산_편성요구서_양식.xlsx");
     showToast("엑셀 양식을 다운로드했습니다.");
   };
 
@@ -811,6 +832,7 @@ export default function Home() {
                 <h1>{year} 본예산 편성검토</h1>
               </div>
               <div className="action-row">
+                <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
                 <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
                   <div className="icon-stack-front"><Upload size={20} /></div>
                   <input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} />
@@ -827,8 +849,8 @@ export default function Home() {
                     </button>
                     {showSaveMenu && (
                       <div className="save-menu">
-                        <button onClick={() => { exportToExcel(); setShowSaveMenu(false); }}>
-                          Excel
+                        <button onClick={() => { exportToCsv(); setShowSaveMenu(false); }}>
+                          CSV
                         </button>
                         <button onClick={() => { showToast("인쇄 미리보기를 준비했습니다."); setShowSaveMenu(false); }}>
                           PDF
