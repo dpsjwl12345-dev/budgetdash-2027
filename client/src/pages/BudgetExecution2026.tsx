@@ -270,9 +270,8 @@ export default function BudgetExecution2026() {
         </section>
 
         <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '8px', marginTop: '0px' }}>
-          <label className="upload-file-field">
-            <Upload size={16} />
-            <span>UPLOAD</span>
+          <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
+            <div className="icon-stack-front"><Upload size={20} /></div>
             <input
               ref={fileInputRef}
               className="upload-input"

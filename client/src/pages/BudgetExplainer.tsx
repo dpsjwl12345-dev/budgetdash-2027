@@ -273,9 +273,13 @@ export default function BudgetExplainer() {
                 ? `현재 파일: ${doc.fileName} (${new Date(doc.uploadedAt).toLocaleString("ko-KR")})`
                 : "업로드된 설명자료가 없습니다"}
             </div>
-            <label className="upload-file-field">
-              <Upload size={16} />
-              <span>{parsing ? "분석 중..." : "PDF 업로드"}</span>
+            <label
+              className="icon-stack-btn"
+              aria-label={parsing ? "분석 중" : "PDF 업로드"}
+              data-tooltip={parsing ? "분석 중..." : "PDF 업로드"}
+              style={parsing ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+            >
+              <div className="icon-stack-front"><Upload size={20} /></div>
               <input
                 ref={fileInputRef}
                 className="upload-input"
