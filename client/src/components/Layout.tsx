@@ -4,7 +4,6 @@ import {
   ClipboardCheck,
   History,
   SlidersHorizontal,
-  UsersRound,
   Database,
   ChevronRight,
   Landmark,
@@ -27,7 +26,6 @@ const navItems: NavItem[] = [
 
 const toolItems = [
   { label: "심의 기준 설정", icon: SlidersHorizontal },
-  { label: "정원·현원 관리", icon: UsersRound },
 ];
 
 export default function Layout({
