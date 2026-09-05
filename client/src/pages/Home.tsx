@@ -662,8 +662,9 @@ export default function Home() {
           const statisticalCode = String(pick(record, ["통계목코드"])) || "";
           const statisticalName = String(pick(record, ["통계목명"])) || "";
           const accountDisplay = statisticalCode && statisticalName ? `${statisticalCode} ${statisticalName}` : statisticalCode;
+          const unitProgram = String(pick(record, ["단위사업명"])) || "";
           const subProgram = String(pick(record, ["세부사업명"])) || "미입력 사업";
-          const programDisplay = subProgram;
+          const programDisplay = unitProgram ? `${unitProgram}\n${subProgram}` : subProgram;
           return {
             id: Date.now() + index,
             policy: String(pick(record, ["정책사업명"])) || "미분류 정책",
@@ -744,6 +745,7 @@ export default function Home() {
   const downloadTemplate = () => {
     const template = [{
       정책사업명: "노인복지 증진",
+      단위사업명: "경로당 운영지원",
       세부사업명: "사업명을 입력하세요",
       편성목코드: "300",
       통계목코드: "302-03",
