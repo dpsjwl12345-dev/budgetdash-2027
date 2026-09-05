@@ -126,6 +126,7 @@ export default function BudgetExecution2026() {
         const parsed = parseInt(String(value || "0").replace(/[^0-9]/g, ""), 10);
         return isNaN(parsed) ? 0 : parsed;
       };
+      const parseText = (value: unknown): string => (value == null ? "" : String(value));
 
       const nextData: BudgetExecution[] = imported
         .map((record, index) => {
@@ -134,11 +135,11 @@ export default function BudgetExecution2026() {
 
           return {
             id: Date.now() + index,
-            department: String(record["부서명"]) || "미분류",
-            policyName: String(record["정책사업명"]) || "",
-            programName: String(record["단위사업명"]) || "",
-            unitName: String(record["세부사업명"]) || "",
-            statisticsCode: String(record["통계목"]) || "",
+            department: parseText(record["부서명"]) || "미분류",
+            policyName: parseText(record["정책사업명"]),
+            programName: parseText(record["단위사업명"]),
+            unitName: parseText(record["세부사업명"]),
+            statisticsCode: parseText(record["통계목"]),
             original: parseNumber(record["본예산"]),
             supplementary: parseNumber(record["추경"]),
             preEstablishment: parseNumber(record["성립전"]),
