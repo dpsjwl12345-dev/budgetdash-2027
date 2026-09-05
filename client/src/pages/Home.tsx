@@ -756,8 +756,6 @@ export default function Home() {
       광역보조금: 0,
       기타: 0,
       전년도: 0,
-      상태: "정상",
-      검토메모: "",
     }];
     const worksheet = XLSX.utils.json_to_sheet(template);
     const workbook = XLSX.utils.book_new();
