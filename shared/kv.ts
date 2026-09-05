@@ -21,7 +21,6 @@ export const saveToKV = async (key: string, data: any): Promise<boolean> => {
       method: 'POST',
       headers: {
         'Authorization': `Bearer ${kv.token}`,
-        'Content-Type': 'application/json',
       },
       body: JSON.stringify(data),
     });
@@ -45,8 +44,8 @@ export const loadFromKV = async (key: string): Promise<any | null> => {
     });
 
     if (!response.ok) return null;
-    const data = await response.json();
-    return data;
+    const body = await response.json();
+    return body?.result ? JSON.parse(body.result) : null;
   } catch (error) {
     console.error('KV 로드 실패:', error);
     return null;
