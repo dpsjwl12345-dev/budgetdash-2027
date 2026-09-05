@@ -555,12 +555,12 @@ export default function Home() {
     }
   };
 
-  const saveDataToServer = async () => {
+  const saveDataToServer = async (rows: BudgetRow[]) => {
     try {
       const response = await fetch('/api/budget/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: budgetRows }),
+        body: JSON.stringify({ data: rows }),
       });
 
       if (!response.ok) throw new Error('서버 저장 실패');
@@ -693,7 +693,7 @@ export default function Home() {
       } catch (error) {
         console.warn('localStorage 저장 실패:', error);
       }
-      setTimeout(() => saveDataToServer(), 500);
+      setTimeout(() => saveDataToServer(nextRows), 500);
     } catch {
       showToast("엑셀 파일을 읽지 못했습니다. 첫 번째 시트와 열 이름을 확인해 주세요.");
     } finally {
@@ -703,10 +703,11 @@ export default function Home() {
 
   const saveRowEdit = async () => {
     if (!editingRow) return;
-    setBudgetRows((currentRows) => currentRows.map((row) => row.id === editingRow.id ? editingRow : row));
+    const updatedRows = budgetRows.map((row) => row.id === editingRow.id ? editingRow : row);
+    setBudgetRows(updatedRows);
     setEditingRow(null);
     showToast(`${editingRow.program} 항목을 저장했습니다.`);
-    await saveDataToServer();
+    await saveDataToServer(updatedRows);
   };
 
   const downloadTemplate = () => {
