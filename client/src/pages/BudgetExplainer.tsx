@@ -401,8 +401,8 @@ export default function BudgetExplainer() {
                   )}
                 </div>
 
-                {/* 3개 섹션 박스 - 전체 높이 사용 */}
-                <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+                {/* 3개 섹션 박스 - 페이지 전체 세로 구분 */}
+                <div style={{ flex: 1, display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: "16px" }}>
 
                   {/* 예산총괄표 */}
                   <div
