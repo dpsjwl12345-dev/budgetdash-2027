@@ -1,4 +1,4 @@
-import { useState, useRef } from "react";
+import { useState, useRef, useEffect } from "react";
 import { useLocation } from "wouter";
 import {
   ClipboardCheck,
@@ -38,11 +38,16 @@ export default function Layout({
   showToast: (message: string) => void;
 }) {
   const [location, setLocation] = useLocation();
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(false);
+  const isBudgetExplainerPage = location === "/budget-explainer";
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isBudgetExplainerPage);
   const [activeNav, setActiveNav] = useState(
     navItems.find((item) => item.path === location)?.label ?? "예산 편성 시트"
   );
   const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
+
+  useEffect(() => {
+    setSidebarCollapsed(isBudgetExplainerPage);
+  }, [location]);
 
   return (
     <div className="app-shell">
