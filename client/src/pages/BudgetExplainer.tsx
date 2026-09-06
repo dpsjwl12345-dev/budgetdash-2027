@@ -464,6 +464,7 @@ export default function BudgetExplainer() {
                       backgroundColor: "var(--bg-secondary)",
                       display: "flex",
                       flexDirection: "column",
+                      overflow: "hidden",
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
@@ -472,9 +473,13 @@ export default function BudgetExplainer() {
                     {materialLoading ? (
                       <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
                     ) : parsedSections["예산총괄표"] ? (
-                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {parsedSections["예산총괄표"]}
-                      </div>
+                      parsedSections["예산총괄표"].includes("<table") ? (
+                        <div style={{ fontSize: "12px", flex: 1, overflowY: "auto" }} dangerouslySetInnerHTML={{ __html: parsedSections["예산총괄표"] }} />
+                      ) : (
+                        <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                          {parsedSections["예산총괄표"]}
+                        </div>
+                      )
                     ) : (
                       <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                         데이터 없음
@@ -491,6 +496,7 @@ export default function BudgetExplainer() {
                       backgroundColor: "var(--bg-secondary)",
                       display: "flex",
                       flexDirection: "column",
+                      overflow: "hidden",
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
@@ -518,6 +524,7 @@ export default function BudgetExplainer() {
                       backgroundColor: "var(--bg-secondary)",
                       display: "flex",
                       flexDirection: "column",
+                      overflow: "hidden",
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
@@ -526,9 +533,13 @@ export default function BudgetExplainer() {
                     {materialLoading ? (
                       <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
                     ) : parsedSections["편성현황"] ? (
-                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {parsedSections["편성현황"]}
-                      </div>
+                      parsedSections["편성현황"].includes("<table") ? (
+                        <div style={{ fontSize: "12px", flex: 1, overflowY: "auto" }} dangerouslySetInnerHTML={{ __html: parsedSections["편성현황"] }} />
+                      ) : (
+                        <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                          {parsedSections["편성현황"]}
+                        </div>
+                      )
                     ) : (
                       <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
                         데이터 없음
