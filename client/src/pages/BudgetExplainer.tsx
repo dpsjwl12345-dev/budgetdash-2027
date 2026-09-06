@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
@@ -34,6 +34,8 @@ export default function BudgetExplainer() {
   const [material, setMaterial] = useState<Material | null>(null);
   const [materialLoading, setMaterialLoading] = useState(false);
   const [showTree, setShowTree] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 계층 구조 데이터 로드
   useEffect(() => {
@@ -97,6 +99,52 @@ export default function BudgetExplainer() {
       newExpanded.add(nodeId);
     }
     setExpandedNodes(newExpanded);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedPath) return;
+
+    setUploading(true);
+    try {
+      const [dept, policy, unit, detail] = selectedPath.split("|");
+      const formData = new FormData();
+      formData.append("department", dept);
+      formData.append("policy", policy);
+      formData.append("unit", unit);
+      formData.append("detail", detail);
+      formData.append("level", "세부사업");
+      formData.append("file", file);
+      formData.append("explanation_text", material?.explanation_text || "");
+
+      const response = await fetch("/api/budget-explainer/save-material", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert("파일이 업로드되었습니다");
+        // 새로 로드
+        const getResponse = await fetch(
+          `/api/budget-explainer/get-material?department=${encodeURIComponent(
+            dept
+          )}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(
+            unit
+          )}&detail=${encodeURIComponent(detail)}`
+        );
+        const { data } = await getResponse.json();
+        setMaterial(data || null);
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    } catch (error) {
+      console.error("업로드 실패:", error);
+      alert("업로드에 실패했습니다");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const TreeNodeRenderer = ({
@@ -333,6 +381,45 @@ export default function BudgetExplainer() {
                     </button>
                   )}
                 </div>
+
+                {/* 파일 업로드 버튼 */}
+                <div style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: "1px solid var(--line)" }}>
+                  <input
+                    ref={fileInputRef}
+                    type="file"
+                    onChange={handleFileUpload}
+                    disabled={uploading}
+                    style={{ display: "none" }}
+                  />
+                  <button
+                    onClick={() => fileInputRef.current?.click()}
+                    disabled={uploading}
+                    style={{
+                      width: "100%",
+                      padding: "12px",
+                      fontSize: "13px",
+                      fontWeight: 500,
+                      border: "1px solid var(--line)",
+                      borderRadius: "4px",
+                      backgroundColor: "rgba(118, 157, 194, 0.1)",
+                      color: "var(--text)",
+                      cursor: uploading ? "not-allowed" : "pointer",
+                      opacity: uploading ? 0.6 : 1,
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      if (!uploading) {
+                        e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.2)";
+                      }
+                    }}
+                    onMouseLeave={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
+                    }}
+                  >
+                    {uploading ? "업로드 중..." : "📁 파일 업로드"}
+                  </button>
+                </div>
+
                 {materialLoading ? (
                   <div style={{ color: "var(--text-muted)" }}>로딩 중...</div>
                 ) : material?.explanation_text ? (
