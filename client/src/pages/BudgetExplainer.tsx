@@ -187,15 +187,6 @@ export default function BudgetExplainer() {
           >
             {node.title}
           </span>
-          <span
-            style={{
-              fontSize: "11px",
-              color: "var(--text-faint)",
-              marginLeft: "4px",
-            }}
-          >
-            {node.level}
-          </span>
         </button>
         {hasChildren && isExpanded && (
           <div>
