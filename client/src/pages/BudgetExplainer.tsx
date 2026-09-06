@@ -1,8 +1,8 @@
-import { useEffect, useState, useRef } from "react";
+import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-import { extractPdfText, splitIntoSections, type MaterialSection } from "@/lib/pdfExplainer";
+import { extractPdfText, extractProgramBlocks } from "@/lib/pdfExplainer";
 import { ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
@@ -14,9 +14,8 @@ type TreeNode = {
 
 type Material = {
   id?: number;
-  explanation_text?: string;
   file_name?: string;
-  sections_json?: string;
+  sections_json?: Record<string, string> | null;
   uploaded_at?: string;
 };
 
@@ -45,28 +44,27 @@ export default function BudgetExplainer() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 계층 구조 데이터 로드
-  useEffect(() => {
-    const loadData = async () => {
-      setLoading(true);
-      try {
-        const response = await fetch(
-          `/api/budget-explainer/data?department=${encodeURIComponent(department)}`
-        );
-        const { data } = await response.json();
-        setTreeData(data || []);
-        // 부서 노드를 기본으로 확장
-        if (data && data.length > 0) {
-          setExpandedNodes(new Set([`0-${data[0].title}`]));
-        }
-      } catch (error) {
-        console.error("데이터 로드 실패:", error);
-      } finally {
-        setLoading(false);
+  const loadTree = useCallback(async () => {
+    setLoading(true);
+    try {
+      const response = await fetch(
+        `/api/budget-explainer/data?department=${encodeURIComponent(department)}`
+      );
+      const { data } = await response.json();
+      setTreeData(data || []);
+      if (data && data.length > 0) {
+        setExpandedNodes(new Set([`0-${data[0].title}`]));
       }
-    };
-
-    loadData();
+    } catch (error) {
+      console.error("데이터 로드 실패:", error);
+    } finally {
+      setLoading(false);
+    }
   }, [department]);
+
+  useEffect(() => {
+    loadTree();
+  }, [loadTree]);
 
   // 설명자료 로드
   useEffect(() => {
@@ -89,18 +87,7 @@ export default function BudgetExplainer() {
         );
         const { data } = await response.json();
         setMaterial(data || null);
-
-        // sections_json 파싱
-        if (data?.sections_json) {
-          try {
-            const sections = JSON.parse(data.sections_json);
-            setParsedSections(sections);
-          } catch (e) {
-            setParsedSections({});
-          }
-        } else {
-          setParsedSections({});
-        }
+        setParsedSections(data?.sections_json || {});
       } catch (error) {
         console.error("설명자료 로드 실패:", error);
       } finally {
@@ -121,64 +108,38 @@ export default function BudgetExplainer() {
     setExpandedNodes(newExpanded);
   };
 
+  // 부서 설명자료 PDF 한 개를 통째로 업로드하면 안에 이어진 세부사업 블록들을
+  // 모두 파싱해 한 번에 저장한다 (세부사업별 개별 업로드 불필요).
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
-    if (!file || !selectedPath) return;
+    if (!file) return;
 
     setUploading(true);
     try {
-      // PDF 파싱
       const pdfText = await extractPdfText(file);
-      const sections = splitIntoSections(pdfText);
+      const materials = extractProgramBlocks(pdfText);
 
-      // 섹션을 객체로 변환
-      const sectionsObj: ParsedSections = {};
-      sections.forEach(section => {
-        sectionsObj[section.title] = section.content;
-      });
+      if (materials.length === 0) {
+        alert("PDF에서 세부사업 블록을 찾지 못했습니다");
+        return;
+      }
 
-      const [dept, policy, unit, detail] = selectedPath.split("|");
-
-      const formData = new FormData();
-      formData.append("department", dept);
-      formData.append("policy", policy);
-      formData.append("unit", unit);
-      formData.append("detail", detail);
-      formData.append("level", "세부사업");
-      formData.append("file_name", file.name);
-      formData.append("sections_json", JSON.stringify(sectionsObj));
-
-      const response = await fetch("/api/budget-explainer/save-material", {
+      const response = await fetch("/api/budget-explainer/bulk-save", {
         method: "POST",
-        body: formData,
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department, fileName: file.name, materials }),
       });
 
       const result = await response.json();
       if (result.success) {
-        alert("파일이 업로드되었습니다");
-        // 새로 로드
-        const getResponse = await fetch(
-          `/api/budget-explainer/get-material?department=${encodeURIComponent(
-            dept
-          )}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(
-            unit
-          )}&detail=${encodeURIComponent(detail)}`
-        );
-        const { data } = await getResponse.json();
-        setMaterial(data || null);
+        alert(`${result.count}개 세부사업의 설명자료를 저장했습니다`);
+        await loadTree();
+      } else {
+        alert(`저장 실패: ${result.error || "알 수 없는 오류"}`);
+      }
 
-        if (data?.sections_json) {
-          try {
-            const loadedSections = JSON.parse(data.sections_json);
-            setParsedSections(loadedSections);
-          } catch (e) {
-            setParsedSections({});
-          }
-        }
-
-        if (fileInputRef.current) {
-          fileInputRef.current.value = "";
-        }
+      if (fileInputRef.current) {
+        fileInputRef.current.value = "";
       }
     } catch (error) {
       console.error("업로드 실패:", error);
@@ -322,9 +283,9 @@ export default function BudgetExplainer() {
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
           <label
             className="icon-stack-btn"
-            aria-label={uploading ? "업로드 중" : "PDF 업로드"}
-            data-tooltip={uploading ? "업로드 중..." : "PDF 업로드"}
-            style={uploading || !selectedPath ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+            aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
+            data-tooltip={uploading ? "업로드 중..." : "부서 설명자료 PDF 업로드"}
+            style={uploading ? { opacity: 0.5, pointerEvents: "none" } : undefined}
           >
             <div className="icon-stack-front"><Upload size={20} /></div>
             <input
@@ -332,7 +293,7 @@ export default function BudgetExplainer() {
               className="upload-input"
               type="file"
               accept=".pdf"
-              disabled={uploading || !selectedPath}
+              disabled={uploading}
               onChange={handleFileUpload}
             />
           </label>
@@ -489,9 +450,9 @@ export default function BudgetExplainer() {
                     </div>
                     {materialLoading ? (
                       <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
-                    ) : parsedSections["사업명세서"] ? (
+                    ) : parsedSections["사업설명서"] ? (
                       <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {parsedSections["사업명세서"]}
+                        {parsedSections["사업설명서"]}
                       </div>
                     ) : (
                       <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
