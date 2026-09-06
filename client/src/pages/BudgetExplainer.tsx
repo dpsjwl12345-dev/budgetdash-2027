@@ -34,6 +34,10 @@ export default function BudgetExplainer() {
   const [material, setMaterial] = useState<Material | null>(null);
   const [materialLoading, setMaterialLoading] = useState(false);
   const [showTree, setShowTree] = useState(true);
+  const [explanationText, setExplanationText] = useState("");
+  const [fileName, setFileName] = useState("");
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [saving, setSaving] = useState(false);
 
   // 계층 구조 데이터 로드
   useEffect(() => {
@@ -63,6 +67,9 @@ export default function BudgetExplainer() {
   useEffect(() => {
     if (!selectedPath) {
       setMaterial(null);
+      setExplanationText("");
+      setFileName("");
+      setSelectedFile(null);
       return;
     }
 
@@ -79,6 +86,8 @@ export default function BudgetExplainer() {
         );
         const { data } = await response.json();
         setMaterial(data || null);
+        setExplanationText(data?.explanation_text || "");
+        setFileName(data?.file_name || "");
       } catch (error) {
         console.error("설명자료 로드 실패:", error);
       } finally {
@@ -88,6 +97,47 @@ export default function BudgetExplainer() {
 
     loadMaterial();
   }, [selectedPath]);
+
+  const handleSaveMaterial = async () => {
+    if (!selectedPath) return;
+
+    setSaving(true);
+    try {
+      const [dept, policy, unit, detail] = selectedPath.split("|");
+      const response = await fetch("/api/budget-explainer/save-material", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          department: dept,
+          policy,
+          unit,
+          detail,
+          level: "세부사업",
+          explanation_text: explanationText,
+          file_name: fileName,
+        }),
+      });
+      const result = await response.json();
+      if (result.success) {
+        alert("저장되었습니다");
+        // 새로 로드
+        const getResponse = await fetch(
+          `/api/budget-explainer/get-material?department=${encodeURIComponent(
+            dept
+          )}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(
+            unit
+          )}&detail=${encodeURIComponent(detail)}`
+        );
+        const { data } = await getResponse.json();
+        setMaterial(data || null);
+      }
+    } catch (error) {
+      console.error("저장 실패:", error);
+      alert("저장에 실패했습니다");
+    } finally {
+      setSaving(false);
+    }
+  };
 
   const toggleExpand = (nodeId: string) => {
     const newExpanded = new Set(expandedNodes);
@@ -333,25 +383,106 @@ export default function BudgetExplainer() {
                     </button>
                   )}
                 </div>
+
+                {/* 설명자료 입력/편집 섹션 */}
+                <div style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: "1px solid var(--line)" }}>
+                  <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "8px", color: "var(--text)" }}>
+                    설명자료 작성
+                  </div>
+
+                  <textarea
+                    value={explanationText}
+                    onChange={(e) => setExplanationText(e.target.value)}
+                    placeholder="설명자료 내용을 입력하세요"
+                    style={{
+                      width: "100%",
+                      height: "150px",
+                      padding: "8px",
+                      fontSize: "13px",
+                      fontFamily: "inherit",
+                      border: "1px solid var(--line)",
+                      borderRadius: "4px",
+                      color: "var(--text)",
+                      backgroundColor: "var(--bg-secondary)",
+                      boxSizing: "border-box",
+                      marginBottom: "8px",
+                    }}
+                  />
+
+                  <div style={{ display: "flex", gap: "8px", marginBottom: "8px" }}>
+                    <input
+                      type="text"
+                      value={fileName}
+                      onChange={(e) => setFileName(e.target.value)}
+                      placeholder="파일명 (선택사항)"
+                      style={{
+                        flex: 1,
+                        padding: "8px",
+                        fontSize: "13px",
+                        border: "1px solid var(--line)",
+                        borderRadius: "4px",
+                        color: "var(--text)",
+                        backgroundColor: "var(--bg-secondary)",
+                      }}
+                    />
+                    <button
+                      onClick={handleSaveMaterial}
+                      disabled={saving}
+                      style={{
+                        padding: "8px 16px",
+                        fontSize: "13px",
+                        fontWeight: 500,
+                        border: "1px solid var(--line)",
+                        borderRadius: "4px",
+                        backgroundColor: "rgba(118, 157, 194, 0.1)",
+                        color: "var(--text)",
+                        cursor: saving ? "not-allowed" : "pointer",
+                        opacity: saving ? 0.6 : 1,
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => {
+                        if (!saving) {
+                          e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.2)";
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
+                      }}
+                    >
+                      {saving ? "저장 중..." : "저장"}
+                    </button>
+                  </div>
+                </div>
+
+                {/* 저장된 설명자료 표시 */}
                 {materialLoading ? (
                   <div style={{ color: "var(--text-muted)" }}>로딩 중...</div>
                 ) : material?.explanation_text ? (
-                  <div
-                    style={{
-                      whiteSpace: "pre-wrap",
-                      lineHeight: "1.6",
-                      color: "var(--text)",
-                    }}
-                  >
-                    {material.explanation_text}
+                  <div>
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "8px", color: "var(--text)" }}>
+                      저장된 내용
+                    </div>
+                    <div
+                      style={{
+                        whiteSpace: "pre-wrap",
+                        lineHeight: "1.6",
+                        color: "var(--text)",
+                        fontSize: "13px",
+                        padding: "8px",
+                        backgroundColor: "var(--bg-secondary)",
+                        borderRadius: "4px",
+                      }}
+                    >
+                      {material.explanation_text}
+                    </div>
                   </div>
                 ) : (
-                  <div style={{ color: "var(--text-muted)" }}>
-                    설명자료가 없습니다
+                  <div style={{ color: "var(--text-muted)", fontSize: "13px" }}>
+                    저장된 설명자료가 없습니다
                   </div>
                 )}
                 {material?.file_name && (
-                  <div style={{ marginTop: "16px", fontSize: "12px" }}>
+                  <div style={{ marginTop: "16px", fontSize: "12px", color: "var(--text-muted)" }}>
                     📄 {material.file_name}
                   </div>
                 )}
