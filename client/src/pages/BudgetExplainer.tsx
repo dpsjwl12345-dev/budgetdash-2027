@@ -216,102 +216,149 @@ export default function BudgetExplainer() {
         </section>
 
 
-        <section className="table-panel" style={{ padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
-            <label
-              className="icon-stack-btn"
-              aria-label={parsing ? "분석 중" : "PDF 업로드"}
-              data-tooltip={parsing ? "분석 중..." : "PDF 업로드"}
-              style={parsing ? { opacity: 0.5, pointerEvents: "none" } : undefined}
-            >
-              <div className="icon-stack-front"><Upload size={20} /></div>
-              <input
-                ref={fileInputRef}
-                className="upload-input"
-                type="file"
-                accept=".pdf"
-                disabled={parsing}
-                onChange={(event) => handleFileSelect(event.target.files?.[0])}
-              />
-            </label>
-          </div>
+        {/* 상단 구분선 */}
+        <div style={{ height: "1px", backgroundColor: "var(--line)", margin: "0 20px" }} />
 
-          {pendingText !== null && (
-            <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "16px", marginBottom: "20px", backgroundColor: "rgba(140, 155, 170, 0.08)" }}>
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px" }}>
-                {pendingSections.map((section) => (
-                  <div key={section.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
-                    <input
-                      value={section.title}
-                      onChange={(event) => updatePendingTitle(section.id, event.target.value)}
-                      placeholder="세부사업명"
-                      style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--line)", fontSize: "14px", backgroundColor: "rgba(140, 155, 170, 0.08)", color: "var(--text)" }}
-                    />
-                    <button
-                      onClick={() => removePendingSection(section.id)}
-                      aria-label="삭제"
-                      style={{ padding: "6px", borderRadius: "8px", border: "1px solid var(--line)", backgroundColor: "transparent", color: "var(--text-muted)", cursor: "pointer" }}
-                    >
-                      <X size={14} />
-                    </button>
-                  </div>
+        {/* 메인 레이아웃: 좌측(정책/세부사업) + 우측(설명자료) */}
+        <section className="table-panel" style={{ display: "flex", height: "calc(100vh - 300px)", padding: "0" }}>
+          {/* 좌측: 정책사업/세부사업 목록 */}
+          <div style={{ width: "280px", borderRight: "1px solid var(--line)", padding: "20px", overflowY: "auto" }}>
+            <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text)", marginBottom: "12px" }}>
+              정책사업
+            </div>
+            {activeSections.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
+                {activeSections.map((section) => (
+                  <button
+                    key={section.id}
+                    onClick={() => setSelectedTitle(section.title)}
+                    style={{
+                      padding: "8px 12px",
+                      textAlign: "left",
+                      backgroundColor: selectedTitle === section.title ? "rgba(118, 157, 194, 0.14)" : "transparent",
+                      border: "1px solid var(--line)",
+                      borderRadius: "6px",
+                      color: selectedTitle === section.title ? "var(--text)" : "var(--text-muted)",
+                      fontSize: "13px",
+                      cursor: "pointer",
+                      transition: "all 0.15s",
+                    }}
+                    onMouseEnter={(e) => {
+                      e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
+                      e.currentTarget.style.color = "var(--text)";
+                    }}
+                    onMouseLeave={(e) => {
+                      if (selectedTitle !== section.title) {
+                        e.currentTarget.style.backgroundColor = "transparent";
+                        e.currentTarget.style.color = "var(--text-muted)";
+                      }
+                    }}
+                  >
+                    {section.title}
+                  </button>
                 ))}
               </div>
-              <div style={{ display: "flex", gap: "8px" }}>
-                <button
-                  onClick={addPendingSection}
-                  style={{ display: "flex", alignItems: "center", gap: "4px", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--line)", backgroundColor: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: "13px" }}
-                >
-                  <Plus size={14} /> 항목 추가
-                </button>
-                <div style={{ flex: 1 }} />
-                <button
-                  onClick={cancelPending}
-                  style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid var(--line)", backgroundColor: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: "13px" }}
-                >
-                  취소
-                </button>
-                <button
-                  onClick={savePending}
-                  style={{ padding: "8px 14px", borderRadius: "8px", border: "none", backgroundColor: "#5b9bf0", color: "#fff", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}
-                >
-                  저장
-                </button>
+            ) : (
+              <div style={{ fontSize: "13px", color: "var(--text-muted)" }}>
+                세부사업 목록 없음
               </div>
+            )}
+          </div>
+
+          {/* 우측: 설명자료 내용 + 업로드 */}
+          <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", overflowY: "auto" }}>
+            {/* 업로드 버튼 */}
+            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
+              <label
+                className="icon-stack-btn"
+                aria-label={parsing ? "분석 중" : "PDF 업로드"}
+                data-tooltip={parsing ? "분석 중..." : "PDF 업로드"}
+                style={parsing ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+              >
+                <div className="icon-stack-front"><Upload size={20} /></div>
+                <input
+                  ref={fileInputRef}
+                  className="upload-input"
+                  type="file"
+                  accept=".pdf"
+                  disabled={parsing}
+                  onChange={(event) => handleFileSelect(event.target.files?.[0])}
+                />
+              </label>
             </div>
-          )}
 
-          {pendingText === null && (
-            <>
-              {activeSections.length > 0 && (
-                <div style={{ marginBottom: "16px" }}>
-                  <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>세부사업: {activeSections.length}개</div>
-                </div>
-              )}
-
-              {selectedTitle && (
-                <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "20px", backgroundColor: "rgba(140, 155, 170, 0.06)" }}>
-                  {excerpt ? (
-                    <>
-                      <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", color: "var(--text)", fontWeight: 600 }}>
-                        <FileText size={16} />
-                        {selectedTitle}
-                      </div>
-                      <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: "14px", lineHeight: 1.7, color: "var(--text)" }}>
-                        {excerpt}
-                      </pre>
-                    </>
-                  ) : (
-                    <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-faint)" }}>
-                      <Search size={16} />
-                      일치하는 내용을 PDF에서 찾지 못했습니다.
+            {/* 펼쳐진 박스 (PDF 업로드 후) */}
+            {pendingText !== null && (
+              <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "16px", marginBottom: "20px", backgroundColor: "rgba(140, 155, 170, 0.08)" }}>
+                <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px" }}>
+                  {pendingSections.map((section) => (
+                    <div key={section.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
+                      <input
+                        value={section.title}
+                        onChange={(event) => updatePendingTitle(section.id, event.target.value)}
+                        placeholder="세부사업명"
+                        style={{ flex: 1, padding: "8px 10px", borderRadius: "8px", border: "1px solid var(--line)", fontSize: "14px", backgroundColor: "rgba(140, 155, 170, 0.08)", color: "var(--text)" }}
+                      />
+                      <button
+                        onClick={() => removePendingSection(section.id)}
+                        aria-label="삭제"
+                        style={{ padding: "6px", borderRadius: "8px", border: "1px solid var(--line)", backgroundColor: "transparent", color: "var(--text-muted)", cursor: "pointer" }}
+                      >
+                        <X size={14} />
+                      </button>
                     </div>
-                  )}
+                  ))}
                 </div>
-              )}
-            </>
-          )}
+                <div style={{ display: "flex", gap: "8px" }}>
+                  <button
+                    onClick={addPendingSection}
+                    style={{ display: "flex", alignItems: "center", gap: "4px", padding: "8px 12px", borderRadius: "8px", border: "1px solid var(--line)", backgroundColor: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: "13px" }}
+                  >
+                    <Plus size={14} /> 항목 추가
+                  </button>
+                  <div style={{ flex: 1 }} />
+                  <button
+                    onClick={cancelPending}
+                    style={{ padding: "8px 14px", borderRadius: "8px", border: "1px solid var(--line)", backgroundColor: "transparent", color: "var(--text-muted)", cursor: "pointer", fontSize: "13px" }}
+                  >
+                    취소
+                  </button>
+                  <button
+                    onClick={savePending}
+                    style={{ padding: "8px 14px", borderRadius: "8px", border: "none", backgroundColor: "#5b9bf0", color: "#fff", cursor: "pointer", fontSize: "13px", fontWeight: 600 }}
+                  >
+                    저장
+                  </button>
+                </div>
+              </div>
+            )}
+
+            {/* 설명자료 내용 */}
+            {pendingText === null && selectedTitle && (
+              <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "20px", backgroundColor: "rgba(140, 155, 170, 0.06)", flex: 1, overflowY: "auto" }}>
+                {excerpt ? (
+                  <>
+                    <div style={{ display: "flex", alignItems: "center", gap: "8px", marginBottom: "12px", color: "var(--text)", fontWeight: 600 }}>
+                      <FileText size={16} />
+                      {selectedTitle}
+                    </div>
+                    <pre style={{ whiteSpace: "pre-wrap", fontFamily: "inherit", fontSize: "14px", lineHeight: 1.7, color: "var(--text)" }}>
+                      {excerpt}
+                    </pre>
+                  </>
+                ) : (
+                  <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-faint)" }}>
+                    <Search size={16} />
+                    일치하는 내용을 PDF에서 찾지 못했습니다.
+                  </div>
+                )}
+              </div>
+            )}
+          </div>
         </section>
+
+        {/* 하단 구분선 */}
+        <div style={{ height: "1px", backgroundColor: "var(--line)", margin: "0 20px" }} />
 
         {toast && (
           <div className="toast">
