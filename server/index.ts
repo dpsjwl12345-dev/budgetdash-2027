@@ -459,10 +459,19 @@ async function startServer() {
     }
   });
 
-  // API 요청에 대해서는 404 반환
-  app.use((_req, res) => {
-    res.status(404).json({ error: 'Not found' });
-  });
+  // Serve static files in production
+  if (process.env.NODE_ENV === 'production') {
+    const publicDir = path.join(__dirname, 'public');
+    app.use(express.static(publicDir));
+    app.get('*', (req, res) => {
+      res.sendFile(path.join(publicDir, 'index.html'));
+    });
+  } else {
+    // API 요청에 대해서는 404 반환
+    app.use((_req, res) => {
+      res.status(404).json({ error: 'Not found' });
+    });
+  }
 
   const port = process.env.PORT || 3002;
 
