@@ -5,6 +5,8 @@ import { DEPARTMENTS } from "@/lib/departments";
 import { extractPdfText, splitIntoSections, type MaterialSection } from "@/lib/pdfExplainer";
 import { ChevronDown, X, Upload } from "lucide-react";
 
+const API_BASE = import.meta.env.VITE_API_BASE || "/api";
+
 type TreeNode = {
   title: string;
   level: "부서" | "정책사업" | "단위사업" | "세부사업";
@@ -50,7 +52,7 @@ export default function BudgetExplainer() {
       setLoading(true);
       try {
         const response = await fetch(
-          `/api/budget-explainer/data?department=${encodeURIComponent(department)}`
+          `${API_BASE}/budget-explainer/data?department=${encodeURIComponent(department)}`
         );
         const { data } = await response.json();
         setTreeData(data || []);
@@ -81,7 +83,7 @@ export default function BudgetExplainer() {
       try {
         const [dept, policy, unit, detail] = selectedPath.split("|");
         const response = await fetch(
-          `/api/budget-explainer/get-material?department=${encodeURIComponent(
+          `${API_BASE}/budget-explainer/get-material?department=${encodeURIComponent(
             dept
           )}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(
             unit
@@ -152,7 +154,7 @@ export default function BudgetExplainer() {
       formData.append("file_name", file.name);
       formData.append("sections_json", JSON.stringify(sectionsObj));
 
-      const response = await fetch("/api/budget-explainer/save-material", {
+      const response = await fetch(`${API_BASE}/budget-explainer/save-material`, {
         method: "POST",
         body: formData,
       });
@@ -162,7 +164,7 @@ export default function BudgetExplainer() {
         alert("파일이 업로드되었습니다");
         // 새로 로드
         const getResponse = await fetch(
-          `/api/budget-explainer/get-material?department=${encodeURIComponent(
+          `${API_BASE}/budget-explainer/get-material?department=${encodeURIComponent(
             dept
           )}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(
             unit
