@@ -161,7 +161,7 @@ async function startServer() {
     }
   });
 
-  // 설명자료 데이터 로드 (부서별)
+  // 설명자료 데이터 로드 (부서별) - 계층 구조로 변환
   app.get('/api/budget-explainer/data', (req, res) => {
     try {
       const department = String(req.query.department || '');
@@ -177,8 +177,100 @@ async function startServer() {
         (err, rows) => {
           if (err) {
             res.status(500).json({ error: String(err) });
+            return;
+          }
+
+          // 계층 구조로 변환
+          const policyMap = new Map();
+          (rows || []).forEach((row: any) => {
+            if (!policyMap.has(row.policy)) {
+              policyMap.set(row.policy, {
+                title: row.policy,
+                level: '정책사업',
+                children: new Map(),
+              });
+            }
+
+            const policyNode = policyMap.get(row.policy);
+            if (!policyNode.children.has(row.unit)) {
+              policyNode.children.set(row.unit, {
+                title: row.unit,
+                level: '단위사업',
+                children: [],
+              });
+            }
+
+            const unitNode = policyNode.children.get(row.unit);
+            unitNode.children.push({
+              id: row.id,
+              title: row.detail,
+              name: row.detail_name,
+              level: '세부사업',
+              children: [],
+            });
+          });
+
+          // Map을 배열로 변환
+          const tree = Array.from(policyMap.values()).map((policy) => ({
+            ...policy,
+            children: Array.from(policy.children.values()),
+          }));
+
+          res.json({ data: tree || [] });
+        }
+      );
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
+  // 설명자료 텍스트 저장 (세부사업별)
+  app.post('/api/budget-explainer/save-material', async (req, res) => {
+    try {
+      const { department, policy, unit, detail, level, explanation_text, file_name } = req.body;
+
+      if (!department || !policy || !unit || !detail || !level) {
+        return res.status(400).json({ success: false, error: '필수 정보가 부족합니다' });
+      }
+
+      const db = getDB();
+      db.run(
+        `INSERT OR REPLACE INTO budget_explainer_materials
+         (department, policy, unit, detail, level, explanation_text, file_name, uploaded_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        [department, policy, unit, detail, level, explanation_text || null, file_name || null],
+        (err) => {
+          if (err) {
+            res.status(500).json({ success: false, error: String(err) });
           } else {
-            res.json({ data: rows || [] });
+            res.json({ success: true, message: '설명자료를 저장했습니다' });
+          }
+        }
+      );
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  // 설명자료 텍스트 조회 (세부사업별)
+  app.get('/api/budget-explainer/get-material', (req, res) => {
+    try {
+      const { department, policy, unit, detail } = req.query;
+
+      if (!department || !policy || !unit || !detail) {
+        return res.status(400).json({ error: '필수 정보가 부족합니다' });
+      }
+
+      const db = getDB();
+      db.get(
+        `SELECT * FROM budget_explainer_materials
+         WHERE department = ? AND policy = ? AND unit = ? AND detail = ?`,
+        [department, policy, unit, detail],
+        (err, row) => {
+          if (err) {
+            res.status(500).json({ error: String(err) });
+          } else {
+            res.json({ data: row || null });
           }
         }
       );
