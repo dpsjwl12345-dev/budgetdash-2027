@@ -111,9 +111,9 @@
       try {
         const params = {
           department: '문화예술과',
-          policy: '문화도시 조성',
-          unit: '문화기반 구축 및 콘텐츠 활성화',
-          detail: '공룡알화석산지 방문자센터 운영'
+          policy: '주요행사 및 문화예술활동 지원',
+          unit: '지역문화역량강화',
+          detail: '문화상 운영'
         };
 
         const query = new URLSearchParams(params).toString();
@@ -123,9 +123,14 @@
         if (result.data && result.data.sections_json) {
           try {
             const sections = JSON.parse(result.data.sections_json);
-            document.getElementById('overview').textContent = sections['예산총괄표'] || '데이터 없음';
-            document.getElementById('details').textContent = sections['사업명세서'] || '데이터 없음';
-            document.getElementById('status').textContent = sections['편성현황'] || '데이터 없음';
+
+            const overview = sections['예산총괄표'];
+            const details = sections['사업명세서'];
+            const status = sections['편성현황'];
+
+            document.getElementById('overview').innerHTML = overview && overview.includes('<table') ? overview : `<div class="empty">${overview || '데이터 없음'}</div>`;
+            document.getElementById('details').textContent = details || '데이터 없음';
+            document.getElementById('status').innerHTML = status && status.includes('<table') ? status : `<div class="empty">${status || '데이터 없음'}</div>`;
           } catch (e) {
             console.error('JSON parse error:', e);
             document.getElementById('overview').textContent = '데이터 파싱 오류';
