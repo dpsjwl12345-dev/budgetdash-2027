@@ -1,4 +1,8 @@
 {
   "buildCommand": "npm run build",
-  "installCommand": "pnpm install --no-frozen-lockfile"
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "public": "dist/public",
+  "env": {
+    "NODE_ENV": "production"
+  }
 }
