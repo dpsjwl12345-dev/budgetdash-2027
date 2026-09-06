@@ -65,38 +65,48 @@ export default function Layout({
         <nav className="nav-list" aria-label="워크스페이스">
           {navItems.map(({ label, icon: Icon, path, count, disabled }) => {
             const isBudgetExplainer = label === "예산설명자료";
+
+            const button = (
+              <button
+                key={label}
+                className={`nav-item ${activeNav === label ? "active" : ""} ${disabled ? "disabled" : ""}`}
+                aria-label={label}
+                disabled={disabled}
+                onClick={() => {
+                  setActiveNav(label);
+                  if (isBudgetExplainer) {
+                    setExpandedBudgetExplainer(!expandedBudgetExplainer);
+                  } else if (path && !disabled) {
+                    setLocation(path);
+                  } else if (disabled) {
+                    showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
+                  }
+                }}
+              >
+                <Icon size={17} />
+                <span>{label}</span>
+                {count && <span className="nav-count">{count}</span>}
+                {isBudgetExplainer && (
+                  <ChevronDown
+                    size={16}
+                    style={{
+                      marginLeft: "auto",
+                      transform: expandedBudgetExplainer ? "rotate(0deg)" : "rotate(-90deg)",
+                      transition: "transform 0.2s",
+                    }}
+                  />
+                )}
+              </button>
+            );
+
+            if (!isBudgetExplainer) {
+              return button;
+            }
+
             return (
               <div key={label}>
-                <button
-                  className={`nav-item ${activeNav === label ? "active" : ""} ${disabled ? "disabled" : ""}`}
-                  aria-label={label}
-                  disabled={disabled}
-                  onClick={() => {
-                    setActiveNav(label);
-                    if (isBudgetExplainer) {
-                      setExpandedBudgetExplainer(!expandedBudgetExplainer);
-                    } else if (path && !disabled) {
-                      setLocation(path);
-                    } else if (disabled) {
-                      showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
-                    }
-                  }}
-                >
-                  <Icon size={17} />
-                  <span>{label}</span>
-                  {count && <span className="nav-count">{count}</span>}
-                  {isBudgetExplainer && (
-                    <ChevronDown
-                      size={16}
-                      style={{
-                        marginLeft: "auto",
-                        transform: expandedBudgetExplainer ? "rotate(0deg)" : "rotate(-90deg)",
-                        transition: "transform 0.2s",
-                      }}
-                    />
-                  )}
-                </button>
-                {isBudgetExplainer && expandedBudgetExplainer && (
+                {button}
+                {expandedBudgetExplainer && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
                     {DEPARTMENTS.map((dept) => (
                       <button
