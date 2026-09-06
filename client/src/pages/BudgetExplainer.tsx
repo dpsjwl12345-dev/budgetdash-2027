@@ -309,13 +309,6 @@ export default function BudgetExplainer() {
                   )}
                 </div>
               )}
-
-              {!doc && !loading && (
-                <div style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-faint)", fontSize: "14px", padding: "24px 0" }}>
-                  <AlertCircle size={16} />
-                  이 부서의 PDF 설명자료를 업로드해주세요.
-                </div>
-              )}
             </>
           )}
         </section>
