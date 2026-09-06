@@ -242,7 +242,10 @@ export default function BudgetExplainer() {
         <section className="table-panel" style={{ display: "flex", height: "calc(100vh - 300px)", padding: "0" }}>
           {/* 좌측: 정책사업/세부사업 목록 */}
           <div style={{ width: "280px", borderRight: "1px solid var(--line)", padding: "20px", overflowY: "auto" }}>
-            <div style={{ fontSize: "14px", fontWeight: 600, color: "var(--text)", marginBottom: "12px" }}>
+            <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", marginBottom: "20px", paddingBottom: "12px", borderBottom: "2px solid var(--line)" }}>
+              {department}
+            </div>
+            <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "12px" }}>
               정책사업
             </div>
             {activeSections.length > 0 ? (
