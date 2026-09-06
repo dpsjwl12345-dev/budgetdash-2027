@@ -8,7 +8,9 @@ import {
   ChevronRight,
   Landmark,
   X,
+  ChevronDown,
 } from "lucide-react";
+import { DEPARTMENTS } from "@/lib/departments";
 
 type NavItem = {
   label: string;
@@ -40,6 +42,7 @@ export default function Layout({
   const [activeNav, setActiveNav] = useState(
     navItems.find((item) => item.path === location)?.label ?? "예산 편성 시트"
   );
+  const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
 
   return (
     <div className="app-shell">
@@ -60,26 +63,79 @@ export default function Layout({
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">
-          {navItems.map(({ label, icon: Icon, path, count, disabled }) => (
-            <button
-              key={label}
-              className={`nav-item ${activeNav === label ? "active" : ""} ${disabled ? "disabled" : ""}`}
-              aria-label={label}
-              disabled={disabled}
-              onClick={() => {
-                setActiveNav(label);
-                if (path && !disabled) {
-                  setLocation(path);
-                } else if (disabled) {
-                  showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
-                }
-              }}
-            >
-              <Icon size={17} />
-              <span>{label}</span>
-              {count && <span className="nav-count">{count}</span>}
-            </button>
-          ))}
+          {navItems.map(({ label, icon: Icon, path, count, disabled }) => {
+            const isBudgetExplainer = label === "예산설명자료";
+            return (
+              <div key={label}>
+                <button
+                  className={`nav-item ${activeNav === label ? "active" : ""} ${disabled ? "disabled" : ""}`}
+                  aria-label={label}
+                  disabled={disabled}
+                  onClick={() => {
+                    setActiveNav(label);
+                    if (isBudgetExplainer) {
+                      setExpandedBudgetExplainer(!expandedBudgetExplainer);
+                    } else if (path && !disabled) {
+                      setLocation(path);
+                    } else if (disabled) {
+                      showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
+                    }
+                  }}
+                >
+                  <Icon size={17} />
+                  <span>{label}</span>
+                  {count && <span className="nav-count">{count}</span>}
+                  {isBudgetExplainer && (
+                    <ChevronDown
+                      size={16}
+                      style={{
+                        marginLeft: "auto",
+                        transform: expandedBudgetExplainer ? "rotate(0deg)" : "rotate(-90deg)",
+                        transition: "transform 0.2s",
+                      }}
+                    />
+                  )}
+                </button>
+                {isBudgetExplainer && expandedBudgetExplainer && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                    {DEPARTMENTS.map((dept) => (
+                      <button
+                        key={dept}
+                        style={{
+                          paddingLeft: "44px",
+                          paddingRight: "12px",
+                          height: "32px",
+                          display: "flex",
+                          alignItems: "center",
+                          fontSize: "13px",
+                          color: "var(--text-muted)",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.15s",
+                        }}
+                        onClick={() => {
+                          setActiveNav(label);
+                          setLocation(`/budget-explainer?dept=${encodeURIComponent(dept)}`);
+                        }}
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        {dept}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="sidebar-label tools-label">TOOLS</div>
