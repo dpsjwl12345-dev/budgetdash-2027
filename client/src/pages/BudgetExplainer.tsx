@@ -364,7 +364,7 @@ export default function BudgetExplainer() {
           {/* 우측: 설명자료 */}
           <div style={{ flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
-              <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%" }}>
+              <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexShrink: 0 }}>
                   <h2 style={{ fontSize: "18px", margin: 0 }}>
                     {selectedPath.split("|").pop()}
