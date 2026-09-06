@@ -211,10 +211,17 @@ async function startServer() {
           });
 
           // Map을 배열로 변환
-          const tree = Array.from(policyMap.values()).map((policy) => ({
+          const policies = Array.from(policyMap.values()).map((policy) => ({
             ...policy,
             children: Array.from(policy.children.values()),
           }));
+
+          // 부서명을 최상위 노드로 감싸기
+          const tree = [{
+            title: department,
+            level: '부서',
+            children: policies,
+          }];
 
           res.json({ data: tree || [] });
         }

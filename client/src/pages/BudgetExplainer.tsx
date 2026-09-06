@@ -6,7 +6,7 @@ import { ChevronDown } from "lucide-react";
 
 type TreeNode = {
   title: string;
-  level: "정책사업" | "단위사업" | "세부사업";
+  level: "부서" | "정책사업" | "단위사업" | "세부사업";
   id?: string;
   children: TreeNode[];
 };
@@ -44,6 +44,10 @@ export default function BudgetExplainer() {
         );
         const { data } = await response.json();
         setTreeData(data || []);
+        // 부서 노드를 기본으로 확장
+        if (data && data.length > 0) {
+          setExpandedNodes(new Set([`0-${data[0].title}`]));
+        }
       } catch (error) {
         console.error("데이터 로드 실패:", error);
       } finally {
@@ -108,11 +112,14 @@ export default function BudgetExplainer() {
     const hasChildren = node.children.length > 0;
     const currentPath = path ? `${path}|${node.title}` : node.title;
     const isSelected = selectedPath === currentPath && node.level === "세부사업";
+    const isDepartment = node.level === "부서";
 
     const handleClick = () => {
       if (node.level === "세부사업") {
         setSelectedPath(currentPath);
-      } else if (hasChildren) {
+      } else if (hasChildren && !isDepartment) {
+        toggleExpand(nodeId);
+      } else if (isDepartment && hasChildren) {
         toggleExpand(nodeId);
       }
     };
@@ -124,30 +131,35 @@ export default function BudgetExplainer() {
           style={{
             paddingLeft: `${12 + depth * 16}px`,
             paddingRight: "12px",
-            height: "36px",
+            height: isDepartment ? "40px" : "36px",
             display: "flex",
             alignItems: "center",
             gap: "8px",
-            fontSize: "13px",
-            color: isSelected ? "var(--text)" : "var(--text-muted)",
-            backgroundColor: isSelected
+            fontSize: isDepartment ? "14px" : "13px",
+            fontWeight: isDepartment ? 600 : 400,
+            color: isDepartment ? "var(--text)" : isSelected ? "var(--text)" : "var(--text-muted)",
+            backgroundColor: isDepartment
+              ? "rgba(118, 157, 194, 0.08)"
+              : isSelected
               ? "rgba(118, 157, 194, 0.14)"
               : "transparent",
             border: "1px solid var(--line)",
             borderRadius: "6px",
-            cursor: "pointer",
+            cursor: isDepartment ? "default" : "pointer",
             textAlign: "left",
             transition: "all 0.15s",
             margin: "4px 0",
             width: "100%",
           }}
           onMouseEnter={(e) => {
-            e.currentTarget.style.backgroundColor =
-              "rgba(118, 157, 194, 0.08)";
-            e.currentTarget.style.color = "var(--text)";
+            if (!isDepartment) {
+              e.currentTarget.style.backgroundColor =
+                "rgba(118, 157, 194, 0.08)";
+              e.currentTarget.style.color = "var(--text)";
+            }
           }}
           onMouseLeave={(e) => {
-            if (!isSelected) {
+            if (!isDepartment && !isSelected) {
               e.currentTarget.style.backgroundColor = "transparent";
               e.currentTarget.style.color = "var(--text-muted)";
             }
