@@ -8,6 +8,7 @@ import {
   ChevronRight,
   X,
   ChevronDown,
+  AlertCircle,
 } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -27,6 +28,7 @@ const navItems: NavItem[] = [
 
 const toolItems = [
   { label: "심의 기준 설정", icon: SlidersHorizontal },
+  { label: "부서별 주요 쟁점사항", icon: AlertCircle },
 ];
 
 export default function Layout({
