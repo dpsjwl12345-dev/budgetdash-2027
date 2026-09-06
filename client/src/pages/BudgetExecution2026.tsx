@@ -139,7 +139,11 @@ export default function BudgetExecution2026() {
             policyName: parseText(record["정책사업명"]),
             programName: parseText(record["단위사업명"]),
             unitName: parseText(record["세부사업명"]),
-            statisticsCode: parseText(record["통계목"]),
+            statisticsCode: (() => {
+              const raw = parseText(record["통계목"]);
+              // 엑셀에서 "05" 같은 코드가 숫자로 읽히면 앞자리 0이 사라지므로 2자리로 복원한다.
+              return /^\d+$/.test(raw) ? raw.padStart(2, "0") : raw;
+            })(),
             original: parseNumber(record["본예산"]),
             supplementary: parseNumber(record["추경"]),
             preEstablishment: parseNumber(record["성립전"]),

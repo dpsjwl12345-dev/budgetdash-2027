@@ -659,7 +659,11 @@ export default function Home() {
           const rawStatus = String(pick(record, ["상태", "status"]));
           const status: Status = rawStatus === "오류" || rawStatus === "주의" || rawStatus === "정상" ? rawStatus : "정상";
           const code = String(pick(record, ["편성목코드"])) || "-";
-          const statisticalCode = String(pick(record, ["통계목코드"])) || "";
+          const rawStatisticalCode = String(pick(record, ["통계목코드"])) || "";
+          // 엑셀에서 "05" 같은 코드가 숫자로 읽히면 앞자리 0이 사라지므로 2자리로 복원한다.
+          const statisticalCode = /^\d+$/.test(rawStatisticalCode)
+            ? rawStatisticalCode.padStart(2, "0")
+            : rawStatisticalCode;
           const statisticalName = String(pick(record, ["통계목명"])) || "";
           const accountDisplay = statisticalCode && statisticalName ? `${statisticalCode} ${statisticalName}` : statisticalCode;
           const unitProgram = String(pick(record, ["단위사업명"])) || "";
@@ -673,7 +677,7 @@ export default function Home() {
             account: accountDisplay,
             detail: (() => {
               const note = String(pick(record, ["요구산출근거"])) || "";
-              const expr = String(pick(record, ["요구산출근거식"])).replace(/=\s*$/, "").trim();
+              const expr = String(pick(record, ["요구산출근거식"])).replace(/=/g, "").trim();
               return note && expr ? `${note}\n${expr}` : (note || expr || "-");
             })(),
             amount: parseNumber(pick(record, ["요구액"])),
