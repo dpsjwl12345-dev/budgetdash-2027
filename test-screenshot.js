@@ -13,15 +13,21 @@ import { chromium } from '@playwright/test';
   try {
     console.log('🎬 Starting automation test...');
 
+    // Sync the CSV data first to populate the tree
+    console.log('🔄 Syncing CSV data...');
+    const syncResponse = await page.request.post('http://localhost:3002/api/budget-explainer/sync');
+    console.log('✅ Sync response:', syncResponse.status());
+
     // First, let's insert test data into the database via API
     const testDepartment = '문화예술과';
+    // Use a real detail item from the CSV
     const testData = {
       department: testDepartment,
-      policy: '공연예술지원',
-      unit: '공연장운영',
-      detail: '시립극장운영',
+      policy: '문화도시 조성',
+      unit: '지역문화역량강화',
+      detail: '문화관광재단 공연장 운영',
       level: '세부사업',
-      explanation_text: '시립극장의 운영 및 유지보수',
+      explanation_text: '문화관광재단 공연장의 운영 및 유지보수',
       sections_json: JSON.stringify([
         {
           title: '예산총괄표',
@@ -29,7 +35,7 @@ import { chromium } from '@playwright/test';
         },
         {
           title: '사업명세서',
-          content: '사업명세서\n============================================\n\n사업명: 시립극장 운영 및 개선\n사업기간: 2026.01.01 ~ 2026.12.31\n사업주체: 문화예술과\n\n세부사업 내용:\n\n1. 운영비\n   - 인건비: 40,000,000원\n   - 관리비: 30,000,000원\n   - 공과금: 20,000,000원\n\n2. 시설개선비\n   - 무대시설 개선: 15,000,000원\n   - 객석 리모델링: 12,000,000원\n   - 안전점검 및 개선: 8,000,000원\n\n3. 프로그램 개발비\n   - 공연작품 개발: 10,000,000원\n   - 마케팅: 5,000,000원'
+          content: '사업명세서\n============================================\n\n사업명: 문화관광재단 공연장 운영\n사업기간: 2026.01.01 ~ 2026.12.31\n사업주체: 문화예술과\n\n세부사업 내용:\n\n1. 운영비\n   - 인건비: 40,000,000원\n   - 관리비: 30,000,000원\n   - 공과금: 20,000,000원\n\n2. 시설개선비\n   - 무대시설 개선: 15,000,000원\n   - 객석 리모델링: 12,000,000원\n   - 안전점검 및 개선: 8,000,000원\n\n3. 프로그램 개발비\n   - 공연작품 개발: 10,000,000원\n   - 마케팅: 5,000,000원'
         },
         {
           title: '편성현황',
@@ -47,29 +53,58 @@ import { chromium } from '@playwright/test';
 
     // Now navigate to the explainer page
     console.log('🌐 Navigating to budget explainer page...');
-    await page.goto(`http://localhost:3002/budget-explainer?dept=${encodeURIComponent(testDepartment)}`, {
-      waitUntil: 'networkidle'
+    await page.goto(`http://localhost:3000/budget-explainer?dept=${encodeURIComponent(testDepartment)}`, {
+      waitUntil: 'networkidle',
+      timeout: 10000
     });
 
     // Wait for page to load
-    await page.waitForTimeout(2000);
+    await page.waitForTimeout(3000);
+
+    // Check page title and URL
+    console.log('📄 Page title:', await page.title());
+    console.log('📍 Page URL:', page.url());
+
+    // Check if main content is visible
+    const mainContent = await page.locator('main').first().isVisible();
+    console.log('📦 Main content visible:', mainContent);
+
+    // Check for grid sections (the 3-section display)
+    const gridSections = await page.locator('div[style*="gridTemplateRows"]').count();
+    console.log('🔲 Found grid sections:', gridSections);
+
+    // Check for text content
+    const pageText = await page.locator('body').textContent();
+    const hasData = pageText.includes('예산총괄표') || pageText.includes('사업명세서') || pageText.includes('편성현황');
+    console.log('📝 Has budget data on page:', hasData);
 
     console.log('🔍 Looking for the detail item to click...');
 
     // Try to find and click the detail item in the tree
-    const detailButtons = await page.locator('button, div, span').filter({ hasText: /시립극장운영/ }).all();
-    console.log(`Found ${detailButtons.length} elements with text containing '시립극장운영'`);
+    const detailText = '문화관광재단 공연장 운영';
+    const detailButtons = await page.locator('button, div, span').filter({ hasText: new RegExp(detailText) }).all();
+    console.log(`Found ${detailButtons.length} elements with text containing '${detailText}'`);
 
     if (detailButtons.length > 0) {
       await detailButtons[0].click();
-      await page.waitForTimeout(1000);
+      await page.waitForTimeout(2000);
       console.log('✅ Clicked on the detail item');
+
+      // Check if material data is now visible
+      const hasData = await page.locator('body').textContent().then(text =>
+        text.includes('예산총괄표') || text.includes('사업명세서')
+      );
+      console.log('📝 Material data visible:', hasData);
     } else {
-      console.log('⚠️  Could not find the detail item, but continuing...');
+      console.log('⚠️  Could not find the detail item, trying to list all visible text...');
+      const allText = await page.locator('body').textContent();
+      const lines = allText.split('\n').filter(l => l.trim().length > 0);
+      console.log('📄 First 20 lines of page content:');
+      lines.slice(0, 20).forEach((line, i) => console.log(`  ${i}: ${line.substring(0, 80)}`));
     }
 
     // Wait a bit and then take screenshots
-    await page.waitForTimeout(1500);
+    await page.waitForTimeout(2000);
 
     // Capture full page screenshot
     console.log('📸 Capturing full page screenshot...');
