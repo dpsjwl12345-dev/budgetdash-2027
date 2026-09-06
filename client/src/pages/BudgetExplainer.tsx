@@ -217,14 +217,7 @@ export default function BudgetExplainer() {
 
 
         <section className="table-panel" style={{ padding: "20px" }}>
-          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
-            <div style={{ fontSize: "16px", fontWeight: 600, color: "var(--text)", lineHeight: "36px" }}>
-              {loading
-                ? "불러오는 중..."
-                : doc
-                ? `현재 파일: ${doc.fileName} (${new Date(doc.uploadedAt).toLocaleString("ko-KR")})`
-                : "업로드된 설명자료가 없습니다"}
-            </div>
+          <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
             <label
               className="icon-stack-btn"
               aria-label={parsing ? "분석 중" : "PDF 업로드"}
@@ -245,12 +238,6 @@ export default function BudgetExplainer() {
 
           {pendingText !== null && (
             <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "16px", marginBottom: "20px", backgroundColor: "rgba(140, 155, 170, 0.08)" }}>
-              <div style={{ fontWeight: 600, marginBottom: "8px", color: "var(--text)" }}>
-                세부사업 목록 확인 · {pendingFileName}
-              </div>
-              <div style={{ fontSize: "13px", color: "var(--text-muted)", marginBottom: "12px" }}>
-                PDF에서 자동으로 나눈 목록입니다. 이름이 이상하면 고치거나 지워주세요.
-              </div>
               <div style={{ display: "flex", flexDirection: "column", gap: "8px", marginBottom: "12px" }}>
                 {pendingSections.map((section) => (
                   <div key={section.id} style={{ display: "flex", gap: "8px", alignItems: "center" }}>
