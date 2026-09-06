@@ -235,6 +235,7 @@ async function startServer() {
   app.post('/api/budget-explainer/save-material', upload.single('file'), async (req, res) => {
     try {
       const { department, policy, unit, detail, level, explanation_text, sections_json, file_name } = req.body;
+      console.log('📥 Received form data:', { department, policy, unit, detail, level, file_name, has_sections_json: !!sections_json });
       let fileName = file_name || null;
 
       if (req.file) {
@@ -242,10 +243,12 @@ async function startServer() {
       }
 
       if (!department || !policy || !unit || !detail || !level) {
+        console.warn('❌ Missing required fields:', { department: !!department, policy: !!policy, unit: !!unit, detail: !!detail, level: !!level });
         return res.status(400).json({ success: false, error: '필수 정보가 부족합니다' });
       }
 
       const db = getDB();
+      console.log('💾 Saving to database:', { department, policy, unit, detail, level, has_sections_json: !!sections_json, sections_json_length: sections_json?.length });
       db.run(
         `INSERT OR REPLACE INTO budget_explainer_materials
          (department, policy, unit, detail, level, explanation_text, file_name, sections_json, uploaded_at, updated_at)
@@ -253,8 +256,10 @@ async function startServer() {
         [department, policy, unit, detail, level, explanation_text || null, fileName, sections_json || null],
         (err) => {
           if (err) {
+            console.error('❌ Database error:', err);
             res.status(500).json({ success: false, error: String(err) });
           } else {
+            console.log('✅ Successfully saved to database');
             res.json({ success: true, message: '설명자료를 저장했습니다' });
           }
         }
