@@ -98,7 +98,8 @@ export function initializeDB(): Promise<sqlite3.Database> {
                   sections_json TEXT,
                   uploaded_at DATETIME,
                   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
-                  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+                  updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                  UNIQUE(department, policy, unit, detail)
                 )
               `, (err) => {
                 if (err) reject(err);
