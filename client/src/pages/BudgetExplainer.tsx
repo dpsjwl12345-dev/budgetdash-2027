@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-import { extractPdfText, extractProgramBlocks } from "@/lib/pdfExplainer";
+import { processExplainerPdf } from "@/lib/pdfExplainer";
 import { ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
@@ -15,12 +15,8 @@ type TreeNode = {
 type Material = {
   id?: number;
   file_name?: string;
-  sections_json?: Record<string, string> | null;
+  sections_json?: { images?: string[] } | null;
   uploaded_at?: string;
-};
-
-type ParsedSections = {
-  [key: string]: string;
 };
 
 export default function BudgetExplainer() {
@@ -40,7 +36,7 @@ export default function BudgetExplainer() {
   const [materialLoading, setMaterialLoading] = useState(false);
   const [showTree, setShowTree] = useState(true);
   const [uploading, setUploading] = useState(false);
-  const [parsedSections, setParsedSections] = useState<ParsedSections>({});
+  const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 계층 구조 데이터 로드
@@ -70,7 +66,6 @@ export default function BudgetExplainer() {
   useEffect(() => {
     if (!selectedPath) {
       setMaterial(null);
-      setParsedSections({});
       return;
     }
 
@@ -87,7 +82,6 @@ export default function BudgetExplainer() {
         );
         const { data } = await response.json();
         setMaterial(data || null);
-        setParsedSections(data?.sections_json || {});
       } catch (error) {
         console.error("설명자료 로드 실패:", error);
       } finally {
@@ -109,34 +103,37 @@ export default function BudgetExplainer() {
   };
 
   // 부서 설명자료 PDF 한 개를 통째로 업로드하면 안에 이어진 세부사업 블록들을
-  // 모두 파싱해 한 번에 저장한다 (세부사업별 개별 업로드 불필요).
+  // 모두 찾아 페이지 이미지를 렌더링한 뒤 저장한다 (세부사업별 개별 업로드 불필요).
+  // 서버리스 함수의 요청 본문 크기 제한 때문에 세부사업 하나씩 순차적으로 저장한다.
   const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file) return;
 
     setUploading(true);
+    setUploadProgress(null);
     try {
-      const pdfText = await extractPdfText(file);
-      const materials = extractProgramBlocks(pdfText);
+      const materials = await processExplainerPdf(file);
 
       if (materials.length === 0) {
         alert("PDF에서 세부사업 블록을 찾지 못했습니다");
         return;
       }
 
-      const response = await fetch("/api/budget-explainer/bulk-save", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department, fileName: file.name, materials }),
-      });
-
-      const result = await response.json();
-      if (result.success) {
-        alert(`${result.count}개 세부사업의 설명자료를 저장했습니다`);
-        await loadTree();
-      } else {
-        alert(`저장 실패: ${result.error || "알 수 없는 오류"}`);
+      let savedCount = 0;
+      for (let i = 0; i < materials.length; i++) {
+        setUploadProgress({ done: i, total: materials.length });
+        const response = await fetch("/api/budget-explainer/bulk-save", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ department, fileName: file.name, materials: [materials[i]] }),
+        });
+        const result = await response.json();
+        if (result.success) savedCount += 1;
       }
+      setUploadProgress({ done: materials.length, total: materials.length });
+
+      alert(`${savedCount}개 세부사업의 설명자료를 저장했습니다`);
+      await loadTree();
 
       if (fileInputRef.current) {
         fileInputRef.current.value = "";
@@ -146,6 +143,7 @@ export default function BudgetExplainer() {
       alert("업로드에 실패했습니다");
     } finally {
       setUploading(false);
+      setUploadProgress(null);
     }
   };
 
@@ -284,7 +282,13 @@ export default function BudgetExplainer() {
           <label
             className="icon-stack-btn"
             aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
-            data-tooltip={uploading ? "업로드 중..." : "부서 설명자료 PDF 업로드"}
+            data-tooltip={
+              uploading
+                ? uploadProgress
+                  ? `업로드 중... (${uploadProgress.done}/${uploadProgress.total})`
+                  : "PDF 분석 중..."
+                : "부서 설명자료 PDF 업로드"
+            }
             style={uploading ? { opacity: 0.5, pointerEvents: "none" } : undefined}
           >
             <div className="icon-stack-front"><Upload size={20} /></div>
@@ -404,89 +408,41 @@ export default function BudgetExplainer() {
                   </h2>
                 </div>
 
-                {/* 3개 섹션 박스 - 페이지 전체 세로 구분 */}
-                <div style={{ flex: 1, display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: "16px" }}>
-
-                  {/* 예산총괄표 */}
-                  <div
-                    style={{
-                      border: "1px solid var(--line)",
-                      borderRadius: "8px",
-                      padding: "16px",
-                      backgroundColor: "var(--bg-secondary)",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
-                      예산총괄표
+                {/* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */}
+                <div
+                  style={{
+                    flex: 1,
+                    overflowY: "auto",
+                    display: "flex",
+                    flexDirection: "column",
+                    alignItems: "center",
+                    gap: "16px",
+                    padding: "8px 0",
+                  }}
+                >
+                  {materialLoading ? (
+                    <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
+                      로딩 중...
                     </div>
-                    {materialLoading ? (
-                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
-                    ) : parsedSections["예산총괄표"] ? (
-                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {parsedSections["예산총괄표"]}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                        데이터 없음
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 사업명세서 */}
-                  <div
-                    style={{
-                      border: "1px solid var(--line)",
-                      borderRadius: "8px",
-                      padding: "16px",
-                      backgroundColor: "var(--bg-secondary)",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
-                      사업명세서
+                  ) : material?.sections_json?.images && material.sections_json.images.length > 0 ? (
+                    material.sections_json.images.map((src, i) => (
+                      <img
+                        key={i}
+                        src={src}
+                        alt={`${selectedPath.split("|").pop()} 설명자료 ${i + 1}페이지`}
+                        style={{
+                          maxWidth: "100%",
+                          border: "1px solid var(--line)",
+                          borderRadius: "4px",
+                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                        }}
+                      />
+                    ))
+                  ) : (
+                    <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
+                      데이터 없음
                     </div>
-                    {materialLoading ? (
-                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
-                    ) : parsedSections["사업설명서"] ? (
-                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {parsedSections["사업설명서"]}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                        데이터 없음
-                      </div>
-                    )}
-                  </div>
-
-                  {/* 편성현황 */}
-                  <div
-                    style={{
-                      border: "1px solid var(--line)",
-                      borderRadius: "8px",
-                      padding: "16px",
-                      backgroundColor: "var(--bg-secondary)",
-                      display: "flex",
-                      flexDirection: "column",
-                    }}
-                  >
-                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
-                      편성현황
-                    </div>
-                    {materialLoading ? (
-                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
-                    ) : parsedSections["편성현황"] ? (
-                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {parsedSections["편성현황"]}
-                      </div>
-                    ) : (
-                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
-                        데이터 없음
-                      </div>
-                    )}
-                  </div>
+                  )}
                 </div>
               </div>
             ) : (

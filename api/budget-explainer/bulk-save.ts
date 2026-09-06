@@ -15,7 +15,7 @@ type MaterialInput = {
   policy: string;
   unit: string;
   detail: string;
-  sections: Record<string, string>;
+  images: string[];
 };
 
 export default async function handler(req: any, res: any) {
@@ -40,7 +40,7 @@ export default async function handler(req: any, res: any) {
         unit: m.unit,
         detail: m.detail,
         file_name: fileName || null,
-        sections_json: m.sections,
+        sections_json: { images: m.images ?? [] },
         uploaded_at: new Date().toISOString(),
         updated_at: new Date().toISOString(),
       }));
