@@ -215,54 +215,6 @@ export default function BudgetExplainer() {
           </div>
         </section>
 
-        <div style={{ marginTop: "12px", marginBottom: "20px" }}>
-          <Popover open={deptOpen} onOpenChange={setDeptOpen}>
-            <PopoverTrigger asChild>
-              <Button
-                variant="outline"
-                role="combobox"
-                aria-expanded={deptOpen}
-                className="w-[220px] justify-between bg-transparent border-[var(--line)] text-[var(--text)] hover:bg-[rgba(118,157,194,0.08)] hover:text-[var(--text)]"
-              >
-                <span>{department}</span>
-                <ChevronsUpDown className="opacity-60 shrink-0" />
-              </Button>
-            </PopoverTrigger>
-            <PopoverContent
-              className="w-[220px] p-1 bg-[#1b212b] border-[var(--line)] text-[var(--text)]"
-              side="bottom"
-              align="start"
-              avoidCollisions={false}
-            >
-              {DEPARTMENTS.map((dept) => (
-                <button
-                  key={dept}
-                  onClick={() => {
-                    setDepartment(dept);
-                    setSelectedTitle("");
-                    cancelPending();
-                    setDeptOpen(false);
-                  }}
-                  style={{
-                    display: "flex",
-                    width: "100%",
-                    padding: "8px 10px",
-                    borderRadius: "6px",
-                    border: "none",
-                    background: department === dept ? "rgba(118, 157, 194, 0.14)" : "transparent",
-                    color: "var(--text)",
-                    fontWeight: department === dept ? 600 : 500,
-                    fontSize: "14px",
-                    textAlign: "left",
-                    cursor: "pointer",
-                  }}
-                >
-                  {dept}
-                </button>
-              ))}
-            </PopoverContent>
-          </Popover>
-        </div>
 
         <section className="table-panel" style={{ padding: "20px" }}>
           <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "16px", flexWrap: "wrap", gap: "12px" }}>
@@ -344,58 +296,11 @@ export default function BudgetExplainer() {
 
           {pendingText === null && (
             <>
-              <div style={{ marginBottom: "16px" }}>
-                <Popover open={comboOpen} onOpenChange={setComboOpen}>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      role="combobox"
-                      aria-expanded={comboOpen}
-                      disabled={!activeSections.length}
-                      className="w-[560px] max-w-full justify-between bg-transparent border-[var(--line)] text-[var(--text)] hover:bg-[rgba(118,157,194,0.08)] hover:text-[var(--text)]"
-                    >
-                      <span className={cn("text-left", !selectedTitle && "text-[var(--text-faint)]")}>
-                        {selectedTitle || "세부사업을 선택하세요"}
-                      </span>
-                      <ChevronsUpDown className="opacity-50 shrink-0" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent
-                    className="w-[560px] max-w-full p-0 bg-[#1b212b] border-[var(--line)] text-[var(--text)]"
-                    side="bottom"
-                    align="start"
-                    avoidCollisions={false}
-                  >
-                    <Command className="bg-transparent">
-                      <CommandInput placeholder="세부사업 검색..." className="h-9 text-[var(--text)]" />
-                      <CommandList className="max-h-[240px] dark-scrollbar">
-                        <CommandEmpty>일치하는 세부사업이 없습니다.</CommandEmpty>
-                        <CommandGroup>
-                          {activeSections.map((section) => (
-                            <CommandItem
-                              key={section.id}
-                              value={section.title}
-                              onSelect={(value) => {
-                                setSelectedTitle(value === selectedTitle ? "" : value);
-                                setComboOpen(false);
-                              }}
-                              className="text-[var(--text)] aria-selected:bg-transparent data-[selected=true]:bg-transparent"
-                            >
-                              {section.title}
-                              <Check
-                                className={cn(
-                                  "ml-auto",
-                                  selectedTitle === section.title ? "opacity-100" : "opacity-0"
-                                )}
-                              />
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
-              </div>
+              {activeSections.length > 0 && (
+                <div style={{ marginBottom: "16px" }}>
+                  <div style={{ fontSize: "14px", color: "var(--text-muted)" }}>세부사업: {activeSections.length}개</div>
+                </div>
+              )}
 
               {selectedTitle && (
                 <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "20px", backgroundColor: "rgba(140, 155, 170, 0.06)" }}>
