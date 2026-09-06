@@ -215,6 +215,25 @@ export default function BudgetExplainer() {
           </div>
         </section>
 
+        {/* 상단 컨트롤 바 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
+          <label
+            className="icon-stack-btn"
+            aria-label={parsing ? "분석 중" : "PDF 업로드"}
+            data-tooltip={parsing ? "분석 중..." : "PDF 업로드"}
+            style={parsing ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+          >
+            <div className="icon-stack-front"><Upload size={20} /></div>
+            <input
+              ref={fileInputRef}
+              className="upload-input"
+              type="file"
+              accept=".pdf"
+              disabled={parsing}
+              onChange={(event) => handleFileSelect(event.target.files?.[0])}
+            />
+          </label>
+        </div>
 
         {/* 상단 구분선 */}
         <div style={{ height: "1px", backgroundColor: "var(--line)", margin: "0 20px" }} />
@@ -265,28 +284,8 @@ export default function BudgetExplainer() {
             )}
           </div>
 
-          {/* 우측: 설명자료 내용 + 업로드 */}
+          {/* 우측: 설명자료 내용 */}
           <div style={{ flex: 1, padding: "20px", display: "flex", flexDirection: "column", overflowY: "auto" }}>
-            {/* 업로드 버튼 */}
-            <div style={{ display: "flex", justifyContent: "flex-end", marginBottom: "16px" }}>
-              <label
-                className="icon-stack-btn"
-                aria-label={parsing ? "분석 중" : "PDF 업로드"}
-                data-tooltip={parsing ? "분석 중..." : "PDF 업로드"}
-                style={parsing ? { opacity: 0.5, pointerEvents: "none" } : undefined}
-              >
-                <div className="icon-stack-front"><Upload size={20} /></div>
-                <input
-                  ref={fileInputRef}
-                  className="upload-input"
-                  type="file"
-                  accept=".pdf"
-                  disabled={parsing}
-                  onChange={(event) => handleFileSelect(event.target.files?.[0])}
-                />
-              </label>
-            </div>
-
             {/* 펼쳐진 박스 (PDF 업로드 후) */}
             {pendingText !== null && (
               <div style={{ border: "1px solid var(--line)", borderRadius: "12px", padding: "16px", marginBottom: "20px", backgroundColor: "rgba(140, 155, 170, 0.08)" }}>
