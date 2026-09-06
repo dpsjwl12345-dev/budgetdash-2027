@@ -256,6 +256,13 @@ function formatMillion(value: number) {
   return new Intl.NumberFormat("ko-KR").format(Math.round(value / 1000));
 }
 
+// row.program은 엑셀 업로드 시 "단위사업명\n세부사업명"으로 합쳐져 저장되므로,
+// 필터 드롭다운에는 세부사업명(마지막 줄)만 보여준다.
+function getDetailName(program: string) {
+  const lines = program.split("\n");
+  return lines[lines.length - 1] || program;
+}
+
 function trapTabKey(event: React.KeyboardEvent, container: HTMLElement | null) {
   if (event.key !== "Tab" || !container) return;
   const focusables = container.querySelectorAll<HTMLElement>(
@@ -585,7 +592,7 @@ export default function Home() {
       const searchable = `${row.policy} ${row.program} ${row.account} ${row.detail}`;
       const matchesSearch = searchable.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
-      const matchesProgram = !programFilter || row.program === programFilter;
+      const matchesProgram = !programFilter || getDetailName(row.program) === programFilter;
       const matchesAccount = !accountFilter || row.account === accountFilter;
       return matchesSearch && matchesStatus && matchesProgram && matchesAccount;
     });
@@ -605,7 +612,7 @@ export default function Home() {
 
   const uniquePrograms = useMemo(() => {
     const seen = new Set();
-    return budgetRows.map(r => r.program).filter(program => {
+    return budgetRows.map(r => getDetailName(r.program)).filter(program => {
       if (!program || seen.has(program)) return false;
       seen.add(program);
       return true;
@@ -910,7 +917,7 @@ export default function Home() {
 
           <section className="table-panel">
             <div className="table-heading">
-              <div className="table-title"><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}><div style={{ fontSize: '20px', color: '#9fb0c8', fontWeight: '600' }}>세출예산요구서</div>{department && <span className="dept-pill">{department}</span>}</div></div>
+              <div className="table-title"><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>{department && <span className="dept-pill">{department}</span>}<div style={{ fontSize: '20px', color: '#9fb0c8', fontWeight: '600' }}>세출예산요구서</div></div></div>
             </div>
 
             <div className="filter-row">
@@ -925,7 +932,7 @@ export default function Home() {
               <table className="budget-table">
                 <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <HeaderFilterDropdown label={key === "policy" ? "정책·단위·세부" : label} value={key === "policy" ? programFilter : accountFilter} options={key === "policy" ? uniquePrograms : uniqueAccounts} onChange={key === "policy" ? setProgramFilter : setAccountFilter} /> : label}</th>)}<th className="col-action">편집</th></tr></thead>
                 <tbody>
-                  <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}<td className="action-cell"></td></tr>
+                  <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`} style={key === "detail" ? { textAlign: "right", paddingRight: 12 } : undefined}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}<td className="action-cell"></td></tr>
                   {paginatedRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
                     {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{renderCell(row, key)}</td>)}
                     <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button></td>

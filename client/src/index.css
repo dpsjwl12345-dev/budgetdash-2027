@@ -488,7 +488,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .table-panel:hover { background: rgba(140, 155, 170, 0.18); border-color: rgba(226, 232, 240, 0.25); }
 .table-heading { min-height: 78px; padding: 16px 19px 16px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
-.dept-pill { display: inline-flex; align-items: center; height: 26px; margin-left: 6px; padding: 0 12px; border-radius: 999px; background: rgba(203, 213, 225, 0.12); border: 1px solid rgba(203, 213, 225, 0.25); color: #dbe8f5; font-size: 13px; font-weight: 600; white-space: nowrap; }
+.dept-pill { display: inline-flex; align-items: center; height: 32px; padding: 0 16px; border-radius: 999px; background: rgba(203, 213, 225, 0.12); border: 1px solid rgba(203, 213, 225, 0.25); color: #dbe8f5; font-size: 17px; font-weight: 700; white-space: nowrap; }
 .active-rule { display: none !important; }
 .table-title h2 { --border-right: 6px; --text-stroke-color: rgba(255,255,255,0.6); --animation-color: #cbd5e1; position: relative; display: inline-block; margin: 0; padding-left: 0; color: #e8f1fa; font-family: "Pretendard", system-ui, sans-serif; font-size: 24px; line-height: 1.3; letter-spacing: -0.01em; font-weight: 700; overflow: hidden; cursor: pointer; }
 .table-title h2 .actual-text { display: inline-block; transition: all 0.5s; }
