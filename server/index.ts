@@ -248,18 +248,25 @@ async function startServer() {
       }
 
       const db = getDB();
-      console.log('💾 Saving to database:', { department, policy, unit, detail, level, has_sections_json: !!sections_json, sections_json_length: sections_json?.length });
+      const values = [department, policy, unit, detail, level, explanation_text || null, fileName, sections_json || null];
+      console.log('💾 Saving to database:', {
+        department, policy, unit, detail, level,
+        has_sections_json: !!sections_json,
+        sections_json_length: sections_json?.length,
+        values_count: values.length
+      });
+
       db.run(
         `INSERT OR REPLACE INTO budget_explainer_materials
          (department, policy, unit, detail, level, explanation_text, file_name, sections_json, uploaded_at, updated_at)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-        [department, policy, unit, detail, level, explanation_text || null, fileName, sections_json || null],
-        (err) => {
+        values,
+        function(err) {
           if (err) {
             console.error('❌ Database error:', err);
             res.status(500).json({ success: false, error: String(err) });
           } else {
-            console.log('✅ Successfully saved to database');
+            console.log(`✅ Successfully saved (ID: ${this.lastID}, Changes: ${this.changes})`);
             res.json({ success: true, message: '설명자료를 저장했습니다' });
           }
         }
