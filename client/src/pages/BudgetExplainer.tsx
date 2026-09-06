@@ -365,10 +365,40 @@ export default function BudgetExplainer() {
           <div style={{ flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
               <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
-                <div style={{ marginBottom: "16px", flexShrink: 0 }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexShrink: 0 }}>
                   <h2 style={{ fontSize: "18px", margin: 0 }}>
                     {selectedPath.split("|").pop()}
                   </h2>
+                  {!showTree && (
+                    <button
+                      onClick={() => setShowTree(true)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "28px",
+                        height: "28px",
+                        padding: 0,
+                        border: "1px solid var(--line)",
+                        borderRadius: "4px",
+                        backgroundColor: "var(--bg-secondary)",
+                        color: "var(--text-muted)",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
+                        e.currentTarget.style.color = "var(--text)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
+                        e.currentTarget.style.color = "var(--text-muted)";
+                      }}
+                      title="네비게이션 열기"
+                    >
+                      ☰
+                    </button>
+                  )}
                 </div>
 
                 {/* 3개 섹션 박스 - 페이지 전체 세로 구분 */}
