@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, useSearchParams } from "wouter";
 import {
   ClipboardCheck,
   History,
@@ -38,7 +38,9 @@ export default function Layout({
   showToast?: (message: string) => void;
 }) {
   const [location, setLocation] = useLocation();
+  const [searchParams] = useSearchParams();
   const isBudgetExplainerPage = location === "/budget-explainer";
+  const currentDept = isBudgetExplainerPage ? searchParams.get("dept") : null;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isBudgetExplainerPage);
   const [activeNav, setActiveNav] = useState(
     navItems.find((item) => item.path === location)?.label ?? "예산 편성 시트"
@@ -113,39 +115,46 @@ export default function Layout({
                 {button}
                 {expandedBudgetExplainer && (
                   <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
-                    {DEPARTMENTS.map((dept) => (
-                      <button
-                        key={dept}
-                        style={{
-                          paddingLeft: "44px",
-                          paddingRight: "12px",
-                          height: "32px",
-                          display: "flex",
-                          alignItems: "center",
-                          fontSize: "13px",
-                          color: "var(--text-muted)",
-                          backgroundColor: "transparent",
-                          border: "none",
-                          cursor: "pointer",
-                          textAlign: "left",
-                          transition: "all 0.15s",
-                        }}
-                        onClick={() => {
-                          setActiveNav(label);
-                          setLocation(`/budget-explainer?dept=${encodeURIComponent(dept)}`);
-                        }}
-                        onMouseEnter={(e) => {
-                          e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
-                          e.currentTarget.style.color = "var(--text)";
-                        }}
-                        onMouseLeave={(e) => {
-                          e.currentTarget.style.backgroundColor = "transparent";
-                          e.currentTarget.style.color = "var(--text-muted)";
-                        }}
-                      >
-                        {dept}
-                      </button>
-                    ))}
+                    {DEPARTMENTS.map((dept) => {
+                      const isDeptActive = currentDept === dept;
+                      return (
+                        <button
+                          key={dept}
+                          style={{
+                            paddingLeft: "44px",
+                            paddingRight: "12px",
+                            height: "32px",
+                            display: "flex",
+                            alignItems: "center",
+                            fontSize: "13px",
+                            fontWeight: isDeptActive ? 600 : 400,
+                            color: isDeptActive ? "#ffffff" : "var(--text-muted)",
+                            backgroundColor: isDeptActive ? "rgba(203, 213, 225, 0.08)" : "transparent",
+                            border: "none",
+                            borderLeft: isDeptActive ? "2px solid #cbd5e1" : "2px solid transparent",
+                            cursor: "pointer",
+                            textAlign: "left",
+                            transition: "all 0.15s",
+                          }}
+                          onClick={() => {
+                            setActiveNav(label);
+                            setLocation(`/budget-explainer?dept=${encodeURIComponent(dept)}`);
+                          }}
+                          onMouseEnter={(e) => {
+                            if (isDeptActive) return;
+                            e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
+                            e.currentTarget.style.color = "var(--text)";
+                          }}
+                          onMouseLeave={(e) => {
+                            if (isDeptActive) return;
+                            e.currentTarget.style.backgroundColor = "transparent";
+                            e.currentTarget.style.color = "var(--text-muted)";
+                          }}
+                        >
+                          {dept}
+                        </button>
+                      );
+                    })}
                   </div>
                 )}
               </div>

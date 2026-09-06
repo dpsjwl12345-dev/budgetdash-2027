@@ -827,8 +827,11 @@ export default function Home() {
       <div className="page-content">
           <section className="page-heading">
             <div className="title-area">
-              <div className="title-wrapper">
-                <h1>{year} 본예산 편성검토</h1>
+              <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
+                <span style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-faint)", letterSpacing: "0.02em" }}>
+                  {year} 본예산
+                </span>
+                <h1 style={{ marginTop: "-4px" }}>편성 검토</h1>
               </div>
               <div className="action-row">
                 <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
@@ -872,32 +875,32 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
-              <strong>{formatMillion(totals.amount)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(totals.amount)}<span className="metric-unit">백만원</span></strong>
             </article>
-            <article className="metric-card" style={{ "--tint": "#4fc3a1" } as React.CSSProperties}>
+            <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 신규 사업 예산액</span></div>
               </div>
-              <strong>0<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>0<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
-              <strong>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
-            <article className="metric-card" style={{ "--tint": "#ff6b7d" } as React.CSSProperties}>
+            <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 최종예산액</span></div>
               </div>
-              <strong>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-header">
                 <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
                 <div className="metric-sub">오류 {budgetRows.filter(r => r.status === "오류").length} · 주의 {budgetRows.filter(r => r.status === "주의").length}</div>
               </div>
-              <strong>{budgetRows.filter(r => r.status === "오류").length}<span className="metric-unit">건</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{budgetRows.filter(r => r.status === "오류").length}<span className="metric-unit">건</span></strong>
             </article>
           </section>
 

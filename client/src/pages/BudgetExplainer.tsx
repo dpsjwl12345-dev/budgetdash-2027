@@ -21,13 +21,11 @@ type Material = {
 
 export default function BudgetExplainer() {
   const [params] = useSearchParams();
-  const initialDept = params.get("dept") ?? DEPARTMENTS[0];
+  const requestedDept = params.get("dept") ?? DEPARTMENTS[0];
+  const department = DEPARTMENTS.includes(requestedDept as (typeof DEPARTMENTS)[number])
+    ? requestedDept
+    : DEPARTMENTS[0];
 
-  const [department] = useState(
-    DEPARTMENTS.includes(initialDept as (typeof DEPARTMENTS)[number])
-      ? initialDept
-      : DEPARTMENTS[0]
-  );
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
   const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
@@ -60,6 +58,9 @@ export default function BudgetExplainer() {
 
   useEffect(() => {
     loadTree();
+    // 부서가 바뀌면 이전 부서의 선택 상태가 남아있으면 안 되므로 초기화한다.
+    setSelectedPath("");
+    setExpandedNodes(new Set());
   }, [loadTree]);
 
   // 설명자료 로드
@@ -258,10 +259,8 @@ export default function BudgetExplainer() {
       <div
         className="page-content"
         style={{
-          height: "calc(100vh - 65px)",
           display: "flex",
           flexDirection: "column",
-          overflow: "hidden",
           paddingTop: "20px",
           paddingBottom: "16px",
         }}
@@ -284,7 +283,8 @@ export default function BudgetExplainer() {
               </span>
               <h1 style={{ marginTop: "-4px" }}>부서별 예산설명자료</h1>
             </div>
-            <label
+            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+              <label
               className="icon-stack-btn"
               aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
               data-tooltip={
@@ -305,22 +305,21 @@ export default function BudgetExplainer() {
                 disabled={uploading}
                 onChange={handleFileUpload}
               />
-            </label>
+              </label>
+            </div>
           </div>
         </section>
 
         {/* 메인 컨텐츠 */}
-        <div style={{ display: "flex", gap: "16px", padding: "0 16px", flex: 1, minHeight: 0 }}>
+        <div style={{ display: "flex", gap: "16px", padding: "0 16px", minHeight: "80vh" }}>
           {/* 좌측: 계층 구조 */}
           {showTree && (
             <div
-              className="dark-scrollbar"
               style={{
                 flex: "0 0 300px",
                 borderRight: "1px solid var(--line)",
                 paddingRight: "16px",
                 paddingTop: "8px",
-                overflowY: "auto",
                 position: "relative",
               }}
             >
@@ -375,9 +374,9 @@ export default function BudgetExplainer() {
           )}
 
           {/* 우측: 설명자료 */}
-          <div style={{ flex: 1, overflow: "hidden", position: "relative", display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
-              <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
+              <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "12px", marginBottom: "16px", flexShrink: 0 }}>
                   {!showTree && (
                     <button
@@ -410,7 +409,19 @@ export default function BudgetExplainer() {
                       ☰
                     </button>
                   )}
-                  <h2 style={{ fontSize: "18px", margin: 0, display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                  <h2
+                    style={{
+                      fontSize: "18px",
+                      margin: 0,
+                      display: "inline-flex",
+                      alignItems: "center",
+                      gap: "8px",
+                      flexWrap: "wrap",
+                      padding: "8px 16px",
+                      borderRadius: "10px",
+                      backgroundColor: "rgb(66, 66, 66)",
+                    }}
+                  >
                     {(() => {
                       const [, policy, unit, detail] = selectedPath.split("|");
                       return (
@@ -428,10 +439,7 @@ export default function BudgetExplainer() {
 
                 {/* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */}
                 <div
-                  className="dark-scrollbar"
                   style={{
-                    flex: 1,
-                    overflowY: "auto",
                     display: "flex",
                     flexDirection: "column",
                     alignItems: "center",

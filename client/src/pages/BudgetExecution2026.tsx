@@ -191,28 +191,6 @@ export default function BudgetExecution2026() {
     window.setTimeout(() => setToast(""), 2200);
   };
 
-  const downloadTemplate = () => {
-    const template = [{
-      부서명: "부서명을 입력하세요",
-      정책사업명: "정책사업명을 입력하세요",
-      단위사업명: "단위사업명을 입력하세요",
-      세부사업명: "세부사업명을 입력하세요",
-      통계목: "201-01",
-      예산현액: 0,
-      본예산: 0,
-      추경: 0,
-      성립전: 0,
-      예비비: 0,
-      이월액계: 0,
-      집행액: 0,
-    }];
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "예산집행현황");
-    XLSX.writeFile(workbook, "2026_예산집행현황_업로드양식.xlsx");
-    showToast("엑셀 양식을 다운로드했습니다.");
-  };
-
   const filteredData = useMemo(() => {
     let filtered = data.filter((row) => {
       const matchesSearch = row.department.toLowerCase().includes(search.toLowerCase()) ||
@@ -266,48 +244,46 @@ export default function BudgetExecution2026() {
 
   return (
     <Layout showToast={showToast}>
-      <div className="page-content">
+      <div className="page-content" style={{ paddingTop: "20px" }}>
         <section className="page-heading">
-          <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "flex-start", gap: "24px" }}>
+          <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
               <span style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-faint)", letterSpacing: "0.02em" }}>
                 2026 일반회계
               </span>
               <h1 style={{ marginTop: "-4px" }}>부서별 예산집행현황</h1>
             </div>
-            <div style={{ display: "flex", gap: "12px" }} aria-label="2026 예산 요약">
-              <article className="metric-card" style={{ "--tint": "#5b9bf0", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
-                <div className="metric-header">
-                  <div className="metric-top"><span>총 예산</span></div>
-                </div>
-                <strong>{formatAmount(Math.round(filteredTotals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
-              </article>
-              <article className="metric-card" style={{ "--tint": "#4fc3a1", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
-                <div className="metric-header">
-                  <div className="metric-top"><span>집행액</span></div>
-                </div>
-                <strong>{formatAmount(Math.round(filteredTotals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
-              </article>
+            <div style={{ display: "flex", alignItems: "flex-end", gap: "24px" }}>
+              <div style={{ display: "flex", gap: "12px" }} aria-label="2026 예산 요약">
+                <article className="metric-card" style={{ "--tint": "#5b9bf0", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
+                  <div className="metric-header">
+                    <div className="metric-top"><span>총 예산</span></div>
+                  </div>
+                  <strong style={{ textAlign: "right" }}>{formatAmount(Math.round(filteredTotals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
+                </article>
+                <article className="metric-card" style={{ "--tint": "#4fc3a1", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
+                  <div className="metric-header">
+                    <div className="metric-top"><span>집행액</span></div>
+                  </div>
+                  <strong style={{ textAlign: "right" }}>{formatAmount(Math.round(filteredTotals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
+                </article>
+              </div>
+              <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
+                <div className="icon-stack-front"><Upload size={20} /></div>
+                <input
+                  ref={fileInputRef}
+                  className="upload-input"
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={(event) => handleExcelUpload(event.target.files?.[0])}
+                />
+              </label>
             </div>
           </div>
         </section>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center', gap: '8px', marginBottom: '8px', marginTop: '0px' }}>
-          <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
-          <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
-            <div className="icon-stack-front"><Upload size={20} /></div>
-            <input
-              ref={fileInputRef}
-              className="upload-input"
-              type="file"
-              accept=".xlsx,.xls,.csv"
-              onChange={(event) => handleExcelUpload(event.target.files?.[0])}
-            />
-          </label>
-        </div>
-
-        <section className="table-panel">
-          <div className="table-heading" style={{ borderBottom: 'none' }}>
+        <section className="table-panel" style={{ marginTop: "8px" }}>
+          <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
             <div className="table-title">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} ref={dropdownRef}>
                 <button
@@ -425,9 +401,7 @@ export default function BudgetExecution2026() {
                 )}
               </div>
             </div>
-          </div>
 
-          <div className="filter-row" style={{ gap: '12px', alignItems: 'center', border: 'none', background: 'transparent', padding: 0 }}>
             <div className="search-box">
               <Search size={17} />
               <input
