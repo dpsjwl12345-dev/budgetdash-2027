@@ -1,6 +1,7 @@
 import * as pdfjsLib from 'pdfjs-dist';
 
-pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.js`;
+// pdfjs-dist 6.x부터 워커가 .mjs(ESM)로만 배포된다 (.js는 cdnjs에 없어 404 발생).
+pdfjsLib.GlobalWorkerOptions.workerSrc = `//cdnjs.cloudflare.com/ajax/libs/pdf.js/${pdfjsLib.version}/pdf.worker.min.mjs`;
 
 export type SectionKey = '예산총괄표' | '사업설명서' | '편성현황';
 
@@ -61,87 +62,40 @@ export function splitIntoSections(text: string): MaterialSection[] {
   return sections;
 }
 
-function commonWordPrefix(a: string, b: string): string {
-  const aw = a.split(/\s+/);
-  const bw = b.split(/\s+/);
-  let i = 0;
-  while (i < aw.length && i < bw.length && aw[i] === bw[i]) i++;
-  return aw.slice(0, i).join(' ');
-}
-
-// 같은 단위사업 안에서 "정책사업+세부사업"이 붙어있는 헤더 문자열들을 서로 비교해
-// 반복되는 공통 접두어를 정책사업명으로, 나머지를 세부사업명으로 분리한다.
-// (동일 단위사업에 세부사업이 하나뿐이면 접두어를 비교할 대상이 없어 정책사업을 "기타"로 둔다.)
-function splitPolicyDetail(headers: string[]): { policy: string; detail: string }[] {
-  const results = new Array<{ policy: string; detail: string }>(headers.length);
-  let remaining = headers.map((s, i) => ({ i, s: s.trim() }));
-
-  while (remaining.length > 0) {
-    let bestPrefix = '';
-    for (let a = 0; a < remaining.length; a++) {
-      for (let b = a + 1; b < remaining.length; b++) {
-        const prefix = commonWordPrefix(remaining[a].s, remaining[b].s);
-        if (prefix.length > bestPrefix.length) bestPrefix = prefix;
-      }
-    }
-
-    if (!bestPrefix) {
-      remaining.forEach((r) => {
-        results[r.i] = { policy: '기타', detail: r.s };
-      });
-      break;
-    }
-
-    const matched = remaining.filter((r) => r.s.startsWith(bestPrefix));
-    matched.forEach((r) => {
-      results[r.i] = { policy: bestPrefix, detail: r.s.slice(bestPrefix.length).trim() };
-    });
-    remaining = remaining.filter((r) => !r.s.startsWith(bestPrefix));
-  }
-
-  return results;
-}
-
-// 부서 전체 설명자료 PDF(여러 세부사업이 "세 출 예 산" 블록으로 이어진 문서)를
-// 세부사업 단위로 분리해 각 블록의 3섹션을 추출한다.
+// 부서 전체 설명자료 PDF는 세부사업마다 "세 출 예 산" 블록이 반복되고, 각 블록은
+// "페이지 {세부사업명} 정책사업 {정책명} 단위사업 {단위명} □ 예산 총괄표 ..." 순서로
+// 나온다(브라우저 pdf.js 추출 순서 기준 — 화면에 보이는 순서와 다르다는 점 주의).
+// "세 출 예 산"으로 블록 경계를 먼저 확정한 뒤 그 안에서만 정책/단위/세부를 뽑아야
+// 특정 블록에 "예산 총괄표" 표기가 없을 때 다음 블록까지 잘못 삼키는 걸 막을 수 있다.
 export function extractProgramBlocks(text: string): ProgramMaterial[] {
-  const headerRegex = /정책사업\s+([\s\S]+?)\s*단위사업\s+([\s\S]+?)(?=□?\s*예산\s*총괄표)/g;
-
-  type RawBlock = { headerCombined: string; unit: string; bodyStart: number };
-  const rawBlocks: RawBlock[] = [];
-  let match: RegExpExecArray | null;
-  while ((match = headerRegex.exec(text)) !== null) {
-    rawBlocks.push({
-      headerCombined: match[1].trim(),
-      unit: match[2].trim(),
-      bodyStart: match.index,
-    });
+  const blockMarker = /세\s*출\s*예\s*산/g;
+  const starts: number[] = [];
+  let markerMatch: RegExpExecArray | null;
+  while ((markerMatch = blockMarker.exec(text)) !== null) {
+    starts.push(markerMatch.index);
   }
 
-  if (rawBlocks.length === 0) return [];
+  if (starts.length === 0) return [];
 
   const results: ProgramMaterial[] = [];
 
-  // 단위사업별로 묶어서 그 안에서 정책/세부를 분리해야 접두어 비교 정확도가 올라간다.
-  const byUnit = new Map<string, number[]>();
-  rawBlocks.forEach((b, idx) => {
-    const list = byUnit.get(b.unit) ?? [];
-    list.push(idx);
-    byUnit.set(b.unit, list);
-  });
+  for (let i = 0; i < starts.length; i++) {
+    const chunk = text.slice(starts[i], i < starts.length - 1 ? starts[i + 1] : text.length);
 
-  const policyDetailByIndex = new Map<number, { policy: string; detail: string }>();
-  byUnit.forEach((indices) => {
-    const headers = indices.map((i) => rawBlocks[i].headerCombined);
-    const split = splitPolicyDetail(headers);
-    indices.forEach((i, j) => policyDetailByIndex.set(i, split[j]));
-  });
+    const detailMatch = /페이지\s+([\s\S]+?)\s*정책사업\s+/.exec(chunk);
+    const policyMatch = /정책사업\s+([\s\S]+?)\s*단위사업\s+/.exec(chunk);
+    const unitMatch =
+      /단위사업\s+([\s\S]+?)\s*□?\s*(?:예산\s*총괄표)/.exec(chunk) ||
+      /단위사업\s+([\s\S]+?)\s*□/.exec(chunk);
 
-  for (let i = 0; i < rawBlocks.length; i++) {
-    const bodyEnd = i < rawBlocks.length - 1 ? rawBlocks[i + 1].bodyStart : text.length;
-    const body = text.slice(rawBlocks[i].bodyStart, bodyEnd);
-    const sections = splitIntoSections(body);
+    if (!detailMatch || !policyMatch || !unitMatch) continue;
 
+    const detail = detailMatch[1].trim();
+    const policy = policyMatch[1].trim();
+    const unit = unitMatch[1].trim();
+    if (!detail || !policy || !unit) continue;
+
+    const sections = splitIntoSections(chunk);
     const sectionMap: Record<SectionKey, string> = {
       예산총괄표: '',
       사업설명서: '',
@@ -151,15 +105,7 @@ export function extractProgramBlocks(text: string): ProgramMaterial[] {
       sectionMap[s.title] = s.content;
     });
 
-    const { policy, detail } = policyDetailByIndex.get(i) ?? { policy: '기타', detail: rawBlocks[i].headerCombined };
-    if (!detail) continue;
-
-    results.push({
-      policy,
-      unit: rawBlocks[i].unit,
-      detail,
-      sections: sectionMap,
-    });
+    results.push({ policy, unit, detail, sections: sectionMap });
   }
 
   return results;
