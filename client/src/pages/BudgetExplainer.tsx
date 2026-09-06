@@ -23,6 +23,85 @@ type ExplainerDoc = {
   uploadedAt: string;
 };
 
+type TreeNode = {
+  id: string;
+  title: string;
+  level: "정책사업" | "단위사업" | "세부사업";
+  children: TreeNode[];
+  sectionId?: string;
+};
+
+const buildTreeFromSections = (sections: ExplainerSection[]): TreeNode[] => {
+  const tree: Map<string, TreeNode> = new Map();
+  let policyCounter = 0;
+  let unitCounter = 0;
+
+  sections.forEach((section) => {
+    const title = section.title.trim();
+
+    // 단순 휴리스틱: 제목을 상위 정책 > 단위사업 > 세부사업으로 파싱
+    // 예: "정책1 > 단위1 > 세부1" 형태로 분할 시도
+    const parts = title.split(">").map((p) => p.trim()).filter(Boolean);
+
+    if (parts.length === 0) return;
+
+    // 정책사업 생성 또는 조회
+    const policyTitle = parts[0];
+    const policyId = `policy-${policyTitle}`;
+    let policyNode = tree.get(policyId);
+    if (!policyNode) {
+      policyNode = {
+        id: policyId,
+        title: policyTitle,
+        level: "정책사업",
+        children: [],
+      };
+      tree.set(policyId, policyNode);
+    }
+
+    if (parts.length === 1) {
+      policyNode.sectionId = section.id;
+      return;
+    }
+
+    // 단위사업 생성 또는 조회
+    const unitTitle = parts[1];
+    const unitId = `${policyId}-unit-${unitTitle}`;
+    let unitNode = policyNode.children.find((n) => n.id === unitId);
+    if (!unitNode) {
+      unitNode = {
+        id: unitId,
+        title: unitTitle,
+        level: "단위사업",
+        children: [],
+      };
+      policyNode.children.push(unitNode);
+    }
+
+    if (parts.length === 2) {
+      unitNode.sectionId = section.id;
+      return;
+    }
+
+    // 세부사업 생성
+    const detailTitle = parts[2];
+    const detailId = `${unitId}-detail-${detailTitle}`;
+    let detailNode = unitNode.children.find((n) => n.id === detailId);
+    if (!detailNode) {
+      detailNode = {
+        id: detailId,
+        title: detailTitle,
+        level: "세부사업",
+        children: [],
+        sectionId: section.id,
+      };
+      unitNode.children.push(detailNode);
+    }
+  });
+
+  return Array.from(tree.values());
+};
+
 export default function BudgetExplainer() {
   const [params] = useSearchParams();
   const initialDept = params.get("dept") ?? "";
@@ -45,6 +124,9 @@ export default function BudgetExplainer() {
   const [pendingSections, setPendingSections] = useState<ExplainerSection[]>([]);
   const [parsing, setParsing] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 트리 노드 확장/축소 상태
+  const [expandedNodes, setExpandedNodes] = useState<Set<string>>(new Set());
 
   const showToast = (message: string) => {
     setToast(message);
@@ -201,6 +283,91 @@ export default function BudgetExplainer() {
       .map((entry) => entry.section);
   }, [pendingText, pendingSections, doc, requestOrder]);
 
+  const treeNodes = useMemo(() => buildTreeFromSections(activeSections), [activeSections]);
+
+  const TreeNodeRenderer = ({ node, depth = 0 }: { node: TreeNode; depth?: number }) => {
+    const isExpanded = expandedNodes.has(node.id);
+    const hasChildren = node.children.length > 0;
+
+    const toggleExpand = () => {
+      const newExpanded = new Set(expandedNodes);
+      if (isExpanded) {
+        newExpanded.delete(node.id);
+      } else {
+        newExpanded.add(node.id);
+      }
+      setExpandedNodes(newExpanded);
+    };
+
+    const handleSelect = () => {
+      if (node.sectionId) {
+        const section = activeSections.find((s) => s.id === node.sectionId);
+        if (section) {
+          setSelectedTitle(section.title);
+        }
+      } else if (!hasChildren) {
+        setSelectedTitle(node.title);
+      }
+    };
+
+    const paddingLeft = 12 + depth * 16;
+
+    return (
+      <div key={node.id}>
+        <button
+          onClick={() => {
+            if (hasChildren) toggleExpand();
+            handleSelect();
+          }}
+          style={{
+            paddingLeft: `${paddingLeft}px`,
+            paddingRight: "12px",
+            height: "32px",
+            display: "flex",
+            alignItems: "center",
+            gap: "6px",
+            fontSize: "13px",
+            color: selectedTitle === node.title || (node.sectionId && selectedTitle === activeSections.find((s) => s.id === node.sectionId)?.title) ? "var(--text)" : "var(--text-muted)",
+            backgroundColor: selectedTitle === node.title || (node.sectionId && selectedTitle === activeSections.find((s) => s.id === node.sectionId)?.title) ? "rgba(118, 157, 194, 0.14)" : "transparent",
+            border: "1px solid var(--line)",
+            borderRadius: "6px",
+            cursor: "pointer",
+            textAlign: "left",
+            transition: "all 0.15s",
+            margin: "4px 0",
+          }}
+          onMouseEnter={(e) => {
+            e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
+            e.currentTarget.style.color = "var(--text)";
+          }}
+          onMouseLeave={(e) => {
+            const isSelected = selectedTitle === node.title || (node.sectionId && selectedTitle === activeSections.find((s) => s.id === node.sectionId)?.title);
+            if (!isSelected) {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.color = "var(--text-muted)";
+            }
+          }}
+        >
+          {hasChildren && (
+            <span style={{ display: "flex", alignItems: "center", minWidth: "16px" }}>
+              <ChevronDown size={14} style={{ transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)", transition: "transform 0.15s" }} />
+            </span>
+          )}
+          {!hasChildren && <span style={{ minWidth: "16px" }} />}
+          <span style={{ flex: 1, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{node.title}</span>
+          <span style={{ fontSize: "11px", color: "var(--text-faint)", marginLeft: "4px" }}>{node.level}</span>
+        </button>
+        {hasChildren && isExpanded && (
+          <div>
+            {node.children.map((child) => (
+              <TreeNodeRenderer key={child.id} node={child} depth={depth + 1} />
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  };
+
   return (
     <Layout showToast={showToast}>
       <div className="page-content">
@@ -242,42 +409,13 @@ export default function BudgetExplainer() {
         <section className="table-panel" style={{ display: "flex", height: "calc(100vh - 300px)", padding: "0" }}>
           {/* 좌측: 정책사업/세부사업 목록 */}
           <div style={{ width: "280px", borderRight: "1px solid var(--line)", padding: "20px", overflowY: "auto" }}>
-            <div style={{ fontSize: "16px", fontWeight: 700, color: "var(--text)", marginBottom: "20px", paddingBottom: "12px", borderBottom: "2px solid var(--line)" }}>
-              {department}
-            </div>
             <div style={{ fontSize: "13px", fontWeight: 600, color: "var(--text-muted)", marginBottom: "12px" }}>
               정책사업
             </div>
-            {activeSections.length > 0 ? (
-              <div style={{ display: "flex", flexDirection: "column", gap: "8px" }}>
-                {activeSections.map((section) => (
-                  <button
-                    key={section.id}
-                    onClick={() => setSelectedTitle(section.title)}
-                    style={{
-                      padding: "8px 12px",
-                      textAlign: "left",
-                      backgroundColor: selectedTitle === section.title ? "rgba(118, 157, 194, 0.14)" : "transparent",
-                      border: "1px solid var(--line)",
-                      borderRadius: "6px",
-                      color: selectedTitle === section.title ? "var(--text)" : "var(--text-muted)",
-                      fontSize: "13px",
-                      cursor: "pointer",
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
-                      e.currentTarget.style.color = "var(--text)";
-                    }}
-                    onMouseLeave={(e) => {
-                      if (selectedTitle !== section.title) {
-                        e.currentTarget.style.backgroundColor = "transparent";
-                        e.currentTarget.style.color = "var(--text-muted)";
-                      }
-                    }}
-                  >
-                    {section.title}
-                  </button>
+            {treeNodes.length > 0 ? (
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px" }}>
+                {treeNodes.map((node) => (
+                  <TreeNodeRenderer key={node.id} node={node} />
                 ))}
               </div>
             ) : (
