@@ -2,6 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
+import { extractPdfText, splitIntoSections, type MaterialSection } from "@/lib/pdfExplainer";
 import { ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
@@ -15,7 +16,12 @@ type Material = {
   id?: number;
   explanation_text?: string;
   file_name?: string;
+  sections_json?: string;
   uploaded_at?: string;
+};
+
+type ParsedSections = {
+  [key: string]: string;
 };
 
 export default function BudgetExplainer() {
@@ -35,6 +41,7 @@ export default function BudgetExplainer() {
   const [materialLoading, setMaterialLoading] = useState(false);
   const [showTree, setShowTree] = useState(true);
   const [uploading, setUploading] = useState(false);
+  const [parsedSections, setParsedSections] = useState<ParsedSections>({});
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 계층 구조 데이터 로드
@@ -65,6 +72,7 @@ export default function BudgetExplainer() {
   useEffect(() => {
     if (!selectedPath) {
       setMaterial(null);
+      setParsedSections({});
       return;
     }
 
@@ -81,6 +89,18 @@ export default function BudgetExplainer() {
         );
         const { data } = await response.json();
         setMaterial(data || null);
+
+        // sections_json 파싱
+        if (data?.sections_json) {
+          try {
+            const sections = JSON.parse(data.sections_json);
+            setParsedSections(sections);
+          } catch (e) {
+            setParsedSections({});
+          }
+        } else {
+          setParsedSections({});
+        }
       } catch (error) {
         console.error("설명자료 로드 실패:", error);
       } finally {
@@ -107,15 +127,26 @@ export default function BudgetExplainer() {
 
     setUploading(true);
     try {
+      // PDF 파싱
+      const pdfText = await extractPdfText(file);
+      const sections = splitIntoSections(pdfText);
+
+      // 섹션을 객체로 변환
+      const sectionsObj: ParsedSections = {};
+      sections.forEach(section => {
+        sectionsObj[section.title] = section.content;
+      });
+
       const [dept, policy, unit, detail] = selectedPath.split("|");
+
       const formData = new FormData();
       formData.append("department", dept);
       formData.append("policy", policy);
       formData.append("unit", unit);
       formData.append("detail", detail);
       formData.append("level", "세부사업");
-      formData.append("file", file);
-      formData.append("explanation_text", material?.explanation_text || "");
+      formData.append("file_name", file.name);
+      formData.append("sections_json", JSON.stringify(sectionsObj));
 
       const response = await fetch("/api/budget-explainer/save-material", {
         method: "POST",
@@ -135,6 +166,16 @@ export default function BudgetExplainer() {
         );
         const { data } = await getResponse.json();
         setMaterial(data || null);
+
+        if (data?.sections_json) {
+          try {
+            const loadedSections = JSON.parse(data.sections_json);
+            setParsedSections(loadedSections);
+          } catch (e) {
+            setParsedSections({});
+          }
+        }
+
         if (fileInputRef.current) {
           fileInputRef.current.value = "";
         }
@@ -281,23 +322,24 @@ export default function BudgetExplainer() {
         <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
           <label
             className="icon-stack-btn"
-            aria-label={uploading ? "업로드 중" : "파일 업로드"}
-            data-tooltip={uploading ? "업로드 중..." : "파일 업로드"}
-            style={uploading ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+            aria-label={uploading ? "업로드 중" : "PDF 업로드"}
+            data-tooltip={uploading ? "업로드 중..." : "PDF 업로드"}
+            style={uploading || !selectedPath ? { opacity: 0.5, pointerEvents: "none" } : undefined}
           >
             <div className="icon-stack-front"><Upload size={20} /></div>
             <input
               ref={fileInputRef}
               className="upload-input"
               type="file"
-              disabled={uploading}
+              accept=".pdf"
+              disabled={uploading || !selectedPath}
               onChange={handleFileUpload}
             />
           </label>
         </div>
 
         {/* 메인 컨텐츠 */}
-        <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 280px)" }}>
+        <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 300px)" }}>
           {/* 좌측: 계층 구조 */}
           {showTree && (
             <div
@@ -420,9 +462,9 @@ export default function BudgetExplainer() {
                     </div>
                     {materialLoading ? (
                       <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
-                    ) : material?.explanation_text ? (
+                    ) : parsedSections["예산총괄표"] ? (
                       <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
-                        {material.explanation_text}
+                        {parsedSections["예산총괄표"]}
                       </div>
                     ) : (
                       <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
@@ -431,7 +473,7 @@ export default function BudgetExplainer() {
                     )}
                   </div>
 
-                  {/* 사업설명서 */}
+                  {/* 사업명세서 */}
                   <div
                     style={{
                       border: "1px solid var(--line)",
@@ -443,11 +485,19 @@ export default function BudgetExplainer() {
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
-                      사업설명서
+                      사업명세서
                     </div>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", flex: 1 }}>
-                      {material?.file_name ? `📄 ${material.file_name}` : "업로드 필요"}
-                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
+                    ) : parsedSections["사업명세서"] ? (
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                        {parsedSections["사업명세서"]}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
 
                   {/* 편성현황 */}
@@ -464,9 +514,17 @@ export default function BudgetExplainer() {
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
                       편성현황
                     </div>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)", flex: 1 }}>
-                      데이터 준비 중
-                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
+                    ) : parsedSections["편성현황"] ? (
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                        {parsedSections["편성현황"]}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
                 </div>
               </div>

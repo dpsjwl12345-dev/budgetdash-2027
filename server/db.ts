@@ -95,13 +95,19 @@ export function initializeDB(): Promise<sqlite3.Database> {
                   level TEXT NOT NULL,
                   explanation_text TEXT,
                   file_name TEXT,
+                  sections_json TEXT,
                   uploaded_at DATETIME,
                   created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
                   updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
                 )
               `, (err) => {
                 if (err) reject(err);
-                else resolve(db!);
+                else {
+                  // 기존 테이블에 sections_json 컬럼 추가 (이미 있으면 무시)
+                  db!.run(`ALTER TABLE budget_explainer_materials ADD COLUMN sections_json TEXT`, () => {
+                    resolve(db!);
+                  });
+                }
               });
             });
           });
