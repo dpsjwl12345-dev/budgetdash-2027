@@ -2,7 +2,7 @@ import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-import { ChevronDown, X } from "lucide-react";
+import { ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -277,6 +277,25 @@ export default function BudgetExplainer() {
           </div>
         </section>
 
+        {/* 상단 컨트롤 바 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
+          <label
+            className="icon-stack-btn"
+            aria-label={uploading ? "업로드 중" : "파일 업로드"}
+            data-tooltip={uploading ? "업로드 중..." : "파일 업로드"}
+            style={uploading ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+          >
+            <div className="icon-stack-front"><Upload size={20} /></div>
+            <input
+              ref={fileInputRef}
+              className="upload-input"
+              type="file"
+              disabled={uploading}
+              onChange={handleFileUpload}
+            />
+          </label>
+        </div>
+
         {/* 메인 컨텐츠 */}
         <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 280px)" }}>
           {/* 좌측: 계층 구조 */}
@@ -380,44 +399,6 @@ export default function BudgetExplainer() {
                       ☰
                     </button>
                   )}
-                </div>
-
-                {/* 파일 업로드 버튼 */}
-                <div style={{ marginBottom: "16px", paddingBottom: "16px", borderBottom: "1px solid var(--line)" }}>
-                  <input
-                    ref={fileInputRef}
-                    type="file"
-                    onChange={handleFileUpload}
-                    disabled={uploading}
-                    style={{ display: "none" }}
-                  />
-                  <button
-                    onClick={() => fileInputRef.current?.click()}
-                    disabled={uploading}
-                    style={{
-                      width: "100%",
-                      padding: "12px",
-                      fontSize: "13px",
-                      fontWeight: 500,
-                      border: "1px solid var(--line)",
-                      borderRadius: "4px",
-                      backgroundColor: "rgba(118, 157, 194, 0.1)",
-                      color: "var(--text)",
-                      cursor: uploading ? "not-allowed" : "pointer",
-                      opacity: uploading ? 0.6 : 1,
-                      transition: "all 0.15s",
-                    }}
-                    onMouseEnter={(e) => {
-                      if (!uploading) {
-                        e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.2)";
-                      }
-                    }}
-                    onMouseLeave={(e) => {
-                      e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
-                    }}
-                  >
-                    {uploading ? "업로드 중..." : "📁 파일 업로드"}
-                  </button>
                 </div>
 
                 {materialLoading ? (
