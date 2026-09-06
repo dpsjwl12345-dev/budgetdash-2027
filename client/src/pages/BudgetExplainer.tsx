@@ -362,10 +362,10 @@ export default function BudgetExplainer() {
           )}
 
           {/* 우측: 설명자료 */}
-          <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+          <div style={{ flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
-              <div style={{ padding: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <div style={{ padding: "16px", display: "flex", flexDirection: "column", height: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexShrink: 0 }}>
                   <h2 style={{ fontSize: "18px", margin: 0 }}>
                     {selectedPath.split("|").pop()}
                   </h2>
@@ -401,8 +401,9 @@ export default function BudgetExplainer() {
                   )}
                 </div>
 
-                {/* 3개 섹션 박스 */}
-                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginTop: "16px" }}>
+                {/* 3개 섹션 박스 - 전체 높이 사용 */}
+                <div style={{ flex: 1, display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px" }}>
+
                   {/* 예산총괄표 */}
                   <div
                     style={{
@@ -410,6 +411,8 @@ export default function BudgetExplainer() {
                       borderRadius: "8px",
                       padding: "16px",
                       backgroundColor: "var(--bg-secondary)",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
@@ -418,7 +421,7 @@ export default function BudgetExplainer() {
                     {materialLoading ? (
                       <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
                     ) : material?.explanation_text ? (
-                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
                         {material.explanation_text}
                       </div>
                     ) : (
@@ -435,12 +438,14 @@ export default function BudgetExplainer() {
                       borderRadius: "8px",
                       padding: "16px",
                       backgroundColor: "var(--bg-secondary)",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
                       사업설명서
                     </div>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", flex: 1 }}>
                       {material?.file_name ? `📄 ${material.file_name}` : "업로드 필요"}
                     </div>
                   </div>
@@ -452,12 +457,14 @@ export default function BudgetExplainer() {
                       borderRadius: "8px",
                       padding: "16px",
                       backgroundColor: "var(--bg-secondary)",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
                     <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
                       편성현황
                     </div>
-                    <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)", flex: 1 }}>
                       데이터 준비 중
                     </div>
                   </div>
