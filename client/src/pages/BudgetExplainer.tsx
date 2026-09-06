@@ -94,11 +94,15 @@ export default function BudgetExplainer() {
         if (data?.sections_json) {
           try {
             const sections = JSON.parse(data.sections_json);
+            console.log("✅ Parsed sections:", sections);
+            console.log("📋 Section keys:", Object.keys(sections));
             setParsedSections(sections);
           } catch (e) {
+            console.error("❌ Failed to parse sections_json:", e);
             setParsedSections({});
           }
         } else {
+          console.warn("⚠️ No sections_json in data:", data);
           setParsedSections({});
         }
       } catch (error) {
@@ -408,9 +412,14 @@ export default function BudgetExplainer() {
             {selectedPath ? (
               <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexShrink: 0 }}>
-                  <h2 style={{ fontSize: "18px", margin: 0 }}>
-                    {selectedPath.split("|").pop()}
-                  </h2>
+                  <div>
+                    <h2 style={{ fontSize: "18px", margin: 0 }}>
+                      {selectedPath.split("|").pop()}
+                    </h2>
+                    <div style={{ fontSize: "11px", color: "var(--text-muted)", marginTop: "4px" }}>
+                      📊 Sections: {Object.keys(parsedSections).join(", ") || "empty"}
+                    </div>
+                  </div>
                   {!showTree && (
                     <button
                       onClick={() => setShowTree(true)}
