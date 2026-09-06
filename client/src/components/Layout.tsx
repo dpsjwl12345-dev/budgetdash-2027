@@ -35,7 +35,7 @@ export default function Layout({
   showToast,
 }: {
   children: React.ReactNode;
-  showToast: (message: string) => void;
+  showToast?: (message: string) => void;
 }) {
   const [location, setLocation] = useLocation();
   const isBudgetExplainerPage = location === "/budget-explainer";
@@ -84,7 +84,7 @@ export default function Layout({
                   } else if (path && !disabled) {
                     setLocation(path);
                   } else if (disabled) {
-                    showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
+                    showToast?.(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
                   }
                 }}
               >
@@ -161,7 +161,7 @@ export default function Layout({
                 className="nav-item"
                 aria-label={label}
                 onClick={() =>
-                  showToast(`${label} 화면은 다음 업데이트에서 제공됩니다.`)
+                  showToast?.(`${label} 화면은 다음 업데이트에서 제공됩니다.`)
                 }
               >
                 <Icon size={17} />
