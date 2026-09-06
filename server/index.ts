@@ -187,19 +187,25 @@ async function startServer() {
     }
   });
 
-  // 설명자료 데이터 Google Sheets에서 동기화
+  // 설명자료 데이터 동기화
   app.post('/api/budget-explainer/sync', async (req, res) => {
     try {
-      const sheetId = '1_vw-lmyaQbS1t9uNFTza52pYTiTOoYhi';
-      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+      // 로컬 test.csv 파일 읽기
+      const fs = await import('fs');
+      const fsPromises = fs.promises;
+      const testFilePath = path.join(__dirname, '../client/public/test.csv');
 
-      const response = await fetch(csvUrl);
-      const csv = await response.text();
+      let csv: string;
+      try {
+        csv = await fsPromises.readFile(testFilePath, 'utf-8');
+      } catch (fileError) {
+        return res.status(500).json({ success: false, error: `File read error: ${String(fileError)}` });
+      }
 
       // CSV 파싱
       const lines = csv.split('\n').filter((line) => line.trim());
       if (lines.length < 2) {
-        return res.status(400).json({ error: 'CSV 데이터가 없습니다' });
+        return res.status(400).json({ error: `CSV 데이터가 없습니다 (lines: ${lines.length}, csv length: ${csv.length})` });
       }
 
       // 헤더 파싱
@@ -209,12 +215,12 @@ async function startServer() {
         headerMap[h] = i;
       });
 
-      // 필수 컬럼 확인
-      const requiredColumns = ['부서명', '정책', '단위', '세부'];
-      for (const col of requiredColumns) {
-        if (!(col in headerMap)) {
-          return res.status(400).json({ error: `필수 컬럼 '${col}'이 없습니다` });
-        }
+      // 필수 컬럼 확인 (부서명 또는 부서, 정책, 단위, 세부 또는 세부사업)
+      const departmentCol = headerMap['부서명'] !== undefined ? '부서명' : '부서';
+      const detailCol = headerMap['세부'] !== undefined ? '세부' : '세부사업';
+
+      if (!(departmentCol in headerMap) || !('정책' in headerMap) || !('단위' in headerMap) || !(detailCol in headerMap)) {
+        return res.status(400).json({ error: `필수 컬럼이 없습니다. 필요한 컬럼: ${departmentCol}, 정책, 단위, ${detailCol}` });
       }
 
       const db = getDB();
@@ -240,10 +246,10 @@ async function startServer() {
             // CSV 파싱 (간단한 버전 - 따옴표 처리 기본)
             const parts = line.split(',').map((p) => p.trim().replace(/"/g, ''));
 
-            const department = parts[headerMap['부서명']] || '';
+            const department = parts[headerMap[departmentCol]] || '';
             const policy = parts[headerMap['정책']] || '';
             const unit = parts[headerMap['단위']] || '';
-            const detail = parts[headerMap['세부']] || '';
+            const detail = parts[headerMap[detailCol]] || '';
             const detailName = parts[headerMap['부기명']] || '';
 
             if (!department || !policy || !unit || !detail) continue;
@@ -342,7 +348,7 @@ async function startServer() {
     res.status(404).json({ error: 'Not found' });
   });
 
-  const port = process.env.PORT || 3001;
+  const port = process.env.PORT || 3002;
 
   server.listen(port, () => {
     console.log(`Server running on http://localhost:${port}/`);
