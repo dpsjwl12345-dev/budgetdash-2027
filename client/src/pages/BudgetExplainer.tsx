@@ -401,28 +401,67 @@ export default function BudgetExplainer() {
                   )}
                 </div>
 
-                {materialLoading ? (
-                  <div style={{ color: "var(--text-muted)" }}>로딩 중...</div>
-                ) : material?.explanation_text ? (
+                {/* 3개 섹션 박스 */}
+                <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr 1fr", gap: "16px", marginTop: "16px" }}>
+                  {/* 예산총괄표 */}
                   <div
                     style={{
-                      whiteSpace: "pre-wrap",
-                      lineHeight: "1.6",
-                      color: "var(--text)",
+                      border: "1px solid var(--line)",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      backgroundColor: "var(--bg-secondary)",
                     }}
                   >
-                    {material.explanation_text}
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
+                      예산총괄표
+                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
+                    ) : material?.explanation_text ? (
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap" }}>
+                        {material.explanation_text}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ color: "var(--text-muted)" }}>
-                    설명자료가 없습니다
+
+                  {/* 사업설명서 */}
+                  <div
+                    style={{
+                      border: "1px solid var(--line)",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      backgroundColor: "var(--bg-secondary)",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
+                      사업설명서
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                      {material?.file_name ? `📄 ${material.file_name}` : "업로드 필요"}
+                    </div>
                   </div>
-                )}
-                {material?.file_name && (
-                  <div style={{ marginTop: "16px", fontSize: "12px" }}>
-                    📄 {material.file_name}
+
+                  {/* 편성현황 */}
+                  <div
+                    style={{
+                      border: "1px solid var(--line)",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      backgroundColor: "var(--bg-secondary)",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
+                      편성현황
+                    </div>
+                    <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                      데이터 준비 중
+                    </div>
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               <div
