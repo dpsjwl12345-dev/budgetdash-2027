@@ -68,7 +68,23 @@ export function initializeDB(): Promise<sqlite3.Database> {
             )
           `, (err) => {
             if (err) reject(err);
-            else resolve(db!);
+
+            // 설명자료 데이터 테이블
+            db!.run(`
+              CREATE TABLE IF NOT EXISTS budget_explainer_data (
+                id INTEGER PRIMARY KEY AUTOINCREMENT,
+                department TEXT NOT NULL,
+                policy TEXT NOT NULL,
+                unit TEXT NOT NULL,
+                detail TEXT NOT NULL,
+                detail_name TEXT,
+                created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+                updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+              )
+            `, (err) => {
+              if (err) reject(err);
+              else resolve(db!);
+            });
           });
         });
       });

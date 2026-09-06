@@ -161,6 +161,115 @@ async function startServer() {
     }
   });
 
+  // 설명자료 데이터 로드 (부서별)
+  app.get('/api/budget-explainer/data', (req, res) => {
+    try {
+      const department = String(req.query.department || '');
+      if (!department) {
+        res.status(400).json({ error: '부서를 선택해주세요' });
+        return;
+      }
+
+      const db = getDB();
+      db.all(
+        'SELECT * FROM budget_explainer_data WHERE department = ? ORDER BY policy, unit, detail',
+        [department],
+        (err, rows) => {
+          if (err) {
+            res.status(500).json({ error: String(err) });
+          } else {
+            res.json({ data: rows || [] });
+          }
+        }
+      );
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
+  // 설명자료 데이터 Google Sheets에서 동기화
+  app.post('/api/budget-explainer/sync', async (req, res) => {
+    try {
+      const sheetId = '1_vw-lmyaQbS1t9uNFTza52pYTiTOoYhi';
+      const csvUrl = `https://docs.google.com/spreadsheets/d/${sheetId}/export?format=csv`;
+
+      const response = await fetch(csvUrl);
+      const csv = await response.text();
+
+      // CSV 파싱
+      const lines = csv.split('\n').filter((line) => line.trim());
+      if (lines.length < 2) {
+        return res.status(400).json({ error: 'CSV 데이터가 없습니다' });
+      }
+
+      // 헤더 파싱
+      const headers = lines[0].split(',').map((h) => h.trim().replace(/"/g, ''));
+      const headerMap: Record<string, number> = {};
+      headers.forEach((h, i) => {
+        headerMap[h] = i;
+      });
+
+      // 필수 컬럼 확인
+      const requiredColumns = ['부서명', '정책', '단위', '세부'];
+      for (const col of requiredColumns) {
+        if (!(col in headerMap)) {
+          return res.status(400).json({ error: `필수 컬럼 '${col}'이 없습니다` });
+        }
+      }
+
+      const db = getDB();
+      db.serialize(() => {
+        db.run('DELETE FROM budget_explainer_data', (err) => {
+          if (err) {
+            res.status(500).json({ success: false, error: String(err) });
+            return;
+          }
+
+          const stmt = db.prepare(`
+            INSERT INTO budget_explainer_data (department, policy, unit, detail, detail_name)
+            VALUES (?, ?, ?, ?, ?)
+          `);
+
+          let count = 0;
+          const seen = new Set<string>();
+
+          for (let i = 1; i < lines.length; i++) {
+            const line = lines[i];
+            if (!line.trim()) continue;
+
+            // CSV 파싱 (간단한 버전 - 따옴표 처리 기본)
+            const parts = line.split(',').map((p) => p.trim().replace(/"/g, ''));
+
+            const department = parts[headerMap['부서명']] || '';
+            const policy = parts[headerMap['정책']] || '';
+            const unit = parts[headerMap['단위']] || '';
+            const detail = parts[headerMap['세부']] || '';
+            const detailName = parts[headerMap['부기명']] || '';
+
+            if (!department || !policy || !unit || !detail) continue;
+
+            // 중복 제거 (같은 정책/단위/세부 조합)
+            const key = `${department}|${policy}|${unit}|${detail}`;
+            if (seen.has(key)) continue;
+            seen.add(key);
+
+            stmt.run(department, policy, unit, detail, detailName);
+            count++;
+          }
+
+          stmt.finalize();
+          res.json({
+            success: true,
+            message: `${count}개 항목을 동기화했습니다`,
+            count,
+          });
+        });
+      });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
   // 2026 예산집행 엑셀 업로드
   app.post('/api/budget-execution-2026/upload', upload.single('file'), (_req, res) => {
     try {
