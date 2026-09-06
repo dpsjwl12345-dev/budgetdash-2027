@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
@@ -20,9 +20,9 @@ type Material = {
 
 export default function BudgetExplainer() {
   const [params] = useSearchParams();
-  const initialDept = params.get("dept") ?? "";
+  const initialDept = params.get("dept") ?? DEPARTMENTS[0];
 
-  const [department, setDepartment] = useState(
+  const [department] = useState(
     DEPARTMENTS.includes(initialDept as (typeof DEPARTMENTS)[number])
       ? initialDept
       : DEPARTMENTS[0]
@@ -222,35 +222,6 @@ export default function BudgetExplainer() {
               </span>
               <h1 style={{ marginTop: "-4px" }}>부서별 예산설명자료</h1>
             </div>
-          </div>
-
-          {/* 부서 선택 */}
-          <div style={{ display: "flex", gap: "12px", marginTop: "16px" }}>
-            {DEPARTMENTS.map((dept) => (
-              <button
-                key={dept}
-                onClick={() => {
-                  setDepartment(dept);
-                  setSelectedPath("");
-                  setMaterial(null);
-                }}
-                style={{
-                  padding: "6px 12px",
-                  borderRadius: "6px",
-                  border: "1px solid var(--line)",
-                  backgroundColor:
-                    department === dept
-                      ? "rgba(118, 157, 194, 0.2)"
-                      : "transparent",
-                  color: department === dept ? "var(--text)" : "var(--text-muted)",
-                  cursor: "pointer",
-                  fontSize: "12px",
-                  transition: "all 0.15s",
-                }}
-              >
-                {dept}
-              </button>
-            ))}
           </div>
         </section>
 
