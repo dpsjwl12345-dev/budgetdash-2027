@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-import { ChevronDown } from "lucide-react";
+import { ChevronDown, X } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -33,6 +33,7 @@ export default function BudgetExplainer() {
   const [selectedPath, setSelectedPath] = useState<string>("");
   const [material, setMaterial] = useState<Material | null>(null);
   const [materialLoading, setMaterialLoading] = useState(false);
+  const [showTree, setShowTree] = useState(true);
 
   // 계층 구조 데이터 로드
   useEffect(() => {
@@ -231,36 +232,107 @@ export default function BudgetExplainer() {
         {/* 메인 컨텐츠 */}
         <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 280px)" }}>
           {/* 좌측: 계층 구조 */}
-          <div
-            style={{
-              flex: "0 0 300px",
-              borderRight: "1px solid var(--line)",
-              paddingRight: "16px",
-              overflowY: "auto",
-            }}
-          >
-            {loading ? (
-              <div style={{ padding: "16px", color: "var(--text-muted)" }}>
-                로딩 중...
-              </div>
-            ) : treeData.length === 0 ? (
-              <div style={{ padding: "16px", color: "var(--text-muted)" }}>
-                데이터가 없습니다
-              </div>
-            ) : (
-              treeData.map((node) => (
-                <TreeNodeRenderer key={node.title} node={node} depth={0} />
-              ))
-            )}
-          </div>
+          {showTree && (
+            <div
+              style={{
+                flex: "0 0 300px",
+                borderRight: "1px solid var(--line)",
+                paddingRight: "16px",
+                paddingTop: "8px",
+                overflowY: "auto",
+                position: "relative",
+              }}
+            >
+              {selectedPath && (
+                <button
+                  onClick={() => setShowTree(false)}
+                  style={{
+                    position: "sticky",
+                    top: 0,
+                    right: 0,
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    width: "28px",
+                    height: "28px",
+                    padding: 0,
+                    marginBottom: "8px",
+                    border: "1px solid var(--line)",
+                    borderRadius: "4px",
+                    backgroundColor: "var(--bg-secondary)",
+                    color: "var(--text-muted)",
+                    cursor: "pointer",
+                    transition: "all 0.15s",
+                    marginLeft: "auto",
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
+                    e.currentTarget.style.color = "var(--text)";
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
+                    e.currentTarget.style.color = "var(--text-muted)";
+                  }}
+                  title="네비게이션 닫기"
+                >
+                  <X size={16} />
+                </button>
+              )}
+              {loading ? (
+                <div style={{ padding: "16px", color: "var(--text-muted)" }}>
+                  로딩 중...
+                </div>
+              ) : treeData.length === 0 ? (
+                <div style={{ padding: "16px", color: "var(--text-muted)" }}>
+                  데이터가 없습니다
+                </div>
+              ) : (
+                treeData.map((node) => (
+                  <TreeNodeRenderer key={node.title} node={node} depth={0} />
+                ))
+              )}
+            </div>
+          )}
 
           {/* 우측: 설명자료 */}
-          <div style={{ flex: 1, overflowY: "auto" }}>
+          <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
             {selectedPath ? (
               <div style={{ padding: "16px" }}>
-                <h2 style={{ fontSize: "18px", marginBottom: "16px" }}>
-                  {selectedPath.split("|").pop()}
-                </h2>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+                  <h2 style={{ fontSize: "18px", margin: 0 }}>
+                    {selectedPath.split("|").pop()}
+                  </h2>
+                  {!showTree && (
+                    <button
+                      onClick={() => setShowTree(true)}
+                      style={{
+                        display: "flex",
+                        alignItems: "center",
+                        justifyContent: "center",
+                        width: "28px",
+                        height: "28px",
+                        padding: 0,
+                        border: "1px solid var(--line)",
+                        borderRadius: "4px",
+                        backgroundColor: "var(--bg-secondary)",
+                        color: "var(--text-muted)",
+                        cursor: "pointer",
+                        transition: "all 0.15s",
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
+                        e.currentTarget.style.color = "var(--text)";
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
+                        e.currentTarget.style.color = "var(--text-muted)";
+                      }}
+                      title="네비게이션 열기"
+                    >
+                      ☰
+                    </button>
+                  )}
+                </div>
                 {materialLoading ? (
                   <div style={{ color: "var(--text-muted)" }}>로딩 중...</div>
                 ) : material?.explanation_text ? (
