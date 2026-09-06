@@ -333,7 +333,6 @@ export default function BudgetExplainer() {
                     color: "var(--text-muted)",
                     cursor: "pointer",
                     transition: "all 0.15s",
-                    marginLeft: "auto",
                   }}
                   onMouseEnter={(e) => {
                     e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
@@ -368,10 +367,7 @@ export default function BudgetExplainer() {
           <div style={{ flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
               <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexShrink: 0 }}>
-                  <h2 style={{ fontSize: "18px", margin: 0 }}>
-                    {selectedPath.split("|").pop()}
-                  </h2>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "12px", marginBottom: "16px", flexShrink: 0 }}>
                   {!showTree && (
                     <button
                       onClick={() => setShowTree(true)}
@@ -388,6 +384,7 @@ export default function BudgetExplainer() {
                         color: "var(--text-muted)",
                         cursor: "pointer",
                         transition: "all 0.15s",
+                        flexShrink: 0,
                       }}
                       onMouseEnter={(e) => {
                         e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
@@ -402,6 +399,9 @@ export default function BudgetExplainer() {
                       ☰
                     </button>
                   )}
+                  <h2 style={{ fontSize: "18px", margin: 0 }}>
+                    {selectedPath.split("|").pop()}
+                  </h2>
                 </div>
 
                 {/* 3개 섹션 박스 - 페이지 전체 세로 구분 */}
