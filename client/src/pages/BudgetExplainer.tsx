@@ -255,8 +255,11 @@ export default function BudgetExplainer() {
 
   return (
     <Layout>
-      <div className="page-content">
-        <section className="page-heading">
+      <div
+        className="page-content"
+        style={{ height: "calc(100vh - 65px)", display: "flex", flexDirection: "column", overflow: "hidden" }}
+      >
+        <section className="page-heading" style={{ flexShrink: 0 }}>
           <div className="title-area">
             <div
               className="title-wrapper"
@@ -278,7 +281,7 @@ export default function BudgetExplainer() {
         </section>
 
         {/* 상단 컨트롤 바 */}
-        <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
+        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexShrink: 0, marginTop: "0px", marginBottom: "8px" }}>
           <label
             className="icon-stack-btn"
             aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
@@ -304,10 +307,11 @@ export default function BudgetExplainer() {
         </div>
 
         {/* 메인 컨텐츠 */}
-        <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 300px)" }}>
+        <div style={{ display: "flex", gap: "16px", padding: "0 16px 16px", flex: 1, minHeight: 0 }}>
           {/* 좌측: 계층 구조 */}
           {showTree && (
             <div
+              className="dark-scrollbar"
               style={{
                 flex: "0 0 300px",
                 borderRight: "1px solid var(--line)",
@@ -368,7 +372,7 @@ export default function BudgetExplainer() {
           )}
 
           {/* 우측: 설명자료 */}
-          <div style={{ flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" }}>
+          <div style={{ flex: 1, overflow: "hidden", position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
               <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "12px", marginBottom: "16px", flexShrink: 0 }}>
@@ -403,13 +407,25 @@ export default function BudgetExplainer() {
                       ☰
                     </button>
                   )}
-                  <h2 style={{ fontSize: "18px", margin: 0 }}>
-                    {selectedPath.split("|").pop()}
+                  <h2 style={{ fontSize: "18px", margin: 0, display: "flex", alignItems: "center", gap: "8px", flexWrap: "wrap" }}>
+                    {(() => {
+                      const [, policy, unit, detail] = selectedPath.split("|");
+                      return (
+                        <>
+                          <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>{policy}</span>
+                          <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>›</span>
+                          <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>{unit}</span>
+                          <span style={{ color: "var(--text-muted)", fontWeight: 400 }}>›</span>
+                          <span>{detail}</span>
+                        </>
+                      );
+                    })()}
                   </h2>
                 </div>
 
                 {/* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */}
                 <div
+                  className="dark-scrollbar"
                   style={{
                     flex: 1,
                     overflowY: "auto",
