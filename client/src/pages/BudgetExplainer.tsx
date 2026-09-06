@@ -257,9 +257,16 @@ export default function BudgetExplainer() {
     <Layout>
       <div
         className="page-content"
-        style={{ height: "calc(100vh - 65px)", display: "flex", flexDirection: "column", overflow: "hidden" }}
+        style={{
+          height: "calc(100vh - 65px)",
+          display: "flex",
+          flexDirection: "column",
+          overflow: "hidden",
+          paddingTop: "20px",
+          paddingBottom: "16px",
+        }}
       >
-        <section className="page-heading" style={{ flexShrink: 0 }}>
+        <section className="page-heading" style={{ flexShrink: 0, marginBottom: "12px" }}>
           <div className="title-area">
             <div
               className="title-wrapper"
@@ -277,37 +284,33 @@ export default function BudgetExplainer() {
               </span>
               <h1 style={{ marginTop: "-4px" }}>부서별 예산설명자료</h1>
             </div>
+            <label
+              className="icon-stack-btn"
+              aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
+              data-tooltip={
+                uploading
+                  ? uploadProgress
+                    ? `업로드 중... (${uploadProgress.done}/${uploadProgress.total})`
+                    : "PDF 분석 중..."
+                  : "부서 설명자료 PDF 업로드"
+              }
+              style={uploading ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+            >
+              <div className="icon-stack-front"><Upload size={20} /></div>
+              <input
+                ref={fileInputRef}
+                className="upload-input"
+                type="file"
+                accept=".pdf"
+                disabled={uploading}
+                onChange={handleFileUpload}
+              />
+            </label>
           </div>
         </section>
 
-        {/* 상단 컨트롤 바 */}
-        <div style={{ display: "flex", justifyContent: "flex-end", alignItems: "center", flexShrink: 0, marginTop: "0px", marginBottom: "8px" }}>
-          <label
-            className="icon-stack-btn"
-            aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
-            data-tooltip={
-              uploading
-                ? uploadProgress
-                  ? `업로드 중... (${uploadProgress.done}/${uploadProgress.total})`
-                  : "PDF 분석 중..."
-                : "부서 설명자료 PDF 업로드"
-            }
-            style={uploading ? { opacity: 0.5, pointerEvents: "none" } : undefined}
-          >
-            <div className="icon-stack-front"><Upload size={20} /></div>
-            <input
-              ref={fileInputRef}
-              className="upload-input"
-              type="file"
-              accept=".pdf"
-              disabled={uploading}
-              onChange={handleFileUpload}
-            />
-          </label>
-        </div>
-
         {/* 메인 컨텐츠 */}
-        <div style={{ display: "flex", gap: "16px", padding: "0 16px 16px", flex: 1, minHeight: 0 }}>
+        <div style={{ display: "flex", gap: "16px", padding: "0 16px", flex: 1, minHeight: 0 }}>
           {/* 좌측: 계층 구조 */}
           {showTree && (
             <div
