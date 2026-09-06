@@ -427,63 +427,63 @@ export default function BudgetExecution2026() {
             <table className="budget-table">
               <thead>
                 <tr style={{ background: 'rgba(140, 155, 170, 0.1)' }}>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>정책사업명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>단위사업명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>세부사업명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>통계목</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>예산현액</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>본예산</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>추경</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>성립전</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>예비비</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>이월액계</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>집행액</th>
-                  <th style={{ textAlign: 'right', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>집행률</th>
+                  <th style={{ textAlign: 'left', padding: '12px 4px', fontWeight: '600', color: 'var(--text)', fontSize: '16px', width: '120px', maxWidth: '120px' }}>정책사업명</th>
+                  <th style={{ textAlign: 'left', padding: '12px 4px', fontWeight: '600', color: 'var(--text)', fontSize: '16px', width: '100px', maxWidth: '100px' }}>단위사업명</th>
+                  <th style={{ textAlign: 'left', padding: '12px 0px', , fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>세부사업명</th>
+                  <th style={{ textAlign: 'left', padding: '12px 6px 12px 2px', , fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>통계목</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px 12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>예산현액</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>본예산</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>추경</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>성립전</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>예비비</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>이월액계</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>집행액</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontWeight: '600', color: 'var(--text)', fontSize: '16px' }}>집행률</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedData.length > 0 && (
                   <tr key="total" style={{ fontWeight: '700', background: 'rgba(91, 155, 240, 0.08)' }}>
+                    <td style={{ padding: '12px 8px', fontSize: '16px', color: '#5b9bf0', width: '120px', maxWidth: '120px' }}></td>
+                    <td style={{ padding: '12px 2px', fontSize: '16px', color: '#5b9bf0', width: '100px', maxWidth: '100px' }}></td>
                     <td style={{ padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}></td>
-                    <td style={{ padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}></td>
-                    <td style={{ padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}></td>
-                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}>합계</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.budget)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.original)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.supplementary)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', color: '#5b9bf0' }}>{formatAmount(filteredTotals.preEstablishment)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', color: '#5b9bf0' }}>{formatAmount(filteredTotals.reserve)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', color: '#5b9bf0' }}>{formatAmount(filteredTotals.carryover)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.executed)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '16px', color: '#5b9bf0' }}>{filteredTotals.budget > 0 ? ((filteredTotals.executed / filteredTotals.budget) * 100).toFixed(1) : '0.0'}%</td>
+                    <td style={{ textAlign: 'left', padding: '12px 4px 12px 4px', width: '50px', maxWidth: '50px', fontSize: '16px', color: '#5b9bf0' }}>합계</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px 12px 12px', width: '80px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.budget)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.original)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.supplementary)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', color: '#5b9bf0' }}>{formatAmount(filteredTotals.preEstablishment)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', color: '#5b9bf0' }}>{formatAmount(filteredTotals.reserve)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', overflow: 'hidden', textOverflow: 'ellipsis', color: '#5b9bf0' }}>{formatAmount(filteredTotals.carryover)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', color: '#5b9bf0' }}>{formatAmount(filteredTotals.executed)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '16px', color: '#5b9bf0' }}>{filteredTotals.budget > 0 ? ((filteredTotals.executed / filteredTotals.budget) * 100).toFixed(1) : '0.0'}%</td>
                   </tr>
                 )}
                 {paginatedData.map((row) => (
                   <tr key={row.id} className="budget-row">
-                    <td style={{ padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyName}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.programName}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitName}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.statisticsCode}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '14px' }}>{formatAmount(row.budget)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '14px' }}>{formatAmount(row.original)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '14px' }}>{formatAmount(row.supplementary)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(row.preEstablishment)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(row.reserve)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', width: '80px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(row.carryover)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '14px' }}>{formatAmount(row.executed)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 8px', fontSize: '14px' }}>{row.executionRate.toFixed(1)}%</td>
+                    <td style={{ padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '120px', maxWidth: '120px' }}>{row.policyName}</td>
+                    <td style={{ padding: '12px 2px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', width: '100px', maxWidth: '100px' }}>{row.programName}</td>
+                    <td style={{ padding: '12px 0px', , fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitName}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 2px 12px 0px', width: '50px', maxWidth: '50px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.statisticsCode}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px 12px 12px', width: '80px', fontSize: '14px' }}>{formatAmount(row.budget)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px' }}>{formatAmount(row.original)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px' }}>{formatAmount(row.supplementary)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(row.preEstablishment)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(row.reserve)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(row.carryover)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px' }}>{formatAmount(row.executed)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', width: '80px', fontSize: '14px' }}>{row.executionRate.toFixed(1)}%</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          <div className="table-footer">
-            <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginBottom: '8px' }}>
-              {filteredData.length === 0 ? '0' : (page - 1) * rowsPerPage + 1}–{Math.min(page * rowsPerPage, filteredData.length)} of {filteredData.length}
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '16px' }}>
+          <div className="table-footer" style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
               <Pagination page={page} totalPages={totalPages} onChange={setPage} />
+            </div>
+            <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
+              {filteredData.length === 0 ? '0' : (page - 1) * rowsPerPage + 1}–{Math.min(page * rowsPerPage, filteredData.length)} of {filteredData.length}
             </div>
           </div>
         </section>
