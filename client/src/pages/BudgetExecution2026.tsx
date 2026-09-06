@@ -261,15 +261,15 @@ export default function BudgetExecution2026() {
               <div style={{ display: "flex", gap: "12px" }} aria-label="2026 예산 요약">
                 <article className="metric-card" style={{ "--tint": "#5b9bf0", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
                   <div className="metric-header">
-                    <div className="metric-top"><span>총 예산</span></div>
+                    <div className="metric-top"><span>총예산액</span></div>
                   </div>
-                  <strong style={{ textAlign: "right" }}>{formatAmount(Math.round(filteredTotals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
+                  <strong style={{ textAlign: "right" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(filteredTotals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
                 </article>
                 <article className="metric-card" style={{ "--tint": "#4fc3a1", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
                   <div className="metric-header">
-                    <div className="metric-top"><span>집행액</span></div>
+                    <div className="metric-top"><span>총집행액</span></div>
                   </div>
-                  <strong style={{ textAlign: "right" }}>{formatAmount(Math.round(filteredTotals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
+                  <strong style={{ textAlign: "right" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(filteredTotals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
                 </article>
               </div>
               <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
@@ -404,6 +404,7 @@ export default function BudgetExecution2026() {
                   </div>
                 )}
               </div>
+              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(단위: 천원)</span>
             </div>
 
             <div className="search-box">

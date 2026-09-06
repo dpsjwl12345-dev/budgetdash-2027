@@ -6,7 +6,6 @@ import {
   SlidersHorizontal,
   Database,
   ChevronRight,
-  Landmark,
   X,
   ChevronDown,
 } from "lucide-react";
@@ -59,9 +58,6 @@ export default function Layout({
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
         <div className="brand-lockup">
-          <div className="brand-icon">
-            <Landmark size={18} />
-          </div>
           <div className="sidebar-title">
             <span>지방자치단체</span>
             <span>예산편성검토</span>

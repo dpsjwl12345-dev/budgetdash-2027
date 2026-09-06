@@ -19,12 +19,34 @@ type Material = {
   uploaded_at?: string;
 };
 
+// 트리에서 제목이 일치하는 세부사업 노드를 찾아 전체 경로와, 그 노드가 보이도록
+// 펼쳐야 하는 조상 노드 id 목록을 함께 반환한다.
+function findDetailNode(
+  node: TreeNode,
+  depth: number,
+  ancestorIds: string[],
+  titleChain: string[],
+  targetTitle: string
+): { path: string; expandIds: string[] } | null {
+  const chain = [...titleChain, node.title];
+  if (node.level === "세부사업" && node.title === targetTitle) {
+    return { path: chain.join("|"), expandIds: ancestorIds };
+  }
+  const nodeId = `${depth}-${node.title}`;
+  for (const child of node.children) {
+    const found = findDetailNode(child, depth + 1, [...ancestorIds, nodeId], chain, targetTitle);
+    if (found) return found;
+  }
+  return null;
+}
+
 export default function BudgetExplainer() {
   const [params] = useSearchParams();
   const requestedDept = params.get("dept") ?? DEPARTMENTS[0];
   const department = DEPARTMENTS.includes(requestedDept as (typeof DEPARTMENTS)[number])
     ? requestedDept
     : DEPARTMENTS[0];
+  const requestedItem = params.get("item");
 
   const [treeData, setTreeData] = useState<TreeNode[]>([]);
   const [loading, setLoading] = useState(false);
@@ -47,20 +69,27 @@ export default function BudgetExplainer() {
       const { data } = await response.json();
       setTreeData(data || []);
       if (data && data.length > 0) {
-        setExpandedNodes(new Set([`0-${data[0].title}`]));
+        const rootId = `0-${data[0].title}`;
+        const match = requestedItem
+          ? findDetailNode(data[0], 0, [], [], requestedItem)
+          : null;
+        if (match) {
+          setExpandedNodes(new Set([rootId, ...match.expandIds]));
+          setSelectedPath(match.path);
+        } else {
+          setExpandedNodes(new Set([rootId]));
+          setSelectedPath("");
+        }
       }
     } catch (error) {
       console.error("데이터 로드 실패:", error);
     } finally {
       setLoading(false);
     }
-  }, [department]);
+  }, [department, requestedItem]);
 
   useEffect(() => {
     loadTree();
-    // 부서가 바뀌면 이전 부서의 선택 상태가 남아있으면 안 되므로 초기화한다.
-    setSelectedPath("");
-    setExpandedNodes(new Set());
   }, [loadTree]);
 
   // 설명자료 로드
