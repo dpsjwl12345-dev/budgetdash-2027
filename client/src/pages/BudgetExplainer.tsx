@@ -1,8 +1,9 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useRef } from "react";
 import { useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-import { ChevronDown, X } from "lucide-react";
+import { extractPdfText, splitIntoSections, type MaterialSection } from "@/lib/pdfExplainer";
+import { ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -15,7 +16,12 @@ type Material = {
   id?: number;
   explanation_text?: string;
   file_name?: string;
+  sections_json?: string;
   uploaded_at?: string;
+};
+
+type ParsedSections = {
+  [key: string]: string;
 };
 
 export default function BudgetExplainer() {
@@ -34,6 +40,9 @@ export default function BudgetExplainer() {
   const [material, setMaterial] = useState<Material | null>(null);
   const [materialLoading, setMaterialLoading] = useState(false);
   const [showTree, setShowTree] = useState(true);
+  const [uploading, setUploading] = useState(false);
+  const [parsedSections, setParsedSections] = useState<ParsedSections>({});
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // 계층 구조 데이터 로드
   useEffect(() => {
@@ -63,6 +72,7 @@ export default function BudgetExplainer() {
   useEffect(() => {
     if (!selectedPath) {
       setMaterial(null);
+      setParsedSections({});
       return;
     }
 
@@ -79,6 +89,18 @@ export default function BudgetExplainer() {
         );
         const { data } = await response.json();
         setMaterial(data || null);
+
+        // sections_json 파싱
+        if (data?.sections_json) {
+          try {
+            const sections = JSON.parse(data.sections_json);
+            setParsedSections(sections);
+          } catch (e) {
+            setParsedSections({});
+          }
+        } else {
+          setParsedSections({});
+        }
       } catch (error) {
         console.error("설명자료 로드 실패:", error);
       } finally {
@@ -97,6 +119,73 @@ export default function BudgetExplainer() {
       newExpanded.add(nodeId);
     }
     setExpandedNodes(newExpanded);
+  };
+
+  const handleFileUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedPath) return;
+
+    setUploading(true);
+    try {
+      // PDF 파싱
+      const pdfText = await extractPdfText(file);
+      const sections = splitIntoSections(pdfText);
+
+      // 섹션을 객체로 변환
+      const sectionsObj: ParsedSections = {};
+      sections.forEach(section => {
+        sectionsObj[section.title] = section.content;
+      });
+
+      const [dept, policy, unit, detail] = selectedPath.split("|");
+
+      const formData = new FormData();
+      formData.append("department", dept);
+      formData.append("policy", policy);
+      formData.append("unit", unit);
+      formData.append("detail", detail);
+      formData.append("level", "세부사업");
+      formData.append("file_name", file.name);
+      formData.append("sections_json", JSON.stringify(sectionsObj));
+
+      const response = await fetch("/api/budget-explainer/save-material", {
+        method: "POST",
+        body: formData,
+      });
+
+      const result = await response.json();
+      if (result.success) {
+        alert("파일이 업로드되었습니다");
+        // 새로 로드
+        const getResponse = await fetch(
+          `/api/budget-explainer/get-material?department=${encodeURIComponent(
+            dept
+          )}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(
+            unit
+          )}&detail=${encodeURIComponent(detail)}`
+        );
+        const { data } = await getResponse.json();
+        setMaterial(data || null);
+
+        if (data?.sections_json) {
+          try {
+            const loadedSections = JSON.parse(data.sections_json);
+            setParsedSections(loadedSections);
+          } catch (e) {
+            setParsedSections({});
+          }
+        }
+
+        if (fileInputRef.current) {
+          fileInputRef.current.value = "";
+        }
+      }
+    } catch (error) {
+      console.error("업로드 실패:", error);
+      alert("업로드에 실패했습니다");
+    } finally {
+      setUploading(false);
+    }
   };
 
   const TreeNodeRenderer = ({
@@ -229,8 +318,28 @@ export default function BudgetExplainer() {
           </div>
         </section>
 
+        {/* 상단 컨트롤 바 */}
+        <div style={{ display: "flex", justifyContent: "flex-end", padding: "12px 20px", borderBottom: "1px solid var(--line)" }}>
+          <label
+            className="icon-stack-btn"
+            aria-label={uploading ? "업로드 중" : "PDF 업로드"}
+            data-tooltip={uploading ? "업로드 중..." : "PDF 업로드"}
+            style={uploading || !selectedPath ? { opacity: 0.5, pointerEvents: "none" } : undefined}
+          >
+            <div className="icon-stack-front"><Upload size={20} /></div>
+            <input
+              ref={fileInputRef}
+              className="upload-input"
+              type="file"
+              accept=".pdf"
+              disabled={uploading || !selectedPath}
+              onChange={handleFileUpload}
+            />
+          </label>
+        </div>
+
         {/* 메인 컨텐츠 */}
-        <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 280px)" }}>
+        <div style={{ display: "flex", gap: "16px", padding: "16px", height: "calc(100vh - 300px)" }}>
           {/* 좌측: 계층 구조 */}
           {showTree && (
             <div
@@ -295,10 +404,10 @@ export default function BudgetExplainer() {
           )}
 
           {/* 우측: 설명자료 */}
-          <div style={{ flex: 1, overflowY: "auto", position: "relative" }}>
+          <div style={{ flex: 1, overflowY: "auto", position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
-              <div style={{ padding: "16px" }}>
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px" }}>
+              <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", height: "100%" }}>
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "16px", flexShrink: 0 }}>
                   <h2 style={{ fontSize: "18px", margin: 0 }}>
                     {selectedPath.split("|").pop()}
                   </h2>
@@ -333,28 +442,91 @@ export default function BudgetExplainer() {
                     </button>
                   )}
                 </div>
-                {materialLoading ? (
-                  <div style={{ color: "var(--text-muted)" }}>로딩 중...</div>
-                ) : material?.explanation_text ? (
+
+                {/* 3개 섹션 박스 - 페이지 전체 세로 구분 */}
+                <div style={{ flex: 1, display: "grid", gridTemplateRows: "1fr 1fr 1fr", gap: "16px" }}>
+
+                  {/* 예산총괄표 */}
                   <div
                     style={{
-                      whiteSpace: "pre-wrap",
-                      lineHeight: "1.6",
-                      color: "var(--text)",
+                      border: "1px solid var(--line)",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      backgroundColor: "var(--bg-secondary)",
+                      display: "flex",
+                      flexDirection: "column",
                     }}
                   >
-                    {material.explanation_text}
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
+                      예산총괄표
+                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
+                    ) : parsedSections["예산총괄표"] ? (
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                        {parsedSections["예산총괄표"]}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
-                ) : (
-                  <div style={{ color: "var(--text-muted)" }}>
-                    설명자료가 없습니다
+
+                  {/* 사업명세서 */}
+                  <div
+                    style={{
+                      border: "1px solid var(--line)",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      backgroundColor: "var(--bg-secondary)",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
+                      사업명세서
+                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
+                    ) : parsedSections["사업명세서"] ? (
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                        {parsedSections["사업명세서"]}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
-                )}
-                {material?.file_name && (
-                  <div style={{ marginTop: "16px", fontSize: "12px" }}>
-                    📄 {material.file_name}
+
+                  {/* 편성현황 */}
+                  <div
+                    style={{
+                      border: "1px solid var(--line)",
+                      borderRadius: "8px",
+                      padding: "16px",
+                      backgroundColor: "var(--bg-secondary)",
+                      display: "flex",
+                      flexDirection: "column",
+                    }}
+                  >
+                    <div style={{ fontSize: "13px", fontWeight: 600, marginBottom: "12px", color: "var(--text)" }}>
+                      편성현황
+                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "12px" }}>로딩 중...</div>
+                    ) : parsedSections["편성현황"] ? (
+                      <div style={{ fontSize: "12px", color: "var(--text)", lineHeight: "1.6", whiteSpace: "pre-wrap", flex: 1, overflowY: "auto" }}>
+                        {parsedSections["편성현황"]}
+                      </div>
+                    ) : (
+                      <div style={{ fontSize: "12px", color: "var(--text-muted)" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
-                )}
+                </div>
               </div>
             ) : (
               <div

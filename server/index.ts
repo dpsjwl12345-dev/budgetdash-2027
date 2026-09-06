@@ -231,10 +231,15 @@ async function startServer() {
     }
   });
 
-  // 설명자료 텍스트 저장 (세부사업별)
-  app.post('/api/budget-explainer/save-material', async (req, res) => {
+  // 설명자료 텍스트 저장 (세부사업별) - JSON 또는 파일 업로드
+  app.post('/api/budget-explainer/save-material', upload.single('file'), async (req, res) => {
     try {
-      const { department, policy, unit, detail, level, explanation_text, file_name } = req.body;
+      const { department, policy, unit, detail, level, explanation_text, sections_json, file_name } = req.body;
+      let fileName = file_name || null;
+
+      if (req.file) {
+        fileName = req.file.originalname;
+      }
 
       if (!department || !policy || !unit || !detail || !level) {
         return res.status(400).json({ success: false, error: '필수 정보가 부족합니다' });
@@ -243,9 +248,9 @@ async function startServer() {
       const db = getDB();
       db.run(
         `INSERT OR REPLACE INTO budget_explainer_materials
-         (department, policy, unit, detail, level, explanation_text, file_name, uploaded_at, updated_at)
-         VALUES (?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
-        [department, policy, unit, detail, level, explanation_text || null, file_name || null],
+         (department, policy, unit, detail, level, explanation_text, file_name, sections_json, uploaded_at, updated_at)
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, datetime('now'), datetime('now'))`,
+        [department, policy, unit, detail, level, explanation_text || null, fileName, sections_json || null],
         (err) => {
           if (err) {
             res.status(500).json({ success: false, error: String(err) });
