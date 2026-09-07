@@ -250,6 +250,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .nav-subitem:hover { color: #c5d5e5; background: rgba(118, 157, 194, 0.08); }
 .nav-item { width: 100%; min-height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #aaaaaa; text-align: left; font-size: 16px; font-weight: 560; transition: background 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 .nav-item svg { color: #b7c2cf; background: rgba(100, 120, 150, 0.12); padding: 10px; border-radius: 50%; border: 1px solid transparent; width: 40px; height: 40px; box-sizing: border-box; transition: all 200ms ease; stroke-width: 1.5px !important; flex-shrink: 0; }
+.nav-item svg:last-child { background: none !important; padding: 0 !important; border: none !important; width: auto !important; height: auto !important; }
 .nav-item:hover { color: #ffffff; background: transparent; }
 .nav-item:hover svg { color: #dbe2e8; background: rgba(203, 213, 225, 0.16); border-color: rgba(203, 213, 225, 0.3); }
 .nav-item.active { color: #ffffff; background: rgba(203, 213, 225, 0.08); border-color: transparent; }
