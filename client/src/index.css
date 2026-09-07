@@ -1118,3 +1118,67 @@ select option {
   .modal-card.staff-modal-card .staff-dept-card,
   .modal-card.staff-modal-card .staff-dept-card:nth-child(n + 5) { flex-basis: auto; }
 }
+
+
+/* Connected execution filter bar */
+.execution-filter-bar {
+  display: flex;
+  align-items: stretch;
+  gap: 0;
+  position: relative;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  overflow: visible;
+  background: #ffffff;
+  box-shadow: 0 1px 2px rgba(0, 0, 0, 0.05);
+}
+.execution-filter-segment {
+  position: relative;
+  display: flex;
+  align-items: center;
+}
+.execution-filter-bar > select,
+.execution-filter-bar .execution-filter-segment > button {
+  height: 38px;
+  min-width: 140px;
+  padding: 8px 12px;
+  border: 0;
+  border-right: 1px solid #e2e8f0;
+  border-radius: 0 !important;
+  background: #ffffff !important;
+  color: #334155 !important;
+  box-shadow: none !important;
+  font-size: 14px;
+  font-weight: 500;
+}
+.execution-filter-bar > select {
+  min-width: 108px;
+  cursor: pointer;
+}
+.execution-filter-bar .execution-filter-segment:last-of-type > button {
+  border-right: 0;
+}
+.execution-filter-bar > select:hover,
+.execution-filter-bar .execution-filter-segment > button:hover,
+.execution-filter-bar > select:focus,
+.execution-filter-bar .execution-filter-segment > button:focus-visible {
+  background: #f8fafc !important;
+  outline: none;
+}
+.execution-filter-bar .execution-filter-segment > div {
+  border-radius: 0 0 8px 8px !important;
+}
+.execution-filter-unit {
+  display: inline-flex;
+  align-items: center;
+  height: 38px;
+  padding: 0 10px;
+  color: var(--text-muted);
+  font-size: 12px;
+  white-space: nowrap;
+}
+@media (max-width: 760px) {
+  .execution-filter-bar { max-width: 100%; overflow-x: auto; }
+  .execution-filter-bar > select,
+  .execution-filter-bar .execution-filter-segment > button { min-width: 125px; }
+}

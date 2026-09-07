@@ -320,7 +320,8 @@ export default function BudgetExecution2026() {
         <section className="table-panel" style={{ marginTop: "8px" }}>
           <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
             <div className="table-title">
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} ref={dropdownRef}>
+              <div className="execution-filter-bar">
+                <div className="execution-filter-segment" ref={dropdownRef}>
                 <select
                   value={selectedYear}
                   onChange={(event) => { setSelectedYear(event.target.value); setSelectedDepartment(""); setSelectedProgramName(""); setPage(1); }}
@@ -443,9 +444,9 @@ export default function BudgetExecution2026() {
                     </div>
                   </div>
                 )}
-              </div>
+                </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} ref={dropdownProgramRef}>
+                <div className="execution-filter-segment" ref={dropdownProgramRef}>
                 <button
                   onClick={() => setDropdownProgramOpen(!dropdownProgramOpen)}
                   style={{
@@ -559,9 +560,10 @@ export default function BudgetExecution2026() {
                     </div>
                   </div>
                 )}
-              </div>
+                </div>
 
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(단위: 천원)</span>
+                <span className="execution-filter-unit">(단위: 천원)</span>
+              </div>
             </div>
 
             <div className="search-box">
