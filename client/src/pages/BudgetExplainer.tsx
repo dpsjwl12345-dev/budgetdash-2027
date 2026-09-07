@@ -15,8 +15,15 @@ type TreeNode = {
 type Material = {
   id?: number;
   file_name?: string;
-  sections_json?: { images?: string[] } | null;
+  sections_json?: { images?: string[]; evidence?: EvidenceFile[] } | null;
   uploaded_at?: string;
+};
+
+type EvidenceFile = {
+  name: string;
+  type: string;
+  size: number;
+  dataUrl: string;
 };
 
 // 트리에서 제목이 일치하는 세부사업 노드를 찾아 전체 경로와, 그 노드가 보이도록
@@ -177,6 +184,51 @@ export default function BudgetExplainer() {
     } finally {
       setUploading(false);
       setUploadProgress(null);
+    }
+  };
+
+  const handleEvidenceUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+    const file = event.target.files?.[0];
+    if (!file || !selectedPath) return;
+    if (file.size > 2 * 1024 * 1024) {
+      alert("증빙자료는 2MB 이하만 등록할 수 있습니다");
+      event.target.value = "";
+      return;
+    }
+
+    try {
+      const dataUrl = await new Promise<string>((resolve, reject) => {
+        const reader = new FileReader();
+        reader.onload = () => resolve(String(reader.result));
+        reader.onerror = () => reject(new Error("파일을 읽지 못했습니다"));
+        reader.readAsDataURL(file);
+      });
+      const [dept, policy, unit, detail] = selectedPath.split("|");
+      const response = await fetch("/api/budget-explainer/save-evidence", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          department: dept,
+          policy,
+          unit,
+          detail,
+          evidence: { name: file.name, type: file.type, size: file.size, dataUrl },
+        }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "저장 실패");
+
+      const materialResponse = await fetch(
+        `/api/budget-explainer/get-material?department=${encodeURIComponent(dept)}&policy=${encodeURIComponent(policy)}&unit=${encodeURIComponent(unit)}&detail=${encodeURIComponent(detail)}`,
+      );
+      const materialResult = await materialResponse.json();
+      setMaterial(materialResult.data || null);
+      alert("증빙자료를 등록했습니다");
+    } catch (error) {
+      console.error("증빙자료 업로드 실패:", error);
+      alert(error instanceof Error ? error.message : "증빙자료 등록에 실패했습니다");
+    } finally {
+      event.target.value = "";
     }
   };
 
@@ -479,6 +531,23 @@ export default function BudgetExplainer() {
                     })()}
                   </h2>
                 </div>
+
+                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
+                  <strong style={{ fontSize: "14px" }}>세부사업 증빙자료</strong>
+                  <label className="template-link" style={{ cursor: "pointer" }}>
+                    + 증빙자료 등록
+                    <input type="file" hidden accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.hwp,.png,.jpg,.jpeg" onChange={handleEvidenceUpload} />
+                  </label>
+                </div>
+                {material?.sections_json?.evidence && material.sections_json.evidence.length > 0 && (
+                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px 0" }}>
+                    {material.sections_json.evidence.map((file) => (
+                      <a key={`${file.name}-${file.dataUrl.slice(-12)}`} href={file.dataUrl} download={file.name} target="_blank" rel="noreferrer" style={{ padding: "8px 10px", border: "1px solid var(--line)", borderRadius: "6px", color: "var(--text)", textDecoration: "none", fontSize: "12px" }}>
+                        {file.name}
+                      </a>
+                    ))}
+                  </div>
+                )}
 
                 {/* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */}
                 <div
