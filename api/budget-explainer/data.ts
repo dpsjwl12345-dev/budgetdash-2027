@@ -44,9 +44,10 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    const rows = [
-      ...(materialRows || []),
-      ...(budgetRows || []).map((row: any) => {
+    // 계층의 기준은 부서별 예산요구서로 고정한다.
+    // 설명자료 테이블에 잘못된 부서로 저장된 자료가 있어도 다른 부서의
+    // 정책·사업이 구조에 섞이지 않도록 한다.
+    const rows = (budgetRows || []).map((row: any) => {
         const parts = String(row.program || "")
           .split("\n")
           .map((part) => part.trim())
@@ -56,8 +57,7 @@ export default async function handler(req: any, res: any) {
           unit: parts.length > 1 ? parts[0] : "단위사업 미지정",
           detail: parts[parts.length - 1] || "미입력 사업",
         };
-      }),
-    ];
+      });
 
     const policyMap = new Map<string, any>();
     rows.forEach((row: any) => {
