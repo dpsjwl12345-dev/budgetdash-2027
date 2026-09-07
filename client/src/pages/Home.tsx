@@ -583,17 +583,20 @@ export default function Home() {
         })
         .filter((row) => row.amount > 0);
       if (!nextRows.length) throw new Error("empty");
-      setBudgetRows(nextRows);
       setSearch("");
-      showToast(`${nextRows.length}개 예산 항목을 엑셀에서 불러왔습니다.`);
-      // localStorage에 저장하고 서버에도 저장
-      try {
-        localStorage.setItem('budgetRows', JSON.stringify(nextRows));
-      } catch (error) {
-        console.warn('localStorage 저장 실패:', error);
-      }
-      setTimeout(() => saveDataToServer(nextRows), 500);
-    } catch {
+      showToast(`${nextRows.length}개 예산 항목을 엑셀에서 추가했습니다.`);
+      setBudgetRows((prevRows) => {
+        const allRows = [...prevRows, ...nextRows];
+        try {
+          localStorage.setItem('budgetRows', JSON.stringify(allRows));
+        } catch (error) {
+          console.warn('localStorage 저장 실패:', error);
+        }
+        setTimeout(() => saveDataToServer(allRows), 100);
+        return allRows;
+      });
+    } catch (error) {
+      console.error('Upload error:', error);
       showToast("엑셀 파일을 읽지 못했습니다. 첫 번째 시트와 열 이름을 확인해 주세요.");
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
