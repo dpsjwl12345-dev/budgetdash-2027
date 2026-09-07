@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import { ChevronDown, ChevronLeft, Star } from "lucide-react";
+import { ChevronDown, Star } from "lucide-react";
 
 type TabKey = "인건비" | "물건비" | "경상이전" | "자본지출" | "보전·반환";
 
@@ -19,11 +19,11 @@ const StarredSubtitle = ({ children }: { children: React.ReactNode }) => (
 );
 
 const TABS: { key: TabKey; label: string; description: string }[] = [
-  { key: "인건비", label: "인건비", description: "소속 직원의 급여 및 수당, 기간제 인부임 산정 탭" },
-  { key: "물건비", label: "물건비", description: "부서 운영 소모품비, 수당, 여비 및 행사 경비 탭" },
-  { key: "경상이전", label: "경상이전", description: "민간 지원금, 사회복지 수혜금 및 민간 위탁금 탭" },
-  { key: "자본지출", label: "자본지출", description: "토지 매입, 자산 취득 및 주요 시설공사 예산 탭" },
-  { key: "보전·반환", label: "보전·반환", description: "차입금 상환 및 국고보조금 정산 잔액 반납 탭" },
+  { key: "인건비", label: "인건비(100)", description: "소속 직원의 급여 및 수당, 기간제 인부임 산정 탭" },
+  { key: "물건비", label: "물건비(200)", description: "부서 운영 소모품비, 수당, 여비 및 행사 경비 탭" },
+  { key: "경상이전", label: "경상이전(300)", description: "민간 지원금, 사회복지 수혜금 및 민간 위탁금 탭" },
+  { key: "자본지출", label: "자본지출(400)", description: "토지 매입, 자산 취득 및 주요 시설공사 예산 탭" },
+  { key: "보전·반환", label: "보전·반환(600,800)", description: "차입금 상환 및 국고보조금 정산 잔액 반납 탭" },
 ];
 
 const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
@@ -663,12 +663,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
 };
 
 export default function StatisticsCodeDetail() {
-  const [activeTab, setActiveTab] = useState<TabKey>("인건비");
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [activeTab, setActiveTab] = useState<TabKey | null>(null);
+  const [expandedItem, setExpandedItem] = useState<string | null>(null);
 
-  const currentItems = ACCORDION_DATA[activeTab];
-  const currentTab = TABS.find((t) => t.key === activeTab);
-  const selectedItemData = selectedItem ? currentItems.find((item) => item.id === selectedItem) : null;
+  const currentItems = activeTab ? ACCORDION_DATA[activeTab] : [];
+  const currentTab = activeTab ? TABS.find((t) => t.key === activeTab) : null;
 
   return (
     <Layout>
@@ -686,7 +685,7 @@ export default function StatisticsCodeDetail() {
                   className={`guide-tab ${activeTab === tab.key ? "active" : ""}`}
                   onClick={() => {
                     setActiveTab(tab.key);
-                    setSelectedItem(null);
+                    setExpandedItem(null);
                   }}
                 >
                   {tab.label}
@@ -702,38 +701,35 @@ export default function StatisticsCodeDetail() {
           </div>
 
           <div className="guide-content">
-            {selectedItemData ? (
-              <div className="detail-view">
-                <button
-                  className="back-button"
-                  onClick={() => setSelectedItem(null)}
-                >
-                  <ChevronLeft size={20} />
-                  <span>뒤로가기</span>
-                </button>
-                <div className="detail-wrapper">
-                  {selectedItemData.content}
-                </div>
-              </div>
+            {!activeTab ? (
+              <div className="guide-empty">상단 탭에서 항목을 선택하면 세부 통계목 목록이 나타납니다.</div>
             ) : (
               <div className="accordion-container">
-                {currentItems.map((item) => (
-                  <button
-                    key={item.id}
-                    className="accordion-item"
-                    onClick={() => setSelectedItem(item.id)}
-                  >
-                    <div className="accordion-header">
-                      <ChevronDown size={18} />
-                      <div className="accordion-title-wrapper">
-                        <span className="accordion-title">{item.title}</span>
-                        {item.subtitle && (
-                          <span className="accordion-subtitle">{item.subtitle}</span>
-                        )}
-                      </div>
+                {currentItems.map((item) => {
+                  const isOpen = expandedItem === item.id;
+                  return (
+                    <div key={item.id} className={`accordion-item ${isOpen ? "open" : ""}`}>
+                      <button
+                        className="accordion-header"
+                        aria-expanded={isOpen}
+                        onClick={() => setExpandedItem(isOpen ? null : item.id)}
+                      >
+                        <ChevronDown size={18} className={`accordion-chevron ${isOpen ? "open" : ""}`} />
+                        <div className="accordion-title-wrapper">
+                          <span className="accordion-title">{item.title}</span>
+                          {item.subtitle && (
+                            <span className="accordion-subtitle">{item.subtitle}</span>
+                          )}
+                        </div>
+                      </button>
+                      {isOpen && (
+                        <div className="accordion-body">
+                          {item.content}
+                        </div>
+                      )}
                     </div>
-                  </button>
-                ))}
+                  );
+                })}
               </div>
             )}
           </div>
@@ -790,26 +786,32 @@ export default function StatisticsCodeDetail() {
           border-top: 1px solid var(--border);
         }
 
+        .guide-empty {
+          padding: 48px 16px;
+          text-align: center;
+          color: var(--text-muted);
+          font-size: 14px;
+        }
+
         .accordion-container {
           display: flex;
           flex-direction: column;
-          gap: 8px;
+          border: 1px solid rgba(118, 157, 194, 0.2);
+          border-radius: 6px;
+          overflow: hidden;
         }
 
         .accordion-item {
           background: none;
-          border: 1px solid rgba(118, 157, 194, 0.2);
-          border-radius: 6px;
-          overflow: hidden;
-          padding: 0;
-          cursor: pointer;
-          transition: all 0.2s;
-          text-align: left;
+          border-bottom: 1px solid rgba(118, 157, 194, 0.15);
         }
 
-        .accordion-item:hover {
-          background: rgba(118, 157, 194, 0.05);
-          border-color: rgba(118, 157, 194, 0.4);
+        .accordion-item:last-child {
+          border-bottom: none;
+        }
+
+        .accordion-item.open {
+          background: rgba(118, 157, 194, 0.03);
         }
 
         .accordion-header {
@@ -819,11 +821,28 @@ export default function StatisticsCodeDetail() {
           display: flex;
           align-items: flex-start;
           gap: 12px;
+          border: none;
+          cursor: pointer;
           transition: background 0.2s ease;
+          text-align: left;
         }
 
-        .accordion-item:hover .accordion-header {
+        .accordion-header:hover {
           background: rgba(118, 157, 194, 0.12);
+        }
+
+        .accordion-item.open .accordion-header {
+          background: rgba(118, 157, 194, 0.14);
+        }
+
+        .accordion-chevron {
+          flex-shrink: 0;
+          margin-top: 1px;
+          transition: transform 0.2s ease;
+        }
+
+        .accordion-chevron.open {
+          transform: rotate(180deg);
         }
 
         .accordion-title-wrapper {
@@ -845,40 +864,22 @@ export default function StatisticsCodeDetail() {
           color: var(--text-muted);
         }
 
-        .detail-view {
-          animation: slideIn 0.3s ease-out;
+        .accordion-body {
+          padding: 24px 20px;
+          background: var(--bg-surface);
+          border-top: 1px solid rgba(118, 157, 194, 0.15);
+          animation: expandDown 0.2s ease-out;
         }
 
-        @keyframes slideIn {
+        @keyframes expandDown {
           from {
             opacity: 0;
-            transform: translateY(10px);
+            transform: translateY(-6px);
           }
           to {
             opacity: 1;
             transform: translateY(0);
           }
-        }
-
-        .back-button {
-          display: flex;
-          align-items: center;
-          gap: 8px;
-          padding: 8px 12px;
-          margin-bottom: 20px;
-          background: rgba(118, 157, 194, 0.1);
-          border: 1px solid rgba(118, 157, 194, 0.2);
-          border-radius: 6px;
-          color: #5b9bf0;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .back-button:hover {
-          background: rgba(118, 157, 194, 0.2);
-          border-color: rgba(118, 157, 194, 0.4);
         }
 
         .detail-content {
@@ -897,8 +898,8 @@ export default function StatisticsCodeDetail() {
         .detail-content {
           max-width: 100%;
           width: 100%;
-          display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(380px, 1fr));
+          display: flex;
+          flex-direction: column;
           gap: 24px;
         }
 
@@ -909,7 +910,6 @@ export default function StatisticsCodeDetail() {
           margin-bottom: 32px;
           border-bottom: 2px solid var(--border);
           padding-bottom: 16px;
-          grid-column: 1 / -1;
         }
 
         .content-section {
@@ -947,11 +947,6 @@ export default function StatisticsCodeDetail() {
           margin: 0;
         }
 
-        .detail-wrapper {
-          padding: 32px;
-          background: var(--bg-surface);
-          border-radius: 6px;
-        }
       `}</style>
     </Layout>
   );

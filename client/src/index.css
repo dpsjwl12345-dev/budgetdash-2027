@@ -968,7 +968,6 @@ select option {
   display: flex;
   align-items: center;
 }
-.execution-filter-bar > select,
 .execution-filter-bar .execution-filter-segment > button {
   height: 38px;
   min-width: 140px;
@@ -981,27 +980,29 @@ select option {
   box-shadow: none !important;
   font-size: 14px;
   font-weight: 500;
-}
-.execution-filter-bar > select {
-  min-width: 108px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
   cursor: pointer;
-  appearance: none;
-  -webkit-appearance: none;
+  white-space: nowrap;
+}
+.execution-filter-value {
+  flex: 1;
+  text-align: left;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 .execution-filter-bar .execution-filter-segment:last-of-type > button {
   border-right: 0;
 }
-.execution-filter-bar > select:hover,
 .execution-filter-bar .execution-filter-segment > button:hover,
-.execution-filter-bar > select:focus,
-.execution-filter-bar .execution-filter-segment > button:focus-visible {
+.execution-filter-bar .execution-filter-segment > button:focus-visible,
+.execution-filter-bar .execution-filter-segment > button[aria-expanded="true"] {
   background: rgba(140, 155, 170, 0.2) !important;
   outline: none;
 }
-.execution-filter-bar .execution-filter-segment > div {
-  border-radius: 0 0 8px 8px !important;
-}
-.execution-filter-unit {
+.unit-note {
   display: inline-flex;
   align-items: center;
   height: 38px;
@@ -1012,6 +1013,5 @@ select option {
 }
 @media (max-width: 760px) {
   .execution-filter-bar { max-width: 100%; overflow-x: auto; }
-  .execution-filter-bar > select,
   .execution-filter-bar .execution-filter-segment > button { min-width: 125px; }
 }

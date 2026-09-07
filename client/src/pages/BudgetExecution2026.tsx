@@ -8,6 +8,7 @@ import {
   X,
   Upload,
   AlertCircle,
+  ChevronDown,
 } from "lucide-react";
 
 type BudgetExecution = {
@@ -32,6 +33,102 @@ function formatAmount(value: number) {
   const thousands = Math.round(value / 1000);
   return new Intl.NumberFormat("ko-KR").format(thousands);
 }
+
+function ExecutionFilterDropdown({
+  label,
+  value,
+  options,
+  onChange,
+  placeholder,
+  clearable = true,
+}: {
+  label: string;
+  value: string;
+  options: { value: string; label: string }[];
+  onChange: (value: string) => void;
+  placeholder: string;
+  clearable?: boolean;
+}) {
+  const [open, setOpen] = useState(false);
+  const containerRef = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const onPointerDown = (event: MouseEvent) => {
+      if (containerRef.current && !containerRef.current.contains(event.target as Node)) setOpen(false);
+    };
+    const onKeyDown = (event: KeyboardEvent) => {
+      if (event.key === "Escape") setOpen(false);
+    };
+    document.addEventListener("mousedown", onPointerDown);
+    document.addEventListener("keydown", onKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", onPointerDown);
+      document.removeEventListener("keydown", onKeyDown);
+    };
+  }, [open]);
+
+  const current = options.find((option) => option.value === value);
+
+  return (
+    <div className="execution-filter-segment" ref={containerRef}>
+      <button
+        type="button"
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        aria-label={label}
+        onClick={() => setOpen((prev) => !prev)}
+      >
+        <span className="execution-filter-value">{current?.label ?? placeholder}</span>
+        <ChevronDown size={15} className={`dropdown-icon ${open ? "open" : ""}`} />
+      </button>
+      {open && (
+        <div className="dropdown-menu" role="listbox">
+          <div className="dropdown-options">
+            {clearable && (
+              <button
+                type="button"
+                role="option"
+                aria-selected={value === ""}
+                className={`dropdown-option ${value === "" ? "selected" : ""}`}
+                onClick={() => { onChange(""); setOpen(false); }}
+              >
+                <span className="option-text">{placeholder}</span>
+              </button>
+            )}
+            {options.map((option) => (
+              <button
+                type="button"
+                key={option.value}
+                role="option"
+                aria-selected={option.value === value}
+                className={`dropdown-option ${option.value === value ? "selected" : ""}`}
+                onClick={() => { onChange(option.value); setOpen(false); }}
+              >
+                <span className="option-text">{option.label}</span>
+              </button>
+            ))}
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
+const EXECUTION_COLUMNS = [
+  ["policyName", 85],
+  ["programName", 85],
+  ["unitName", 145],
+  ["statisticsCode", 140],
+  ["budget", 82],
+  ["original", 82],
+  ["supplementary", 78],
+  ["preEstablishment", 78],
+  ["reserve", 78],
+  ["carryover", 82],
+  ["executed", 82],
+  ["executionRate", 74],
+] as const;
 
 function ExecutionBar({ rate }: { rate: number }) {
   return (
@@ -67,31 +164,76 @@ export default function BudgetExecution2026() {
   const [toast, setToast] = useState("");
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [page, setPage] = useState(1);
-  const [dropdownOpen, setDropdownOpen] = useState(false);
-  const [dropdownProgramOpen, setDropdownProgramOpen] = useState(false);
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    try {
+      const saved = localStorage.getItem("budgetExecution2026ColumnWidths");
+      return saved ? JSON.parse(saved) : {};
+    } catch {
+      return {};
+    }
+  });
+  const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
-  const dropdownRef = useRef<HTMLDivElement>(null);
-  const dropdownProgramRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadDataFromServer();
   }, []);
 
+  // columnWidths 저장
   useEffect(() => {
-    const handleClickOutside = (event: MouseEvent) => {
-      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
-        setDropdownOpen(false);
-      }
-      if (dropdownProgramRef.current && !dropdownProgramRef.current.contains(event.target as Node)) {
-        setDropdownProgramOpen(false);
-      }
+    try {
+      localStorage.setItem("budgetExecution2026ColumnWidths", JSON.stringify(columnWidths));
+    } catch (error) {
+      console.warn('columnWidths 저장 실패:', error);
+    }
+  }, [columnWidths]);
+
+  // 컬럼 리사이저 이벤트
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizingColumn.startX;
+      const newWidth = Math.max(50, resizingColumn.startWidth + diff);
+      setColumnWidths(prev => ({
+        ...prev,
+        [resizingColumn.key]: newWidth,
+      }));
     };
 
-    if (dropdownOpen || dropdownProgramOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-      return () => document.removeEventListener('mousedown', handleClickOutside);
-    }
-  }, [dropdownOpen, dropdownProgramOpen]);
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn]);
+
+  const colWidth = (key: string, fallback: number) => columnWidths[key] ?? fallback;
+
+  const renderResizeHandle = (colKey: string, fallback: number) => (
+    <div
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setResizingColumn({ key: colKey, startX: e.clientX, startWidth: colWidth(colKey, fallback) });
+      }}
+      style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        height: '100%',
+        width: '6px',
+        cursor: 'col-resize',
+        background: resizingColumn?.key === colKey ? 'rgba(91, 155, 240, 0.5)' : 'transparent',
+      }}
+    />
+  );
 
   const loadDataFromServer = async () => {
     try {
@@ -318,297 +460,74 @@ export default function BudgetExecution2026() {
           <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
             <div className="table-title">
               <div className="execution-filter-bar">
-                <div className="execution-filter-segment" ref={dropdownRef}>
-                <select
+                <ExecutionFilterDropdown
+                  label="회계연도"
                   value={selectedYear}
-                  onChange={(event) => { setSelectedYear(event.target.value); setSelectedDepartment(""); setSelectedProgramName(""); setPage(1); }}
-                  aria-label="회계연도"
-                  style={{ padding: '8px 12px', fontSize: '14px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#334155', fontWeight: 500, cursor: 'pointer' }}
-                >
-                  <option value="2025">2025년</option>
-                  <option value="2026">2026년</option>
-                </select>
-                <button
-                  onClick={() => setDropdownOpen(!dropdownOpen)}
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '14px',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#fff',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    color: '#334155',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                    minWidth: '140px',
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLButtonElement).style.borderColor = '#cbd5e1';
-                    (e.target as HTMLButtonElement).style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLButtonElement).style.borderColor = '#e2e8f0';
-                    (e.target as HTMLButtonElement).style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-                  }}
-                >
-                  <span>{selectedDepartment || '부서명 선택'}</span>
-                  <span style={{ fontSize: '12px' }}>▼</span>
-                </button>
-                {dropdownOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: '0',
-                    right: '0',
-                    marginTop: '4px',
-                    backgroundColor: '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    zIndex: 10,
-                    maxHeight: '240px',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-                    <button
-                      onClick={() => {
-                        setSelectedDepartment('');
-                        setDropdownOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: 'none',
-                        backgroundColor: selectedDepartment === '' ? '#f0f4f9' : 'transparent',
-                        color: '#334155',
-                        fontSize: '14px',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (selectedDepartment !== '') {
-                          (e.target as HTMLButtonElement).style.backgroundColor = '#f0f4f9';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedDepartment !== '') {
-                          (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
-                        }
-                      }}
-                    >
-                      부서명 선택
-                    </button>
-                    {departments.map((dept) => (
-                      <button
-                        key={dept}
-                        onClick={() => {
-                          setSelectedDepartment(dept);
-                          setDropdownOpen(false);
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: 'none',
-                          backgroundColor: selectedDepartment === dept ? '#f0f4f9' : 'transparent',
-                          color: '#334155',
-                          fontSize: '14px',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontWeight: selectedDepartment === dept ? '600' : '500',
-                          transition: 'background 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (selectedDepartment !== dept) {
-                            (e.target as HTMLButtonElement).style.backgroundColor = '#f0f4f9';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedDepartment !== dept) {
-                            (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
-                          }
-                        }}
-                      >
-                        {dept}
-                      </button>
-                    ))}
-                    </div>
-                  </div>
-                )}
-                </div>
-
-                <div className="execution-filter-segment" ref={dropdownProgramRef}>
-                <button
-                  onClick={() => setDropdownProgramOpen(!dropdownProgramOpen)}
-                  style={{
-                    padding: '8px 12px',
-                    fontSize: '14px',
-                    borderRadius: '16px',
-                    border: '1px solid #e2e8f0',
-                    backgroundColor: '#fff',
-                    cursor: 'pointer',
-                    fontWeight: '500',
-                    color: '#334155',
-                    transition: 'all 0.2s ease',
-                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                    minWidth: '140px',
-                    textAlign: 'left',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    gap: '8px',
-                  }}
-                  onMouseEnter={(e) => {
-                    (e.target as HTMLButtonElement).style.borderColor = '#cbd5e1';
-                    (e.target as HTMLButtonElement).style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.08)';
-                  }}
-                  onMouseLeave={(e) => {
-                    (e.target as HTMLButtonElement).style.borderColor = '#e2e8f0';
-                    (e.target as HTMLButtonElement).style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
-                  }}
-                >
-                  <span>{selectedProgramName || '세부사업명 선택'}</span>
-                  <span style={{ fontSize: '12px' }}>▼</span>
-                </button>
-                {dropdownProgramOpen && (
-                  <div style={{
-                    position: 'absolute',
-                    top: '100%',
-                    left: '0',
-                    right: '0',
-                    marginTop: '4px',
-                    backgroundColor: '#fff',
-                    border: '1px solid #e2e8f0',
-                    borderRadius: '16px',
-                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
-                    zIndex: 10,
-                    maxHeight: '240px',
-                    overflow: 'hidden',
-                  }}>
-                    <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
-                    <button
-                      onClick={() => {
-                        setSelectedProgramName('');
-                        setDropdownProgramOpen(false);
-                      }}
-                      style={{
-                        width: '100%',
-                        padding: '10px 12px',
-                        border: 'none',
-                        backgroundColor: selectedProgramName === '' ? '#f0f4f9' : 'transparent',
-                        color: '#334155',
-                        fontSize: '14px',
-                        textAlign: 'left',
-                        cursor: 'pointer',
-                        transition: 'background 0.2s ease',
-                      }}
-                      onMouseEnter={(e) => {
-                        if (selectedProgramName !== '') {
-                          (e.target as HTMLButtonElement).style.backgroundColor = '#f0f4f9';
-                        }
-                      }}
-                      onMouseLeave={(e) => {
-                        if (selectedProgramName !== '') {
-                          (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
-                        }
-                      }}
-                    >
-                      세부사업명 선택
-                    </button>
-                    {programNames.map((prog) => (
-                      <button
-                        key={prog}
-                        onClick={() => {
-                          setSelectedProgramName(prog);
-                          setDropdownProgramOpen(false);
-                        }}
-                        style={{
-                          width: '100%',
-                          padding: '10px 12px',
-                          border: 'none',
-                          backgroundColor: selectedProgramName === prog ? '#f0f4f9' : 'transparent',
-                          color: '#334155',
-                          fontSize: '14px',
-                          textAlign: 'left',
-                          cursor: 'pointer',
-                          fontWeight: selectedProgramName === prog ? '600' : '500',
-                          transition: 'background 0.2s ease',
-                        }}
-                        onMouseEnter={(e) => {
-                          if (selectedProgramName !== prog) {
-                            (e.target as HTMLButtonElement).style.backgroundColor = '#f0f4f9';
-                          }
-                        }}
-                        onMouseLeave={(e) => {
-                          if (selectedProgramName !== prog) {
-                            (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
-                          }
-                        }}
-                      >
-                        {prog}
-                      </button>
-                    ))}
-                    </div>
-                  </div>
-                )}
-                </div>
-
-                <span className="execution-filter-unit">(단위: 천원)</span>
+                  options={[
+                    { value: "2025", label: "2025년" },
+                    { value: "2026", label: "2026년" },
+                  ]}
+                  onChange={(value) => { setSelectedYear(value); setSelectedDepartment(""); setSelectedProgramName(""); setPage(1); }}
+                  placeholder="연도 선택"
+                  clearable={false}
+                />
+                <ExecutionFilterDropdown
+                  label="부서명"
+                  value={selectedDepartment}
+                  options={departments.map((dept) => ({ value: dept, label: dept }))}
+                  onChange={setSelectedDepartment}
+                  placeholder="부서명 선택"
+                />
+                <ExecutionFilterDropdown
+                  label="세부사업명"
+                  value={selectedProgramName}
+                  options={programNames.map((prog) => ({ value: prog, label: prog }))}
+                  onChange={setSelectedProgramName}
+                  placeholder="세부사업명 선택"
+                />
               </div>
             </div>
 
-            <div className="search-box">
-              <Search size={17} />
-              <input
-                value={search}
-                onChange={(event) => setSearch(event.target.value)}
-                placeholder="검색"
-                aria-label="검색"
-              />
-              {search && (
-                <button aria-label="검색어 지우기" onClick={() => setSearch("")}>
-                  <X size={14} />
-                </button>
-              )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="search-box">
+                <Search size={17} />
+                <input
+                  value={search}
+                  onChange={(event) => setSearch(event.target.value)}
+                  placeholder="검색"
+                  aria-label="검색"
+                />
+                {search && (
+                  <button aria-label="검색어 지우기" onClick={() => setSearch("")}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <span className="unit-note">(단위: 천원)</span>
             </div>
           </div>
 
           <div className="table-scroll" style={{ maxHeight: 'calc(100vh - 360px)', overflowY: 'auto' }}>
             <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1091px' }}>
               <colgroup>
-                <col style={{ width: '85px' }} />
-                <col style={{ width: '85px' }} />
-                <col style={{ width: '145px' }} />
-                <col style={{ width: '140px' }} />
-                <col style={{ width: '82px' }} />
-                <col style={{ width: '82px' }} />
-                <col style={{ width: '78px' }} />
-                <col style={{ width: '78px' }} />
-                <col style={{ width: '78px' }} />
-                <col style={{ width: '82px' }} />
-                <col style={{ width: '82px' }} />
-                <col style={{ width: '74px' }} />
+                {EXECUTION_COLUMNS.map(([key, fallback]) => (
+                  <col key={key} style={{ width: `${colWidth(key, fallback)}px` }} />
+                ))}
               </colgroup>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '13px' }}>정책사업명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '13px' }}>단위사업명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>세부사업명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>통계목</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>예산현액</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>본예산</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>추경</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>성립전</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>예비비</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>이월액계</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>집행액</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>집행률</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '13px' }}>정책사업명{renderResizeHandle("policyName", 85)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '13px' }}>단위사업명{renderResizeHandle("programName", 85)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>본예산{renderResizeHandle("original", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>예비비{renderResizeHandle("reserve", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>이월액계{renderResizeHandle("carryover", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>집행액{renderResizeHandle("executed", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>집행률{renderResizeHandle("executionRate", 74)}</th>
                 </tr>
               </thead>
               <tbody>
