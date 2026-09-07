@@ -5,14 +5,8 @@
 import { useMemo, useRef, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
-import { createClient } from "@supabase/supabase-js";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-
-const supabase = createClient(
-  import.meta.env.VITE_SUPABASE_URL || "",
-  import.meta.env.VITE_SUPABASE_ANON_KEY || ""
-);
 
 type BudgetExecution = {
   id: number;
@@ -414,12 +408,9 @@ export default function Home() {
     }
   }, [Boolean(editingRow)]);
 
-  // 페이지 로드 시 서버에서 데이터 불러오기 (localStorage 우선)
+  // 페이지 로드 시 클라우드 데이터를 우선 불러오고, 클라우드가 설정되지 않은 경우에만 localStorage를 사용한다.
   useEffect(() => {
-    const saved = localStorage.getItem('budgetRows');
-    if (!saved) {
-      loadDataFromServer();
-    }
+    loadDataFromServer();
     loadExecutionDataFromServer();
   }, []);
 
@@ -484,9 +475,21 @@ export default function Home() {
       const { data } = await response.json();
       if (data && Array.isArray(data)) {
         setBudgetRows(data);
+        localStorage.setItem('budgetRows', JSON.stringify(data));
+        return;
       }
+      const saved = localStorage.getItem('budgetRows');
+      if (saved) setBudgetRows(JSON.parse(saved));
     } catch (error) {
       console.warn('서버에서 데이터 로드 실패:', error);
+      const saved = localStorage.getItem('budgetRows');
+      if (saved) {
+        try {
+          setBudgetRows(JSON.parse(saved));
+        } catch (localError) {
+          console.warn('localStorage 데이터 로드 실패:', localError);
+        }
+      }
     }
   };
 
@@ -506,15 +509,17 @@ export default function Home() {
 
   const saveDataToServer = async (rows: BudgetRow[]) => {
     try {
-      // Supabase로 직접 저장
-      const { error } = await supabase
-        .from('budget_rows')
-        .upsert(rows, { onConflict: 'id' });
-
-      if (!error) {
+      // Supabase 서비스 키는 브라우저에 노출하지 않고 Vercel API에서만 사용한다.
+      const response = await fetch('/api/budget/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: rows }),
+      });
+      const result = await response.json();
+      if (response.ok && result.success) {
         showToast('클라우드에 저장되었습니다. ☁️');
       } else {
-        console.error('Supabase 저장 실패:', error);
+        console.error('클라우드 저장 실패:', result);
         showToast('로컬에만 저장되었습니다. 💾');
       }
     } catch (error) {
@@ -524,7 +529,7 @@ export default function Home() {
   };
 
   const filteredRows = useMemo(() => {
-    const deptCounts = {};
+    const deptCounts: Record<string, number> = {};
     budgetRows.forEach(row => {
       const dept = row.department || '(없음)';
       deptCounts[dept] = (deptCounts[dept] || 0) + 1;
