@@ -529,13 +529,6 @@ export default function Home() {
   };
 
   const filteredRows = useMemo(() => {
-    const deptCounts: Record<string, number> = {};
-    budgetRows.forEach(row => {
-      const dept = row.department || '(없음)';
-      deptCounts[dept] = (deptCounts[dept] || 0) + 1;
-    });
-    console.log('부서별 데이터:', deptCounts, '선택된 부서:', department || '(없음)', '일치하는 행:', budgetRows.filter(r => (r.department === department || (!department && !r.department))).length);
-
     const filtered = budgetRows.filter((row) => {
       const searchable = `${row.policy} ${row.program} ${row.account} ${row.detail}`;
       const matchesSearch = searchable.toLowerCase().includes(search.toLowerCase());
@@ -547,6 +540,11 @@ export default function Home() {
     });
     return filtered;
   }, [budgetRows, search, statusFilter, programFilter, accountFilter, department]);
+
+  const departmentRows = useMemo(
+    () => department ? budgetRows.filter((row) => row.department === department) : budgetRows,
+    [budgetRows, department],
+  );
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
@@ -562,17 +560,17 @@ export default function Home() {
 
   const uniquePrograms = useMemo(() => {
     const seen = new Set();
-    return budgetRows.map(r => getDetailName(r.program)).filter(program => {
+    return departmentRows.map(r => getDetailName(r.program)).filter(program => {
       if (!program || seen.has(program)) return false;
       seen.add(program);
       return true;
     });
-  }, [budgetRows]);
+  }, [departmentRows]);
 
   const uniqueAccounts = useMemo(() => {
-    const accounts = new Set(budgetRows.map(r => r.account).filter(Boolean));
+    const accounts = new Set(departmentRows.map(r => r.account).filter(Boolean));
     return Array.from(accounts).sort();
-  }, [budgetRows]);
+  }, [departmentRows]);
 
   const totals = useMemo(() => filteredRows.reduce((sum, row) => ({ amount: sum.amount + row.amount, city: sum.city + row.city, national: sum.national + row.national, province: sum.province + row.province, other: sum.other + row.other, previous: sum.previous + row.previous }), { amount: 0, city: 0, national: 0, province: 0, other: 0, previous: 0 }), [filteredRows]);
 
@@ -583,10 +581,10 @@ export default function Home() {
   }, [executionData, department]);
 
   const counts = {
-    전체: budgetRows.length,
-    오류: budgetRows.filter((row) => row.status === "오류").length,
-    주의: budgetRows.filter((row) => row.status === "주의").length,
-    정상: budgetRows.filter((row) => row.status === "정상").length,
+    전체: departmentRows.length,
+    오류: departmentRows.filter((row) => row.status === "오류").length,
+    주의: departmentRows.filter((row) => row.status === "주의").length,
+    정상: departmentRows.filter((row) => row.status === "정상").length,
   };
 
   const showToast = (message: string) => {
@@ -651,7 +649,7 @@ export default function Home() {
             previous: parseNumber(pick(record, ["전년도"])),
             status,
             note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
-            department: String(pick(record, ["부서명"])) || undefined,
+            department: String(pick(record, ["부서명"])) || department || undefined,
           };
         })
         .filter((row) => row.amount > 0);
@@ -664,7 +662,8 @@ export default function Home() {
               newRow.policy === prevRow.policy &&
               newRow.code === prevRow.code &&
               newRow.account === prevRow.account &&
-              newRow.program === prevRow.program
+              newRow.program === prevRow.program &&
+              newRow.department === prevRow.department
           );
           return matchingNewRow || prevRow;
         });
@@ -674,7 +673,8 @@ export default function Home() {
               newRow.policy === prevRow.policy &&
               newRow.code === prevRow.code &&
               newRow.account === prevRow.account &&
-              newRow.program === prevRow.program
+              newRow.program === prevRow.program &&
+              newRow.department === prevRow.department
           )
         );
         const allRows = [...updated, ...toAdd];
