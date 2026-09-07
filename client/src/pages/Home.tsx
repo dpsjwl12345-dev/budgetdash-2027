@@ -467,7 +467,7 @@ export default function Home() {
   };
 
   const filteredRows = useMemo(() => {
-    return budgetRows.filter((row) => {
+    const filtered = budgetRows.filter((row) => {
       const searchable = `${row.policy} ${row.program} ${row.account} ${row.detail}`;
       const matchesSearch = searchable.toLowerCase().includes(search.toLowerCase());
       const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
@@ -476,6 +476,10 @@ export default function Home() {
       const matchesDepartment = !department || row.department === department;
       return matchesSearch && matchesStatus && matchesProgram && matchesAccount && matchesDepartment;
     });
+    if (department) {
+      console.log(`부서 필터: "${department}", 필터된 행: ${filtered.length}, 전체 행: ${budgetRows.length}, 샘플 부서명:`, budgetRows.slice(0, 3).map(r => r.department));
+    }
+    return filtered;
   }, [budgetRows, search, statusFilter, programFilter, accountFilter, department]);
 
   const itemsPerPage = 10;
