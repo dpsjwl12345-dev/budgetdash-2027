@@ -281,12 +281,9 @@ export default function BudgetExecution2026() {
     <Layout showToast={showToast}>
       <div className="page-content" style={{ paddingTop: "20px" }}>
         <section className="page-heading">
-          <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
+            <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
-              <span style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-faint)", letterSpacing: "0.02em" }}>
-                {selectedYear} 일반회계
-              </span>
-              <h1 style={{ marginTop: "-4px" }}>부서별 예산집행현황</h1>
+              <h1 style={{ marginTop: "0" }}>부서별 예산집행현황</h1>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: "24px" }}>
               <div style={{ display: "flex", gap: "12px" }} aria-label="2026 예산 요약">
