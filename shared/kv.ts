@@ -51,3 +51,22 @@ export const loadFromKV = async (key: string): Promise<any | null> => {
     return null;
   }
 };
+
+export const deleteFromKV = async (key: string): Promise<boolean> => {
+  const kv = initKV();
+  if (!kv) return false;
+
+  try {
+    const response = await fetch(`${kv.url}/del/${key}`, {
+      method: 'DELETE',
+      headers: {
+        'Authorization': `Bearer ${kv.token}`,
+      },
+    });
+
+    return response.ok;
+  } catch (error) {
+    console.error('KV 삭제 실패:', error);
+    return false;
+  }
+};

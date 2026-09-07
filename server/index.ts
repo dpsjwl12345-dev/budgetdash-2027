@@ -4,7 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import * as XLSX from "xlsx";
-import { saveToKV, loadFromKV } from "../shared/kv";
+import { saveToKV, loadFromKV, deleteFromKV } from "../shared/kv";
 import { initializeDB, getDB } from "./db";
 import explainerDataHandler from "../api/budget-explainer/data";
 import explainerGetMaterialHandler from "../api/budget-explainer/get-material";
@@ -61,6 +61,15 @@ async function startServer() {
     try {
       const data = await loadFromKV('budgetRows');
       res.json({ data });
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
+  app.delete('/api/budget/clear', async (_req, res) => {
+    try {
+      const success = await deleteFromKV('budgetRows');
+      res.json({ success });
     } catch (error) {
       res.status(500).json({ error: String(error) });
     }
