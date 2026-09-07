@@ -46,11 +46,34 @@ async function startServer() {
   app.post('/api/budget/save', async (req, res) => {
     try {
       const { data } = req.body;
-      const success = await saveToKV('budgetRows', data);
 
+      // 로컬은 localStorage 폴백만 사용 (Supabase는 프로덕션에서)
+      try {
+        // 로컬에서도 Supabase 테스트 시도
+        const supabaseUrl = process.env.SUPABASE_URL;
+        const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+        if (supabaseUrl && supabaseKey) {
+          const { createClient } = await import('@supabase/supabase-js');
+          const supabase = createClient(supabaseUrl, supabaseKey);
+          const { error } = await supabase
+            .from('budget_rows')
+            .upsert(data ?? [], { onConflict: 'id' });
+
+          if (!error) {
+            res.json({ success: true, message: '클라우드에 저장되었습니다' });
+            return;
+          }
+        }
+      } catch (supabaseError) {
+        console.log('Supabase 저장 시도 실패, 로컬 폴백:', supabaseError);
+      }
+
+      // Supabase 실패 시 로컬 폴백
+      const success = await saveToKV('budgetRows', data);
       res.json({
         success,
-        message: success ? '저장 완료' : '저장 실패 (로컬만 사용)'
+        message: success ? '로컬에 저장되었습니다' : '저장 실패 (로컬만 사용)'
       });
     } catch (error) {
       res.status(500).json({ success: false, error: String(error) });
@@ -59,6 +82,24 @@ async function startServer() {
 
   app.get('/api/budget/load', async (_req, res) => {
     try {
+      // Supabase 시도
+      const supabaseUrl = process.env.SUPABASE_URL;
+      const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY;
+
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { data, error } = await supabase
+          .from('budget_rows')
+          .select('*');
+
+        if (!error && data) {
+          res.json({ data });
+          return;
+        }
+      }
+
+      // Supabase 실패 시 로컬 폴백
       const data = await loadFromKV('budgetRows');
       res.json({ data });
     } catch (error) {
