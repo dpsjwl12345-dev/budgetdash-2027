@@ -584,9 +584,30 @@ export default function Home() {
         .filter((row) => row.amount > 0);
       if (!nextRows.length) throw new Error("empty");
       setSearch("");
-      showToast(`${nextRows.length}개 예산 항목을 엑셀에서 추가했습니다.`);
       setBudgetRows((prevRows) => {
-        const allRows = [...prevRows, ...nextRows];
+        const updated = prevRows.map(prevRow => {
+          const matchingNewRow = nextRows.find(
+            newRow =>
+              newRow.policy === prevRow.policy &&
+              newRow.code === prevRow.code &&
+              newRow.account === prevRow.account &&
+              newRow.program === prevRow.program
+          );
+          return matchingNewRow || prevRow;
+        });
+        const toAdd = nextRows.filter(
+          newRow => !prevRows.some(
+            prevRow =>
+              newRow.policy === prevRow.policy &&
+              newRow.code === prevRow.code &&
+              newRow.account === prevRow.account &&
+              newRow.program === prevRow.program
+          )
+        );
+        const allRows = [...updated, ...toAdd];
+        const updatedCount = nextRows.length - toAdd.length;
+        const addedCount = toAdd.length;
+        showToast(`${addedCount}개 추가, ${updatedCount}개 업데이트되었습니다.`);
         try {
           localStorage.setItem('budgetRows', JSON.stringify(allRows));
         } catch (error) {
