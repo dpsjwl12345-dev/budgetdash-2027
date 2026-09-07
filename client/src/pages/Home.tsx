@@ -611,11 +611,16 @@ export default function Home() {
 
   const handleExcelUpload = async (file?: File) => {
     if (!file) return;
+    if (!department) {
+      showToast("먼저 편성 부서를 선택해 주세요.");
+      if (fileInputRef.current) fileInputRef.current.value = "";
+      return;
+    }
     try {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
-      const nextRows = imported
+      const importedRows = imported
         .map((record, index): BudgetRow => {
           const rawStatus = String(pick(record, ["상태", "status"]));
           const status: Status = rawStatus === "오류" || rawStatus === "주의" || rawStatus === "정상" ? rawStatus : "정상";
@@ -653,33 +658,28 @@ export default function Home() {
           };
         })
         .filter((row) => row.amount > 0);
+      const rowKey = (row: BudgetRow) => [row.policy, row.code, row.account, row.program].join("\u001f");
+      const nextRows = Array.from(
+        new Map(importedRows.map((row) => [rowKey(row), row])).values(),
+      );
       if (!nextRows.length) throw new Error("empty");
       setSearch("");
       setBudgetRows((prevRows) => {
-        const updated = prevRows.map(prevRow => {
-          const matchingNewRow = nextRows.find(
-            newRow =>
-              newRow.policy === prevRow.policy &&
-              newRow.code === prevRow.code &&
-              newRow.account === prevRow.account &&
-              newRow.program === prevRow.program &&
-              newRow.department === prevRow.department
-          );
-          return matchingNewRow || prevRow;
+        // 한 부서의 엑셀은 해당 부서의 전체 요구자료로 취급한다.
+        // 기존 행과 키를 비교해 병합하면 부서명이 비어 있는 구버전 행과
+        // 새 행이 서로 다른 것으로 판단되어 같은 자료가 중복될 수 있다.
+        const importedKeys = new Set(nextRows.map(rowKey));
+        const otherDepartmentRows = prevRows.filter((row) => {
+          if (row.department === department) return false;
+          // 구버전 데이터에는 부서명이 없을 수 있다. 새 파일과 같은 행이면
+          // 기존 미지정 행도 제거해 업로드 후 중복으로 보이지 않게 한다.
+          if (!row.department && importedKeys.has(rowKey(row))) return false;
+          return true;
         });
-        const toAdd = nextRows.filter(
-          newRow => !prevRows.some(
-            prevRow =>
-              newRow.policy === prevRow.policy &&
-              newRow.code === prevRow.code &&
-              newRow.account === prevRow.account &&
-              newRow.program === prevRow.program &&
-              newRow.department === prevRow.department
-          )
-        );
-        const allRows = [...updated, ...toAdd];
-        const updatedCount = nextRows.length - toAdd.length;
-        const addedCount = toAdd.length;
+        const previousDepartmentCount = prevRows.length - otherDepartmentRows.length;
+        const allRows = [...otherDepartmentRows, ...nextRows];
+        const addedCount = Math.max(0, nextRows.length - previousDepartmentCount);
+        const updatedCount = Math.min(nextRows.length, previousDepartmentCount);
         showToast(`${addedCount}개 추가, ${updatedCount}개 업데이트되었습니다.`);
         try {
           localStorage.setItem('budgetRows', JSON.stringify(allRows));
