@@ -415,7 +415,7 @@ export default function BudgetEstablishmentGuide() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>편성기준 및 사전절차</h1>
+          <h1>사전절차 및 편성기준</h1>
         </section>
 
         <section className="guide-section">

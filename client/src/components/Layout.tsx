@@ -38,7 +38,7 @@ const toolItems: ToolItem[] = [
     label: "예산 편성 가이드",
     icon: SlidersHorizontal,
     subItems: [
-      { label: "편성기준 및 사전절차" },
+      { label: "사전절차 및 편성기준" },
       { label: "세출 통계목별 상세" },
     ],
   },
@@ -64,7 +64,7 @@ export default function Layout({
 
     switch (location) {
       case "/budget-establishment-guide":
-        return "편성기준 및 사전절차";
+        return "사전절차 및 편성기준";
       case "/statistics-code-detail":
         return "세출 통계목별 상세";
       case "/department-key-issues":
@@ -258,7 +258,7 @@ export default function Layout({
                           transition: "all 0.15s",
                         }}
                         onClick={() => {
-                          if (subItem.label === "편성기준 및 사전절차") {
+                          if (subItem.label === "사전절차 및 편성기준") {
                             setLocation("/budget-establishment-guide");
                           } else if (subItem.label === "세출 통계목별 상세") {
                             setLocation("/statistics-code-detail");

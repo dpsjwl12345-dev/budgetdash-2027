@@ -88,9 +88,6 @@ export default function DepartmentKeyIssues() {
                 placeholder={`${selectedDept}의 주요 쟁점사항을 입력하세요...`}
               />
 
-              <div className="editor-footer">
-                <span className="char-count">{currentText.length}자</span>
-              </div>
             </main>
           </div>
         </section>
