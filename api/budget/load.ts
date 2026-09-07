@@ -2,8 +2,8 @@ const { createClient } = require('@supabase/supabase-js');
 
 export default async function handler(_req: any, res: any) {
   try {
-    const url = process.env.VITE_SUPABASE_URL;
-    const key = process.env.VITE_SUPABASE_ANON_KEY;
+    const url = process.env.SUPABASE_URL;
+    const key = process.env.SUPABASE_ANON_KEY;
 
     if (!url || !key) {
       res.status(200).json({ data: null });
