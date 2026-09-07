@@ -1120,7 +1120,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .breadcrumbs { color: #62666d; font-size: 12px; letter-spacing: .04em; }
 .breadcrumbs b { color: #d0d6e0; font-weight: 500; }
 .page-content { max-width: 1440px; margin: 0 auto; padding: 40px 40px 72px; }
-h1 { color: #f7f8f8; font-family: inherit; font-size: clamp(28px, 2.6vw, 38px); font-weight: 600; letter-spacing: -0.04em; line-height: 1.1; }
+h1 { color: #f7f8f8; font-family: inherit; font-size: clamp(32px, 4vw, 56px); font-weight: 600; letter-spacing: -0.055em; line-height: 1.1; }
 .context-bar { padding: 16px; background: #0f1011; border: 1px solid #23252a; border-radius: 12px; }
 .context-bar .dropdown-value, .context-bar .staff-summary b { font-family: inherit; color: #f7f8f8; }
 .context-bar .select-wrap, .context-bar .staff-summary { background: #141516; border-color: #34343a; }
@@ -1165,5 +1165,5 @@ tbody tr:hover { background: #141516 !important; }
   .page-content { padding: 24px 14px 48px; }
   .title-area { align-items: flex-start; flex-direction: column; }
   .action-row { width: 100%; justify-content: flex-start; }
-  h1 { font-size: 30px; }
+  h1 { font-size: 36px; }
 }
