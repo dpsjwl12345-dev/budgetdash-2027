@@ -241,6 +241,8 @@ export default function Layout({
                         onClick={() => {
                           if (subItem.label === "편성기준 및 사전절차") {
                             setLocation("/budget-establishment-guide");
+                          } else if (subItem.label === "세출 통계목별 상세") {
+                            setLocation("/statistics-code-detail");
                           } else {
                             showToast?.(`${subItem.label}은 다음 업데이트에서 제공됩니다.`);
                           }
