@@ -834,11 +834,8 @@ export default function Home() {
       <div className="page-content">
           <section className="page-heading">
             <div className="title-area">
-              <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
-                <span style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-faint)", letterSpacing: "0.02em" }}>
-                  {year} 본예산
-                </span>
-                <h1 style={{ marginTop: "-4px" }}>편성 검토</h1>
+              <div className="title-wrapper budget-page-title">
+                <h1>{year} 본예산 편성 검토</h1>
               </div>
               <div className="action-row">
                 <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
