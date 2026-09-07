@@ -53,6 +53,7 @@ export default function BudgetExecution2026() {
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"department" | "executionRate">("department");
   const [selectedDepartment, setSelectedDepartment] = useState("");
+  const [selectedProgramName, setSelectedProgramName] = useState("");
   const [data, setData] = useState<BudgetExecution[]>(() => {
     try {
       const saved = localStorage.getItem("budgetExecution2026Rows");
@@ -65,8 +66,10 @@ export default function BudgetExecution2026() {
   const [rowsPerPage, setRowsPerPage] = useState(20);
   const [page, setPage] = useState(1);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [dropdownProgramOpen, setDropdownProgramOpen] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const dropdownProgramRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     loadDataFromServer();
@@ -77,13 +80,16 @@ export default function BudgetExecution2026() {
       if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
         setDropdownOpen(false);
       }
+      if (dropdownProgramRef.current && !dropdownProgramRef.current.contains(event.target as Node)) {
+        setDropdownProgramOpen(false);
+      }
     };
 
-    if (dropdownOpen) {
+    if (dropdownOpen || dropdownProgramOpen) {
       document.addEventListener('mousedown', handleClickOutside);
       return () => document.removeEventListener('mousedown', handleClickOutside);
     }
-  }, [dropdownOpen]);
+  }, [dropdownOpen, dropdownProgramOpen]);
 
   const loadDataFromServer = async () => {
     try {
@@ -201,7 +207,8 @@ export default function BudgetExecution2026() {
                            row.policyName.toLowerCase().includes(search.toLowerCase()) ||
                            row.programName.toLowerCase().includes(search.toLowerCase());
       const matchesDepartment = selectedDepartment === "" || selectedDepartment === "전체" || row.department === selectedDepartment;
-      return matchesSearch && matchesDepartment;
+      const matchesProgramName = selectedProgramName === "" || selectedProgramName === "전체" || row.programName === selectedProgramName;
+      return matchesSearch && matchesDepartment && matchesProgramName;
     });
 
     if (sortBy === "executionRate") {
@@ -217,7 +224,7 @@ export default function BudgetExecution2026() {
     }
 
     return filtered;
-  }, [data, search, sortBy, selectedDepartment]);
+  }, [data, search, sortBy, selectedDepartment, selectedProgramName]);
 
   const filteredTotals = useMemo(() => {
     return filteredData.reduce(
@@ -238,6 +245,13 @@ export default function BudgetExecution2026() {
     const departmentOrder = ["문화예술과", "문화유산과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
     return departmentOrder;
   }, [data]);
+
+  const programNames = useMemo(() => {
+    const dept = selectedDepartment && selectedDepartment !== "전체" ? selectedDepartment : null;
+    const filtered = dept ? data.filter(row => row.department === dept) : data;
+    const unique = Array.from(new Set(filtered.map(row => row.programName).filter(Boolean)));
+    return unique.sort();
+  }, [data, selectedDepartment]);
 
   const paginatedData = useMemo(() => {
     const startIndex = (page - 1) * rowsPerPage;
@@ -404,6 +418,123 @@ export default function BudgetExecution2026() {
                   </div>
                 )}
               </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} ref={dropdownProgramRef}>
+                <button
+                  onClick={() => setDropdownProgramOpen(!dropdownProgramOpen)}
+                  style={{
+                    padding: '8px 12px',
+                    fontSize: '14px',
+                    borderRadius: '16px',
+                    border: '1px solid #e2e8f0',
+                    backgroundColor: '#fff',
+                    cursor: 'pointer',
+                    fontWeight: '500',
+                    color: '#334155',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
+                    minWidth: '140px',
+                    textAlign: 'left',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '8px',
+                  }}
+                  onMouseEnter={(e) => {
+                    (e.target as HTMLButtonElement).style.borderColor = '#cbd5e1';
+                    (e.target as HTMLButtonElement).style.boxShadow = '0 2px 4px rgba(0, 0, 0, 0.08)';
+                  }}
+                  onMouseLeave={(e) => {
+                    (e.target as HTMLButtonElement).style.borderColor = '#e2e8f0';
+                    (e.target as HTMLButtonElement).style.boxShadow = '0 1px 2px rgba(0, 0, 0, 0.05)';
+                  }}
+                >
+                  <span>{selectedProgramName || '세부사업명 선택'}</span>
+                  <span style={{ fontSize: '12px' }}>▼</span>
+                </button>
+                {dropdownProgramOpen && (
+                  <div style={{
+                    position: 'absolute',
+                    top: '100%',
+                    left: '0',
+                    right: '0',
+                    marginTop: '4px',
+                    backgroundColor: '#fff',
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '16px',
+                    boxShadow: '0 4px 12px rgba(0, 0, 0, 0.15)',
+                    zIndex: 10,
+                    maxHeight: '240px',
+                    overflow: 'hidden',
+                  }}>
+                    <div style={{ maxHeight: '240px', overflowY: 'auto' }}>
+                    <button
+                      onClick={() => {
+                        setSelectedProgramName('');
+                        setDropdownProgramOpen(false);
+                      }}
+                      style={{
+                        width: '100%',
+                        padding: '10px 12px',
+                        border: 'none',
+                        backgroundColor: selectedProgramName === '' ? '#f0f4f9' : 'transparent',
+                        color: '#334155',
+                        fontSize: '14px',
+                        textAlign: 'left',
+                        cursor: 'pointer',
+                        transition: 'background 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        if (selectedProgramName !== '') {
+                          (e.target as HTMLButtonElement).style.backgroundColor = '#f0f4f9';
+                        }
+                      }}
+                      onMouseLeave={(e) => {
+                        if (selectedProgramName !== '') {
+                          (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
+                        }
+                      }}
+                    >
+                      세부사업명 선택
+                    </button>
+                    {programNames.map((prog) => (
+                      <button
+                        key={prog}
+                        onClick={() => {
+                          setSelectedProgramName(prog);
+                          setDropdownProgramOpen(false);
+                        }}
+                        style={{
+                          width: '100%',
+                          padding: '10px 12px',
+                          border: 'none',
+                          backgroundColor: selectedProgramName === prog ? '#f0f4f9' : 'transparent',
+                          color: '#334155',
+                          fontSize: '14px',
+                          textAlign: 'left',
+                          cursor: 'pointer',
+                          fontWeight: selectedProgramName === prog ? '600' : '500',
+                          transition: 'background 0.2s ease',
+                        }}
+                        onMouseEnter={(e) => {
+                          if (selectedProgramName !== prog) {
+                            (e.target as HTMLButtonElement).style.backgroundColor = '#f0f4f9';
+                          }
+                        }}
+                        onMouseLeave={(e) => {
+                          if (selectedProgramName !== prog) {
+                            (e.target as HTMLButtonElement).style.backgroundColor = 'transparent';
+                          }
+                        }}
+                      >
+                        {prog}
+                      </button>
+                    ))}
+                    </div>
+                  </div>
+                )}
+              </div>
+
               <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>(단위: 천원)</span>
             </div>
 
