@@ -507,7 +507,7 @@ export default function BudgetExecution2026() {
             </div>
           </div>
 
-          <div className="table-scroll" style={{ maxHeight: 'calc(100vh - 360px)', overflowY: 'auto' }}>
+          <div className="table-scroll">
             <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1091px' }}>
               <colgroup>
                 {EXECUTION_COLUMNS.map(([key, fallback]) => (

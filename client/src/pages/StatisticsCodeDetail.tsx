@@ -1,6 +1,6 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import { ChevronDown, Star } from "lucide-react";
+import { Star } from "lucide-react";
 
 type TabKey = "인건비" | "물건비" | "경상이전" | "자본지출" | "보전·반환";
 
@@ -664,10 +664,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
 
 export default function StatisticsCodeDetail() {
   const [activeTab, setActiveTab] = useState<TabKey | null>(null);
-  const [expandedItem, setExpandedItem] = useState<string | null>(null);
+  const [selectedItemId, setSelectedItemId] = useState<string | null>(null);
 
   const currentItems = activeTab ? ACCORDION_DATA[activeTab] : [];
   const currentTab = activeTab ? TABS.find((t) => t.key === activeTab) : null;
+  const selectedItemData = selectedItemId ? currentItems.find((item) => item.id === selectedItemId) : null;
 
   return (
     <Layout>
@@ -685,7 +686,7 @@ export default function StatisticsCodeDetail() {
                   className={`guide-tab ${activeTab === tab.key ? "active" : ""}`}
                   onClick={() => {
                     setActiveTab(tab.key);
-                    setExpandedItem(null);
+                    setSelectedItemId(null);
                   }}
                 >
                   {tab.label}
@@ -704,33 +705,29 @@ export default function StatisticsCodeDetail() {
             {!activeTab ? (
               <div className="guide-empty">상단 탭에서 항목을 선택하면 세부 통계목 목록이 나타납니다.</div>
             ) : (
-              <div className="accordion-container">
-                {currentItems.map((item) => {
-                  const isOpen = expandedItem === item.id;
-                  return (
-                    <div key={item.id} className={`accordion-item ${isOpen ? "open" : ""}`}>
-                      <button
-                        className="accordion-header"
-                        aria-expanded={isOpen}
-                        onClick={() => setExpandedItem(isOpen ? null : item.id)}
-                      >
-                        <ChevronDown size={18} className={`accordion-chevron ${isOpen ? "open" : ""}`} />
-                        <div className="accordion-title-wrapper">
-                          <span className="accordion-title">{item.title}</span>
-                          {item.subtitle && (
-                            <span className="accordion-subtitle">{item.subtitle}</span>
-                          )}
-                        </div>
-                      </button>
-                      {isOpen && (
-                        <div className="accordion-body">
-                          {item.content}
-                        </div>
+              <>
+                <div className="guide-subtabs">
+                  {currentItems.map((item) => (
+                    <button
+                      key={item.id}
+                      className={`guide-subtab ${selectedItemId === item.id ? "active" : ""}`}
+                      onClick={() => setSelectedItemId(item.id)}
+                    >
+                      <span className="guide-subtab-title">{item.title}</span>
+                      {item.subtitle && (
+                        <span className="guide-subtab-subtitle">{item.subtitle}</span>
                       )}
-                    </div>
-                  );
-                })}
-              </div>
+                    </button>
+                  ))}
+                </div>
+                <div className="guide-detail-area">
+                  {selectedItemData ? (
+                    selectedItemData.content
+                  ) : (
+                    <div className="guide-empty">세부 통계목을 선택하면 내용이 나타납니다.</div>
+                  )}
+                </div>
+              </>
             )}
           </div>
         </section>
@@ -793,93 +790,60 @@ export default function StatisticsCodeDetail() {
           font-size: 14px;
         }
 
-        .accordion-container {
+        .guide-subtabs {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          padding: 16px;
+          background: rgba(118, 157, 194, 0.04);
+          border-bottom: 1px solid var(--border);
+        }
+
+        .guide-subtab {
           display: flex;
           flex-direction: column;
-          border: 1px solid rgba(118, 157, 194, 0.2);
-          border-radius: 6px;
-          overflow: hidden;
-        }
-
-        .accordion-item {
-          background: none;
-          border-bottom: 1px solid rgba(118, 157, 194, 0.15);
-        }
-
-        .accordion-item:last-child {
-          border-bottom: none;
-        }
-
-        .accordion-item.open {
-          background: rgba(118, 157, 194, 0.03);
-        }
-
-        .accordion-header {
-          width: 100%;
-          padding: 14px 16px;
-          background: rgba(118, 157, 194, 0.08);
-          display: flex;
           align-items: flex-start;
-          gap: 12px;
-          border: none;
+          gap: 2px;
+          padding: 10px 16px;
+          border: 1px solid rgba(118, 157, 194, 0.25);
+          border-radius: 8px;
+          background: rgba(118, 157, 194, 0.06);
+          color: var(--text-muted);
           cursor: pointer;
-          transition: background 0.2s ease;
+          transition: all 0.2s;
           text-align: left;
         }
 
-        .accordion-header:hover {
+        .guide-subtab:hover {
           background: rgba(118, 157, 194, 0.12);
+          border-color: rgba(118, 157, 194, 0.4);
+          color: var(--text);
         }
 
-        .accordion-item.open .accordion-header {
-          background: rgba(118, 157, 194, 0.14);
-        }
-
-        .accordion-chevron {
-          flex-shrink: 0;
-          margin-top: 1px;
-          transition: transform 0.2s ease;
-        }
-
-        .accordion-chevron.open {
-          transform: rotate(180deg);
-        }
-
-        .accordion-title-wrapper {
-          display: flex;
-          flex-direction: column;
-          gap: 4px;
-          flex: 1;
-        }
-
-        .accordion-title {
-          font-size: 15px;
-          font-weight: 600;
+        .guide-subtab.active {
+          background: rgba(91, 155, 240, 0.14);
+          border-color: #5b9bf0;
           color: #5b9bf0;
         }
 
-        .accordion-subtitle {
-          font-size: 13px;
+        .guide-subtab-title {
+          font-size: 14px;
+          font-weight: 600;
+        }
+
+        .guide-subtab-subtitle {
+          font-size: 12px;
           font-weight: 400;
           color: var(--text-muted);
         }
 
-        .accordion-body {
-          padding: 24px 20px;
-          background: var(--bg-surface);
-          border-top: 1px solid rgba(118, 157, 194, 0.15);
-          animation: expandDown 0.2s ease-out;
+        .guide-subtab.active .guide-subtab-subtitle {
+          color: #5b9bf0;
+          opacity: 0.8;
         }
 
-        @keyframes expandDown {
-          from {
-            opacity: 0;
-            transform: translateY(-6px);
-          }
-          to {
-            opacity: 1;
-            transform: translateY(0);
-          }
+        .guide-detail-area {
+          padding: 24px 20px;
         }
 
         .detail-content {
