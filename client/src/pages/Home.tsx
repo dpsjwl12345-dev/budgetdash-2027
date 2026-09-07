@@ -620,7 +620,14 @@ export default function Home() {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
-      const importedRows = imported
+      // 편성 부서별 업로드는 해당 부서의 전체 스냅샷으로 처리한다.
+      // 통합 양식에 다른 부서 행이 함께 있어도 현재 선택 부서만 반영한다.
+      const selectedDepartmentRecords = imported.filter((record) => {
+        const sourceDepartment = String(pick(record, ["부서명"])).trim();
+        return !sourceDepartment || sourceDepartment === department;
+      });
+      const skippedDepartmentCount = imported.length - selectedDepartmentRecords.length;
+      const importedRows = selectedDepartmentRecords
         .map((record, index): BudgetRow => {
           const rawStatus = String(pick(record, ["상태", "status"]));
           const status: Status = rawStatus === "오류" || rawStatus === "주의" || rawStatus === "정상" ? rawStatus : "정상";
@@ -654,7 +661,7 @@ export default function Home() {
             previous: parseNumber(pick(record, ["전년도"])),
             status,
             note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
-            department: String(pick(record, ["부서명"])) || department || undefined,
+            department,
           };
         })
         .filter((row) => row.amount > 0);
@@ -680,7 +687,7 @@ export default function Home() {
         const allRows = [...otherDepartmentRows, ...nextRows];
         const addedCount = Math.max(0, nextRows.length - previousDepartmentCount);
         const updatedCount = Math.min(nextRows.length, previousDepartmentCount);
-        showToast(`${addedCount}개 추가, ${updatedCount}개 업데이트되었습니다.`);
+        showToast(`${department} 기존 자료를 초기화하고 ${nextRows.length}개를 등록했습니다.${skippedDepartmentCount > 0 ? ` (${skippedDepartmentCount}개 타 부서 행 제외)` : ""}`);
         try {
           localStorage.setItem('budgetRows', JSON.stringify(allRows));
         } catch (error) {
