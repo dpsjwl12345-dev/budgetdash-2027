@@ -459,6 +459,26 @@ export default function Home() {
 
   const saveDataToServer = async (rows: BudgetRow[]) => {
     try {
+      // Supabase로 직접 저장 시도
+      const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+      const supabaseKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+      if (supabaseUrl && supabaseKey) {
+        const { createClient } = await import('@supabase/supabase-js');
+        const supabase = createClient(supabaseUrl, supabaseKey);
+        const { error } = await supabase
+          .from('budget_rows')
+          .upsert(rows, { onConflict: 'id' });
+
+        if (!error) {
+          showToast('클라우드에 저장되었습니다. ☁️');
+          return;
+        } else {
+          console.error('Supabase 저장 실패:', error);
+        }
+      }
+
+      // Supabase 실패 시 서버 폴백
       const response = await fetch('/api/budget/save', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
