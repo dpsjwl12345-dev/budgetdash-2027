@@ -92,7 +92,7 @@ export default function DepartmentKeyIssues() {
                         ></path>
                       </svg>
                     </span>
-                    <p className="text">Save</p>
+                    <p className="text">저장</p>
                   </button>
                 </div>
               </div>

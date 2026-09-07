@@ -450,17 +450,6 @@ export default function BudgetEstablishmentGuide() {
           font-family: 'Noto Sans KR', sans-serif;
         }
 
-        .page-heading {
-          margin-bottom: 24px;
-        }
-
-        .page-heading h1 {
-          font-size: 28px;
-          font-weight: 700;
-          color: var(--text);
-          margin: 0;
-        }
-
         .guide-section {
           background: var(--bg-surface);
           border-radius: 8px;
@@ -516,7 +505,7 @@ export default function BudgetEstablishmentGuide() {
 
         .tab-content {
           color: var(--text);
-          font-size: 15px;
+          font-size: 16px;
           line-height: 1.8;
           word-break: keep-all;
         }
@@ -549,7 +538,7 @@ export default function BudgetEstablishmentGuide() {
         .tab-content p {
           margin: 12px 0;
           color: var(--text-muted);
-          font-size: 15px;
+          font-size: 16px;
         }
 
         .tab-content ul,

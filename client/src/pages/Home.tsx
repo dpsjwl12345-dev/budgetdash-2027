@@ -808,7 +808,7 @@ export default function Home() {
       return (
         <div className="account-cell">
           <span className="account-code">{row.code}</span>
-          <span className="account-name">{row.account}</span>
+          <span className="account-name" title={row.account}>{row.account}</span>
         </div>
       );
     }
@@ -818,8 +818,8 @@ export default function Home() {
       const formula = lineBreakIndex === -1 ? "" : row.detail.slice(lineBreakIndex + 1).trim();
       return (
         <div className="detail-cell">
-          <span className="detail-description">{description}</span>
-          {formula && <span className="detail-formula">{formula}</span>}
+          <span className="detail-description" title={description}>{description}</span>
+          {formula && <span className="detail-formula" title={formula}>{formula}</span>}
           {row.note && <span className={`row-note row-note-${row.status}`}>{row.note}</span>}
         </div>
       );

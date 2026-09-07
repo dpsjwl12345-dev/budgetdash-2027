@@ -1,15 +1,22 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
-import { ChevronDown, ChevronLeft } from "lucide-react";
+import { ChevronDown, ChevronLeft, Star } from "lucide-react";
 
 type TabKey = "인건비" | "물건비" | "경상이전" | "자본지출" | "보전·반환";
 
 interface AccordionItem {
   id: string;
   title: string;
-  subtitle?: string;
+  subtitle?: React.ReactNode;
   content: React.ReactNode;
 }
+
+const StarredSubtitle = ({ children }: { children: React.ReactNode }) => (
+  <>
+    <Star size={11} style={{ display: "inline", verticalAlign: "-1px", fill: "currentColor" }} />{" "}
+    {children}
+  </>
+);
 
 const TABS: { key: TabKey; label: string; description: string }[] = [
   { key: "인건비", label: "인건비", description: "소속 직원의 급여 및 수당, 기간제 인부임 산정 탭" },
@@ -80,7 +87,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
     {
       id: "101-04",
       title: "101-04. 기간제근로자등 보수",
-      subtitle: "🌟 [가장 많이 찾는 페이지]",
+      subtitle: <StarredSubtitle>[가장 많이 찾는 페이지]</StarredSubtitle>,
       content: (
         <div className="detail-content">
           <h3>기간제근로자 채용 및 단가 가이드</h3>
@@ -162,7 +169,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
     {
       id: "201-01",
       title: "201-01. 사무관리비",
-      subtitle: "🌟 [기본경비 집중 안내]",
+      subtitle: <StarredSubtitle>[기본경비 집중 안내]</StarredSubtitle>,
       content: (
         <div className="detail-content">
           <h3>사무관리비 편성 기준</h3>
@@ -475,7 +482,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
     {
       id: "401-01",
       title: "401-01. 시설공사 보상비",
-      subtitle: "🌟 [2027년 신설 탭]",
+      subtitle: <StarredSubtitle>[2027년 신설 탭]</StarredSubtitle>,
       content: (
         <div className="detail-content">
           <h3>시설공사 보상비 편성 기준</h3>
@@ -501,7 +508,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
     {
       id: "401-02",
       title: "401-02. 시설비",
-      subtitle: "🌟 [2027년 개정 탭]",
+      subtitle: <StarredSubtitle>[2027년 개정 탭]</StarredSubtitle>,
       content: (
         <div className="detail-content">
           <h3>시설비 편성 기준</h3>
