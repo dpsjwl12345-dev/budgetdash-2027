@@ -217,7 +217,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   color: #ffffff;
   display: flex;
   flex-direction: column;
-  gap: 1px;
+  align-items: flex-start;
+  gap: 3px;
   font-family: "Gmarket Sans", "Pretendard", system-ui, sans-serif;
 }
 .sidebar-title span:first-child {
@@ -226,13 +227,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   font-weight: 700;
   text-transform: uppercase;
   letter-spacing: 0.09em;
+  line-height: 1;
 }
 .sidebar-title span:last-child {
-  font-size: 20px;
+  font-size: 18px;
   color: #ffffff;
   font-weight: 750;
-  letter-spacing: -0.005em;
-  line-height: 1.15;
+  letter-spacing: -0.03em;
+  line-height: 1.2;
 }
 
 
