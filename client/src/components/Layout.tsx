@@ -238,9 +238,13 @@ export default function Layout({
                           textAlign: "left",
                           transition: "all 0.15s",
                         }}
-                        onClick={() =>
-                          showToast?.(`${subItem.label}은 다음 업데이트에서 제공됩니다.`)
-                        }
+                        onClick={() => {
+                          if (subItem.label === "편성기준 및 사전절차") {
+                            setLocation("/budget-establishment-guide");
+                          } else {
+                            showToast?.(`${subItem.label}은 다음 업데이트에서 제공됩니다.`);
+                          }
+                        }}
                         onMouseEnter={(e) => {
                           e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
                           e.currentTarget.style.color = "var(--text)";
