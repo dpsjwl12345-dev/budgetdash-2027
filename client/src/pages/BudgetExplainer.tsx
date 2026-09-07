@@ -165,7 +165,12 @@ export default function BudgetExplainer() {
         const response = await fetch("/api/budget-explainer/bulk-save", {
           method: "POST",
           headers: { "Content-Type": "application/json" },
-          body: JSON.stringify({ department, fileName: file.name, materials: [materials[i]] }),
+          body: JSON.stringify({
+            department,
+            fileName: file.name,
+            materials: [materials[i]],
+            replaceExisting: i === 0,
+          }),
         });
         const result = await response.json();
         if (result.success) savedCount += 1;

@@ -25,7 +25,7 @@ export default async function handler(req: any, res: any) {
   }
 
   try {
-    const { department, fileName, materials } = req.body ?? {};
+    const { department, fileName, materials, replaceExisting } = req.body ?? {};
 
     if (!department || !Array.isArray(materials) || materials.length === 0) {
       res.status(400).json({ success: false, error: "부서와 설명자료 목록이 필요합니다" });
@@ -51,6 +51,35 @@ export default async function handler(req: any, res: any) {
     }
 
     const supabase = getSupabaseAdmin();
+    const preservedEvidence = new Map<string, any>();
+    if (replaceExisting) {
+      const { data: existingRows, error: existingError } = await supabase
+        .from("budget_explainer_materials")
+        .select("policy, unit, detail, sections_json")
+        .eq("department", String(department));
+      if (existingError) {
+        res.status(500).json({ success: false, error: existingError.message });
+        return;
+      }
+      (existingRows || []).forEach((row: any) => {
+        const evidence = row.sections_json?.evidence;
+        if (Array.isArray(evidence) && evidence.length > 0) {
+          preservedEvidence.set(`${row.policy}\u001f${row.unit}\u001f${row.detail}`, evidence);
+        }
+      });
+      const { error: deleteError } = await supabase
+        .from("budget_explainer_materials")
+        .delete()
+        .eq("department", String(department));
+      if (deleteError) {
+        res.status(500).json({ success: false, error: deleteError.message });
+        return;
+      }
+    }
+    rows.forEach((row: any) => {
+      const evidence = preservedEvidence.get(`${row.policy}\u001f${row.unit}\u001f${row.detail}`);
+      if (evidence) row.sections_json.evidence = evidence;
+    });
     const { error } = await supabase
       .from("budget_explainer_materials")
       .upsert(rows, { onConflict: "department,policy,unit,detail" });
