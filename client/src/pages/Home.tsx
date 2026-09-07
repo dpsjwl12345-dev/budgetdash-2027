@@ -178,6 +178,7 @@ function Dropdown({
     <div className="dropdown-container" ref={containerRef}>
       <button
         type="button"
+        id={`dropdown-${label}`}
         className="dropdown-trigger"
         aria-haspopup="listbox"
         aria-expanded={open}
