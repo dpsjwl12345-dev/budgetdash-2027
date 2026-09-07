@@ -1079,3 +1079,16 @@ select option {
   .modal-card.staff-modal-card .staff-modal-fields { grid-template-columns: repeat(2, minmax(0, 1fr)); }
   .staff-dept-card h3 { font-size: 18px; }
 }
+
+
+/* Staff modal save action */
+.staff-modal-card .button-primary {
+  border-color: #4f7cff;
+  background: #4f7cff;
+  color: #ffffff;
+  box-shadow: 0 6px 16px rgba(79, 124, 255, 0.24);
+}
+.staff-modal-card .button-primary:hover {
+  border-color: #6f96ff;
+  background: #6f96ff;
+}
