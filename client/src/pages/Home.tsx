@@ -402,12 +402,8 @@ export default function Home() {
     }
   }, [Boolean(editingRow)]);
 
-  // 페이지 로드 시 서버에서 데이터 불러오기 (localStorage 우선)
+  // 페이지 로드 시 localStorage에서만 불러오기
   useEffect(() => {
-    const saved = localStorage.getItem('budgetRows');
-    if (!saved) {
-      loadDataFromServer();
-    }
     loadExecutionDataFromServer();
   }, []);
 
