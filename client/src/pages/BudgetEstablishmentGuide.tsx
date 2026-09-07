@@ -22,7 +22,7 @@ export default function BudgetEstablishmentGuide() {
       case "세입예산":
         return (
           <div className="tab-content">
-            <h2>세입예산 요구 가이드 <span className="guide-subtitle">세외수입 및 이전재원 요구</span></h2>
+            <h2>세입예산 <span className="guide-subtitle">세외수입 및 이전재원 요구</span></h2>
 
             <h3>📌 세입 분류별 핵심 정의</h3>
             <div className="cards-grid">
@@ -153,7 +153,7 @@ export default function BudgetEstablishmentGuide() {
       case "보조금·행사":
         return (
           <div className="tab-content">
-            <h2>지방보조금 및 행사 요구 가이드 <span className="guide-subtitle">민간보조금 한도 관리 및 평가 환류</span></h2>
+            <h2>지방보조금 및 행사 <span className="guide-subtitle">민간보조금 한도 관리 및 평가 환류</span></h2>
 
             <h3>📌 핵심 개념 정의</h3>
             <div className="cards-grid">
@@ -212,7 +212,7 @@ export default function BudgetEstablishmentGuide() {
       case "국도비·전환":
         return (
           <div className="tab-content">
-            <h2>국·도비 및 전환사업 요구 가이드 <span className="guide-subtitle">매칭 비율 및 전환사업 독립 편성</span></h2>
+            <h2>국·도비 및 전환사업 <span className="guide-subtitle">매칭 비율 및 전환사업 독립 편성</span></h2>
 
             <h3>📌 핵심 개념 정의</h3>
             <div className="cards-grid">
@@ -251,7 +251,7 @@ export default function BudgetEstablishmentGuide() {
       case "지방투자사업":
         return (
           <div className="tab-content">
-            <h2>지방투자사업 요구 가이드 <span className="guide-subtitle">투자심사 대상 금액 및 절차 기준</span></h2>
+            <h2>지방투자사업 <span className="guide-subtitle">투자심사 대상 금액 및 절차 기준</span></h2>
 
             <h3>💰 지방재정 투자심사 대상 금액 기준</h3>
             <table className="content-table">
@@ -300,7 +300,7 @@ export default function BudgetEstablishmentGuide() {
       case "시설비":
         return (
           <div className="tab-content">
-            <h2>시설비 요구 가이드 <span className="guide-subtitle">시설비 통계목 이원화 및 단계별 편성 기준</span></h2>
+            <h2>시설비 <span className="guide-subtitle">시설비 통계목 이원화 및 단계별 편성 기준</span></h2>
 
             <h3>📌 2027년도 핵심 개정: 시설비 통계목의 이원화 분리</h3>
             <p>포괄 편성으로 인한 예산의 불용 및 이월을 근절하기 위해 토지매입 및 보상 경비를 시설비에서 완전히 분리해 이력을 관리합니다.</p>
@@ -344,7 +344,7 @@ export default function BudgetEstablishmentGuide() {
       case "자산 취득":
         return (
           <div className="tab-content">
-            <h2>자산 취득 요구 가이드 <span className="guide-subtitle">주요 물품 정수 승인 및 친환경 원칙</span></h2>
+            <h2>자산 취득 <span className="guide-subtitle">주요 물품 정수 승인 및 친환경 원칙</span></h2>
 
             <h3>📌 주요 물품 및 공용차량 정수 승인 제도</h3>
 
@@ -373,7 +373,7 @@ export default function BudgetEstablishmentGuide() {
       case "기간제근로자":
         return (
           <div className="tab-content">
-            <h2>기간제근로자 요구 가이드 <span className="guide-subtitle">채용 사전 승인 및 급여 산정 기준</span></h2>
+            <h2>기간제근로자 <span className="guide-subtitle">채용 사전 승인 및 급여 산정 기준</span></h2>
 
             <h3>📋 기간제근로자 채용 사전 승인</h3>
 
@@ -522,8 +522,8 @@ export default function BudgetEstablishmentGuide() {
         }
 
         .tab-content h2 {
-          font-size: 22px;
-          font-weight: 600;
+          font-size: 26px;
+          font-weight: 700;
           color: var(--text);
           margin-top: 0;
           margin-bottom: 16px;

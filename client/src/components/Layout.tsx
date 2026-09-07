@@ -131,6 +131,11 @@ export default function Layout({
                       transform: expandedBudgetExplainer ? "rotate(0deg)" : "rotate(-90deg)",
                       transition: "transform 0.2s",
                       opacity: 0.6,
+                      background: "none !important",
+                      padding: "0 !important",
+                      border: "none !important",
+                      width: "auto !important",
+                      height: "auto !important",
                     }}
                   />
                 )}
