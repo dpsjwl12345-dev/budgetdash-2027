@@ -6,6 +6,23 @@ import { useMemo, useRef, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
+
+type BudgetExecution = {
+  id: number;
+  department: string;
+  policyName: string;
+  programName: string;
+  unitName: string;
+  statisticsCode: string;
+  original: number;
+  supplementary: number;
+  preEstablishment: number;
+  reserve: number;
+  carryover: number;
+  budget: number;
+  executed: number;
+  executionRate: number;
+};
 import Pagination from "@/components/Pagination";
 import {
   AlertCircle,
@@ -324,6 +341,10 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
+  const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
+    const saved = localStorage.getItem('budgetExecution2026Rows');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
@@ -382,6 +403,7 @@ export default function Home() {
     if (!saved) {
       loadDataFromServer();
     }
+    loadExecutionDataFromServer();
   }, []);
 
   // localStorage에 budgetRows 저장
@@ -404,6 +426,20 @@ export default function Home() {
       }
     } catch (error) {
       console.warn('서버에서 데이터 로드 실패:', error);
+    }
+  };
+
+  const loadExecutionDataFromServer = async () => {
+    const saved = localStorage.getItem('budgetExecution2026Rows');
+    if (saved) {
+      try {
+        const data = JSON.parse(saved);
+        if (data && Array.isArray(data)) {
+          setExecutionData(data);
+        }
+      } catch (error) {
+        console.warn('localStorage에서 데이터 로드 실패:', error);
+      }
     }
   };
 
@@ -467,6 +503,12 @@ export default function Home() {
   }, [budgetRows]);
 
   const totals = useMemo(() => budgetRows.reduce((sum, row) => ({ amount: sum.amount + row.amount, city: sum.city + row.city, national: sum.national + row.national, province: sum.province + row.province, other: sum.other + row.other, previous: sum.previous + row.previous }), { amount: 0, city: 0, national: 0, province: 0, other: 0, previous: 0 }), [budgetRows]);
+
+  const budget2026Total = useMemo(() => {
+    if (executionData.length === 0) return 0;
+    const filtered = department ? executionData.filter(row => row.department === department) : executionData;
+    return filtered.reduce((sum, row) => sum + row.original + row.supplementary + row.preEstablishment + row.reserve, 0);
+  }, [executionData, department]);
 
   const counts = {
     전체: budgetRows.length,
@@ -744,9 +786,9 @@ export default function Home() {
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
-                <div className="metric-top"><span>2026 최종예산액</span></div>
+                <div className="metric-top"><span>2026 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Total / 1000000))}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-header">

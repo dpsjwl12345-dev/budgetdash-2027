@@ -20,14 +20,27 @@ type NavItem = {
   disabled?: boolean;
 };
 
+type ToolItem = {
+  label: string;
+  icon: React.FC<{ size: number }>;
+  subItems?: { label: string; path?: string }[];
+};
+
 const navItems: NavItem[] = [
   { label: "예산 편성 시트", icon: ClipboardCheck, path: "/", count: "01" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer" },
 ];
 
-const toolItems = [
-  { label: "심의 기준 설정", icon: SlidersHorizontal },
+const toolItems: ToolItem[] = [
+  {
+    label: "예산 편성 가이드",
+    icon: SlidersHorizontal,
+    subItems: [
+      { label: "편성기준 및 사전절차" },
+      { label: "세출 통계목별 상세" },
+    ],
+  },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle },
 ];
 
@@ -47,6 +60,7 @@ export default function Layout({
     navItems.find((item) => item.path === location)?.label ?? "예산 편성 시트"
   );
   const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
+  const [expandedGuide, setExpandedGuide] = useState(false);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
@@ -93,11 +107,12 @@ export default function Layout({
                 {count && <span className="nav-count">{count}</span>}
                 {isBudgetExplainer && (
                   <ChevronDown
-                    size={16}
+                    size={14}
                     style={{
                       marginLeft: "auto",
                       transform: expandedBudgetExplainer ? "rotate(0deg)" : "rotate(-90deg)",
                       transition: "transform 0.2s",
+                      opacity: 0.6,
                     }}
                   />
                 )}
@@ -162,20 +177,87 @@ export default function Layout({
 
         <div className="sidebar-label tools-label">TOOLS</div>
         <nav className="nav-list" aria-label="도구">
-          {toolItems.map(({ label, icon: Icon }) => (
-            <div key={label}>
+          {toolItems.map(({ label, icon: Icon, subItems }) => {
+            const hasSubItems = subItems && subItems.length > 0;
+            const isExpanded = label === "예산 편성 가이드" ? expandedGuide : false;
+
+            const button = (
               <button
+                key={label}
                 className="nav-item"
                 aria-label={label}
-                onClick={() =>
-                  showToast?.(`${label} 화면은 다음 업데이트에서 제공됩니다.`)
-                }
+                onClick={() => {
+                  if (hasSubItems && label === "예산 편성 가이드") {
+                    setExpandedGuide(!expandedGuide);
+                  } else {
+                    showToast?.(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
+                  }
+                }}
               >
                 <Icon size={17} />
                 <span>{label}</span>
+                {hasSubItems && (
+                  <ChevronDown
+                    size={14}
+                    style={{
+                      marginLeft: "auto",
+                      transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                      transition: "transform 0.2s",
+                      opacity: 0.6,
+                    }}
+                  />
+                )}
               </button>
-            </div>
-          ))}
+            );
+
+            if (!hasSubItems) {
+              return <div key={label}>{button}</div>;
+            }
+
+            return (
+              <div key={label}>
+                {button}
+                {isExpanded && (
+                  <div style={{ display: "flex", flexDirection: "column", gap: "0" }}>
+                    {subItems.map((subItem) => (
+                      <button
+                        key={subItem.label}
+                        style={{
+                          paddingLeft: "44px",
+                          paddingRight: "12px",
+                          height: "32px",
+                          display: "flex",
+                          alignItems: "center",
+                          fontSize: "14px",
+                          fontWeight: 400,
+                          color: "var(--text-muted)",
+                          backgroundColor: "transparent",
+                          border: "none",
+                          borderLeft: "2px solid transparent",
+                          cursor: "pointer",
+                          textAlign: "left",
+                          transition: "all 0.15s",
+                        }}
+                        onClick={() =>
+                          showToast?.(`${subItem.label}은 다음 업데이트에서 제공됩니다.`)
+                        }
+                        onMouseEnter={(e) => {
+                          e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.08)";
+                          e.currentTarget.style.color = "var(--text)";
+                        }}
+                        onMouseLeave={(e) => {
+                          e.currentTarget.style.backgroundColor = "transparent";
+                          e.currentTarget.style.color = "var(--text-muted)";
+                        }}
+                      >
+                        {subItem.label}
+                      </button>
+                    ))}
+                  </div>
+                )}
+              </div>
+            );
+          })}
         </nav>
 
         <div className="sidebar-bottom" />
