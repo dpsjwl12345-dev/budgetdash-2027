@@ -282,12 +282,13 @@ export default function BudgetEstablishmentGuide() {
           margin-top: 0;
           margin-bottom: 8px;
           color: #5b9bf0;
-          font-size: 14px;
+          font-size: 16px;
+          font-weight: 600;
         }
 
         .info-card p {
           margin: 0;
-          font-size: 13px;
+          font-size: 14px;
           line-height: 1.6;
         }
 
