@@ -120,12 +120,12 @@ export default function Layout({
                   }
                 }}
               >
-                <Icon size={17} color={iconColor} style={{ color: iconColor }} />
+                <Icon size={17} />
                 <span>{label}</span>
                 {count && <span className="nav-count">{count}</span>}
                 {isBudgetExplainer && (
                   <ChevronDown
-                    size={14}
+                    size={10}
                     style={{
                       marginLeft: "auto",
                       transform: expandedBudgetExplainer ? "rotate(0deg)" : "rotate(-90deg)",
@@ -218,7 +218,7 @@ export default function Layout({
                 <span>{label}</span>
                 {hasSubItems && (
                   <ChevronDown
-                    size={14}
+                    size={10}
                     style={{
                       marginLeft: "auto",
                       transform: isExpanded ? "rotate(0deg)" : "rotate(-90deg)",

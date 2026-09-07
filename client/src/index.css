@@ -543,7 +543,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .result-refresh { margin-left: auto; width: 26px; height: 26px; display: inline-flex; align-items: center; justify-content: center; border: 0; border-radius: 5px; background: transparent; color: #7ab8f2; cursor: pointer; }
 .result-refresh:hover { color: #a7d8ff; background: rgba(118, 157, 194, 0.15); }
 .table-scroll { overflow-x: auto; overflow-y: visible; }
-.budget-table { width: 100%; min-width: 1060px; border-collapse: collapse; table-layout: fixed; font-family: "Pretendard", system-ui, sans-serif; }
+.budget-table { width: 100%; min-width: 1060px; border-collapse: collapse; table-layout: auto; font-family: "Pretendard", system-ui, sans-serif; }
 .budget-table th, .budget-table td { border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
 .budget-table tbody tr td:nth-child(n+5) { text-align: right; }
 .budget-table tbody tr td:nth-child(12) { text-align: right !important; }
@@ -600,7 +600,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .footer-hint { display: none; }
 
 .modal-backdrop { position: fixed; inset: 0; z-index: 20; display: flex; align-items: center; justify-content: center; background: rgba(2, 9, 17, 0.72); backdrop-filter: blur(4px); }
-.modal-card { width: 420px; padding: 24px; border: 1px solid rgba(118, 157, 194, 0.2); border-radius: 16px; background: linear-gradient(135deg, rgba(20, 45, 70, 0.95) 0%, rgba(25, 50, 75, 0.9) 100%); backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(118, 157, 194, 0.15), 0 24px 80px rgba(0, 0, 0, 0.4); animation: modal-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
+.modal-card { width: 1600px; max-width: 95vw; padding: 24px; border: 1px solid rgba(118, 157, 194, 0.2); border-radius: 16px; background: linear-gradient(135deg, rgba(20, 45, 70, 0.95) 0%, rgba(25, 50, 75, 0.9) 100%); backdrop-filter: blur(20px); box-shadow: 0 0 40px rgba(118, 157, 194, 0.15), 0 24px 80px rgba(0, 0, 0, 0.4); animation: modal-in 200ms cubic-bezier(0.23, 1, 0.32, 1); }
 @keyframes modal-in { from { opacity: 0; transform: translateY(7px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
 
