@@ -537,8 +537,34 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>민간자본사업보조 편성 기준</h3>
           <div className="content-section">
-            <h4>자본 형성적 사업 지원</h4>
-            <p>자체/이전재원 무관 통합 안내에 따라 편성합니다.</p>
+            <h4>기본 정의</h4>
+            <p>민간이 자체적으로 추진하는 자본 형성적 사업(시설물 축조, 대규모 수선, 자본재 및 고가 장비 도입 등)을 지원하기 위해 지방자치단체가 민간 보조사업자에게 교부하는 <strong>자본 지출 성격의 보조금</strong>입니다.</p>
+          </div>
+          <div className="content-section">
+            <h4>2027년도 주요 개정 사항</h4>
+            <p><strong>재원구분 통계목 통합:</strong> 기존에는 자체재원 보조와 이전재원(국·도비 등) 보조로 번거롭게 나누어 관리되던 민간자본 보조 통계목이 '민간자본사업보조(402-01)' 단일 통계목으로 완전히 통합되었습니다.</p>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>💡 <em>실무 팁: e호조 시스템 입력 시에는 하나의 통계목으로 통일하되, 보통교부세 산정 등을 위해 시스템 내부 속성(정보관리사업)에서 재원 구분을 분류하여 관리합니다.</em></p>
+          </div>
+          <div className="content-section">
+            <h4>예산 편성 대상 및 범위</h4>
+            <ul>
+              <li><strong>시설 신·증축 및 개보수:</strong> 민간 단체나 법인이 소유·운영하는 시설물의 신축, 증축, 개축 및 대수선 공사 비용 지원</li>
+              <li><strong>자본재 및 고가 장비 구입:</strong> 내용연수가 다년인 기계장비, 공장 설비, 전문 의료·과학 장비 등 민간의 유형자산 형성을 돕기 위한 물품 취득비 지원</li>
+            </ul>
+          </div>
+          <div className="content-section">
+            <h4>⚠️ 예산 편성 시 실무 유의사항 (필수 체크)</h4>
+            <div style={{ backgroundColor: "rgba(255, 193, 7, 0.1)", padding: "12px", borderRadius: "4px", marginBottom: "12px" }}>
+              <strong>경상적 경비 편성 절대 금지</strong>
+              <ul style={{ marginTop: "8px" }}>
+                <li>사업 수행에 따르는 단순 인건비, 사무실 운영비, 소모품 구입비, 홍보비, 여비 등 경상적 성격의 경비는 자본지출(402-01)에 섞어서 편성할 수 없습니다.</li>
+                <li>해당 비용은 반드시 경상이전 비목인 민간경상사업보조(307-02) 등으로 철저히 분리하여 요구해야 합니다.</li>
+              </ul>
+            </div>
+            <ul>
+              <li><strong>지방보조금 사전 심의:</strong> 예산 요구 전, 반드시 지방보조금관리위원회 심의를 완료하여 승인을 득한 사업에 한해서만 예산을 반영할 수 있습니다.</li>
+              <li><strong>보조금 총액한도액 관리:</strong> 화성시 전체 민간보조금 총액 한도(2027년도 예상 한도액 1,094억 원) 범위 내에서 부서별 한도액 배분을 준수하여야 합니다.</li>
+            </ul>
           </div>
         </div>
       ),
