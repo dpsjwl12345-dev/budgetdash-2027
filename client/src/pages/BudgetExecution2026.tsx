@@ -12,6 +12,7 @@ import {
 
 type BudgetExecution = {
   id: number;
+  year?: string;
   department: string;
   policyName: string;
   programName: string;
@@ -50,6 +51,7 @@ function ExecutionBar({ rate }: { rate: number }) {
 }
 
 export default function BudgetExecution2026() {
+  const [selectedYear, setSelectedYear] = useState("2026");
   const [search, setSearch] = useState("");
   const [sortBy, setSortBy] = useState<"department" | "executionRate">("department");
   const [selectedDepartment, setSelectedDepartment] = useState("");
@@ -99,6 +101,7 @@ export default function BudgetExecution2026() {
       if (data && Array.isArray(data) && data.length > 0) {
         const mapped = data.map((row: any) => ({
           id: row.id,
+          year: String(row.year ?? "2026"),
           department: row.department,
           policyName: row.policyName ?? row.policy_name,
           programName: row.programName ?? row.program_name,
@@ -141,6 +144,7 @@ export default function BudgetExecution2026() {
 
           return {
             id: Date.now() + index,
+            year: selectedYear,
             department: parseText(record["부서명"]) || "미분류",
             policyName: parseText(record["정책사업명"]),
             programName: parseText(record["단위사업명"]),
@@ -164,11 +168,18 @@ export default function BudgetExecution2026() {
 
       if (!nextData.length) throw new Error("empty");
 
-      setData(nextData);
-      setSelectedDepartment("전체");
+      setData((previous) => [
+        ...previous.filter((row) => String(row.year ?? "2026") !== selectedYear),
+        ...nextData,
+      ]);
+      setSelectedDepartment("");
 
       try {
-        localStorage.setItem("budgetExecution2026Rows", JSON.stringify(nextData));
+        const merged = [
+          ...data.filter((row) => String(row.year ?? "2026") !== selectedYear),
+          ...nextData,
+        ];
+        localStorage.setItem("budgetExecution2026Rows", JSON.stringify(merged));
       } catch (error) {
         console.warn('localStorage 저장 실패:', error);
       }
@@ -177,12 +188,17 @@ export default function BudgetExecution2026() {
         const response = await fetch(`/api/budget-execution-2026/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: nextData }),
+          body: JSON.stringify({
+            data: [
+              ...data.filter((row) => String(row.year ?? "2026") !== selectedYear),
+              ...nextData,
+            ],
+          }),
         });
         if (!response.ok) {
           showToast('저장에 실패했습니다 (로컬에만 저장됨)');
         } else {
-          showToast(`${nextData.length}개 부서 데이터를 저장했습니다.`);
+          showToast(`${selectedYear}년 ${nextData.length}개 데이터를 교체 저장했습니다.`);
         }
       } catch (error) {
         console.warn('서버 저장 실패:', error);
@@ -203,12 +219,13 @@ export default function BudgetExecution2026() {
 
   const filteredData = useMemo(() => {
     let filtered = data.filter((row) => {
+      const matchesYear = String(row.year ?? "2026") === selectedYear;
       const matchesSearch = row.department.toLowerCase().includes(search.toLowerCase()) ||
                            row.policyName.toLowerCase().includes(search.toLowerCase()) ||
                            row.programName.toLowerCase().includes(search.toLowerCase());
       const matchesDepartment = selectedDepartment === "" || selectedDepartment === "전체" || row.department === selectedDepartment;
       const matchesProgramName = selectedProgramName === "" || selectedProgramName === "전체" || row.programName === selectedProgramName;
-      return matchesSearch && matchesDepartment && matchesProgramName;
+      return matchesYear && matchesSearch && matchesDepartment && matchesProgramName;
     });
 
     if (sortBy === "executionRate") {
@@ -224,7 +241,7 @@ export default function BudgetExecution2026() {
     }
 
     return filtered;
-  }, [data, search, sortBy, selectedDepartment, selectedProgramName]);
+  }, [data, search, sortBy, selectedDepartment, selectedProgramName, selectedYear]);
 
   const filteredTotals = useMemo(() => {
     return filteredData.reduce(
@@ -267,7 +284,7 @@ export default function BudgetExecution2026() {
           <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
               <span style={{ fontSize: "22px", fontWeight: 700, color: "var(--text-faint)", letterSpacing: "0.02em" }}>
-                2026 일반회계
+                {selectedYear} 일반회계
               </span>
               <h1 style={{ marginTop: "-4px" }}>부서별 예산집행현황</h1>
             </div>
@@ -304,6 +321,15 @@ export default function BudgetExecution2026() {
           <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
             <div className="table-title">
               <div style={{ display: 'flex', alignItems: 'center', gap: '12px', position: 'relative' }} ref={dropdownRef}>
+                <select
+                  value={selectedYear}
+                  onChange={(event) => { setSelectedYear(event.target.value); setSelectedDepartment(""); setSelectedProgramName(""); setPage(1); }}
+                  aria-label="회계연도"
+                  style={{ padding: '8px 12px', fontSize: '14px', borderRadius: '16px', border: '1px solid #e2e8f0', backgroundColor: '#fff', color: '#334155', fontWeight: 500, cursor: 'pointer' }}
+                >
+                  <option value="2025">2025년</option>
+                  <option value="2026">2026년</option>
+                </select>
                 <button
                   onClick={() => setDropdownOpen(!dropdownOpen)}
                   style={{
