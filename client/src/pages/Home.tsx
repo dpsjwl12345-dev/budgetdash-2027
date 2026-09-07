@@ -701,6 +701,14 @@ export default function Home() {
     await saveDataToServer(updatedRows);
   };
 
+  const deleteRow = async (rowId: number) => {
+    const rowToDelete = budgetRows.find(row => row.id === rowId);
+    const updatedRows = budgetRows.filter(row => row.id !== rowId);
+    setBudgetRows(updatedRows);
+    showToast(`${rowToDelete?.program || '항목'}이(가) 삭제되었습니다.`);
+    await saveDataToServer(updatedRows);
+  };
+
   const exportToCsv = () => {
     const sheetRows = filteredRows.map((row) => ({
       정책사업명: row.policy,
@@ -911,7 +919,7 @@ export default function Home() {
                   <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`} style={key === "detail" ? { textAlign: "right", paddingRight: 12 } : undefined}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}<td className="action-cell"></td></tr>
                   {paginatedRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
                     {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{renderCell(row, key)}</td>)}
-                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button></td>
+                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button><button className="row-delete" onClick={() => deleteRow(row.id)} aria-label={`${row.program} 삭제`}><X size={15} /></button></td>
                   </tr>)}
                 </tbody>
               </table>
