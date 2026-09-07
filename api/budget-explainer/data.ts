@@ -20,7 +20,7 @@ export default async function handler(req: any, res: any) {
     }
 
     const supabase = getSupabaseAdmin();
-    const { data: rows, error } = await supabase
+    const { data: materialRows, error } = await supabase
       .from("budget_explainer_materials")
       .select("policy, unit, detail")
       .eq("department", department)
@@ -33,8 +33,34 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
+    // 설명자료 PDF를 아직 올리지 않은 부서도 예산요구서의
+    // 정책·단위·세부사업 계층을 바로 탐색할 수 있도록 병합한다.
+    const { data: budgetRows, error: budgetError } = await supabase
+      .from("budget_rows")
+      .select("policy, program, department")
+      .eq("department", department);
+    if (budgetError) {
+      res.status(500).json({ error: budgetError.message });
+      return;
+    }
+
+    const rows = [
+      ...(materialRows || []),
+      ...(budgetRows || []).map((row: any) => {
+        const parts = String(row.program || "")
+          .split("\n")
+          .map((part) => part.trim())
+          .filter(Boolean);
+        return {
+          policy: String(row.policy || "미분류 정책"),
+          unit: parts.length > 1 ? parts[0] : "단위사업 미지정",
+          detail: parts[parts.length - 1] || "미입력 사업",
+        };
+      }),
+    ];
+
     const policyMap = new Map<string, any>();
-    (rows || []).forEach((row: any) => {
+    rows.forEach((row: any) => {
       if (!policyMap.has(row.policy)) {
         policyMap.set(row.policy, {
           title: row.policy,
