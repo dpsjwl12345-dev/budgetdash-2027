@@ -456,13 +456,13 @@ export default function Home() {
       const result = await response.json();
 
       if (result.success) {
-        showToast('클라우드에 저장되었습니다.');
+        showToast('클라우드에 저장되었습니다. ☁️');
       } else {
-        showToast('로컬에만 저장되었습니다.');
+        showToast('로컬에만 저장되었습니다. 💾');
       }
     } catch (error) {
       console.error('서버 저장 실패:', error);
-      showToast('로컬에만 저장되었습니다.');
+      showToast('로컬에만 저장되었습니다. 💾');
     }
   };
 
