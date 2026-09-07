@@ -586,6 +586,7 @@ export default function Home() {
         })
         .filter((row) => row.amount > 0);
       if (!nextRows.length) throw new Error("empty");
+      console.log('업로드된 데이터 샘플:', nextRows.slice(0, 3).map(r => ({ policy: r.policy, department: r.department })));
       setSearch("");
       setBudgetRows((prevRows) => {
         const updated = prevRows.map(prevRow => {

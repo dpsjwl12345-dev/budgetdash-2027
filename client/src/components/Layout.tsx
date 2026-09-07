@@ -57,14 +57,30 @@ export default function Layout({
   const isBudgetExplainerPage = location === "/budget-explainer";
   const currentDept = isBudgetExplainerPage ? searchParams.get("dept") : null;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isBudgetExplainerPage);
-  const [activeNav, setActiveNav] = useState(
-    navItems.find((item) => item.path === location)?.label ?? "예산 편성 시트"
-  );
+
+  const getActiveNavLabel = () => {
+    const navItem = navItems.find((item) => item.path === location);
+    if (navItem) return navItem.label;
+
+    switch (location) {
+      case "/budget-establishment-guide":
+        return "편성기준 및 사전절차";
+      case "/statistics-code-detail":
+        return "세출 통계목별 상세";
+      case "/department-key-issues":
+        return "부서별 주요 쟁점사항";
+      default:
+        return "예산 편성 시트";
+    }
+  };
+
+  const [activeNav, setActiveNav] = useState(getActiveNavLabel());
   const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
   const [expandedGuide, setExpandedGuide] = useState(false);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
+    setActiveNav(getActiveNavLabel());
   }, [location]);
 
   return (

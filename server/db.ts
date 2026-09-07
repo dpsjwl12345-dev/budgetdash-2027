@@ -1,9 +1,16 @@
 import sqlite3 from "sqlite3";
 import path from "path";
 import { fileURLToPath } from "url";
+import fs from "fs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
-const dbPath = path.join(__dirname, "..", "data", "budget.db");
+const dataDir = path.join(__dirname, "..", "data");
+const dbPath = path.join(dataDir, "budget.db");
+
+// Ensure data directory exists
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
 let db: sqlite3.Database | null = null;
 
