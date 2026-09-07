@@ -71,6 +71,7 @@ type BudgetRow = {
   previous: number;
   status: Status;
   note?: string;
+  department?: string;
 };
 
 
@@ -472,9 +473,10 @@ export default function Home() {
       const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
       const matchesProgram = !programFilter || getDetailName(row.program) === programFilter;
       const matchesAccount = !accountFilter || row.account === accountFilter;
-      return matchesSearch && matchesStatus && matchesProgram && matchesAccount;
+      const matchesDepartment = !department || row.department === department;
+      return matchesSearch && matchesStatus && matchesProgram && matchesAccount && matchesDepartment;
     });
-  }, [budgetRows, search, statusFilter, programFilter, accountFilter]);
+  }, [budgetRows, search, statusFilter, programFilter, accountFilter, department]);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
@@ -579,6 +581,7 @@ export default function Home() {
             previous: parseNumber(pick(record, ["전년도"])),
             status,
             note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
+            department: String(pick(record, ["부서명"])) || undefined,
           };
         })
         .filter((row) => row.amount > 0);
