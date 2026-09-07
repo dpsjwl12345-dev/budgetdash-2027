@@ -808,7 +808,7 @@ export default function Home() {
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(val) => { setDepartment(val); setCurrentPage(1); }} label="편성 부서" /></div>
+              <div className="select-field"><span>편성 부서</span><select name="department" value={department} onChange={(e) => { setDepartment(e.target.value); setCurrentPage(1); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text)' }}>{departmentOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>

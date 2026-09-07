@@ -1,24 +1,25 @@
+const { createClient } = require('@supabase/supabase-js');
+
 export default async function handler(_req: any, res: any) {
   try {
-    const url = process.env.KV_REST_API_URL;
-    const token = process.env.KV_REST_API_TOKEN;
+    const url = process.env.VITE_SUPABASE_URL;
+    const key = process.env.VITE_SUPABASE_ANON_KEY;
 
-    if (!url || !token) {
+    if (!url || !key) {
       res.status(200).json({ data: null });
       return;
     }
 
-    const kvResponse = await fetch(`${url}/get/budgetRows`, {
-      headers: { Authorization: `Bearer ${token}` },
-    });
+    const supabase = createClient(url, key);
+    const { data, error } = await supabase
+      .from('budget_rows')
+      .select('*');
 
-    if (!kvResponse.ok) {
+    if (error) {
       res.status(200).json({ data: null });
       return;
     }
 
-    const body = await kvResponse.json();
-    const data = body?.result ? JSON.parse(body.result) : null;
     res.status(200).json({ data });
   } catch (error) {
     res.status(500).json({ error: String(error) });
