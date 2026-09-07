@@ -497,7 +497,7 @@ export default function Home() {
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [search, statusFilter, programFilter, accountFilter]);
+  }, [search, statusFilter, programFilter, accountFilter, department]);
 
   const uniquePrograms = useMemo(() => {
     const seen = new Set();
