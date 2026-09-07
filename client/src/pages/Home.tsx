@@ -58,7 +58,6 @@ type Status = "정상" | "오류" | "주의";
 
 type BudgetRow = {
   id: number;
-  department?: string;
   policy: string;
   program: string;
   code: string;
@@ -473,10 +472,9 @@ export default function Home() {
       const matchesStatus = statusFilter === "전체" || row.status === statusFilter;
       const matchesProgram = !programFilter || getDetailName(row.program) === programFilter;
       const matchesAccount = !accountFilter || row.account === accountFilter;
-      const matchesDepartment = !department || row.department === department;
-      return matchesSearch && matchesStatus && matchesProgram && matchesAccount && matchesDepartment;
+      return matchesSearch && matchesStatus && matchesProgram && matchesAccount;
     });
-  }, [budgetRows, search, statusFilter, programFilter, accountFilter, department]);
+  }, [budgetRows, search, statusFilter, programFilter, accountFilter]);
 
   const itemsPerPage = 10;
   const totalPages = Math.ceil(filteredRows.length / itemsPerPage);
@@ -564,7 +562,6 @@ export default function Home() {
           const programDisplay = unitProgram ? `${unitProgram}\n${subProgram}` : subProgram;
           return {
             id: Date.now() + index,
-            department: String(pick(record, ["부서명"])) || undefined,
             policy: String(pick(record, ["정책사업명"])) || "미분류 정책",
             program: programDisplay,
             code,
