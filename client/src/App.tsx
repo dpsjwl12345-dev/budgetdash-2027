@@ -9,6 +9,7 @@ import BudgetExecution2026 from "./pages/BudgetExecution2026";
 import BudgetExplainer from "./pages/BudgetExplainer";
 import BudgetEstablishmentGuide from "./pages/BudgetEstablishmentGuide";
 import StatisticsCodeDetail from "./pages/StatisticsCodeDetail";
+import DepartmentKeyIssues from "./pages/DepartmentKeyIssues";
 
 
 function Router() {
@@ -19,6 +20,7 @@ function Router() {
       <Route path={"/budget-explainer"} component={BudgetExplainer} />
       <Route path={"/budget-establishment-guide"} component={BudgetEstablishmentGuide} />
       <Route path={"/statistics-code-detail"} component={StatisticsCodeDetail} />
+      <Route path={"/department-key-issues"} component={DepartmentKeyIssues} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route: keep the single-file HTML usable from a local file path. */}
       <Route component={Home} />

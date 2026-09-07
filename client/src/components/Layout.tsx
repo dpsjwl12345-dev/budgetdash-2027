@@ -23,6 +23,7 @@ type NavItem = {
 type ToolItem = {
   label: string;
   icon: React.FC<{ size: number }>;
+  path?: string;
   subItems?: { label: string; path?: string }[];
 };
 
@@ -41,7 +42,7 @@ const toolItems: ToolItem[] = [
       { label: "세출 통계목별 상세" },
     ],
   },
-  { label: "부서별 주요 쟁점사항", icon: AlertCircle },
+  { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
 ];
 
 export default function Layout({
@@ -177,7 +178,7 @@ export default function Layout({
 
         <div className="sidebar-label tools-label">TOOLS</div>
         <nav className="nav-list" aria-label="도구">
-          {toolItems.map(({ label, icon: Icon, subItems }) => {
+          {toolItems.map(({ label, icon: Icon, path, subItems }) => {
             const hasSubItems = subItems && subItems.length > 0;
             const isExpanded = label === "예산 편성 가이드" ? expandedGuide : false;
 
@@ -189,6 +190,8 @@ export default function Layout({
                 onClick={() => {
                   if (hasSubItems && label === "예산 편성 가이드") {
                     setExpandedGuide(!expandedGuide);
+                  } else if (path) {
+                    setLocation(path);
                   } else {
                     showToast?.(`${label} 화면은 다음 업데이트에서 제공됩니다.`);
                   }
