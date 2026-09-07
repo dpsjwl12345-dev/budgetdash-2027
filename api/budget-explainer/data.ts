@@ -74,21 +74,26 @@ export default async function handler(req: any, res: any) {
         policyNode.children.set(row.unit, {
           title: row.unit,
           level: "단위사업",
-          children: [],
+          children: new Map<string, any>(),
         });
       }
 
       const unitNode = policyNode.children.get(row.unit);
-      unitNode.children.push({
-        title: row.detail,
-        level: "세부사업",
-        children: [],
-      });
+      if (!unitNode.children.has(row.detail)) {
+        unitNode.children.set(row.detail, {
+          title: row.detail,
+          level: "세부사업",
+          children: [],
+        });
+      }
     });
 
     const policies = Array.from(policyMap.values()).map((policy) => ({
       ...policy,
-      children: Array.from(policy.children.values()),
+      children: Array.from(policy.children.values()).map((unit: any) => ({
+        ...unit,
+        children: Array.from(unit.children.values()),
+      })),
     }));
 
     const tree = [

@@ -1,5 +1,5 @@
 import { useEffect, useState, useRef, useCallback } from "react";
-import { useSearchParams } from "wouter";
+import { useLocation, useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 import { processExplainerPdf } from "@/lib/pdfExplainer";
@@ -42,6 +42,7 @@ function findDetailNode(
 
 export default function BudgetExplainer() {
   const [params] = useSearchParams();
+  const [, setLocation] = useLocation();
   const requestedDept = params.get("dept") ?? DEPARTMENTS[0];
   const department = DEPARTMENTS.includes(requestedDept as (typeof DEPARTMENTS)[number])
     ? requestedDept
@@ -62,6 +63,8 @@ export default function BudgetExplainer() {
   // 계층 구조 데이터 로드
   const loadTree = useCallback(async () => {
     setLoading(true);
+    setSelectedPath("");
+    setMaterial(null);
     try {
       const response = await fetch(
         `/api/budget-explainer/data?department=${encodeURIComponent(department)}`
@@ -312,7 +315,18 @@ export default function BudgetExplainer() {
               </span>
               <h1 style={{ marginTop: "-4px" }}>부서별 예산설명자료</h1>
             </div>
-            <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "8px" }}>
+            <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
+              <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)", fontSize: "13px" }}>
+                편성 부서
+                <select
+                  value={department}
+                  onChange={(event) => setLocation(`/budget-explainer?dept=${encodeURIComponent(event.target.value)}`)}
+                  style={{ minWidth: "150px", padding: "8px 10px", border: "1px solid var(--line)", borderRadius: "6px", background: "var(--bg-secondary)", color: "var(--text)" }}
+                  aria-label="설명자료 편성 부서"
+                >
+                  {DEPARTMENTS.map((dept) => <option key={dept} value={dept}>{dept}</option>)}
+                </select>
+              </label>
               <label
               className="icon-stack-btn"
               aria-label={uploading ? "업로드 중" : "부서 설명자료 PDF 업로드"}
