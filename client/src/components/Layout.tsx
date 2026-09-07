@@ -18,6 +18,7 @@ type NavItem = {
   path: string;
   count?: string;
   disabled?: boolean;
+  iconColor?: string;
 };
 
 type ToolItem = {
@@ -29,8 +30,8 @@ type ToolItem = {
 
 const navItems: NavItem[] = [
   { label: "예산 편성 시트", icon: ClipboardCheck, path: "/", count: "01" },
-  { label: "예산집행현황", icon: History, path: "/budget-execution-2026" },
-  { label: "예산설명자료", icon: Database, path: "/budget-explainer" },
+  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
+  { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
 ];
 
 const toolItems: ToolItem[] = [
@@ -99,7 +100,7 @@ export default function Layout({
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">
-          {navItems.map(({ label, icon: Icon, path, count, disabled }) => {
+          {navItems.map(({ label, icon: Icon, path, count, disabled, iconColor }) => {
             const isBudgetExplainer = label === "예산설명자료";
 
             const button = (
@@ -119,7 +120,7 @@ export default function Layout({
                   }
                 }}
               >
-                <Icon size={17} />
+                <Icon size={17} color={iconColor} style={{ color: iconColor }} />
                 <span>{label}</span>
                 {count && <span className="nav-count">{count}</span>}
                 {isBudgetExplainer && (

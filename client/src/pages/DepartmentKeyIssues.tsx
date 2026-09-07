@@ -2,9 +2,14 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
+type IssueData = {
+  text: string;
+  date: string;
+};
+
 export default function DepartmentKeyIssues() {
   const [selectedDept, setSelectedDept] = useState<string>(DEPARTMENTS[0] || "");
-  const [issues, setIssues] = useState<Record<string, string>>({});
+  const [issues, setIssues] = useState<Record<string, IssueData>>({});
   const [currentText, setCurrentText] = useState("");
 
   // localStorage에서 데이터 로드
@@ -21,14 +26,26 @@ export default function DepartmentKeyIssues() {
 
   // 부서 변경 시 텍스트 업데이트
   useEffect(() => {
-    setCurrentText(issues[selectedDept] || "");
+    const issue = issues[selectedDept];
+    setCurrentText(issue ? issue.text : "");
   }, [selectedDept, issues]);
 
   // 메모 저장
   const handleSave = () => {
+    if (!currentText.trim()) return;
+
+    const today = new Date().toLocaleDateString('ko-KR', {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit'
+    });
+
     const updatedIssues = {
       ...issues,
-      [selectedDept]: currentText,
+      [selectedDept]: {
+        text: currentText,
+        date: today
+      },
     };
     setIssues(updatedIssues);
     localStorage.setItem("departmentIssues", JSON.stringify(updatedIssues));
@@ -45,7 +62,6 @@ export default function DepartmentKeyIssues() {
           <div className="issues-container">
             {/* 부서 목록 */}
             <aside className="departments-list">
-              <h3>부서 목록</h3>
               <div className="dept-buttons">
                 {DEPARTMENTS.map((dept) => (
                   <button
@@ -80,6 +96,16 @@ export default function DepartmentKeyIssues() {
                   </button>
                 </div>
               </div>
+
+              {/* 저장된 메모 표시 */}
+              {issues[selectedDept] && (
+                <div className="saved-memo-box">
+                  <div className="memo-header">
+                    <span className="memo-date">{issues[selectedDept].date}</span>
+                  </div>
+                  <div className="memo-content">{issues[selectedDept].text}</div>
+                </div>
+              )}
 
               <textarea
                 className="memo-textarea"
@@ -132,15 +158,6 @@ export default function DepartmentKeyIssues() {
           background: rgba(118, 157, 194, 0.05);
         }
 
-        .departments-list h3 {
-          font-size: 14px;
-          font-weight: 600;
-          color: var(--text-muted);
-          margin: 0 0 12px 0;
-          text-transform: uppercase;
-          letter-spacing: 0.5px;
-        }
-
         .dept-buttons {
           display: flex;
           flex-direction: column;
@@ -156,7 +173,7 @@ export default function DepartmentKeyIssues() {
           border: 1px solid transparent;
           border-radius: 6px;
           color: var(--text-muted);
-          font-size: 13px;
+          font-size: 15px;
           font-weight: 500;
           cursor: pointer;
           transition: all 0.2s;
@@ -205,10 +222,10 @@ export default function DepartmentKeyIssues() {
         }
 
         .editor-header h2 {
-          font-size: 20px;
+          font-size: 21px;
           font-weight: 600;
           color: var(--text);
-          margin: 0 0 4px 0;
+          margin: 6px 0 4px 0;
         }
 
         .subtitle {
@@ -280,6 +297,37 @@ export default function DepartmentKeyIssues() {
           transition-duration: 0.3s;
         }
 
+        .saved-memo-box {
+          background: var(--bg-surface);
+          border: 1px solid var(--border);
+          border-radius: 6px;
+          padding: 12px 16px;
+          margin-bottom: 12px;
+          max-height: 120px;
+          overflow-y: auto;
+        }
+
+        .memo-header {
+          display: flex;
+          align-items: center;
+          margin-bottom: 8px;
+          gap: 8px;
+        }
+
+        .memo-date {
+          font-size: 12px;
+          color: #5b9bf0;
+          font-weight: 600;
+        }
+
+        .memo-content {
+          color: var(--text);
+          font-size: 14px;
+          line-height: 1.6;
+          white-space: pre-wrap;
+          word-break: break-word;
+        }
+
         .memo-textarea {
           flex: 1;
           padding: 16px;
@@ -305,37 +353,6 @@ export default function DepartmentKeyIssues() {
           color: var(--text-muted);
         }
 
-        .editor-footer {
-          display: flex;
-          align-items: center;
-          gap: 12px;
-        }
-
-        .save-button {
-          padding: 10px 16px;
-          background: #5b9bf0;
-          border: none;
-          border-radius: 6px;
-          color: white;
-          font-size: 14px;
-          font-weight: 600;
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-
-        .save-button:hover {
-          background: #4a8ae0;
-        }
-
-        .save-button:active {
-          transform: scale(0.98);
-        }
-
-        .char-count {
-          font-size: 13px;
-          color: var(--text-muted);
-          margin-left: auto;
-        }
 
         @media (max-width: 768px) {
           .issues-container {

@@ -522,7 +522,7 @@ export default function BudgetEstablishmentGuide() {
         }
 
         .tab-content h2 {
-          font-size: 20px;
+          font-size: 22px;
           font-weight: 600;
           color: var(--text);
           margin-top: 0;

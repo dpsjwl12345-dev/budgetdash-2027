@@ -248,7 +248,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .nav-sublist { display: grid; gap: 2px; margin-top: 4px; padding-left: 12px; }
 .nav-subitem { width: 100%; min-height: 36px; padding: 0 12px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #8fa3b7; text-align: right; font-size: 13px; font-weight: 550; transition: background 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 .nav-subitem:hover { color: #c5d5e5; background: rgba(118, 157, 194, 0.08); }
-.nav-item { width: 100%; min-height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #aaaaaa; text-align: left; font-size: 15px; font-weight: 560; transition: background 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
+.nav-item { width: 100%; min-height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #aaaaaa; text-align: left; font-size: 16px; font-weight: 560; transition: background 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
 .nav-item svg { color: #b7c2cf; background: rgba(100, 120, 150, 0.12); padding: 10px; border-radius: 50%; border: 1px solid transparent; width: 40px; height: 40px; box-sizing: border-box; transition: all 200ms ease; stroke-width: 1.5px !important; flex-shrink: 0; }
 .nav-item:hover { color: #ffffff; background: transparent; }
 .nav-item:hover svg { color: #dbe2e8; background: rgba(203, 213, 225, 0.16); border-color: rgba(203, 213, 225, 0.3); }
@@ -569,7 +569,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .total-row td:nth-child(1), .total-row td:nth-child(2), .total-row td:nth-child(3) { font-size: 15px !important; }
 .total-row td.col-detail { text-align: right !important; padding-right: 12px !important; }
 .total-row td:nth-child(1) { text-align: center; }
-.total-row td.col-amount { color: #ffd700 !important; font-size: 14px !important; }
+.total-row td.col-amount { color: #5b9bf0 !important; font-size: 14px !important; }
 .total-row td.col-city, .total-row td.col-national, .total-row td.col-province, .total-row td.col-other, .total-row td.col-previous { color: #d0e0f0 !important; }
 .total-row td b { font-size: 15px !important; color: inherit; }
 .total-caption { display: block; margin-top: 2px; color: #7690aa; font-size: 10.5px; }

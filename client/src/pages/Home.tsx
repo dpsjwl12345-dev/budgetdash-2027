@@ -372,9 +372,15 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [programFilter, setProgramFilter] = useState("");
   const [accountFilter, setAccountFilter] = useState("");
+  const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
+    const saved = localStorage.getItem('columnWidths');
+    return saved ? JSON.parse(saved) : {};
+  });
+  const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const staffModalRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
+  const tableRef = useRef<HTMLDivElement>(null);
 
   // Esc로 모달 닫기
   useEffect(() => {
@@ -434,6 +440,41 @@ export default function Home() {
       console.warn('localStorage 저장 실패:', error);
     }
   }, [staffData]);
+
+  // columnWidths 저장
+  useEffect(() => {
+    try {
+      localStorage.setItem('columnWidths', JSON.stringify(columnWidths));
+    } catch (error) {
+      console.warn('columnWidths 저장 실패:', error);
+    }
+  }, [columnWidths]);
+
+  // 컬럼 리사이저 이벤트
+  useEffect(() => {
+    if (!resizingColumn) return;
+
+    const handleMouseMove = (e: MouseEvent) => {
+      const diff = e.clientX - resizingColumn.startX;
+      const newWidth = Math.max(60, resizingColumn.startWidth + diff);
+      setColumnWidths(prev => ({
+        ...prev,
+        [resizingColumn.key]: newWidth
+      }));
+    };
+
+    const handleMouseUp = () => {
+      setResizingColumn(null);
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+    document.addEventListener('mouseup', handleMouseUp);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+      document.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [resizingColumn]);
 
   // 서버 API 함수들
   const loadDataFromServer = async () => {
@@ -811,7 +852,7 @@ export default function Home() {
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><select name="department" value={department} onChange={(e) => { setDepartment(e.target.value); setCurrentPage(1); }} style={{ padding: '8px', borderRadius: '6px', border: '1px solid var(--border)', background: 'var(--bg-surface)', color: 'var(--text)' }}>{departmentOptions.map(opt => <option key={opt.value} value={opt.value}>{opt.label}</option>)}</select></div>
+              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(opt) => { setDepartment(opt.value); setCurrentPage(1); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
@@ -863,9 +904,9 @@ export default function Home() {
               <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
             </div>
 
-            <div className="table-scroll">
+            <div className="table-scroll" ref={tableRef}>
               <table className="budget-table">
-                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <HeaderFilterDropdown label={key === "policy" ? "정책·단위·세부" : label} value={key === "policy" ? programFilter : accountFilter} options={key === "policy" ? uniquePrograms : uniqueAccounts} onChange={key === "policy" ? setProgramFilter : setAccountFilter} /> : label}</th>)}<th className="col-action">편집</th></tr></thead>
+                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', width: columnWidths[key] ? `${columnWidths[key]}px` : 'auto', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <HeaderFilterDropdown label={key === "policy" ? "정책·단위·세부" : label} value={key === "policy" ? programFilter : accountFilter} options={key === "policy" ? uniquePrograms : uniqueAccounts} onChange={key === "policy" ? setProgramFilter : setAccountFilter} /> : label}<div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '6px', cursor: 'col-resize', background: resizingColumn?.key === key ? 'rgba(91, 155, 240, 0.5)' : 'transparent' }} onMouseDown={(e) => { e.preventDefault(); setResizingColumn({ key, startX: e.clientX, startWidth: columnWidths[key] || 120 }); }} /></th>)}<th className="col-action">편집</th></tr></thead>
                 <tbody>
                   <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`} style={key === "detail" ? { textAlign: "right", paddingRight: 12 } : undefined}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}<td className="action-cell"></td></tr>
                   {paginatedRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
@@ -881,7 +922,7 @@ export default function Home() {
           </section>
         </div>
 
-      {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields" style={{display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "16px", maxHeight: "500px", overflowY: "auto"}}>{DEPARTMENTS.map((dept) => (<div key={dept} style={{padding: "12px", border: "1px solid var(--border)", borderRadius: "6px"}}><h3 style={{margin: "0 0 12px 0", fontSize: "13px", fontWeight: "600"}}>{dept}</h3><label style={{display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px"}}>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" style={{padding: "6px", borderRadius: "4px"}} />명</label><label style={{display: "flex", flexDirection: "column", gap: "4px"}}>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" style={{padding: "6px", borderRadius: "4px"}} />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
+      {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields" style={{display: "grid", gridTemplateColumns: "repeat(4, 1fr)", gap: "16px", maxHeight: "500px", overflowY: "auto"}}>{DEPARTMENTS.map((dept) => (<div key={dept} style={{padding: "12px", border: "1px solid var(--border)", borderRadius: "6px"}}><h3 style={{margin: "0 0 12px 0", fontSize: "13px", fontWeight: "600"}}>{dept}</h3><label style={{display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px"}}>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" style={{padding: "6px", borderRadius: "4px"}} />명</label><label style={{display: "flex", flexDirection: "column", gap: "4px"}}>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" style={{padding: "6px", borderRadius: "4px"}} />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
       {editingRow && <div className="modal-backdrop" onMouseDown={() => setEditingRow(null)}><div className="modal-card edit-row-modal" ref={editModalRef} role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, editModalRef.current)}><div className="modal-head"><div><span>BUDGET ITEM / EDIT</span><h2 id="edit-modal-title">예산 항목 편집</h2></div><button className="close-button" onClick={() => setEditingRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>정책<input value={editingRow.policy} onChange={(event) => setEditingRow({ ...editingRow, policy: event.target.value })} /></label><label>세부사업<input value={editingRow.program} onChange={(event) => setEditingRow({ ...editingRow, program: event.target.value })} /></label><label className="edit-wide">산출내역<input value={editingRow.detail} onChange={(event) => setEditingRow({ ...editingRow, detail: event.target.value })} /></label><label>요구액(천원)<input value={editingRow.amount} onChange={(event) => setEditingRow({ ...editingRow, amount: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingRow.previous} onChange={(event) => setEditingRow({ ...editingRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>시비(천원)<input value={editingRow.city} onChange={(event) => setEditingRow({ ...editingRow, city: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>국비(천원)<input value={editingRow.national} onChange={(event) => setEditingRow({ ...editingRow, national: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>도비(천원)<input value={editingRow.province} onChange={(event) => setEditingRow({ ...editingRow, province: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>기타(천원)<input value={editingRow.other} onChange={(event) => setEditingRow({ ...editingRow, other: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>상태<select value={editingRow.status} onChange={(event) => setEditingRow({ ...editingRow, status: event.target.value as Status })}><option>정상</option><option>주의</option><option>오류</option></select></label><label className="edit-wide">검토 메모<input value={editingRow.note ?? ""} onChange={(event) => setEditingRow({ ...editingRow, note: event.target.value })} placeholder="검토 메모를 입력하세요" /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveRowEdit}>저장</AppButton></div></div></div>}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </Layout>
