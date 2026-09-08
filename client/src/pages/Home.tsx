@@ -792,11 +792,8 @@ export default function Home() {
             department,
           };
         })
-        .filter((row) => row.amount > 0);
-      const rowKey = (row: BudgetRow) => [row.policy, row.code, row.account, row.program].join("\u001f");
-      const nextRows = Array.from(
-        new Map(importedRows.map((row) => [rowKey(row), row])).values(),
-      );
+        });
+      const nextRows = importedRows;
       if (!nextRows.length) throw new Error("empty");
       setSearch("");
       setBudgetRows((prevRows) => {
