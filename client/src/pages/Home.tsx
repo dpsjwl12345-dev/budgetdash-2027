@@ -795,24 +795,10 @@ export default function Home() {
         });
       const nextRows = importedRows;
       if (!nextRows.length) throw new Error("empty");
-      const rowKey = (row: BudgetRow) => [row.policy, row.code, row.account, row.program].join("");
       setSearch("");
       setBudgetRows((prevRows) => {
-        // 한 부서의 엑셀은 해당 부서의 전체 요구자료로 취급한다.
-        // 기존 행과 키를 비교해 병합하면 부서명이 비어 있는 구버전 행과
-        // 새 행이 서로 다른 것으로 판단되어 같은 자료가 중복될 수 있다.
-        const importedKeys = new Set(nextRows.map(rowKey));
-        const otherDepartmentRows = prevRows.filter((row) => {
-          if (row.department === department) return false;
-          // 구버전 데이터에는 부서명이 없을 수 있다. 새 파일과 같은 행이면
-          // 기존 미지정 행도 제거해 업로드 후 중복으로 보이지 않게 한다.
-          if (!row.department && importedKeys.has(rowKey(row))) return false;
-          return true;
-        });
-        const previousDepartmentCount = prevRows.length - otherDepartmentRows.length;
+        const otherDepartmentRows = prevRows.filter((row) => row.department !== department);
         const allRows = [...otherDepartmentRows, ...nextRows];
-        const addedCount = Math.max(0, nextRows.length - previousDepartmentCount);
-        const updatedCount = Math.min(nextRows.length, previousDepartmentCount);
         showToast(`${department} 기존 자료를 초기화하고 ${nextRows.length}개를 등록했습니다.${skippedDepartmentCount > 0 ? ` (${skippedDepartmentCount}개 타 부서 행 제외)` : ""}`);
         try {
           localStorage.setItem('budgetRows', JSON.stringify(allRows));
