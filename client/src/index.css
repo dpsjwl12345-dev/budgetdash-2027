@@ -533,7 +533,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .budget-table th:nth-child(2) { padding-left: 0px; }
 .budget-table th:nth-child(3), .budget-table td:nth-child(3) { padding-left: 20px !important; }
 .budget-table th:last-child, .budget-table td:last-child { padding-right: 19px; }
-.col-policy { width: 14%; text-align: left !important; } .col-account { width: 10%; text-align: left !important; padding-left: 0 !important; } .col-detail { width: 12%; text-align: center; padding-left: 20px !important; } .col-amount { width: 10%; font-size: 13px !important; font-weight: 600; text-align: right; color: #f0f5fa !important; } .col-city, .col-national, .col-province { width: 8%; font-size: 13px !important; text-align: right; color: #d0e0f0 !important; } .col-other { width: 1%; font-size: 13px !important; text-align: right; color: #d0e0f0 !important; } .col-previous { width: 1%; font-size: 13px !important; text-align: right; color: #d0e0f0 !important; } .col-status { width: 6%; text-align: center !important; } .col-action { width: 6%; text-align: center !important; }
+.col-policy { width: 14%; text-align: left !important; } .col-account { width: 10%; text-align: left !important; padding-left: 0 !important; } .col-detail { width: 12%; text-align: center; padding-left: 20px !important; } .col-amount { width: 10%; font-size: 13px !important; font-weight: 600; text-align: right; color: #f0f5fa !important; } .col-city, .col-national, .col-province, .col-other { width: 8%; font-size: 13px !important; text-align: right; color: #d0e0f0 !important; } .col-previous { width: 10%; font-size: 13px !important; text-align: right; color: #d0e0f0 !important; } .col-status { width: 6%; text-align: center !important; } .col-action { width: 6%; text-align: center !important; }
 .sort-mark { margin-left: 4px; color: #74b8fc; }
 .total-row { }
 .total-row td { color: #d5e4f2; font-size: 12px !important; font-variant-numeric: tabular-nums; padding: 10px 0; background: rgba(91, 155, 240, 0.06); border-top: 1.5px solid rgba(91, 155, 240, 0.3); }
@@ -1026,4 +1026,3 @@ select option {
   .execution-filter-bar { max-width: 100%; overflow-x: auto; }
   .execution-filter-bar .execution-filter-segment > button { min-width: 125px; }
 }
-
