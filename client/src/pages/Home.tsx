@@ -125,7 +125,7 @@ const columns = [
   ["province", "도비"],
   ["other", "기타"],
   ["previous", "전년도"],
-  ["status", "상태"],
+  ["status", "검토"],
 ] as const;
 
 type ColumnKey = (typeof columns)[number][0];
@@ -929,9 +929,8 @@ export default function Home() {
           {procedureNames.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
               {procedureNames.map((name, idx) => (
-                <span key={idx} style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>{name}</span>
+                <span key={idx} style={{ display: 'inline-block', backgroundColor: name === '보조금심의' ? '#e3f2fd' : '#ffe0e0', color: name === '보조금심의' ? '#1565c0' : '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>{name}</span>
               ))}
-              <span style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>확인 필요</span>
             </div>
           )}
           {(row.formulaErrors && row.formulaErrors.length > 0) && (
@@ -1113,12 +1112,12 @@ export default function Home() {
 
             <div className="table-scroll" ref={tableRef}>
               <table className="budget-table">
-                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', width: columnWidths[key] ? `${columnWidths[key]}px` : 'auto', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <HeaderFilterDropdown label={key === "policy" ? "정책·단위·세부" : label} value={key === "policy" ? programFilter : accountFilter} options={key === "policy" ? uniquePrograms : uniqueAccounts} onChange={key === "policy" ? setProgramFilter : setAccountFilter} /> : label}<div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '6px', cursor: 'col-resize', background: resizingColumn?.key === key ? 'rgba(91, 155, 240, 0.5)' : 'transparent' }} onMouseDown={(e) => { e.preventDefault(); setResizingColumn({ key, startX: e.clientX, startWidth: columnWidths[key] || 120 }); }} /></th>)}<th className="col-action">편집</th></tr></thead>
+                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', width: columnWidths[key] ? `${columnWidths[key]}px` : 'auto', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <HeaderFilterDropdown label={key === "policy" ? "정책·단위·세부" : label} value={key === "policy" ? programFilter : accountFilter} options={key === "policy" ? uniquePrograms : uniqueAccounts} onChange={key === "policy" ? setProgramFilter : setAccountFilter} /> : label}<div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '10px', cursor: 'col-resize', background: resizingColumn?.key === key ? 'rgba(91, 155, 240, 0.5)' : 'transparent' }} onMouseDown={(e) => { e.preventDefault(); setResizingColumn({ key, startX: e.clientX, startWidth: columnWidths[key] || 120 }); }} /></th>)}<th className="col-action">편집</th></tr></thead>
                 <tbody>
                   <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`} style={key === "detail" ? { textAlign: "right", paddingRight: 12 } : undefined}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}<td className="action-cell"></td></tr>
                   {paginatedRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
                     {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{renderCell(row, key)}</td>)}
-                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button><button className="row-delete" onClick={() => deleteRow(row.id)} aria-label={`${row.program} 삭제`}><X size={15} /></button></td>
+                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button></td>
                   </tr>)}
                 </tbody>
               </table>
