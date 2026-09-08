@@ -1002,6 +1002,17 @@ select option {
   background: rgba(140, 155, 170, 0.2) !important;
   outline: none;
 }
+.execution-filter-bar .execution-filter-segment > button.is-selected {
+  background: rgba(91, 155, 240, 0.2) !important;
+  color: #8fc1ff !important;
+  font-weight: 700;
+  box-shadow: inset 0 -2px 0 #5b9bf0 !important;
+}
+.execution-filter-bar .execution-filter-segment > button.is-selected:hover,
+.execution-filter-bar .execution-filter-segment > button.is-selected:focus-visible,
+.execution-filter-bar .execution-filter-segment > button.is-selected[aria-expanded="true"] {
+  background: rgba(91, 155, 240, 0.3) !important;
+}
 .unit-note {
   display: inline-flex;
   align-items: center;

@@ -41,6 +41,7 @@ function ExecutionFilterDropdown({
   onChange,
   placeholder,
   clearable = true,
+  highlightSelected = false,
 }: {
   label: string;
   value: string;
@@ -48,6 +49,7 @@ function ExecutionFilterDropdown({
   onChange: (value: string) => void;
   placeholder: string;
   clearable?: boolean;
+  highlightSelected?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -77,6 +79,7 @@ function ExecutionFilterDropdown({
         aria-haspopup="listbox"
         aria-expanded={open}
         aria-label={label}
+        className={highlightSelected && value ? "is-selected" : undefined}
         onClick={() => setOpen((prev) => !prev)}
       >
         <span className="execution-filter-value">{current?.label ?? placeholder}</span>
@@ -401,7 +404,7 @@ export default function BudgetExecution2026() {
   }, [filteredData]);
 
   const departments = useMemo(() => {
-    const departmentOrder = ["문화예술과", "문화유산과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
+    const departmentOrder = ["문화예술과", "문화시설과", "문화유산과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
     return departmentOrder;
   }, [data]);
 
@@ -470,6 +473,7 @@ export default function BudgetExecution2026() {
                   onChange={(value) => { setSelectedYear(value); setSelectedDepartment(""); setSelectedProgramName(""); setPage(1); }}
                   placeholder="연도 선택"
                   clearable={false}
+                  highlightSelected
                 />
                 <ExecutionFilterDropdown
                   label="부서명"
@@ -477,6 +481,7 @@ export default function BudgetExecution2026() {
                   options={departments.map((dept) => ({ value: dept, label: dept }))}
                   onChange={setSelectedDepartment}
                   placeholder="부서명 선택"
+                  highlightSelected
                 />
                 <ExecutionFilterDropdown
                   label="세부사업명"
