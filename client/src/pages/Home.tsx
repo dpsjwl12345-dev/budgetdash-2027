@@ -795,6 +795,7 @@ export default function Home() {
         });
       const nextRows = importedRows;
       if (!nextRows.length) throw new Error("empty");
+      const rowKey = (row: BudgetRow) => [row.policy, row.code, row.account, row.program].join("");
       setSearch("");
       setBudgetRows((prevRows) => {
         // 한 부서의 엑셀은 해당 부서의 전체 요구자료로 취급한다.
