@@ -931,7 +931,6 @@ export default function Home() {
               {procedureNames.map((name, idx) => (
                 <span key={idx} style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>{name}</span>
               ))}
-              <span style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>확인 필요</span>
             </div>
           )}
           {(row.formulaErrors && row.formulaErrors.length > 0) && (
@@ -1001,7 +1000,8 @@ export default function Home() {
                   fontWeight: 500,
                   border: '1px solid #ffc107',
                   cursor: 'pointer',
-                  transition: 'all 0.2s'
+                  transition: 'all 0.2s',
+                  marginLeft: 'auto'
                 }}
                 onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#ffe69c')}
                 onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#fff3cd')}
