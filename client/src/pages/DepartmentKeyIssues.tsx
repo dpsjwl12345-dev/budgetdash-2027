@@ -2,9 +2,13 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
-type IssueData = {
+type MemoItem = {
   text: string;
   date: string;
+};
+
+type IssueData = {
+  memos: MemoItem[];
 };
 
 export default function DepartmentKeyIssues() {
@@ -24,13 +28,12 @@ export default function DepartmentKeyIssues() {
     }
   }, []);
 
-  // 부서 변경 시 텍스트 업데이트
+  // 부서 변경 시 textarea 초기화
   useEffect(() => {
-    const issue = issues[selectedDept];
-    setCurrentText(issue ? issue.text : "");
-  }, [selectedDept, issues]);
+    setCurrentText("");
+  }, [selectedDept]);
 
-  // 메모 저장
+  // 메모 저장 (기존 메모에 추가)
   const handleSave = () => {
     if (!currentText.trim()) return;
 
@@ -40,15 +43,19 @@ export default function DepartmentKeyIssues() {
       day: '2-digit'
     });
 
+    const existingData = issues[selectedDept] || { memos: [] };
     const updatedIssues = {
       ...issues,
       [selectedDept]: {
-        text: currentText,
-        date: today
+        memos: [
+          ...existingData.memos,
+          { text: currentText, date: today }
+        ]
       },
     };
     setIssues(updatedIssues);
     localStorage.setItem("departmentIssues", JSON.stringify(updatedIssues));
+    setCurrentText("");
   };
 
   return (
@@ -70,7 +77,7 @@ export default function DepartmentKeyIssues() {
                     onClick={() => setSelectedDept(dept)}
                   >
                     <span className="dept-name">{dept}</span>
-                    {issues[dept] && <span className="has-note">●</span>}
+                    {issues[dept]?.memos?.length > 0 && <span className="has-note">●</span>}
                   </button>
                 ))}
               </div>
@@ -97,15 +104,21 @@ export default function DepartmentKeyIssues() {
                 </div>
               </div>
 
-              {/* 저장된 메모 표시 */}
-              {issues[selectedDept] && (
-                <div className="saved-memo-box">
-                  <div className="memo-header">
-                    <span className="memo-date">{issues[selectedDept].date}</span>
-                  </div>
-                  <div className="memo-content">{issues[selectedDept].text}</div>
-                </div>
-              )}
+              {/* 저장된 메모 표시 (최신순) */}
+              <div className="saved-memos-container">
+                {issues[selectedDept]?.memos && issues[selectedDept].memos.length > 0 ? (
+                  [...issues[selectedDept].memos].reverse().map((memo, idx) => (
+                    <div key={idx} className="saved-memo-box">
+                      <div className="memo-header">
+                        <span className="memo-date">{memo.date}</span>
+                      </div>
+                      <div className="memo-content">{memo.text}</div>
+                    </div>
+                  ))
+                ) : (
+                  <div className="no-memos">저장된 메모가 없습니다</div>
+                )}
+              </div>
 
               <textarea
                 className="memo-textarea"
@@ -297,14 +310,46 @@ export default function DepartmentKeyIssues() {
           transition-duration: 0.3s;
         }
 
+        .saved-memos-container {
+          display: flex;
+          flex-direction: column;
+          gap: 8px;
+          margin-bottom: 12px;
+          max-height: 300px;
+          overflow-y: auto;
+          padding-right: 4px;
+        }
+
+        .saved-memos-container::-webkit-scrollbar {
+          width: 6px;
+        }
+
+        .saved-memos-container::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .saved-memos-container::-webkit-scrollbar-thumb {
+          background: rgba(118, 157, 194, 0.3);
+          border-radius: 3px;
+        }
+
+        .saved-memos-container::-webkit-scrollbar-thumb:hover {
+          background: rgba(118, 157, 194, 0.5);
+        }
+
+        .no-memos {
+          text-align: center;
+          padding: 24px;
+          color: var(--text-muted);
+          font-size: 14px;
+        }
+
         .saved-memo-box {
           background: var(--bg-surface);
           border: 1px solid var(--border);
           border-radius: 6px;
           padding: 12px 16px;
-          margin-bottom: 12px;
-          max-height: 120px;
-          overflow-y: auto;
+          flex-shrink: 0;
         }
 
         .memo-header {
