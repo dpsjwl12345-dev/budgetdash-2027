@@ -523,10 +523,10 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .budget-table tbody tr td:nth-child(1), .budget-table tbody tr td:nth-child(2), .budget-table tbody tr td:nth-child(3) { text-align: left !important; }
 .budget-table th.col-account { text-align: left !important; padding-left: 0 !important; }
 .budget-table th.col-detail { text-align: left !important; }
-.budget-table th.col-status { text-align: center !important; }
+.budget-table th.col-status { text-align: right !important; padding-right: 12px; }
 .budget-table th.col-action { text-align: center !important; }
 .budget-table th.col-amount { font-size: 14px !important; text-align: right !important; }
-.budget-table th.col-city, .budget-table th.col-national, .budget-table th.col-province, .budget-table th.col-other, .budget-table th.col-previous { font-size: 14px !important; text-align: right !important; }
+.budget-table th.col-city, .budget-table th.col-national, .budget-table th.col-province, .budget-table th.col-other { font-size: 14px !important; text-align: right !important; } .budget-table th.col-previous { font-size: 14px !important; text-align: right !important; }
 .budget-table td { padding: 12px 0; color: #b8cade; font-size: 16px; font-weight: 600; line-height: 1.5; vertical-align: middle; font-variant-numeric: tabular-nums; }
 .budget-table th:first-child, .budget-table td:first-child { padding-left: 8px; }
 .budget-table th:first-child { padding-left: 8px; }
