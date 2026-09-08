@@ -783,7 +783,6 @@ export default function Home() {
             previous: parseNumber(pick(record, ["전년도"])),
             status,
             note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
-            department,
           };
         });
       const nextRows = importedRows;
