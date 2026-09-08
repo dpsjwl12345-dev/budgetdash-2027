@@ -476,7 +476,7 @@ export default function BudgetExplainer() {
           {/* 우측: 설명자료 */}
           <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
             {selectedPath ? (
-              <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column" }}>
+              <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", overflow: "auto" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "12px", marginBottom: "16px", flexShrink: 0 }}>
                   {!showTree && (
                     <button
