@@ -785,7 +785,6 @@ export default function Home() {
             note: String(pick(record, ["검토메모", "메모", "note"])) || undefined,
             department,
           };
-        })
         });
       const nextRows = importedRows;
       if (!nextRows.length) throw new Error("empty");
