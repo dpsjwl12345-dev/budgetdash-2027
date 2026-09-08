@@ -748,14 +748,8 @@ export default function Home() {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
-      // 편성 부서별 업로드는 해당 부서의 전체 스냅샷으로 처리한다.
-      // 통합 양식에 다른 부서 행이 함께 있어도 현재 선택 부서만 반영한다.
-      const selectedDepartmentRecords = imported.filter((record) => {
-        const sourceDepartment = String(pick(record, ["부서명"])).trim();
-        return !sourceDepartment || sourceDepartment === department;
-      });
-      const skippedDepartmentCount = imported.length - selectedDepartmentRecords.length;
-      const importedRows = selectedDepartmentRecords
+      const skippedDepartmentCount = 0;
+      const importedRows = imported
         .map((record, index): BudgetRow => {
           const rawStatus = String(pick(record, ["상태", "status"]));
           const status: Status = rawStatus === "오류" || rawStatus === "주의" || rawStatus === "정상" ? rawStatus : "정상";
