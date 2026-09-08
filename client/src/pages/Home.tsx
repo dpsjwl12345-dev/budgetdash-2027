@@ -74,6 +74,7 @@ type BudgetRow = {
   note?: string;
   department?: string;
   procedures?: number[];
+  formulaErrors?: string[];
 };
 
 
@@ -203,6 +204,40 @@ function getApplicableProcedures(row: BudgetRow): number[] {
   if (text.includes("재난") || text.includes("안전")) applicable.push(16);
 
   return applicable;
+}
+
+function getFormulaErrors(row: BudgetRow, staffData: Record<string, { capacity: string; current: string }>): string[] {
+  const errors: string[] = [];
+  const accountText = `${row.account}`.toLowerCase();
+  const department = row.department || "";
+  const currentStaff = parseInt(staffData[department]?.current || "0");
+  const capacity = parseInt(staffData[department]?.capacity || "0");
+
+  // 국내여비: 현원 × 20,000 × 9 × 12 (국외여비 제외)
+  if ((accountText.includes("국내여비") && !accountText.includes("국외여비")) || accountText.includes("202-01")) {
+    const expectedAmount = currentStaff * 20000 * 9 * 12;
+    if (Math.abs(row.amount - expectedAmount) > 1000) {
+      errors.push(`국내여비: 현원 ${currentStaff} × 20,000 × 9 × 12 = ${expectedAmount.toLocaleString()}원`);
+    }
+  }
+
+  // 급식비: 정원 × 600,000
+  if (accountText.includes("급식비")) {
+    const expectedAmount = capacity * 600000;
+    if (Math.abs(row.amount - expectedAmount) > 1000) {
+      errors.push(`급식비: 정원 ${capacity} × 600,000 = ${expectedAmount.toLocaleString()}원`);
+    }
+  }
+
+  // 일반수용비: 정원 × 750,000
+  if (accountText.includes("일반수용비")) {
+    const expectedAmount = capacity * 750000;
+    if (Math.abs(row.amount - expectedAmount) > 1000) {
+      errors.push(`일반수용비: 정원 ${capacity} × 750,000 = ${expectedAmount.toLocaleString()}원`);
+    }
+  }
+
+  return errors;
 }
 
 function trapTabKey(event: React.KeyboardEvent, container: HTMLElement | null) {
@@ -612,9 +647,11 @@ export default function Home() {
   const filteredRows = useMemo(() => {
     const filtered = budgetRows.map((row) => {
       const applicable = getApplicableProcedures(row);
+      const errors = getFormulaErrors(row, staffData);
       return {
         ...row,
-        procedures: applicable
+        procedures: applicable,
+        formulaErrors: errors
       };
     }).filter((row) => {
       const searchable = `${row.policy} ${row.program} ${row.account} ${row.detail}`;
@@ -920,40 +957,82 @@ export default function Home() {
               <span style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>확인 필요</span>
             </div>
           )}
+          {(row.formulaErrors && row.formulaErrors.length > 0) && (
+            <div style={{ display: 'block', marginTop: '6px', padding: '6px', backgroundColor: '#e8f5e9', borderRadius: '3px', borderLeft: '3px solid #4caf50' }}>
+              {row.formulaErrors.map((error, idx) => (
+                <div key={idx} style={{ fontSize: '0.75em', color: '#2e7d32', marginBottom: idx < row.formulaErrors!.length - 1 ? '4px' : '0' }}>
+                  {error}
+                </div>
+              ))}
+            </div>
+          )}
           {row.note && <span className={`row-note row-note-${row.status}`}>{row.note}</span>}
         </div>
       );
     }
     if (key === "status") {
-      if (row.procedures && row.procedures.length > 0) {
+      const hasFormula = row.formulaErrors && row.formulaErrors.length > 0;
+      const hasProcedure = row.procedures && row.procedures.length > 0;
+
+      if (hasFormula || hasProcedure) {
         return (
-          <button
-            type="button"
-            onClick={() => {
-              const updatedRows = budgetRows.map(r => r.id === row.id ? { ...r, procedures: [] } : r);
-              setBudgetRows(updatedRows);
-              localStorage.setItem('budgetRows', JSON.stringify(updatedRows));
-              showToast(`사전 절차 완료 표시됨`);
-            }}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '4px',
-              padding: '6px 12px',
-              borderRadius: '4px',
-              backgroundColor: '#fff3cd',
-              color: '#856404',
-              fontSize: '0.85em',
-              fontWeight: 500,
-              border: '1px solid #ffc107',
-              cursor: 'pointer',
-              transition: 'all 0.2s'
-            }}
-            onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#ffe69c')}
-            onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#fff3cd')}
-          >
-            ⚠️ 사전
-          </button>
+          <div style={{ display: 'flex', gap: '4px', flexWrap: 'wrap' }}>
+            {hasFormula && (
+              <button
+                type="button"
+                onClick={() => {
+                  showToast(`산출식: ${row.formulaErrors![0]}`);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  backgroundColor: '#e8f5e9',
+                  color: '#2e7d32',
+                  fontSize: '0.75em',
+                  fontWeight: 500,
+                  border: '1px solid #4caf50',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#c8e6c9')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#e8f5e9')}
+              >
+                ✓ 산출식
+              </button>
+            )}
+            {hasProcedure && (
+              <button
+                type="button"
+                onClick={() => {
+                  const updatedRows = budgetRows.map(r => r.id === row.id ? { ...r, procedures: [] } : r);
+                  setBudgetRows(updatedRows);
+                  localStorage.setItem('budgetRows', JSON.stringify(updatedRows));
+                  showToast(`사전 절차 완료 표시됨`);
+                }}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '2px',
+                  padding: '2px 6px',
+                  borderRadius: '3px',
+                  backgroundColor: '#fff3cd',
+                  color: '#856404',
+                  fontSize: '0.75em',
+                  fontWeight: 500,
+                  border: '1px solid #ffc107',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s'
+                }}
+                onMouseOver={(e) => (e.currentTarget.style.backgroundColor = '#ffe69c')}
+                onMouseOut={(e) => (e.currentTarget.style.backgroundColor = '#fff3cd')}
+              >
+                ⚠️ 사전
+              </button>
+            )}
+          </div>
         );
       }
       return <StatusBadge status={row.status} />;
@@ -1012,7 +1091,7 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(totals.amount)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(totals.amount)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
@@ -1049,7 +1128,7 @@ export default function Home() {
             <div className="filter-row">
               <span className="filter-label"><Filter size={15} />필터</span>
               <button className={`filter-chip ${statusFilter === "전체" ? "selected" : ""}`} onClick={() => setStatusFilter("전체")}>전체</button>
-              {(["정상", "오류", "주의", "사전"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
+              {(["정상", "사전"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
               <button className="result-refresh" aria-label="새로고침" onClick={() => showToast("목록을 새로고침했습니다.")}><RefreshCw size={15} /></button>
               <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
               <span className="unit-note">(단위: 천원)</span>
