@@ -82,72 +82,75 @@ export default function BudgetEstablishmentGuide() {
       case "행정운영경비":
         return (
           <div className="tab-content">
-            <h2>행정운영경비 및 기본경비 요구가이드 <span className="guide-subtitle">기본경비 및 급식·여비 기준</span></h2>
+            <h2>행정운영경비 및 부서 기본경비 <span className="guide-subtitle">기본경비 및 급식·여비 기준</span></h2>
 
-            <h3>📌 핵심 개념 정의</h3>
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>행정운영경비</h4>
-                <p>부서의 기본적인 조직 유지와 인력 운영을 위한 공통 경비입니다.</p>
+            <h3>📌 통상 업무 기본 경비 배분 기준</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>일반수용비 (정원 기준)</h4>
+                <p>부서 소모품비, 피복비, 도서구입비, 범용 S/W 구입비, 장비 임차료 등.</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 배분 한도: 공무원 정원 1인당 연 750,000원 (2026. 10. 기준 정원 적용).</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 표준 산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>750,000원 × 부서 공무원 정원(명) = 총요구액(원)</code></p>
               </div>
-              <div className="info-card">
-                <h4>인력운영비</h4>
-                <p>소속 직원의 보수 및 법정부담금으로, 행안부 기준인건비 범위 내에서만 편성합니다. 2026년 8월 말 정원과 2026년도 봉급표가 적용 기준입니다.</p>
-              </div>
-            </div>
-
-            <div className="alert-box">
-              <strong>🚨 화면 안내</strong>
-              <p>세부사업 등록 시 세부사업명 옆에 <strong>[행정운영경비(OO과)]</strong>를 명시하고, 기타(900) 비목으로 분류해 부서 간 상호 구분되도록 해야 합니다.</p>
-            </div>
-
-            <h3>💰 2027년도 부서 기본경비 기준 단가표</h3>
-            <div style={{ padding: '16px', background: 'rgba(118, 157, 194, 0.08)', borderRadius: '6px', marginBottom: '20px' }}>
-              <p style={{ margin: '0 0 12px 0', fontWeight: '600', color: 'var(--text)' }}>부서 정원당 배분액</p>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px' }}>
-                <div>
-                  <p style={{ margin: '0 0 4px 0', color: '#5b9bf0', fontWeight: '600' }}>일반수용비</p>
-                  <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-muted)' }}>750,000원/명</p>
-                </div>
-                <div>
-                  <p style={{ margin: '0 0 4px 0', color: '#5b9bf0', fontWeight: '600' }}>급식비</p>
-                  <p style={{ margin: '0', fontSize: '14px', color: 'var(--text-muted)' }}>600,000원/명</p>
-                </div>
+              <div className="rule-item">
+                <h4>급식비 (특근매식비)</h4>
+                <p>통상 업무 수행을 위한 급식비.</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 배분 한도: 공무원 정원 1인당 연 600,000원 (인허가 등 격무·기피 가점 부서도 동일 단가 적용하되 정책사업으로 편성 가능).</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 표준 산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>600,000원 × 부서 공무원 정원(명) = 총요구액(원)</code></p>
               </div>
             </div>
 
-            <h3>📝 편성 및 지급 기준</h3>
-            <table className="content-table">
-              <thead>
-                <tr>
-                  <th>구분</th>
-                  <th>편성 및 지급 기준</th>
-                  <th>e호조 입력 표준 수식 예시</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>관내여비</td>
-                  <td>• 1일 20,000원 (월 9일 기준 편성)</td>
-                  <td>20,000원 × 공무원현원 × 9일 × 12월</td>
-                </tr>
-                <tr>
-                  <td>월액여비</td>
-                  <td>• 상시출장자 대상 월 225,000원 한도</td>
-                  <td>225,000원 × 대상자수 × 12월</td>
-                </tr>
-                <tr>
-                  <td>특근매식비</td>
-                  <td>• 기본업무 수행용 급식비 단가 기준</td>
-                  <td>600,000원 × 부서 정원</td>
-                </tr>
-                <tr>
-                  <td>위원회 수당</td>
-                  <td>• 대면: 1회 100,000원 (2시간 초과 시 50,000원 추가)<br/>• 서면: 1회 50,000원</td>
-                  <td>100,000원 × 위원수 × 횟수<br/>50,000원 × 위원수 × 횟수</td>
-                </tr>
-              </tbody>
-            </table>
+            <h3>📌 위원회 수당 및 법정 당직비 기준</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>위원회 참석수당</h4>
+                <p>법령 및 조례 등에 의해 설치된 위원회의 심의 참석 수당 (단, 개별 조례에 따로 단가가 명시된 경우는 조례 단가 우선 적용).</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}><strong>대면 심의 수당:</strong> 1회당 100,000원. (회의 시간이 2시간을 초과할 경우 50,000원 추가 지급 가능).</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>100,000원(또는 150,000원) × 참석 위원 수(명) × 회의 횟수(회)</code></p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}><strong>서면 심의 수당:</strong> 1회당 50,000원.</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>50,000원 × 심의 위원 수(명) × 심의 횟수(회)</code></p>
+              </div>
+              <div className="rule-item">
+                <h4>일·숙직 수당</h4>
+                <p>「화성시 지방공무원 당직 및 비상근무 규칙」에 따라 당직근무 명령을 받고 근무하는 자에게 지급하는 수당.</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 일직 및 숙직 근무: 1회당 60,000원.</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 재택 당직근무: 1회당 30,000원.</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>표준 산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>60,000원(또는 30,000원) × 근무 인원(명) × 365일</code></p>
+              </div>
+            </div>
+
+            <h3>📌 현업직종 피복비 기준</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>청원경찰 피복비</h4>
+                <p>연간 총 266,000원 범위 내 반영.</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>산출 세부 내역: 근무복 상의 50,000원 × 2회 + 근무복 하의 104,000원 + 단화 62,000원.</p>
+              </div>
+              <div className="rule-item">
+                <h4>환경미화원 피복비</h4>
+                <p>연간 총 700,000원 범위 내 반영.</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>산출 세부 내역: 상·하복 500,000원 + 안전장구(안전화 등) 200,000원.</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#e67e22' }}>※ 방역·조리·도로보수 등 기타 현업직종은 부서 요구 시 예산재정과 별도 검토.</p>
+              </div>
+            </div>
+
+            <h3>📌 행사 지원 차출 및 특수 매식비 기준</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>행사 차출 공무원 지급경비</h4>
+                <p>시 주관 행사·축제 지원을 위해 공무원이 휴일 근무를 하는 경우 지급하는 실비보상 경비 (반드시 201-01 사무관리비로만 편성해야 하며, 동일 근무시간에 대한 시간외수당 및 관리업무수당 중복 지급은 절대 불가함).</p>
+                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 반일 (4시간 이하) 차출: 60,000원.</p>
+                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 1일 상한 (4시간 초과) 차출: 120,000원 범위 내에서 실제 근무시간에 비례하여 지급.</p>
+              </div>
+              <div className="rule-item">
+                <h4>출동 매식비</h4>
+                <p>화재·구급 현장 출동 소방공무원에 대한 매식비 및 출동간식비 지원 (단, 훈련출동 시 간식비 미지급 준수).</p>
+              </div>
+              <div className="rule-item">
+                <h4>구내식당 운영비</h4>
+                <p>자치단체 조례에 근거하여 구내식당이 후생복지시설에 포함되고 명시적 지원 근거가 규정된 경우에 한하여, 주·부식대 및 연료비 등 구내식당 운영 경비를 예산으로 편성 가능.</p>
+              </div>
+            </div>
           </div>
         );
       case "보조금·행사":
