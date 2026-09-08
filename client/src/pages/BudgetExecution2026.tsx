@@ -177,16 +177,16 @@ export default function BudgetExecution2026() {
 
   useEffect(() => {
     loadDataFromServer();
-  }, []);
+  }, [selectedYear]);
 
   // columnWidths 저장
   useEffect(() => {
     try {
-      localStorage.setItem("budgetExecution2026ColumnWidths", JSON.stringify(columnWidths));
+      localStorage.setItem(`budgetExecution${selectedYear}ColumnWidths`, JSON.stringify(columnWidths));
     } catch (error) {
       console.warn('columnWidths 저장 실패:', error);
     }
-  }, [columnWidths]);
+  }, [columnWidths, selectedYear]);
 
   // 컬럼 리사이저 이벤트
   useEffect(() => {
@@ -237,13 +237,13 @@ export default function BudgetExecution2026() {
 
   const loadDataFromServer = async () => {
     try {
-      const response = await fetch(`/api/budget-execution-2026/load`);
+      const response = await fetch(`/api/budget-execution-${selectedYear}/load`);
       if (!response.ok) throw new Error('데이터 로드 실패');
       const { data } = await response.json();
       if (data && Array.isArray(data) && data.length > 0) {
         const mapped = data.map((row: any) => ({
           id: row.id,
-          year: String(row.year ?? "2026"),
+          year: String(row.year ?? selectedYear),
           department: row.department,
           policyName: row.policyName ?? row.policy_name,
           programName: row.programName ?? row.program_name,
@@ -321,13 +321,13 @@ export default function BudgetExecution2026() {
           ...data.filter((row) => String(row.year ?? "2026") !== selectedYear),
           ...nextData,
         ];
-        localStorage.setItem("budgetExecution2026Rows", JSON.stringify(merged));
+        localStorage.setItem(`budgetExecution${selectedYear}Rows`, JSON.stringify(merged));
       } catch (error) {
         console.warn('localStorage 저장 실패:', error);
       }
 
       try {
-        const response = await fetch(`/api/budget-execution-2026/save`, {
+        const response = await fetch(`/api/budget-execution-${selectedYear}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
@@ -361,7 +361,7 @@ export default function BudgetExecution2026() {
 
   const filteredData = useMemo(() => {
     let filtered = data.filter((row) => {
-      const matchesYear = String(row.year ?? "2026") === selectedYear;
+      const matchesYear = String(row.year ?? selectedYear) === selectedYear;
       const matchesSearch = row.department.toLowerCase().includes(search.toLowerCase()) ||
                            row.policyName.toLowerCase().includes(search.toLowerCase()) ||
                            row.programName.toLowerCase().includes(search.toLowerCase());
@@ -401,7 +401,7 @@ export default function BudgetExecution2026() {
   }, [filteredData]);
 
   const departments = useMemo(() => {
-    const departmentOrder = ["문화예술과", "문화유산과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
+    const departmentOrder = ["문화예술과", "문화유산과", "문화시설과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
     return departmentOrder;
   }, [data]);
 
@@ -516,18 +516,18 @@ export default function BudgetExecution2026() {
               </colgroup>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '13px' }}>정책사업명{renderResizeHandle("policyName", 85)}</th>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '13px' }}>단위사업명{renderResizeHandle("programName", 85)}</th>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>본예산{renderResizeHandle("original", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>예비비{renderResizeHandle("reserve", 78)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>이월액계{renderResizeHandle("carryover", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>집행액{renderResizeHandle("executed", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '14px' }}>집행률{renderResizeHandle("executionRate", 74)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>정책사업명{renderResizeHandle("policyName", 85)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>단위사업명{renderResizeHandle("programName", 85)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>본예산{renderResizeHandle("original", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예비비{renderResizeHandle("reserve", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>이월액계{renderResizeHandle("carryover", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>집행액{renderResizeHandle("executed", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>집행률{renderResizeHandle("executionRate", 74)}</th>
                 </tr>
               </thead>
               <tbody>
