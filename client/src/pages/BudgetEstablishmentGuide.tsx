@@ -15,7 +15,7 @@ const TABS: { key: TabKey; label: string }[] = [
 ];
 
 export default function BudgetEstablishmentGuide() {
-  const [activeTab, setActiveTab] = useState<TabKey>("세입예산");
+  const [activeTab, setActiveTab] = useState<TabKey>("행정운영경비");
 
   const renderTabContent = () => {
     switch (activeTab) {
