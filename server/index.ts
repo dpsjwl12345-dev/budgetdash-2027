@@ -4,6 +4,7 @@ import path from "path";
 import { fileURLToPath } from "url";
 import multer from "multer";
 import * as XLSX from "xlsx";
+import * as fs from "fs";
 import { saveToKV, loadFromKV, deleteFromKV } from "../shared/kv";
 import { initializeDB, getDB } from "./db";
 import explainerDataHandler from "../api/budget-explainer/data";
@@ -111,6 +112,61 @@ async function startServer() {
     try {
       const success = await deleteFromKV('budgetRows');
       res.json({ success });
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
+  // CSV 파일에서 계층형 예산 데이터 로드
+  app.get('/api/budget/load-csv', (_req, res) => {
+    try {
+      const csvPath = 'C:\\Users\\user\\Desktop\\report (11).csv';
+      if (!fs.existsSync(csvPath)) {
+        return res.status(404).json({ error: 'CSV 파일을 찾을 수 없습니다' });
+      }
+
+      const content = fs.readFileSync(csvPath, 'utf-8');
+      const rows = content.split('\n');
+      const hierarchyData: any[] = [];
+      let id = 1;
+
+      rows.forEach((line, idx) => {
+        if (idx < 2 || !line.trim()) return;
+
+        const commaMatch = line.match(/^,*/);
+        const indent = (commaMatch?.[0] || '').length;
+        const cells = line.split(',');
+        let cellIndex = indent;
+
+        const label = cells[cellIndex]?.replace(/^"+|"+$/g, '').trim() || '';
+        const budget = parseInt(cells[indent + 5]?.replace(/[^0-9]/g, '') || '0') || undefined;
+        const previous = parseInt(cells[indent + 6]?.replace(/[^0-9]/g, '') || '0') || undefined;
+        const difference = parseInt(cells[indent + 7]?.replace(/[^0-9]/g, '') || '0') || undefined;
+        const statisticsCode = cells[indent + 8]?.replace(/^"+|"+$/g, '').trim() || '';
+        const description = cells[indent + 9]?.replace(/^"+|"+$/g, '').trim() || '';
+
+        if (!label) return;
+
+        let level = 'item';
+        if (indent === 0) level = 'dept';
+        else if (indent === 1) level = 'policy';
+        else if (indent === 2) level = 'unit';
+        else if (indent === 3) level = 'program';
+        else if (indent === 4) level = 'account';
+
+        hierarchyData.push({
+          id: `row-${id++}`,
+          level,
+          label,
+          budget: budget || undefined,
+          previous: previous || undefined,
+          difference: difference || undefined,
+          statisticsCode: statisticsCode || undefined,
+          description: description || undefined
+        });
+      });
+
+      res.json({ data: hierarchyData });
     } catch (error) {
       res.status(500).json({ error: String(error) });
     }

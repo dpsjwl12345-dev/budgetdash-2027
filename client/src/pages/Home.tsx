@@ -77,6 +77,21 @@ type BudgetRow = {
   formulaErrors?: string[];
 };
 
+type HierarchyLevel = "dept" | "policy" | "unit" | "program" | "account" | "item" | "note" | "formula" | "opinion";
+
+type BudgetHierarchyRow = {
+  id: string;
+  level: HierarchyLevel;
+  label: string;
+  budget?: number;
+  previous?: number;
+  difference?: number;
+  statisticsCode?: string;
+  description?: string;
+  parentId?: string;
+  colSpan?: number;
+};
+
 
 const PROCEDURE_NAMES: Record<number, string> = {
   1: "재정합의",
@@ -460,6 +475,17 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
+  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>(() => {
+    return [
+      { id: '1', level: 'dept', label: '관광진흥과', budget: 67551417, previous: 23355044, difference: 44196373 },
+      { id: '2', level: 'policy', label: '선진 관광도시 육성', budget: 48351699, previous: 23280914, difference: 25070785 },
+      { id: '3', level: 'unit', label: '관광산업 진흥', budget: 2137696, previous: 820788, difference: 1316908 },
+      { id: '4', level: 'program', label: '화성시문화관광재단 관광진흥본부 지원', budget: 1023062, previous: 0, difference: 1023062 },
+      { id: '5', level: 'account', label: '306 출연금', budget: 1023062, previous: 0, difference: 1023062 },
+    ];
+  });
+  const [statisticsFilter, setStatisticsFilter] = useState('');
+  const [noteFilter, setNoteFilter] = useState('');
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -528,7 +554,22 @@ export default function Home() {
   useEffect(() => {
     loadDataFromServer();
     loadExecutionDataFromServer();
+    loadCsvData();
   }, []);
+
+  const loadCsvData = async () => {
+    try {
+      const response = await fetch('/api/budget/load-csv');
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && Array.isArray(data)) {
+          setBudgetHierarchyRows(data);
+        }
+      }
+    } catch (error) {
+      console.log('CSV 로드 실패:', error);
+    }
+  };
 
   // localStorage에 budgetRows 저장
   useEffect(() => {
@@ -739,6 +780,72 @@ export default function Home() {
 
   const handleExcelUpload = async (file?: File) => {
     if (!file) return;
+
+    // CSV 파일인 경우
+    if (file.name.endsWith('.csv')) {
+      try {
+        const text = await file.text();
+        const rows = text.split('\n');
+
+        const hierarchyData: BudgetHierarchyRow[] = [];
+        let id = 1;
+
+        for (let idx = 2; idx < rows.length; idx++) {
+          const line = rows[idx];
+          if (!line.trim()) continue;
+
+          const commaMatch = line.match(/^,*/);
+          const indent = (commaMatch?.[0] || '').length;
+          const cells = line.split(',');
+
+          const label = cells[indent]?.replace(/^"+|"+$/g, '').trim() || '';
+          const budget = parseNumber(cells[indent + 5]);
+          const previous = parseNumber(cells[indent + 6]);
+          const difference = parseNumber(cells[indent + 7]);
+          const statisticsCode = cells[indent + 8]?.replace(/^"+|"+$/g, '').trim() || '';
+          const description = cells[indent + 9]?.replace(/^"+|"+$/g, '').trim() || '';
+
+          // 첫 번째 셀만 있고 나머지는 비어있으면 부기명, 산출식 등 특별한 행
+          const hasOnlyLabel = label && !budget && !previous && !difference && !statisticsCode;
+
+          if (!label) continue;
+
+          let level: HierarchyLevel = 'item';
+          if (indent === 0) level = 'dept';
+          else if (indent === 1) level = 'policy';
+          else if (indent === 2) level = 'unit';
+          else if (indent === 3) level = 'program';
+          else if (indent === 4) level = 'account';
+          else if (hasOnlyLabel && label.includes('○')) level = 'note';
+          else if (hasOnlyLabel && label.includes('=')) level = 'formula';
+          else if (hasOnlyLabel) level = 'opinion';
+
+          hierarchyData.push({
+            id: `row-${id++}`,
+            level,
+            label,
+            budget: budget || undefined,
+            previous: previous || undefined,
+            difference: difference || undefined,
+            statisticsCode: statisticsCode || undefined,
+            description: description || undefined,
+            colSpan: hasOnlyLabel ? 8 : undefined
+          });
+        }
+
+        setBudgetHierarchyRows(hierarchyData);
+        showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      } catch (error) {
+        console.error('CSV 파싱 오류:', error);
+        showToast("CSV 파일을 읽지 못했습니다.");
+        if (fileInputRef.current) fileInputRef.current.value = "";
+        return;
+      }
+    }
+
+    // Excel 파일인 경우
     if (!department) {
       showToast("먼저 편성 부서를 선택해 주세요.");
       if (fileInputRef.current) fileInputRef.current.value = "";
@@ -789,6 +896,68 @@ export default function Home() {
       const nextRows = importedRows;
       if (!nextRows.length) throw new Error("empty");
       setSearch("");
+
+      // 계층형 데이터로 변환
+      const hierarchyRows: BudgetHierarchyRow[] = [];
+      const groupedByDept = new Map<string, BudgetRow[]>();
+
+      nextRows.forEach(row => {
+        const dept = row.department || "미분류";
+        if (!groupedByDept.has(dept)) groupedByDept.set(dept, []);
+        groupedByDept.get(dept)!.push(row);
+      });
+
+      let id = 1;
+      groupedByDept.forEach((deptRows, dept) => {
+        const deptBudget = deptRows.reduce((sum, r) => sum + r.amount, 0);
+        const deptPrevious = deptRows.reduce((sum, r) => sum + r.previous, 0);
+        hierarchyRows.push({
+          id: `dept-${id++}`,
+          level: "dept",
+          label: dept,
+          budget: deptBudget,
+          previous: deptPrevious,
+          difference: deptBudget - deptPrevious
+        });
+
+        const groupedByPolicy = new Map<string, BudgetRow[]>();
+        deptRows.forEach(row => {
+          const policy = row.policy || "미분류 정책";
+          if (!groupedByPolicy.has(policy)) groupedByPolicy.set(policy, []);
+          groupedByPolicy.get(policy)!.push(row);
+        });
+
+        groupedByPolicy.forEach((policyRows, policy) => {
+          const policyBudget = policyRows.reduce((sum, r) => sum + r.amount, 0);
+          const policyPrevious = policyRows.reduce((sum, r) => sum + r.previous, 0);
+          hierarchyRows.push({
+            id: `policy-${id++}`,
+            level: "policy",
+            label: policy,
+            budget: policyBudget,
+            previous: policyPrevious,
+            difference: policyBudget - policyPrevious,
+            parentId: dept
+          });
+
+          policyRows.forEach(row => {
+            hierarchyRows.push({
+              id: `item-${id++}`,
+              level: "item",
+              label: row.program,
+              budget: row.amount,
+              previous: row.previous,
+              difference: row.amount - row.previous,
+              statisticsCode: row.account,
+              description: row.detail,
+              parentId: policy
+            });
+          });
+        });
+      });
+
+      setBudgetHierarchyRows(hierarchyRows);
+
       setBudgetRows((prevRows) => {
         const otherDepartmentRows = prevRows.filter((row) => row.department !== department);
         const allRows = [...otherDepartmentRows, ...nextRows];
@@ -1099,32 +1268,103 @@ export default function Home() {
 
           <section className="table-panel">
             <div className="table-heading">
-              <div className="table-title"><div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>{department && <span className="dept-pill">{department}</span>}<div style={{ fontSize: '20px', color: '#9fb0c8', fontWeight: '600' }}>세출예산요구서</div></div></div>
+              <div className="table-title"><div style={{ fontSize: '20px', color: '#9fb0c8', fontWeight: '600' }}>세출예산내역서</div></div>
             </div>
 
-            <div className="filter-row">
-              <span className="filter-label"><Filter size={15} />필터</span>
-              <button className={`filter-chip ${statusFilter === "전체" ? "selected" : ""}`} onClick={() => setStatusFilter("전체")}>전체</button>
-              {(["정상", "사전"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
-              <button className="result-refresh" aria-label="새로고침" onClick={() => showToast("목록을 새로고침했습니다.")}><RefreshCw size={15} /></button>
-              <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
-              <span className="unit-note">(단위: 천원)</span>
-            </div>
-
-            <div className="table-scroll" ref={tableRef}>
-              <table className="budget-table">
-                <thead><tr>{columns.filter(([key]) => visibleColumns.includes(key)).map(([key, label]) => <th key={key} className={`col-${key}`} style={{ position: 'relative', width: columnWidths[key] ? `${columnWidths[key]}px` : 'auto', minWidth: key === "policy" ? '200px' : 'auto' }}>{key === "policy" || key === "account" ? <HeaderFilterDropdown label={key === "policy" ? "정책·단위·세부" : label} value={key === "policy" ? programFilter : accountFilter} options={key === "policy" ? uniquePrograms : uniqueAccounts} onChange={key === "policy" ? setProgramFilter : setAccountFilter} /> : label}<div style={{ position: 'absolute', right: 0, top: 0, height: '100%', width: '1px', cursor: 'col-resize', background: resizingColumn?.key === key ? 'rgba(91, 155, 240, 0.8)' : 'rgba(91, 155, 240, 0.3)' }} onMouseDown={(e) => { e.preventDefault(); setResizingColumn({ key, startX: e.clientX, startWidth: columnWidths[key] || 120 }); }} /></th>)}<th className="col-action">편집</th></tr></thead>
+            <div className="table-scroll" ref={tableRef} style={{ overflow: 'auto', border: '1px solid var(--border)' }}>
+              <table className="budget-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+                <thead>
+                  <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
+                    <th style={{ width: '25%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>통계목</th>
+                    <th style={{ width: '20%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거</th>
+                    <th style={{ width: '8%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토</th>
+                    <th style={{ width: '7%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>편집</th>
+                  </tr>
+                </thead>
                 <tbody>
-                  <tr className="total-row">{columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`} style={key === "detail" ? { textAlign: "right", paddingRight: 12 } : undefined}>{key === "policy" ? "" : key === "account" ? "" : key === "detail" ? <b>합계</b> : key === "amount" ? <b>{formatAmount(totals.amount)}</b> : key === "city" ? <b>{formatAmount(totals.city)}</b> : key === "national" ? <b>{formatAmount(totals.national)}</b> : key === "province" ? <b>{formatAmount(totals.province)}</b> : key === "other" ? <b>{formatAmount(totals.other)}</b> : key === "previous" ? <b>{formatAmount(totals.previous)}</b> : key === "status" ? "" : null}</td>)}<td className="action-cell"></td></tr>
-                  {paginatedRows.map((row) => <tr key={row.id} className={`budget-row row-${row.status}`}>
-                    {columns.filter(([key]) => visibleColumns.includes(key)).map(([key]) => <td key={key} className={`col-${key}`}>{renderCell(row, key)}</td>)}
-                    <td className="action-cell"><button className="row-edit" onClick={() => setEditingRow(row)} aria-label={`${row.program} 편집`}><Pencil size={15} /></button><button className="row-delete" onClick={() => deleteRow(row.id)} aria-label={`${row.program} 삭제`}><X size={15} /></button></td>
-                  </tr>)}
+                  {budgetHierarchyRows.map((row) => {
+                    const getPaddingLeft = () => {
+                      switch (row.level) {
+                        case 'dept': return '16px';
+                        case 'policy': return '40px';
+                        case 'unit': return '64px';
+                        case 'program': return '88px';
+                        case 'account': return '112px';
+                        case 'item': return '136px';
+                        case 'note': return '16px';
+                        case 'formula': return '16px';
+                        default: return '16px';
+                      }
+                    };
+
+                    const getBackground = () => {
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit') return '#f9f9f9';
+                      if (row.level === 'account') return '#fafafa';
+                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#fffbea';
+                      return 'transparent';
+                    };
+
+                    const getFontSize = () => {
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit') return '14px';
+                      if (row.level === 'item') return '13px';
+                      return '12px';
+                    };
+
+                    const getFontWeight = () => {
+                      if (row.level === 'dept') return '600';
+                      if (row.level === 'policy') return '500';
+                      return 'normal';
+                    };
+
+                    const formatNumber = (num?: number) => {
+                      if (!num && num !== 0) return '';
+                      return new Intl.NumberFormat('ko-KR').format(num);
+                    };
+
+                    // colSpan이 있는 경우 (부기명, 산출식 등)
+                    if (row.colSpan) {
+                      return (
+                        <tr key={row.id}>
+                          <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), color: '#666', borderTop: '1px solid #e0e0e0' }}>
+                            {row.label}
+                          </td>
+                        </tr>
+                      );
+                    }
+
+                    return (
+                      <tr key={row.id}>
+                        <td style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: row.level === 'note' || row.level === 'formula' ? '#666' : 'inherit' }}>
+                          {row.label}
+                        </td>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize() }}>
+                          {formatNumber(row.budget)}
+                        </td>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize() }}>
+                          {formatNumber(row.previous)}
+                        </td>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize() }}>
+                          {formatNumber(row.difference)}
+                        </td>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: row.level === 'note' || row.level === 'formula' ? '#666' : 'inherit' }}>
+                          {row.statisticsCode || ''}
+                        </td>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: row.level === 'note' || row.level === 'formula' ? '#666' : 'inherit' }}>
+                          {row.description || ''}
+                        </td>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center' }}></td>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center' }}>
+                          {row.level === 'item' && '✎'}
+                        </td>
+                      </tr>
+                    );
+                  })}
                 </tbody>
               </table>
-            </div>
-            <div className="table-footer" style={{ display: 'flex', justifyContent: 'center', padding: '16px' }}>
-              <Pagination page={currentPage} totalPages={totalPages} onChange={setCurrentPage} />
             </div>
           </section>
         </div>
