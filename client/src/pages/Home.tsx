@@ -564,7 +564,7 @@ export default function Home() {
 
   const loadStaffDataFromServer = async () => {
     try {
-      const response = await fetch('/api/staff/load');
+      const response = await fetch('/api/cloud-sync?type=staff');
       if (response.ok) {
         const { data } = await response.json();
         if (data && typeof data === 'object' && Object.keys(data).length > 0) {
@@ -578,7 +578,7 @@ export default function Home() {
 
   const loadCsvData = async () => {
     try {
-      const response = await fetch('/api/budget/load-csv');
+      const response = await fetch('/api/cloud-sync');
       if (response.ok) {
         const { data } = await response.json();
         if (data && Array.isArray(data) && data.length > 0) {
@@ -803,7 +803,7 @@ export default function Home() {
   const saveStaff = async () => {
     setShowStaffModal(false);
     try {
-      await fetch('/api/staff/save', {
+      await fetch('/api/cloud-sync?type=staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: staffData }),
@@ -935,7 +935,7 @@ export default function Home() {
 
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     try {
-      await fetch('/api/budget/save-csv', {
+      await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: rows }),
