@@ -527,6 +527,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .budget-table th.col-action { text-align: center !important; }
 .budget-table th.col-amount, .budget-table th.col-change, .budget-table th.col-city, .budget-table th.col-national, .budget-table th.col-province, .budget-table th.col-other, .budget-table th.col-previous { font-size: 16px !important; text-align: right !important; }
 .budget-table th.col-amount, .budget-table td.col-amount { padding-right: 24px !important; }
+.budget-table td.col-amount, .budget-table td.col-change, .budget-table td.col-city, .budget-table td.col-national, .budget-table td.col-province, .budget-table td.col-other, .budget-table td.col-previous { font-size: 13px !important; }
 .budget-table td { padding: 12px 0; color: #b8cade; font-size: 16px; font-weight: 600; line-height: 1.5; vertical-align: middle; font-variant-numeric: tabular-nums; }
 .budget-table th:first-child, .budget-table td:first-child { padding-left: 8px; }
 .budget-table th:first-child { padding-left: 8px; }
