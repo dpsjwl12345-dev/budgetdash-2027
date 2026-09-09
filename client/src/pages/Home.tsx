@@ -955,9 +955,26 @@ export default function Home() {
           {formula && <span className="detail-formula" title={formula}>{formula}</span>}
           {procedureNames.length > 0 && (
             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '3px' }}>
-              {procedureNames.map((name, idx) => (
-                <span key={idx} style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '2px 5px', borderRadius: '3px', fontSize: '0.72em', fontWeight: 500 }}>{name}</span>
-              ))}
+              {procedureNames.map((name, idx) => {
+                const isSubsidyReview = name === "보조금심의";
+                const isServiceReview = name === "용역심의";
+                return (
+                  <span
+                    key={idx}
+                    style={{
+                      display: 'inline-block',
+                      backgroundColor: isSubsidyReview ? '#eee3ff' : isServiceReview ? '#dff2ff' : '#ffe0e0',
+                      color: isSubsidyReview ? '#7045ad' : isServiceReview ? '#1d709f' : '#c0392b',
+                      padding: '2px 5px',
+                      borderRadius: '3px',
+                      fontSize: '0.72em',
+                      fontWeight: 500,
+                    }}
+                  >
+                    {name}
+                  </span>
+                );
+              })}
             </div>
           )}
           {(row.formulaErrors && row.formulaErrors.length > 0) && (
