@@ -516,7 +516,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .table-scroll { overflow-x: auto; overflow-y: visible; }
 .budget-table { width: 100%; min-width: 1060px; border-collapse: collapse; table-layout: auto; font-family: "Pretendard", system-ui, sans-serif; }
 /* 예산 편성 시트(세출예산내역서) 전용: 예산액/전년도 데이터도 우측정렬 (다른 budget-table에는 영향 없음) */
-.hierarchy-budget-table tbody tr td:nth-child(2), .hierarchy-budget-table tbody tr td:nth-child(3) { text-align: right !important; }
+table.budget-table.hierarchy-budget-table tbody tr td:nth-child(2), table.budget-table.hierarchy-budget-table tbody tr td:nth-child(3) { text-align: right !important; }
 .budget-table th, .budget-table td { border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
 .budget-table tbody tr td:nth-child(n+5) { text-align: right; }
 .budget-table tbody tr td:nth-child(12) { text-align: right !important; }

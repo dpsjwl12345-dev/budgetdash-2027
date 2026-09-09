@@ -475,15 +475,7 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
-  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>(() => {
-    return [
-      { id: '1', level: 'dept', label: '관광진흥과', budget: 67551417, previous: 23355044, difference: 44196373 },
-      { id: '2', level: 'policy', label: '선진 관광도시 육성', budget: 48351699, previous: 23280914, difference: 25070785 },
-      { id: '3', level: 'unit', label: '관광산업 진흥', budget: 2137696, previous: 820788, difference: 1316908 },
-      { id: '4', level: 'program', label: '화성시문화관광재단 관광진흥본부 지원', budget: 1023062, previous: 0, difference: 1023062 },
-      { id: '5', level: 'account', label: '306 출연금', budget: 1023062, previous: 0, difference: 1023062 },
-    ];
-  });
+  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
   const [programMemos, setProgramMemos] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem('budgetProgramMemos');
     return saved ? JSON.parse(saved) : {};
