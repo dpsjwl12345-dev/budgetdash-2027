@@ -776,6 +776,100 @@ export default function Home() {
     return key ? record[key] : "";
   };
 
+  const HIERARCHY_LEVELS: HierarchyLevel[] = ["dept", "policy", "unit", "program", "account"];
+
+  // 부서/정책/단위/세부/과목(0~4열) · 예산액/전년도/증감(5~7열) · 산출근거(8~9열, 12열) 고정 서식을
+  // 행 배열로 받아 계층형 데이터로 변환한다. CSV와 "부서 통합" 엑셀 서식이 이 함수를 공유한다.
+  const buildHierarchyFromRows = (cellRows: string[][]): BudgetHierarchyRow[] => {
+    const hierarchyData: BudgetHierarchyRow[] = [];
+    let id = 1;
+
+    for (let idx = 2; idx < cellRows.length; idx++) {
+      const cleanCells = (cellRows[idx] || []).map((cell) => (cell ?? "").replace(/^"+|"+$/g, "").trim());
+      if (!cleanCells.some((cell) => cell)) continue;
+
+      const hierIndent = [0, 1, 2, 3, 4].findIndex((i) => cleanCells[i]);
+      const budget = parseNumber(cleanCells[5]);
+      const previous = parseNumber(cleanCells[6]);
+      const difference = parseNumber(cleanCells[7]);
+      const col8 = cleanCells[8] || "";
+      const col9 = cleanCells[9] || "";
+      const col12 = cleanCells[12] || "";
+
+      let level: HierarchyLevel;
+      let label: string;
+      let statisticsCode = "";
+      let description = "";
+      let colSpan: number | undefined;
+
+      if (hierIndent !== -1) {
+        // 부서/정책/단위/세부사업/통계목 레벨의 계층 라벨 행
+        level = HIERARCHY_LEVELS[hierIndent];
+        label = cleanCells[hierIndent];
+        statisticsCode = col8;
+      } else if (col8.includes("○")) {
+        // 산출근거 설명 (예: "○화성시문화관광재단 지원")
+        // 산출식(9열)의 결과값은 12열에 따로 있으므로 "100,000원*13명 = 1,300"처럼 이어 붙인다.
+        level = "note";
+        label = col8;
+        description = col9 && col12 ? `${col9} ${col12}` : col9;
+        colSpan = 8;
+      } else if (col8 && (budget || previous || difference)) {
+        // 편성목 코드 + 금액 반복 행 (예: "01 출연금") — 라벨 칸에 이미 코드가 있으므로
+        // 통계목 칸에는 같은 코드를 반복하지 않고 비워둔다.
+        level = "item";
+        label = col8;
+      } else if (col9.includes("=")) {
+        // 산출식 (예: "18,689,524,000원 =")
+        level = "formula";
+        label = col9 && col12 ? `${col9} ${col12}` : col9;
+        colSpan = 8;
+      } else if (col8) {
+        level = "opinion";
+        label = col8;
+        colSpan = 8;
+      } else if (col12.startsWith("[")) {
+        // 재원 내역 ([국 000] [도 000] [시 000])
+        level = "note";
+        label = col12;
+        colSpan = 8;
+      } else {
+        continue;
+      }
+
+      if (!label) continue;
+
+      hierarchyData.push({
+        id: `row-${id++}`,
+        level,
+        label,
+        budget: budget || undefined,
+        previous: previous || undefined,
+        difference: difference || undefined,
+        statisticsCode: statisticsCode || undefined,
+        description: description || undefined,
+        colSpan,
+      });
+    }
+
+    // 부기명(○...)·산출식(...=)·재원내역([국/도/시])은 별도 행이 아니라,
+    // 바로 위 통계목·편성목 행("306 출연금", "01 출연금" 등 각각 자기 줄을 유지)의
+    // "산출근거" 칸에 줄바꿈으로 이어 붙인다. 통계목·편성목은 둘 다 각자 별도 줄로 남긴다.
+    const merged: BudgetHierarchyRow[] = [];
+    for (const node of hierarchyData) {
+      const isNoteLike = node.level === 'note' || node.level === 'formula' || node.level === 'opinion';
+      const prev = merged[merged.length - 1];
+      if (isNoteLike && prev && prev.level !== 'note' && prev.level !== 'formula' && prev.level !== 'opinion') {
+        const noteText = [node.label, node.description].filter(Boolean).join('\n');
+        prev.description = prev.description ? `${prev.description}\n${noteText}` : noteText;
+        continue;
+      }
+      merged.push(node);
+    }
+
+    return merged;
+  };
+
   const handleExcelUpload = async (file?: File) => {
     if (!file) return;
 
@@ -783,20 +877,13 @@ export default function Home() {
     if (file.name.endsWith('.csv')) {
       try {
         const text = await file.text();
-        const rows = text.split('\n');
+        const lines = text.split('\n');
 
-        const hierarchyData: BudgetHierarchyRow[] = [];
-        let id = 1;
-
-        for (let idx = 2; idx < rows.length; idx++) {
-          const line = rows[idx];
-          if (!line.trim()) continue;
-
-          // CSV 파싱: 따옴표를 고려하여 분리
+        // CSV 파싱: 따옴표를 고려하여 분리
+        const cellRows = lines.map((line) => {
           const cells: string[] = [];
           let current = '';
           let inQuotes = false;
-
           for (let i = 0; i < line.length; i++) {
             const char = line[i];
             if (char === '"') {
@@ -809,52 +896,10 @@ export default function Home() {
             }
           }
           cells.push(current);
+          return cells;
+        });
 
-          // 따옴표와 공백 제거
-          const cleanCells = cells.map(cell => cell.replace(/^"+|"+$/g, '').trim());
-
-          // 첫 번째 비어있지 않은 셀의 위치로 들여쓰기 판단
-          let indent = 0;
-          for (let i = 0; i < cleanCells.length; i++) {
-            if (cleanCells[i]) break;
-            indent++;
-          }
-
-          const label = cleanCells[indent] || '';
-          // CSV 구조: 0-4는 계층(빈칸), 5는 빈칸, 6은 예산액, 7은 전년도, 8은 증감
-          const budget = parseNumber(cleanCells[6]);
-          const previous = parseNumber(cleanCells[7]);
-          const difference = parseNumber(cleanCells[8]);
-          const statisticsCode = cleanCells[9] || '';
-          const description = cleanCells[10] || '';
-
-          // 첫 번째 셀만 있고 나머지는 비어있으면 부기명, 산출식 등 특별한 행
-          const hasOnlyLabel = label && !budget && !previous && !difference && !statisticsCode;
-
-          if (!label) continue;
-
-          let level: HierarchyLevel = 'item';
-          if (indent === 0) level = 'dept';
-          else if (indent === 1) level = 'policy';
-          else if (indent === 2) level = 'unit';
-          else if (indent === 3) level = 'program';
-          else if (indent === 4) level = 'account';
-          else if (hasOnlyLabel && label.includes('○')) level = 'note';
-          else if (hasOnlyLabel && label.includes('=')) level = 'formula';
-          else if (hasOnlyLabel) level = 'opinion';
-
-          hierarchyData.push({
-            id: `row-${id++}`,
-            level,
-            label,
-            budget: budget || undefined,
-            previous: previous || undefined,
-            difference: difference || undefined,
-            statisticsCode: statisticsCode || undefined,
-            description: description || undefined,
-            colSpan: hasOnlyLabel ? 8 : undefined
-          });
-        }
+        const hierarchyData = buildHierarchyFromRows(cellRows);
 
         setBudgetHierarchyRows(hierarchyData);
         showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
@@ -869,14 +914,27 @@ export default function Home() {
     }
 
     // Excel 파일인 경우
-    if (!department) {
-      showToast("먼저 편성 부서를 선택해 주세요.");
-      if (fileInputRef.current) fileInputRef.current.value = "";
-      return;
-    }
     try {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+
+      // "부서·정책·단위·세부·과목" 계층형 서식(여러 부서를 한 파일에 담은 서식) 감지
+      const matrix = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+      const headerFirstCell = String((matrix[0] as unknown[])?.[0] ?? "");
+      if (headerFirstCell.includes("부서") && headerFirstCell.includes("과목")) {
+        const cellRows = (matrix as unknown[][]).map((row) => row.map((cell) => String(cell ?? "")));
+        const hierarchyData = buildHierarchyFromRows(cellRows);
+        if (!hierarchyData.length) throw new Error("empty");
+        setBudgetHierarchyRows(hierarchyData);
+        showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
+        return;
+      }
+
+      if (!department) {
+        showToast("먼저 편성 부서를 선택해 주세요.");
+        return;
+      }
+
       const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
       const skippedDepartmentCount = 0;
       const importedRows = imported
@@ -1367,26 +1425,26 @@ export default function Home() {
 
                     return (
                       <tr key={row.id}>
-                        <td style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor() }}>
+                        <td style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top' }}>
                           {row.label}
                         </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
                           {formatNumber(row.budget)}
                         </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
                           {formatNumber(row.previous)}
                         </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
                           {formatNumber(row.difference)}
                         </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px' }}>
                           {row.statisticsCode || ''}
                         </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px' }}>
                           {row.description || ''}
                         </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor() }}></td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor() }}>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}></td>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}>
                           {row.level === 'item' && '✎'}
                         </td>
                       </tr>
