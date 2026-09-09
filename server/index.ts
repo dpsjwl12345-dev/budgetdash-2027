@@ -46,6 +46,10 @@ async function startServer() {
   app.post('/api/budget/save', async (req, res) => {
     try {
       const { data } = req.body;
+      if (!Array.isArray(data) || data.length === 0) {
+        res.status(400).json({ success: false, error: '빈 예산 데이터는 저장할 수 없습니다.' });
+        return;
+      }
 
       // 로컬은 localStorage 폴백만 사용 (Supabase는 프로덕션에서)
       try {

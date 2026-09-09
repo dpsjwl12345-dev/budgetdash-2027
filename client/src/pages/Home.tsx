@@ -590,13 +590,19 @@ export default function Home() {
       const response = await fetch('/api/budget/load');
       if (!response.ok) throw new Error('서버 로드 실패');
       const { data } = await response.json();
-      if (data && Array.isArray(data)) {
+      if (data && Array.isArray(data) && data.length > 0) {
         setBudgetRows(data);
         localStorage.setItem('budgetRows', JSON.stringify(data));
         return;
       }
       const saved = localStorage.getItem('budgetRows');
-      if (saved) setBudgetRows(JSON.parse(saved));
+      if (saved) {
+        const savedRows = JSON.parse(saved);
+        if (Array.isArray(savedRows) && savedRows.length > 0) {
+          setBudgetRows(savedRows);
+          await saveDataToServer(savedRows);
+        }
+      }
     } catch (error) {
       console.warn('서버에서 데이터 로드 실패:', error);
       const saved = localStorage.getItem('budgetRows');
@@ -725,6 +731,24 @@ export default function Home() {
     setVisibleColumns((currentColumns) =>
       currentColumns.includes(key) ? currentColumns.filter((item) => item !== key) : [...currentColumns, key],
     );
+  };
+
+  const autoFitColumns = () => {
+    const table = tableRef.current?.querySelector<HTMLTableElement>(".budget-table");
+    if (!table) return;
+
+    const nextWidths: Record<string, number> = {};
+    const headerCells = Array.from(table.querySelectorAll<HTMLTableCellElement>("thead th"));
+    const rowCells = Array.from(table.querySelectorAll<HTMLTableRowElement>("tbody tr"));
+    visibleColumns.forEach((key, columnIndex) => {
+      const cells = [headerCells[columnIndex], ...rowCells.map((row) => row.cells[columnIndex])].filter(Boolean);
+      const measuredWidth = Math.max(...cells.map((cell) => cell.scrollWidth), 0) + 20;
+      const minWidth = key === "policy" ? 200 : key === "detail" ? 150 : 80;
+      const maxWidth = key === "policy" || key === "detail" ? 420 : 180;
+      nextWidths[key] = Math.min(maxWidth, Math.max(minWidth, measuredWidth));
+    });
+    setColumnWidths((currentWidths) => ({ ...currentWidths, ...nextWidths }));
+    showToast("현재 내용에 맞춰 열 너비를 자동 조정했습니다.");
   };
 
   const saveStaff = () => {
@@ -1111,6 +1135,7 @@ export default function Home() {
               <button className={`filter-chip ${statusFilter === "전체" ? "selected" : ""}`} onClick={() => setStatusFilter("전체")}>전체</button>
               {(["정상", "사전"] as const).map((filter) => <button key={filter} className={`filter-chip ${statusFilter === filter ? "selected" : ""} filter-${filter}`} onClick={() => setStatusFilter(filter)}><span className="chip-dot" />{filter}<b>{counts[filter]}</b></button>)}
               <button className="result-refresh" aria-label="새로고침" onClick={() => showToast("목록을 새로고침했습니다.")}><RefreshCw size={15} /></button>
+              <button className="result-refresh" aria-label="열 너비 자동 조정" title="열 너비 자동 조정" onClick={autoFitColumns}><Settings2 size={15} /></button>
               <div className="search-box"><Search size={17} /><input value={search} onChange={(event) => setSearch(event.target.value)} placeholder="사업명, 산출내역 검색" aria-label="사업명, 산출내역 검색" />{search && <button aria-label="검색어 지우기" onClick={() => setSearch("")}><X size={14} /></button>}</div>
               <span className="unit-note">(단위: 천원)</span>
             </div>
