@@ -908,6 +908,20 @@ export default function Home() {
     return hierarchyData;
   };
 
+  // "편성 부서"를 선택한 상태로 업로드하면, 파일 안에 여러 부서가 섞여 있어도
+  // 선택한 부서의 데이터만 인식한다.
+  const filterHierarchyByDepartment = (rows: BudgetHierarchyRow[], deptName: string) => {
+    const filtered: BudgetHierarchyRow[] = [];
+    let keeping = false;
+    for (const row of rows) {
+      if (row.level === 'dept') {
+        keeping = row.label === deptName;
+      }
+      if (keeping) filtered.push(row);
+    }
+    return filtered;
+  };
+
   // 부서별로 파일을 하나씩 업로드할 때, 기존에 저장된 다른 부서의 행은 그대로 두고
   // 이번에 업로드한 부서(들)의 기존 행만 새 데이터로 교체한다.
   const mergeHierarchyByDepartment = (existingRows: BudgetHierarchyRow[], newRows: BudgetHierarchyRow[]) => {
@@ -966,7 +980,13 @@ export default function Home() {
           return cells;
         });
 
-        const hierarchyData = buildHierarchyFromRows(cellRows);
+        const parsedData = buildHierarchyFromRows(cellRows);
+        const hierarchyData = department ? filterHierarchyByDepartment(parsedData, department) : parsedData;
+        if (department && hierarchyData.length === 0) {
+          showToast(`파일에서 "${department}" 데이터를 찾지 못했습니다.`);
+          if (fileInputRef.current) fileInputRef.current.value = "";
+          return;
+        }
 
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, hierarchyData);
@@ -994,8 +1014,12 @@ export default function Home() {
       const headerFirstCell = String((matrix[0] as unknown[])?.[0] ?? "");
       if (headerFirstCell.includes("부서") && headerFirstCell.includes("과목")) {
         const cellRows = (matrix as unknown[][]).map((row) => row.map((cell) => String(cell ?? "")));
-        const hierarchyData = buildHierarchyFromRows(cellRows);
-        if (!hierarchyData.length) throw new Error("empty");
+        const parsedData = buildHierarchyFromRows(cellRows);
+        const hierarchyData = department ? filterHierarchyByDepartment(parsedData, department) : parsedData;
+        if (!hierarchyData.length) {
+          if (department) throw new Error(`파일에서 "${department}" 데이터를 찾지 못했습니다.`);
+          throw new Error("empty");
+        }
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, hierarchyData);
           saveHierarchyToServer(merged);
@@ -1128,7 +1152,10 @@ export default function Home() {
       });
     } catch (error) {
       console.error('Upload error:', error);
-      showToast("엑셀 파일을 읽지 못했습니다. 첫 번째 시트와 열 이름을 확인해 주세요.");
+      const message = error instanceof Error && error.message.includes("데이터를 찾지 못했습니다")
+        ? error.message
+        : "엑셀 파일을 읽지 못했습니다. 첫 번째 시트와 열 이름을 확인해 주세요.";
+      showToast(message);
     } finally {
       if (fileInputRef.current) fileInputRef.current.value = "";
     }
