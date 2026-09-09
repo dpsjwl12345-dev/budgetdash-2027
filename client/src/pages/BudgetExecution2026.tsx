@@ -25,6 +25,7 @@ type BudgetExecution = {
   reserve: number;
   carryover: number;
   budget: number;
+  appropriated: number;
   executed: number;
   executionRate: number;
 };
@@ -121,6 +122,7 @@ const EXECUTION_COLUMNS = [
   ["unitName", 145],
   ["statisticsCode", 140],
   ["budget", 82],
+  ["appropriated", 82],
   ["original", 82],
   ["supplementary", 78],
   ["preEstablishment", 78],
@@ -255,6 +257,7 @@ export default function BudgetExecution2026() {
           reserve: row.reserve,
           carryover: row.carryover,
           budget: row.budget,
+          appropriated: (row.original ?? 0) + (row.supplementary ?? 0) + (row.preEstablishment ?? row.pre_establishment ?? 0),
           executed: row.executed,
           executionRate: row.executionRate ?? row.execution_rate,
         }));
@@ -302,6 +305,7 @@ export default function BudgetExecution2026() {
             reserve: parseNumber(record["예비비"]),
             carryover: parseNumber(record["이월액계"]),
             budget: budgetAmount,
+            appropriated: parseNumber(record["본예산"]) + parseNumber(record["추경"]) + parseNumber(record["성립전"]),
             executed: executedAmount,
             executionRate: budgetAmount > 0 ? (executedAmount / budgetAmount) * 100 : 0,
           };
@@ -389,6 +393,7 @@ export default function BudgetExecution2026() {
     return filteredData.reduce(
       (sum, row) => ({
         budget: sum.budget + row.budget,
+        appropriated: sum.appropriated + row.appropriated,
         original: sum.original + row.original,
         supplementary: sum.supplementary + row.supplementary,
         preEstablishment: sum.preEstablishment + row.preEstablishment,
@@ -396,7 +401,7 @@ export default function BudgetExecution2026() {
         carryover: sum.carryover + row.carryover,
         executed: sum.executed + row.executed,
       }),
-      { budget: 0, original: 0, supplementary: 0, preEstablishment: 0, reserve: 0, carryover: 0, executed: 0 }
+      { budget: 0, appropriated: 0, original: 0, supplementary: 0, preEstablishment: 0, reserve: 0, carryover: 0, executed: 0 }
     );
   }, [filteredData]);
 
@@ -508,7 +513,7 @@ export default function BudgetExecution2026() {
           </div>
 
           <div className="table-scroll">
-            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1091px' }}>
+            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1173px' }}>
               <colgroup>
                 {EXECUTION_COLUMNS.map(([key, fallback]) => (
                   <col key={key} style={{ width: `${colWidth(key, fallback)}px` }} />
@@ -521,6 +526,7 @@ export default function BudgetExecution2026() {
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>편성액{renderResizeHandle("appropriated", 82)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>본예산{renderResizeHandle("original", 82)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
@@ -538,6 +544,7 @@ export default function BudgetExecution2026() {
                     <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}>합계</td>
                     <td style={{ padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}></td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.budget)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.appropriated)}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.original)}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.supplementary)}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(filteredTotals.preEstablishment)}</td>
@@ -554,6 +561,7 @@ export default function BudgetExecution2026() {
                     <td title={row.unitName} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitName}</td>
                     <td title={row.statisticsCode} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.statisticsCode}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.budget)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.appropriated)}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.original)}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.supplementary)}</td>
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.preEstablishment)}</td>
