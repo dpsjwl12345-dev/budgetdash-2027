@@ -1681,7 +1681,7 @@ export default function Home() {
                 </colgroup>
                 <thead>
                   <tr style={{ background: '#1e3a5f', position: 'sticky', top: 0, zIndex: 2 }}>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>
                       <HeaderFilterDropdown
                         label="부서/정책/단위/세부/과목"
                         value={hierarchyProgramFilter}
@@ -1690,9 +1690,9 @@ export default function Home() {
                       />
                       {renderHierarchyResizeHandle('label')}
                     </th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
                     <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px' }}>
                       <HeaderFilterDropdown
                         label="통계목"
@@ -1703,9 +1703,9 @@ export default function Home() {
                       />
                       {renderHierarchyResizeHandle('statisticsCode')}
                     </th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>검토{renderHierarchyResizeHandle('review')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>편집{renderHierarchyResizeHandle('edit')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>검토{renderHierarchyResizeHandle('review')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '16px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>편집{renderHierarchyResizeHandle('edit')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1748,20 +1748,20 @@ export default function Home() {
                     };
 
                     const getFontSize = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '14px';
-                      if (row.level === 'item' || row.level === 'note') return '13px';
-                      return '12px';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '15px';
+                      if (row.level === 'item' || row.level === 'note') return '14px';
+                      return '13px';
                     };
 
                     // 부서~세부사업(첫 컬럼) 전용: 나머지 레벨은 기존과 동일하고, 상위 레벨만 1포인트 크게.
                     const getLabelFontSize = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '15px';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '16px';
                       return getFontSize();
                     };
 
                     // 통계목 컬럼 전용: 통계목(item)과 부기명(note)만 1포인트 크게.
                     const getStatCodeFontSize = () => {
-                      if (row.level === 'item' || row.level === 'note') return '14px';
+                      if (row.level === 'item' || row.level === 'note') return '15px';
                       return getFontSize();
                     };
 

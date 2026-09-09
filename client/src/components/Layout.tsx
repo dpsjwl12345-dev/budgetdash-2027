@@ -87,6 +87,7 @@ export default function Layout({
   const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
   const [expandedGuide, setExpandedGuide] = useState(false);
   const [highlightMode, setHighlightMode] = useState(false);
+  const [eraserMode, setEraserMode] = useState(false);
   const [highlightColor, setHighlightColor] = useState("#ffe45c");
   const [highlightStrokes, setHighlightStrokes] = useState<HighlightStroke[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
@@ -155,6 +156,10 @@ export default function Layout({
   });
 
   const startHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (eraserMode) {
+      handleEraser(event);
+      return;
+    }
     drawingRef.current = true;
     strokeStartRef.current = getPointerPoint(event);
     event.currentTarget.setPointerCapture(event.pointerId);
@@ -162,7 +167,7 @@ export default function Layout({
   };
 
   const continueHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
-    if (!drawingRef.current) return;
+    if (!drawingRef.current || eraserMode) return;
     setHighlightStrokes((strokes) => {
       const next = [...strokes];
       const current = next[next.length - 1];
@@ -178,6 +183,22 @@ export default function Layout({
   const finishHighlight = () => {
     drawingRef.current = false;
     strokeStartRef.current = null;
+  };
+
+  const handleEraser = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const clickPoint = getPointerPoint(event);
+    const eraserRadius = 30;
+
+    setHighlightStrokes((strokes) => {
+      const filtered = strokes.filter((stroke) => {
+        return !stroke.points.some(
+          (point) =>
+            Math.hypot(point.x - clickPoint.x, point.y - clickPoint.y) <= eraserRadius
+        );
+      });
+      redrawHighlights(filtered);
+      return filtered;
+    });
   };
 
   return (
@@ -415,7 +436,7 @@ export default function Layout({
           // 도구를 닫아도 캔버스가 콘텐츠 위에 남아 기존 표시를 계속 보여준다.
           zIndex: 40,
           pointerEvents: highlightMode ? "auto" : "none",
-          cursor: highlightMode ? "crosshair" : "default",
+          cursor: highlightMode ? (eraserMode ? "not-allowed" : "crosshair") : "default",
         }}
       />
 
@@ -435,7 +456,7 @@ export default function Layout({
           boxShadow: "0 10px 28px rgba(0, 0, 0, 0.28)",
         }}
       >
-        {highlightMode && ["#ffe45c", "#7ee787", "#ff8fab"].map((color) => (
+        {highlightMode && !eraserMode && ["#ffe45c", "#7ee787", "#ff8fab"].map((color) => (
           <button
             key={color}
             type="button"
@@ -454,13 +475,16 @@ export default function Layout({
         ))}
         {highlightMode && (
           <>
-            <button type="button" onClick={() => setHighlightStrokes((strokes) => strokes.slice(0, -1))} aria-label="마지막 형광펜 되돌리기" title="실행 취소" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
-              <Undo2 size={16} />
-            </button>
-            <button type="button" onClick={() => { setHighlightStrokes([]); redrawHighlights([]); }} aria-label="형광펜 전체 지우기" title="전체 지우기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+            <button type="button" onClick={() => setEraserMode(!eraserMode)} aria-label={eraserMode ? "지우기 모드 해제" : "지우기 모드"} title={eraserMode ? "지우기 모드 해제" : "지우기"} className="icon-stack-btn" style={{ width: "32px", height: "32px", background: eraserMode ? "rgba(255, 107, 107, 0.2)" : "transparent" }}>
               <Trash2 size={16} />
             </button>
-            <button type="button" onClick={() => setHighlightMode(false)} aria-label="형광펜 닫기" title="닫기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+            <button type="button" onClick={() => setHighlightStrokes((strokes) => strokes.slice(0, -1))} aria-label="마지막 형광펜 되돌리기" title="실행 취소" className="icon-stack-btn" style={{ width: "32px", height: "32px" }} disabled={eraserMode}>
+              <Undo2 size={16} />
+            </button>
+            <button type="button" onClick={() => { setHighlightStrokes([]); redrawHighlights([]); setEraserMode(false); }} aria-label="형광펜 전체 지우기" title="전체 지우기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+              <Trash2 size={16} />
+            </button>
+            <button type="button" onClick={() => { setHighlightMode(false); setEraserMode(false); }} aria-label="형광펜 닫기" title="닫기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
               <X size={16} />
             </button>
           </>
