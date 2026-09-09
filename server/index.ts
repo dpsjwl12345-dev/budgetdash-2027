@@ -10,6 +10,7 @@ import { initializeDB, getDB } from "./db";
 import explainerDataHandler from "../api/budget-explainer/data";
 import explainerGetMaterialHandler from "../api/budget-explainer/get-material";
 import explainerBulkSaveHandler from "../api/budget-explainer/bulk-save";
+import cloudSyncHandler from "../api/cloud-sync";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -304,6 +305,10 @@ async function startServer() {
   app.get('/api/budget-explainer/data', (req, res) => explainerDataHandler(req, res));
   app.get('/api/budget-explainer/get-material', (req, res) => explainerGetMaterialHandler(req, res));
   app.post('/api/budget-explainer/bulk-save', (req, res) => explainerBulkSaveHandler(req, res));
+
+  // 예산 편성 시트(hierarchy) · 정원·현원(staff) 클라우드 동기화 - 같은 이유로 위임
+  app.get('/api/cloud-sync', (req, res) => cloudSyncHandler(req, res));
+  app.post('/api/cloud-sync', (req, res) => cloudSyncHandler(req, res));
 
   // 2026 예산집행 엑셀 업로드
   app.post('/api/budget-execution-2026/upload', upload.single('file'), (_req, res) => {

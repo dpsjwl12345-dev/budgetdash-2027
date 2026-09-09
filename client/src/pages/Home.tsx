@@ -482,6 +482,10 @@ export default function Home() {
   });
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [memoDraft, setMemoDraft] = useState("");
+  const [hiddenMemoIds, setHiddenMemoIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('budgetHiddenMemoIds');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -503,8 +507,11 @@ export default function Home() {
   const [toast, setToast] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [hierarchyPage, setHierarchyPage] = useState(1);
-  const HIERARCHY_ROWS_PER_PAGE = 20;
-  const [rowSpacing, setRowSpacing] = useState(12);
+  const HIERARCHY_ROWS_PER_PAGE = 30;
+  const [hierarchySearch, setHierarchySearch] = useState("");
+  const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState("");
+  const [hierarchyItemFilter, setHierarchyItemFilter] = useState("");
+  const [rowSpacing, setRowSpacing] = useState(4);
   const [programFilter, setProgramFilter] = useState("");
   const [accountFilter, setAccountFilter] = useState("");
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
@@ -676,6 +683,7 @@ export default function Home() {
         height: '100%',
         width: '6px',
         cursor: 'col-resize',
+        zIndex: 4,
         background: resizingColumn?.key === colKey ? 'rgba(91, 155, 240, 0.5)' : 'transparent',
       }}
     />
@@ -810,6 +818,140 @@ export default function Home() {
       .reduce((sum, row) => sum + (row.budget || 0), 0);
   }, [budgetHierarchyRows]);
 
+  // 세출예산내역서 표의 각 행에 대해 가장 가까운 상위 계층(부서/정책/단위/세부사업/편성목/통계목) 행을 찾아둔다.
+  // 검색·필터 드롭다운이 "이 행의 조상이 조건에 맞으면 전체 하위행도 같이 보여준다" 식으로 동작하는 데 쓰인다.
+  const hierarchyAncestors = useMemo(() => {
+    const map = new Map<string, {
+      deptRow?: BudgetHierarchyRow; policyRow?: BudgetHierarchyRow; unitRow?: BudgetHierarchyRow;
+      programRow?: BudgetHierarchyRow; accountRow?: BudgetHierarchyRow; itemRow?: BudgetHierarchyRow;
+    }>();
+    let deptRow: BudgetHierarchyRow | undefined;
+    let policyRow: BudgetHierarchyRow | undefined;
+    let unitRow: BudgetHierarchyRow | undefined;
+    let programRow: BudgetHierarchyRow | undefined;
+    let accountRow: BudgetHierarchyRow | undefined;
+    let itemRow: BudgetHierarchyRow | undefined;
+    for (const row of budgetHierarchyRows) {
+      if (row.level === 'dept') { deptRow = row; policyRow = unitRow = programRow = accountRow = itemRow = undefined; }
+      else if (row.level === 'policy') { policyRow = row; unitRow = programRow = accountRow = itemRow = undefined; }
+      else if (row.level === 'unit') { unitRow = row; programRow = accountRow = itemRow = undefined; }
+      else if (row.level === 'program') { programRow = row; accountRow = itemRow = undefined; }
+      else if (row.level === 'account') { accountRow = row; itemRow = undefined; }
+      else if (row.level === 'item') { itemRow = row; }
+      map.set(row.id, { deptRow, policyRow, unitRow, programRow, accountRow, itemRow });
+    }
+    return map;
+  }, [budgetHierarchyRows]);
+
+  // 세부사업 드롭다운 필터 값 목록 (세부사업명만, 중복 제거)
+  const uniqueHierarchyPrograms = useMemo(() => {
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const row of budgetHierarchyRows) {
+      if (row.level === 'program' && row.label && !seen.has(row.label)) {
+        seen.add(row.label);
+        list.push(row.label);
+      }
+    }
+    return list;
+  }, [budgetHierarchyRows]);
+
+  // 통계목 드롭다운 필터 값 목록 (통계목만, 중복 제거)
+  const uniqueHierarchyItems = useMemo(() => {
+    const seen = new Set<string>();
+    const list: string[] = [];
+    for (const row of budgetHierarchyRows) {
+      if (row.level === 'item' && row.statisticsCode && !seen.has(row.statisticsCode)) {
+        seen.add(row.statisticsCode);
+        list.push(row.statisticsCode);
+      }
+    }
+    return list;
+  }, [budgetHierarchyRows]);
+
+  // 조건에 맞는 행(직접 매치)을 찾은 뒤, 그 행의 조상(문맥 표시용)과 자손(하위 내역) 전체를
+  // 함께 "표시할 행"으로 넓혀준다. 조상은 직접 매치 집합에 섞으면 안 된다 — 섞으면 같은 조상을
+  // 공유하는 무관한 다른 세부사업들까지 전부 딸려 나오게 된다.
+  const expandHierarchyMatches = (
+    rows: BudgetHierarchyRow[],
+    ancestors: typeof hierarchyAncestors,
+    isMatch: (row: BudgetHierarchyRow) => boolean,
+  ): Set<string> => {
+    const directMatches = new Set<string>();
+    for (const row of rows) {
+      if (isMatch(row)) directMatches.add(row.id);
+    }
+
+    // 직접 매치된 행의 조상(부서/정책/단위/세부사업/편성목/통계목) 헤더 행은 문맥 표시를 위해 그대로 둔다.
+    const ancestorContext = new Set<string>();
+    directMatches.forEach((id) => {
+      const a = ancestors.get(id);
+      if (a?.deptRow) ancestorContext.add(a.deptRow.id);
+      if (a?.policyRow) ancestorContext.add(a.policyRow.id);
+      if (a?.unitRow) ancestorContext.add(a.unitRow.id);
+      if (a?.programRow) ancestorContext.add(a.programRow.id);
+      if (a?.accountRow) ancestorContext.add(a.accountRow.id);
+      if (a?.itemRow) ancestorContext.add(a.itemRow.id);
+    });
+
+    const keep = new Set<string>();
+    for (const row of rows) {
+      if (directMatches.has(row.id) || ancestorContext.has(row.id)) {
+        keep.add(row.id);
+        continue;
+      }
+      // 직접 매치된 행의 자손(하위 편성목·통계목·부기·산출식 등)인지 확인한다.
+      const a = ancestors.get(row.id);
+      if (
+        (a?.deptRow && directMatches.has(a.deptRow.id)) ||
+        (a?.policyRow && directMatches.has(a.policyRow.id)) ||
+        (a?.unitRow && directMatches.has(a.unitRow.id)) ||
+        (a?.programRow && directMatches.has(a.programRow.id)) ||
+        (a?.accountRow && directMatches.has(a.accountRow.id)) ||
+        (a?.itemRow && directMatches.has(a.itemRow.id))
+      ) keep.add(row.id);
+    }
+    return keep;
+  };
+
+  // 편성 부서 / 검색어 / 세부사업 필터 / 통계목 필터를 모두 통과하는 행만 남긴다 (각 조건은 AND).
+  const filteredHierarchyRows = useMemo(() => {
+    const term = hierarchySearch.trim().toLowerCase();
+    if (!department && !term && !hierarchyProgramFilter && !hierarchyItemFilter) return budgetHierarchyRows;
+
+    let keep: Set<string> | null = null;
+    const intersect = (next: Set<string>) => {
+      keep = keep ? new Set(Array.from(keep).filter((id) => next.has(id))) : next;
+    };
+
+    // 클라우드에 저장된 세출예산내역서는 여러 부서 데이터가 한 목록에 섞여 있을 수 있어,
+    // 상단 "편성 부서" 드롭다운으로 선택한 부서(dept 레벨 행)의 하위 행만 남긴다.
+    if (department) {
+      intersect(expandHierarchyMatches(budgetHierarchyRows, hierarchyAncestors, (row) =>
+        row.level === 'dept' && row.label === department));
+    }
+    if (term) {
+      intersect(expandHierarchyMatches(budgetHierarchyRows, hierarchyAncestors, (row) => {
+        const text = `${row.label} ${row.statisticsCode ?? ''} ${row.description ?? ''}`.toLowerCase();
+        return text.includes(term);
+      }));
+    }
+    if (hierarchyProgramFilter) {
+      intersect(expandHierarchyMatches(budgetHierarchyRows, hierarchyAncestors, (row) =>
+        row.level === 'program' && row.label === hierarchyProgramFilter));
+    }
+    if (hierarchyItemFilter) {
+      intersect(expandHierarchyMatches(budgetHierarchyRows, hierarchyAncestors, (row) =>
+        row.level === 'item' && row.statisticsCode === hierarchyItemFilter));
+    }
+
+    return budgetHierarchyRows.filter((row) => keep!.has(row.id));
+  }, [budgetHierarchyRows, hierarchyAncestors, department, hierarchySearch, hierarchyProgramFilter, hierarchyItemFilter]);
+
+  useEffect(() => {
+    setHierarchyPage(1);
+  }, [department, hierarchySearch, hierarchyProgramFilter, hierarchyItemFilter]);
+
   const budget2026Total = useMemo(() => {
     if (executionData.length === 0) return 0;
     const filtered = department ? executionData.filter(row => row.department === department) : executionData;
@@ -860,6 +1002,19 @@ export default function Home() {
         localStorage.setItem('budgetProgramMemos', JSON.stringify(next));
       } catch (error) {
         console.warn('메모 저장 실패:', error);
+      }
+      return next;
+    });
+  };
+
+  const hideMemoRow = (rowId: string) => {
+    setHiddenMemoIds((prev) => {
+      if (prev.includes(rowId)) return prev;
+      const next = [...prev, rowId];
+      try {
+        localStorage.setItem('budgetHiddenMemoIds', JSON.stringify(next));
+      } catch (error) {
+        console.warn('메모 줄 숨김 저장 실패:', error);
       }
       return next;
     });
@@ -1499,12 +1654,24 @@ export default function Home() {
             </article>
           </section>
 
-          <section className="table-panel">
-            <div className="table-heading">
-              <div className="table-title"><div style={{ fontSize: '20px', color: '#9fb0c8', fontWeight: '600' }}>세출예산내역서</div></div>
+          <section className="table-panel ledger-paper" style={{ background: '#d9dfe6' }}>
+            <div className="table-heading" style={{ minHeight: 0, padding: '8px 19px 8px 30px' }}>
+              <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+                <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
+                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                  <Search size={14} style={{ position: 'absolute', left: '10px', color: '#6b7280', pointerEvents: 'none' }} />
+                  <input
+                    type="text"
+                    value={hierarchySearch}
+                    onChange={(event) => setHierarchySearch(event.target.value)}
+                    placeholder="검색"
+                    style={{ width: '220px', padding: '6px 10px 6px 30px', fontSize: '13px', background: '#eef1f5', border: '1px solid #b7c2cf', borderRadius: '6px', color: '#111827' }}
+                  />
+                </div>
+              </div>
             </div>
 
-            <div className="table-scroll" ref={tableRef} style={{ overflow: 'auto', border: '1px solid var(--border)' }}>
+            <div className="table-scroll ledger-scrollbar" ref={tableRef} style={{ overflowX: 'auto', overflowY: 'visible', border: '1px solid #b7c2cf' }}>
               <table className="budget-table hierarchy-budget-table" style={{ width: '100%', minWidth: '1140px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <colgroup>
                   {(['label', 'budget', 'previous', 'difference', 'statisticsCode', 'description', 'review', 'edit'] as const).map((key) => (
@@ -1512,15 +1679,32 @@ export default function Home() {
                   ))}
                 </colgroup>
                 <thead>
-                  <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목{renderHierarchyResizeHandle('label')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감{renderHierarchyResizeHandle('difference')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px' }}>통계목{renderHierarchyResizeHandle('statisticsCode')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토{renderHierarchyResizeHandle('review')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>편집{renderHierarchyResizeHandle('edit')}</th>
+                  <tr style={{ background: '#1e3a5f', position: 'sticky', top: 0, zIndex: 2 }}>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>
+                      <HeaderFilterDropdown
+                        label="부서/정책/단위/세부/과목"
+                        value={hierarchyProgramFilter}
+                        options={uniqueHierarchyPrograms}
+                        onChange={setHierarchyProgramFilter}
+                      />
+                      {renderHierarchyResizeHandle('label')}
+                    </th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px' }}>
+                      <HeaderFilterDropdown
+                        label="통계목"
+                        value={hierarchyItemFilter}
+                        options={uniqueHierarchyItems}
+                        onChange={setHierarchyItemFilter}
+                        align="right"
+                      />
+                      {renderHierarchyResizeHandle('statisticsCode')}
+                    </th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>검토{renderHierarchyResizeHandle('review')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: '15px', borderRight: '1px solid rgba(255,255,255,0.15)' }}>편집{renderHierarchyResizeHandle('edit')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1530,9 +1714,9 @@ export default function Home() {
                     const BOUNDARY_LEVELS: HierarchyLevel[] = ['dept', 'policy', 'unit', 'program'];
                     let activeProgramId: string | null = null;
                     const memoAfterRowId: Record<string, string> = {};
-                    budgetHierarchyRows.forEach((row, idx) => {
+                    filteredHierarchyRows.forEach((row, idx) => {
                       if (row.level === 'program') activeProgramId = row.id;
-                      const nextRow = budgetHierarchyRows[idx + 1];
+                      const nextRow = filteredHierarchyRows[idx + 1];
                       const nextIsBoundaryOrEnd = !nextRow || BOUNDARY_LEVELS.includes(nextRow.level);
                       if (activeProgramId && nextIsBoundaryOrEnd) {
                         memoAfterRowId[row.id] = activeProgramId;
@@ -1541,7 +1725,7 @@ export default function Home() {
                     });
 
                     const pageStart = (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE;
-                    const pagedRows = budgetHierarchyRows.slice(pageStart, pageStart + HIERARCHY_ROWS_PER_PAGE);
+                    const pagedRows = filteredHierarchyRows.slice(pageStart, pageStart + HIERARCHY_ROWS_PER_PAGE);
 
                     return pagedRows.map((row) => {
                     const getPaddingLeft = () => {
@@ -1559,16 +1743,25 @@ export default function Home() {
                     };
 
                     const getBackground = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit') return 'rgba(203, 213, 225, 0.045)';
-                      if (row.level === 'account') return 'rgba(91, 155, 240, 0.06)';
-                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return 'rgba(91, 155, 240, 0.03)';
                       return 'transparent';
                     };
 
                     const getFontSize = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit') return '14px';
-                      if (row.level === 'item') return '13px';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '14px';
+                      if (row.level === 'item' || row.level === 'note') return '13px';
                       return '12px';
+                    };
+
+                    // 부서~세부사업(첫 컬럼) 전용: 나머지 레벨은 기존과 동일하고, 상위 레벨만 1포인트 크게.
+                    const getLabelFontSize = () => {
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '15px';
+                      return getFontSize();
+                    };
+
+                    // 통계목 컬럼 전용: 통계목(item)과 부기명(note)만 1포인트 크게.
+                    const getStatCodeFontSize = () => {
+                      if (row.level === 'item' || row.level === 'note') return '14px';
+                      return getFontSize();
                     };
 
                     const getFontWeight = () => {
@@ -1577,6 +1770,12 @@ export default function Home() {
                       return 'normal';
                     };
 
+                    // 예산액·전년도·증감 컬럼 전용: 부서~세부사업(상위 레벨)은 기존 굵기/크기 그대로 유지하고,
+                    // 그 아래(편성목·통계목·부기 등)는 레벨에 상관없이 동일하게 얇고 한 단계 작은 글씨로 통일한다.
+                    const isUpperAmountLevel = row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program';
+                    const getAmountFontSize = () => (isUpperAmountLevel ? '14px' : '13px');
+                    const getAmountFontWeight = () => (isUpperAmountLevel ? '600' : '400');
+
                     const formatNumber = (num?: number) => {
                       if (!num && num !== 0) return '';
                       return new Intl.NumberFormat('ko-KR').format(num);
@@ -1584,9 +1783,9 @@ export default function Home() {
 
                     const memoProgramId = memoAfterRowId[row.id];
                     const isEditingMemo = memoProgramId && editingMemoId === memoProgramId;
-                    const memoRow = memoProgramId && (
+                    const memoRow = memoProgramId && !hiddenMemoIds.includes(memoProgramId) && (
                       <tr key={`${row.id}-memo`}>
-                        <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(203, 213, 225, 0.02)' }}>
+                        <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(30, 58, 95, 0.04)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {isEditingMemo ? (
                               <>
@@ -1596,7 +1795,7 @@ export default function Home() {
                                   onChange={(event) => setMemoDraft(event.target.value)}
                                   placeholder="메모"
                                   autoFocus
-                                  style={{ flex: 1, background: 'transparent', border: '1px dashed rgba(184, 202, 222, 0.25)', borderRadius: '4px', padding: '4px 8px', color: '#b8cade', fontSize: '12px' }}
+                                  style={{ flex: 1, background: 'transparent', border: '1px dashed #d7dbe0', borderRadius: '4px', padding: '4px 8px', color: '#111827', fontSize: '12px' }}
                                 />
                                 <button
                                   type="button"
@@ -1610,7 +1809,7 @@ export default function Home() {
                               </>
                             ) : (
                               <>
-                                <span style={{ flex: 1, fontSize: '12px', color: programMemos[memoProgramId] ? '#b8cade' : '#5f6f7f', padding: '4px 8px' }}>
+                                <span style={{ flex: 1, fontSize: '12px', color: programMemos[memoProgramId] ? '#111827' : '#6b7280', padding: '4px 8px' }}>
                                   {programMemos[memoProgramId] || '메모'}
                                 </span>
                                 <button
@@ -1618,9 +1817,18 @@ export default function Home() {
                                   aria-label="메모 수정"
                                   title="수정"
                                   onClick={() => { setMemoDraft(programMemos[memoProgramId] ?? ''); setEditingMemoId(memoProgramId); }}
-                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid rgba(184, 202, 222, 0.25)', borderRadius: '4px', background: 'transparent', color: '#8fa1b3', cursor: 'pointer' }}
+                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #b7c2cf', borderRadius: '4px', background: 'transparent', color: '#475569', cursor: 'pointer' }}
                                 >
                                   <Pencil size={12} />
+                                </button>
+                                <button
+                                  type="button"
+                                  aria-label="메모 줄 삭제"
+                                  title="이 메모 줄 삭제"
+                                  onClick={() => hideMemoRow(memoProgramId)}
+                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #b7c2cf', borderRadius: '4px', background: 'transparent', color: '#9b2c2c', cursor: 'pointer' }}
+                                >
+                                  <X size={12} />
                                 </button>
                               </>
                             )}
@@ -1635,7 +1843,7 @@ export default function Home() {
                       return (
                         <Fragment key={row.id}>
                           <tr>
-                            <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#8fa1b3', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
+                            <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#374357', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
                               {row.label}
                             </td>
                           </tr>
@@ -1645,32 +1853,33 @@ export default function Home() {
                     }
 
                     const getColor = () => {
-                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#8fa1b3';
-                      return '#b8cade';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '#1e3a5f';
+                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#374357';
+                      return '#111827';
                     };
 
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getLabelFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(0,0,0,0.18)' }}>
                             {row.label}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
                             {formatNumber(row.budget)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
                             {formatNumber(row.previous)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
                             {formatNumber(row.difference)}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                          <td style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
                             {row.statisticsCode || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
                             {row.description || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}></td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(0,0,0,0.18)' }}></td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
                             {row.level === 'item' && '✎'}
                           </td>
@@ -1688,12 +1897,12 @@ export default function Home() {
               <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
                 <Pagination
                   page={hierarchyPage}
-                  totalPages={Math.ceil(budgetHierarchyRows.length / HIERARCHY_ROWS_PER_PAGE)}
+                  totalPages={Math.max(1, Math.ceil(filteredHierarchyRows.length / HIERARCHY_ROWS_PER_PAGE))}
                   onChange={setHierarchyPage}
                 />
               </div>
-              <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
-                {budgetHierarchyRows.length === 0 ? '0' : (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE + 1}–{Math.min(hierarchyPage * HIERARCHY_ROWS_PER_PAGE, budgetHierarchyRows.length)} of {budgetHierarchyRows.length}
+              <div style={{ textAlign: 'center', fontSize: '13px', color: '#374357', marginTop: '4px' }}>
+                {filteredHierarchyRows.length === 0 ? '0' : (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE + 1}–{Math.min(hierarchyPage * HIERARCHY_ROWS_PER_PAGE, filteredHierarchyRows.length)} of {filteredHierarchyRows.length}
               </div>
             </div>
           </section>

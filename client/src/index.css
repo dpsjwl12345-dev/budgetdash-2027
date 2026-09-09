@@ -879,6 +879,41 @@ select option {
   background-color: rgba(164, 192, 221, 0.55);
 }
 
+/* 세출예산내역서: 어두운 화면 안에서 이 표만 실제 종이 예산서처럼 밝게 반전 */
+.ledger-paper .th-filter-trigger { color: #ffffff; }
+.ledger-paper .th-filter-trigger:hover,
+.ledger-paper .th-filter-trigger[aria-expanded="true"] { color: #ffffff; }
+.ledger-paper .th-filter-icon { color: rgba(255, 255, 255, 0.7); }
+.ledger-paper .th-filter-trigger:hover .th-filter-icon,
+.ledger-paper .th-filter-trigger[aria-expanded="true"] .th-filter-icon { color: #ffffff; }
+
+.ledger-paper .dropdown-menu { background: #ffffff; border: 1px solid #d7dbe0; box-shadow: 0 8px 24px rgba(0, 0, 0, 0.12); }
+.ledger-paper .dropdown-search { background: #f7f8fa; color: #111827; border-bottom: 1px solid #e5e7eb; }
+.ledger-paper .dropdown-search::placeholder { color: #9ca3af; }
+.ledger-paper .dropdown-search:focus { background: #ffffff; }
+.ledger-paper .dropdown-option { color: #1f2937; }
+.ledger-paper .dropdown-option:hover { background: rgba(30, 58, 95, 0.06); }
+.ledger-paper .dropdown-option.selected { background: rgba(91, 155, 240, 0.12); color: #1e3a5f; }
+.ledger-paper .dropdown-empty { color: #6b7280; }
+.ledger-paper .dropdown-options::-webkit-scrollbar-thumb { background: rgba(30, 58, 95, 0.25); }
+.ledger-paper .dropdown-options::-webkit-scrollbar-thumb:hover { background: rgba(30, 58, 95, 0.4); }
+
+.ledger-paper .table-footer button { color: #5b6b7f; border-color: #d7dbe0; }
+.ledger-paper .table-footer button:hover { background: rgba(30, 58, 95, 0.06); color: #1e3a5f; }
+.ledger-paper .table-footer button.bg-\[\#5b9bf0\] { background: #4b5563; border-color: #4b5563; color: #ffffff; }
+.ledger-paper .table-footer button.bg-\[\#5b9bf0\]:hover { background: #374151; border-color: #374151; color: #ffffff; }
+.ledger-paper .hierarchy-budget-table th,
+.ledger-paper .hierarchy-budget-table td { border-bottom: 1px solid rgba(0, 0, 0, 0.18); }
+
+.ledger-scrollbar {
+  scrollbar-width: thin;
+  scrollbar-color: rgba(30, 58, 95, 0.25) transparent;
+}
+.ledger-scrollbar::-webkit-scrollbar { width: 8px; height: 8px; }
+.ledger-scrollbar::-webkit-scrollbar-track { background: transparent; }
+.ledger-scrollbar::-webkit-scrollbar-thumb { background-color: rgba(30, 58, 95, 0.25); border-radius: 8px; }
+.ledger-scrollbar::-webkit-scrollbar-thumb:hover { background-color: rgba(30, 58, 95, 0.4); }
+
 
 /* Staff modal: compact two-row department matrix */
 .staff-modal-card {
