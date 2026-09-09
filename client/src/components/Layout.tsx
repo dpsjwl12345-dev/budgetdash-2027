@@ -412,7 +412,8 @@ export default function Layout({
         style={{
           position: "fixed",
           inset: 0,
-          zIndex: highlightMode ? 40 : -1,
+          // 도구를 닫아도 캔버스가 콘텐츠 위에 남아 기존 표시를 계속 보여준다.
+          zIndex: 40,
           pointerEvents: highlightMode ? "auto" : "none",
           cursor: highlightMode ? "crosshair" : "default",
         }}
