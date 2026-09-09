@@ -107,6 +107,30 @@ async function startServer() {
     }
   });
 
+  // 부서별 주요 쟁점사항 저장/로드
+  app.post('/api/department-issues/save', async (req, res) => {
+    try {
+      const { data } = req.body;
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        res.status(400).json({ success: false, error: '유효한 쟁점사항 데이터가 필요합니다.' });
+        return;
+      }
+      const success = await saveToKV('departmentIssues', data);
+      res.json({ success, message: success ? '쟁점사항이 서버에 저장되었습니다.' : '서버 저장에 실패했습니다.' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/department-issues/load', async (_req, res) => {
+    try {
+      const data = await loadFromKV('departmentIssues');
+      res.json({ data });
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
   app.delete('/api/budget/clear', async (_req, res) => {
     try {
       const success = await deleteFromKV('budgetRows');
