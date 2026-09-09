@@ -3,7 +3,7 @@ import { useLocation, useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 import { processExplainerPdf } from "@/lib/pdfExplainer";
-import { ChevronDown, X, Upload } from "lucide-react";
+import { ArrowUp, ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -65,7 +65,19 @@ export default function BudgetExplainer() {
   const [showTree, setShowTree] = useState(true);
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
+  const [showBackToTop, setShowBackToTop] = useState(false);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  useEffect(() => {
+    const handleScroll = () => setShowBackToTop(window.scrollY > 400);
+    handleScroll();
+    window.addEventListener("scroll", handleScroll, { passive: true });
+    return () => window.removeEventListener("scroll", handleScroll);
+  }, []);
+
+  const handleBackToTop = () => {
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  };
 
   // 계층 구조 데이터 로드
   const loadTree = useCallback(async () => {
@@ -605,6 +617,33 @@ export default function BudgetExplainer() {
           </div>
         </div>
       </div>
+      {showBackToTop && (
+        <button
+          type="button"
+          onClick={handleBackToTop}
+          aria-label="페이지 상단으로 이동"
+          title="상단으로"
+          style={{
+            position: "fixed",
+            right: "32px",
+            bottom: "32px",
+            zIndex: 10,
+            display: "flex",
+            alignItems: "center",
+            justifyContent: "center",
+            width: "44px",
+            height: "44px",
+            border: "1px solid rgba(164, 192, 221, 0.35)",
+            borderRadius: "50%",
+            background: "var(--panel-raised)",
+            color: "var(--text)",
+            boxShadow: "0 8px 20px rgba(0, 0, 0, 0.28)",
+            cursor: "pointer",
+          }}
+        >
+          <ArrowUp size={20} />
+        </button>
+      )}
     </Layout>
   );
 }
