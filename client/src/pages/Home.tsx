@@ -1350,9 +1350,10 @@ export default function Home() {
 
                     // colSpan이 있는 경우 (부기명, 산출식 등)
                     if (row.colSpan) {
+                      const isRightAligned = row.level === 'formula' || row.level === 'opinion';
                       return (
                         <tr key={row.id}>
-                          <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), color: '#666', borderTop: '1px solid #e0e0e0' }}>
+                          <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#8fa1b3', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
                             {row.label}
                           </td>
                         </tr>
