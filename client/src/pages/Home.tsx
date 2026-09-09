@@ -502,6 +502,9 @@ export default function Home() {
   });
   const [toast, setToast] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
+  const [hierarchyPage, setHierarchyPage] = useState(1);
+  const HIERARCHY_ROWS_PER_PAGE = 20;
+  const [rowSpacing, setRowSpacing] = useState(12);
   const [programFilter, setProgramFilter] = useState("");
   const [accountFilter, setAccountFilter] = useState("");
   const [columnWidths, setColumnWidths] = useState<Record<string, number>>(() => {
@@ -509,6 +512,10 @@ export default function Home() {
     return saved ? JSON.parse(saved) : {};
   });
   const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
+  const DEFAULT_HIERARCHY_COLUMN_WIDTHS: Record<string, number> = {
+    label: 228, budget: 120, previous: 120, difference: 120, statisticsCode: 132, description: 300, review: 60, edit: 60,
+  };
+  const getHierarchyColumnWidth = (key: string) => columnWidths[key] ?? DEFAULT_HIERARCHY_COLUMN_WIDTHS[key];
   const staffModalRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
@@ -582,6 +589,12 @@ export default function Home() {
     }
   };
 
+  // 업로드/로드로 행 수가 바뀌어 현재 페이지가 범위를 벗어나면 마지막 페이지로 당겨준다.
+  useEffect(() => {
+    const totalPages = Math.max(1, Math.ceil(budgetHierarchyRows.length / HIERARCHY_ROWS_PER_PAGE));
+    setHierarchyPage((prev) => Math.min(prev, totalPages));
+  }, [budgetHierarchyRows.length]);
+
   // localStorage에 budgetRows 저장
   useEffect(() => {
     try {
@@ -648,6 +661,25 @@ export default function Home() {
       document.removeEventListener('mouseup', handleMouseUp);
     };
   }, [resizingColumn]);
+
+  const renderHierarchyResizeHandle = (colKey: string) => (
+    <div
+      onMouseDown={(e) => {
+        e.preventDefault();
+        e.stopPropagation();
+        setResizingColumn({ key: colKey, startX: e.clientX, startWidth: getHierarchyColumnWidth(colKey) });
+      }}
+      style={{
+        position: 'absolute',
+        right: 0,
+        top: 0,
+        height: '100%',
+        width: '6px',
+        cursor: 'col-resize',
+        background: resizingColumn?.key === colKey ? 'rgba(91, 155, 240, 0.5)' : 'transparent',
+      }}
+    />
+  );
 
   // 서버 API 함수들
   const loadDataFromServer = async () => {
@@ -764,6 +796,20 @@ export default function Home() {
 
   const totals = useMemo(() => filteredRows.reduce((sum, row) => ({ amount: sum.amount + row.amount, city: sum.city + row.city, national: sum.national + row.national, province: sum.province + row.province, other: sum.other + row.other, previous: sum.previous + row.previous }), { amount: 0, city: 0, national: 0, province: 0, other: 0, previous: 0 }), [filteredRows]);
 
+  // 상단 카드는 업로드된 예산 편성 시트(부서별 합계)를 기준으로 집계한다.
+  const hierarchyTotals = useMemo(() => {
+    return budgetHierarchyRows
+      .filter((row) => row.level === 'dept')
+      .reduce((sum, row) => ({ amount: sum.amount + (row.budget || 0), previous: sum.previous + (row.previous || 0) }), { amount: 0, previous: 0 });
+  }, [budgetHierarchyRows]);
+
+  // 2027 신규 사업 예산액 = 전년도 예산이 0인 세부사업(program)들의 예산액 합계
+  const newProjectTotal = useMemo(() => {
+    return budgetHierarchyRows
+      .filter((row) => row.level === 'program' && !(row.previous || 0))
+      .reduce((sum, row) => sum + (row.budget || 0), 0);
+  }, [budgetHierarchyRows]);
+
   const budget2026Total = useMemo(() => {
     if (executionData.length === 0) return 0;
     const filtered = department ? executionData.filter(row => row.department === department) : executionData;
@@ -833,7 +879,13 @@ export default function Home() {
     const hierarchyData: BudgetHierarchyRow[] = [];
     let id = 1;
 
-    for (let idx = 2; idx < cellRows.length; idx++) {
+    // 0행은 헤더. 원본 "국" 단위 파일은 1행에 전체 "총 계" 행이 하나 더 있지만,
+    // 부서 하나만 담긴 분할 파일은 1행부터 바로 그 부서 데이터라 총계 행이 없다.
+    // 총계 행이 실제로 있을 때만 건너뛰도록 내용을 보고 판단한다.
+    const secondRowLabel = (cellRows[1]?.[0] || "").replace(/\s/g, "");
+    const startIdx = secondRowLabel === "총계" ? 2 : 1;
+
+    for (let idx = startIdx; idx < cellRows.length; idx++) {
       const cleanCells = (cellRows[idx] || []).map((cell) => (cell ?? "").replace(/^"+|"+$/g, "").trim());
       if (!cleanCells.some((cell) => cell)) continue;
 
@@ -1420,19 +1472,19 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(totals.amount)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 신규 사업 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>0<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(totals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
@@ -1443,9 +1495,7 @@ export default function Home() {
             <article className="metric-card metric-alert">
               <div className="metric-header">
                 <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
-                <div className="metric-sub">오류 {budgetRows.filter(r => r.status === "오류").length} · 주의 {budgetRows.filter(r => r.status === "주의").length}</div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{budgetRows.filter(r => r.status === "오류").length}<span className="metric-unit">건</span></strong>
             </article>
           </section>
 
@@ -1455,17 +1505,22 @@ export default function Home() {
             </div>
 
             <div className="table-scroll" ref={tableRef} style={{ overflow: 'auto', border: '1px solid var(--border)' }}>
-              <table className="budget-table hierarchy-budget-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <table className="budget-table hierarchy-budget-table" style={{ width: '100%', minWidth: '1140px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+                <colgroup>
+                  {(['label', 'budget', 'previous', 'difference', 'statisticsCode', 'description', 'review', 'edit'] as const).map((key) => (
+                    <col key={key} style={{ width: `${getHierarchyColumnWidth(key)}px` }} />
+                  ))}
+                </colgroup>
                 <thead>
                   <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                    <th style={{ width: '19%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감</th>
-                    <th style={{ width: '11%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px' }}>통계목</th>
-                    <th style={{ width: '25%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거</th>
-                    <th style={{ width: '5%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토</th>
-                    <th style={{ width: '5%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>편집</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목{renderHierarchyResizeHandle('label')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감{renderHierarchyResizeHandle('difference')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px' }}>통계목{renderHierarchyResizeHandle('statisticsCode')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토{renderHierarchyResizeHandle('review')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>편집{renderHierarchyResizeHandle('edit')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -1485,7 +1540,10 @@ export default function Home() {
                       }
                     });
 
-                    return budgetHierarchyRows.map((row) => {
+                    const pageStart = (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE;
+                    const pagedRows = budgetHierarchyRows.slice(pageStart, pageStart + HIERARCHY_ROWS_PER_PAGE);
+
+                    return pagedRows.map((row) => {
                     const getPaddingLeft = () => {
                       switch (row.level) {
                         case 'dept': return '16px';
@@ -1594,26 +1652,26 @@ export default function Home() {
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {row.label}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {formatNumber(row.budget)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {formatNumber(row.previous)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {formatNumber(row.difference)}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
                             {row.statisticsCode || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {row.description || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}></td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(255,255,255,0.07)' }}></td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
                             {row.level === 'item' && '✎'}
                           </td>
                         </tr>
@@ -1624,6 +1682,19 @@ export default function Home() {
                   })()}
                 </tbody>
               </table>
+            </div>
+
+            <div className="table-footer" style={{ marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
+                <Pagination
+                  page={hierarchyPage}
+                  totalPages={Math.ceil(budgetHierarchyRows.length / HIERARCHY_ROWS_PER_PAGE)}
+                  onChange={setHierarchyPage}
+                />
+              </div>
+              <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
+                {budgetHierarchyRows.length === 0 ? '0' : (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE + 1}–{Math.min(hierarchyPage * HIERARCHY_ROWS_PER_PAGE, budgetHierarchyRows.length)} of {budgetHierarchyRows.length}
+              </div>
             </div>
           </section>
         </div>
