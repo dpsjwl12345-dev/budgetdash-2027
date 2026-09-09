@@ -16,16 +16,32 @@ export default function DepartmentKeyIssues() {
   const [issues, setIssues] = useState<Record<string, IssueData>>({});
   const [currentText, setCurrentText] = useState("");
 
-  // localStorage에서 데이터 로드
+  // 서버 데이터를 우선 로드하고, 서버를 사용할 수 없는 경우 localStorage를 사용한다.
   useEffect(() => {
-    const savedIssues = localStorage.getItem("departmentIssues");
-    if (savedIssues) {
+    const loadIssues = async () => {
       try {
-        setIssues(JSON.parse(savedIssues));
-      } catch (e) {
-        console.error("Failed to load issues:", e);
+        const response = await fetch("/api/department-issues/load");
+        if (!response.ok) throw new Error("서버 로드 실패");
+        const { data } = await response.json();
+        if (data && typeof data === "object" && !Array.isArray(data)) {
+          setIssues(data);
+          localStorage.setItem("departmentIssues", JSON.stringify(data));
+          return;
+        }
+      } catch (error) {
+        console.warn("서버에서 쟁점사항 로드 실패:", error);
       }
-    }
+
+      const savedIssues = localStorage.getItem("departmentIssues");
+      if (savedIssues) {
+        try {
+          setIssues(JSON.parse(savedIssues));
+        } catch (error) {
+          console.error("쟁점사항 로컬 데이터 로드 실패:", error);
+        }
+      }
+    };
+    loadIssues();
   }, []);
 
   // 부서 변경 시 textarea 초기화
@@ -34,7 +50,7 @@ export default function DepartmentKeyIssues() {
   }, [selectedDept]);
 
   // 메모 저장 (기존 메모에 추가)
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!currentText.trim()) return;
 
     const today = new Date().toLocaleDateString('ko-KR', {
@@ -56,6 +72,17 @@ export default function DepartmentKeyIssues() {
     setIssues(updatedIssues);
     localStorage.setItem("departmentIssues", JSON.stringify(updatedIssues));
     setCurrentText("");
+
+    try {
+      const response = await fetch("/api/department-issues/save", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: updatedIssues }),
+      });
+      if (!response.ok) throw new Error("서버 저장 실패");
+    } catch (error) {
+      console.warn("쟁점사항 서버 저장 실패:", error);
+    }
   };
 
   return (

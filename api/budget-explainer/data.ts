@@ -44,10 +44,10 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    // 계층의 기준은 부서별 예산요구서로 고정한다.
-    // 설명자료 테이블에 잘못된 부서로 저장된 자료가 있어도 다른 부서의
-    // 정책·사업이 구조에 섞이지 않도록 한다.
-    const rows = (budgetRows || []).map((row: any) => {
+    // 예산요구서와 설명자료의 계층을 병합한다. 예산요구서를 다시 업로드해
+    // budget_rows의 사업 구성이 바뀌거나 잠시 비어 있어도 기존 설명자료의
+    // 연결 경로가 사라지지 않도록 한다.
+    const budgetTreeRows = (budgetRows || []).map((row: any) => {
         const parts = String(row.program || "")
           .split("\n")
           .map((part) => part.trim())
@@ -58,6 +58,16 @@ export default async function handler(req: any, res: any) {
           detail: parts[parts.length - 1] || "미입력 사업",
         };
       });
+    const materialTreeRows = (materialRows || []).map((row: any) => ({
+      policy: String(row.policy || "미분류 정책"),
+      unit: String(row.unit || "단위사업 미지정"),
+      detail: String(row.detail || "미입력 사업"),
+    }));
+    const rowMap = new Map<string, { policy: string; unit: string; detail: string }>();
+    [...budgetTreeRows, ...materialTreeRows].forEach((row) => {
+      rowMap.set(`${row.policy}\u001f${row.unit}\u001f${row.detail}`, row);
+    });
+    const rows = Array.from(rowMap.values());
 
     const policyMap = new Map<string, any>();
     rows.forEach((row: any) => {

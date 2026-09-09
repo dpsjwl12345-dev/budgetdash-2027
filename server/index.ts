@@ -47,6 +47,10 @@ async function startServer() {
   app.post('/api/budget/save', async (req, res) => {
     try {
       const { data } = req.body;
+      if (!Array.isArray(data) || data.length === 0) {
+        res.status(400).json({ success: false, error: '빈 예산 데이터는 저장할 수 없습니다.' });
+        return;
+      }
 
       // 로컬은 localStorage 폴백만 사용 (Supabase는 프로덕션에서)
       try {
@@ -102,6 +106,30 @@ async function startServer() {
 
       // Supabase 실패 시 로컬 폴백
       const data = await loadFromKV('budgetRows');
+      res.json({ data });
+    } catch (error) {
+      res.status(500).json({ error: String(error) });
+    }
+  });
+
+  // 부서별 주요 쟁점사항 저장/로드
+  app.post('/api/department-issues/save', async (req, res) => {
+    try {
+      const { data } = req.body;
+      if (!data || typeof data !== 'object' || Array.isArray(data)) {
+        res.status(400).json({ success: false, error: '유효한 쟁점사항 데이터가 필요합니다.' });
+        return;
+      }
+      const success = await saveToKV('departmentIssues', data);
+      res.json({ success, message: success ? '쟁점사항이 서버에 저장되었습니다.' : '서버 저장에 실패했습니다.' });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
+  app.get('/api/department-issues/load', async (_req, res) => {
+    try {
+      const data = await loadFromKV('departmentIssues');
       res.json({ data });
     } catch (error) {
       res.status(500).json({ error: String(error) });

@@ -1,5 +1,12 @@
 {
   "buildCommand": "npm run build",
   "outputDirectory": "dist/public",
-  "installCommand": "pnpm install --no-frozen-lockfile"
+  "installCommand": "pnpm install --no-frozen-lockfile",
+  "rewrites": [
+    { "source": "/budget-explainer", "destination": "/index.html" },
+    { "source": "/budget-execution-2026", "destination": "/index.html" },
+    { "source": "/budget-establishment-guide", "destination": "/index.html" },
+    { "source": "/statistics-code-detail", "destination": "/index.html" },
+    { "source": "/department-key-issues", "destination": "/index.html" }
+  ]
 }

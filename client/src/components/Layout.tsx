@@ -9,6 +9,9 @@ import {
   X,
   ChevronDown,
   AlertCircle,
+  Highlighter,
+  Undo2,
+  Trash2,
 } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -26,6 +29,11 @@ type ToolItem = {
   icon: React.FC<{ size: number }>;
   path?: string;
   subItems?: { label: string; path?: string }[];
+};
+
+type HighlightStroke = {
+  color: string;
+  points: { x: number; y: number }[];
 };
 
 const navItems: NavItem[] = [
@@ -78,11 +86,99 @@ export default function Layout({
   const [activeNav, setActiveNav] = useState(getActiveNavLabel());
   const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
   const [expandedGuide, setExpandedGuide] = useState(false);
+  const [highlightMode, setHighlightMode] = useState(false);
+  const [highlightColor, setHighlightColor] = useState("#ffe45c");
+  const [highlightStrokes, setHighlightStrokes] = useState<HighlightStroke[]>([]);
+  const canvasRef = useRef<HTMLCanvasElement>(null);
+  const drawingRef = useRef(false);
+  const strokeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
     setActiveNav(getActiveNavLabel());
   }, [location]);
+
+  useEffect(() => {
+    const canvas = canvasRef.current;
+    if (!canvas) return;
+    const context = canvas.getContext("2d");
+    if (!context) return;
+
+    const resizeCanvas = () => {
+      const ratio = window.devicePixelRatio || 1;
+      canvas.width = window.innerWidth * ratio;
+      canvas.height = window.innerHeight * ratio;
+      canvas.style.width = `${window.innerWidth}px`;
+      canvas.style.height = `${window.innerHeight}px`;
+      context.setTransform(ratio, 0, 0, ratio, 0, 0);
+      context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+      highlightStrokes.forEach((stroke) => drawStroke(context, stroke));
+    };
+
+    resizeCanvas();
+    window.addEventListener("resize", resizeCanvas);
+    const redrawOnScroll = () => redrawHighlights(highlightStrokes);
+    window.addEventListener("scroll", redrawOnScroll, { passive: true });
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("scroll", redrawOnScroll);
+    };
+  }, [highlightStrokes]);
+
+  const drawStroke = (context: CanvasRenderingContext2D, stroke: HighlightStroke) => {
+    if (stroke.points.length < 2) return;
+    context.save();
+    context.globalAlpha = 0.42;
+    context.globalCompositeOperation = "multiply";
+    context.strokeStyle = stroke.color;
+    context.lineWidth = 22;
+    context.lineCap = "butt";
+    context.lineJoin = "miter";
+    context.beginPath();
+    context.moveTo(stroke.points[0].x - window.scrollX, stroke.points[0].y - window.scrollY);
+    stroke.points.slice(1).forEach((point) => context.lineTo(point.x - window.scrollX, point.y - window.scrollY));
+    context.stroke();
+    context.restore();
+  };
+
+  const redrawHighlights = (strokes: HighlightStroke[]) => {
+    const canvas = canvasRef.current;
+    const context = canvas?.getContext("2d");
+    if (!canvas || !context) return;
+    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    strokes.forEach((stroke) => drawStroke(context, stroke));
+  };
+
+  const getPointerPoint = (event: React.PointerEvent<HTMLCanvasElement>) => ({
+    x: event.clientX + window.scrollX,
+    y: event.clientY + window.scrollY,
+  });
+
+  const startHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    drawingRef.current = true;
+    strokeStartRef.current = getPointerPoint(event);
+    event.currentTarget.setPointerCapture(event.pointerId);
+    setHighlightStrokes((strokes) => [...strokes, { color: highlightColor, points: [getPointerPoint(event), getPointerPoint(event)] }]);
+  };
+
+  const continueHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    if (!drawingRef.current) return;
+    setHighlightStrokes((strokes) => {
+      const next = [...strokes];
+      const current = next[next.length - 1];
+      const start = strokeStartRef.current;
+      if (!current || !start) return strokes;
+      // 형광펜은 자유 곡선이 아닌 시작점과 현재 위치를 잇는 직선으로 표시한다.
+      current.points = [start, getPointerPoint(event)];
+      redrawHighlights(next);
+      return next;
+    });
+  };
+
+  const finishHighlight = () => {
+    drawingRef.current = false;
+    strokeStartRef.current = null;
+  };
 
   return (
     <div className="app-shell">
@@ -305,6 +401,96 @@ export default function Layout({
 
         {children}
       </main>
+
+      <canvas
+        ref={canvasRef}
+        aria-hidden={!highlightMode}
+        onPointerDown={highlightMode ? startHighlight : undefined}
+        onPointerMove={highlightMode ? continueHighlight : undefined}
+        onPointerUp={highlightMode ? finishHighlight : undefined}
+        onPointerCancel={highlightMode ? finishHighlight : undefined}
+        style={{
+          position: "fixed",
+          inset: 0,
+          // 도구를 닫아도 캔버스가 콘텐츠 위에 남아 기존 표시를 계속 보여준다.
+          zIndex: 40,
+          pointerEvents: highlightMode ? "auto" : "none",
+          cursor: highlightMode ? "crosshair" : "default",
+        }}
+      />
+
+      <div
+        style={{
+          position: "fixed",
+          right: "24px",
+          bottom: "24px",
+          zIndex: 41,
+          display: "flex",
+          alignItems: "center",
+          gap: "8px",
+          padding: "8px",
+          border: "1px solid var(--line)",
+          borderRadius: "10px",
+          background: "var(--panel-raised)",
+          boxShadow: "0 10px 28px rgba(0, 0, 0, 0.28)",
+        }}
+      >
+        {highlightMode && ["#ffe45c", "#7ee787", "#ff8fab"].map((color) => (
+          <button
+            key={color}
+            type="button"
+            aria-label={`형광펜 색상 ${color}`}
+            onClick={() => setHighlightColor(color)}
+            style={{
+              width: "22px",
+              height: "22px",
+              padding: 0,
+              border: highlightColor === color ? "2px solid var(--text)" : "1px solid var(--line)",
+              borderRadius: "50%",
+              background: color,
+              cursor: "pointer",
+            }}
+          />
+        ))}
+        {highlightMode && (
+          <>
+            <button type="button" onClick={() => setHighlightStrokes((strokes) => strokes.slice(0, -1))} aria-label="마지막 형광펜 되돌리기" title="실행 취소" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+              <Undo2 size={16} />
+            </button>
+            <button type="button" onClick={() => { setHighlightStrokes([]); redrawHighlights([]); }} aria-label="형광펜 전체 지우기" title="전체 지우기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+              <Trash2 size={16} />
+            </button>
+            <button type="button" onClick={() => setHighlightMode(false)} aria-label="형광펜 닫기" title="닫기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+              <X size={16} />
+            </button>
+          </>
+        )}
+        {!highlightMode && (
+          <button
+            type="button"
+            onClick={() => setHighlightMode(true)}
+            aria-label="형광펜 켜기"
+            title="형광펜"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              height: "38px",
+              padding: "0 12px",
+              border: "1px solid #f4d35e",
+              borderRadius: "7px",
+              background: "#ffe45c",
+              color: "#2a2614",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
+            <Highlighter size={18} />
+            형광펜
+          </button>
+        )}
+      </div>
     </div>
   );
 }
