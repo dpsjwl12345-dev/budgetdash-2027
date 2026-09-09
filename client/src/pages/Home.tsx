@@ -1302,9 +1302,9 @@ export default function Home() {
                     };
 
                     const getBackground = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit') return '#f9f9f9';
-                      if (row.level === 'account') return '#fafafa';
-                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#fffbea';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit') return 'rgba(203, 213, 225, 0.045)';
+                      if (row.level === 'account') return 'rgba(91, 155, 240, 0.06)';
+                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return 'rgba(91, 155, 240, 0.03)';
                       return 'transparent';
                     };
 
@@ -1336,28 +1336,33 @@ export default function Home() {
                       );
                     }
 
+                    const getColor = () => {
+                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#8fa1b3';
+                      return '#b8cade';
+                    };
+
                     return (
                       <tr key={row.id}>
-                        <td style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: row.level === 'note' || row.level === 'formula' ? '#666' : 'inherit' }}>
+                        <td style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor() }}>
                           {row.label}
                         </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize() }}>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
                           {formatNumber(row.budget)}
                         </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize() }}>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
                           {formatNumber(row.previous)}
                         </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize() }}>
+                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
                           {formatNumber(row.difference)}
                         </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: row.level === 'note' || row.level === 'formula' ? '#666' : 'inherit' }}>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
                           {row.statisticsCode || ''}
                         </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: row.level === 'note' || row.level === 'formula' ? '#666' : 'inherit' }}>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor() }}>
                           {row.description || ''}
                         </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center' }}></td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center' }}>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor() }}></td>
+                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor() }}>
                           {row.level === 'item' && '✎'}
                         </td>
                       </tr>

@@ -1,0 +1,309 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>예산편성시트 - 계층형 테이블</title>
+  <style>
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+    body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; background: #f5f5f5; padding: 20px; }
+
+    .table-container { background: white; border-radius: 8px; overflow: hidden; box-shadow: 0 1px 3px rgba(0,0,0,0.1); }
+
+    table { width: 100%; border-collapse: collapse; }
+
+    th {
+      background: #141a22;
+      color: #fff;
+      padding: 12px;
+      text-align: left;
+      font-weight: 600;
+      font-size: 14px;
+      border-bottom: 1px solid #ddd;
+    }
+
+    td { padding: 12px; text-align: left; font-size: 13px; border-bottom: 1px solid #e0e0e0; border-right: 1px solid #e0e0e0; }
+    td:nth-child(5) { border-right: none; }
+    th { border-right: 1px solid #ddd; }
+    th:nth-child(5) { border-right: none; }
+
+    /* 금액 컬럼 */
+    .amount { text-align: right; font-variant-numeric: tabular-nums; }
+
+    /* 계층 스타일 */
+    .level-1 { padding-left: 16px; font-weight: 600; background: #f9f9f9; }
+    .level-2 { padding-left: 40px; background: #f9f9f9; }
+    .level-3 { padding-left: 64px; background: #f9f9f9; }
+    .level-4 { padding-left: 88px; font-size: 13px; }
+    .level-5 { padding-left: 112px; font-size: 13px; background: #fafafa; }
+    .level-6 { padding-left: 136px; font-size: 13px; }
+    .level-7 { padding-left: 160px; font-size: 12px; color: #666; }
+
+    /* 버튼 */
+    .action-btn {
+      background: none;
+      border: none;
+      cursor: pointer;
+      font-size: 16px;
+      padding: 4px 8px;
+      margin: 0 2px;
+    }
+
+    .action-btn:hover { color: #0066cc; }
+
+    /* 검토 영역 */
+    .review-cell { min-width: 150px; }
+
+    /* 아래 행 - 검토 배지 + 심사의견 */
+    .detail-row td {
+      background: #fafafa;
+      padding: 0;
+    }
+
+    .detail-content {
+      padding: 12px 16px;
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 20px;
+      border-top: 1px solid #ddd;
+    }
+
+    .review-badges {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+    }
+
+    .badge {
+      background: #fff3cd;
+      border: 1px solid #ffc107;
+      color: #856404;
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .memo-section {
+      display: flex;
+      gap: 8px;
+      align-items: flex-start;
+    }
+
+    .memo-input {
+      flex: 1;
+      padding: 6px 8px;
+      border: 1px solid #ddd;
+      border-radius: 4px;
+      font-size: 12px;
+      font-family: inherit;
+      resize: vertical;
+      min-height: 60px;
+    }
+
+    .memo-btn {
+      background: #5b9bf0;
+      color: white;
+      border: none;
+      padding: 6px 12px;
+      border-radius: 4px;
+      cursor: pointer;
+      font-size: 12px;
+      white-space: nowrap;
+    }
+
+    .memo-btn:hover { background: #3a7ed5; }
+
+    .warning-section {
+      background: #fffbea;
+      border-left: 3px solid #ffc107;
+      padding: 12px;
+      border-radius: 4px;
+    }
+  </style>
+</head>
+<body>
+  <div class="table-container">
+    <table>
+      <thead>
+        <tr>
+          <th style="width: 25%;">부서/정책/단위/세부/과목</th>
+          <th style="width: 10%;">예산액</th>
+          <th style="width: 10%;">전년도</th>
+          <th style="width: 10%;">증감</th>
+          <th style="width: 10%;">통계목</th>
+          <th style="width: 27%;">산출근거</th>
+          <th style="width: 12%; text-align: center;">검토</th>
+          <th style="width: 8%;">편집</th>
+        </tr>
+      </thead>
+      <tbody>
+        <!-- 부서 (Level 1) -->
+        <tr>
+          <td class="level-1">관광진흥과</td>
+          <td class="amount">67,551,417</td>
+          <td class="amount">23,355,044</td>
+          <td class="amount">44,196,373</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 정책 (Level 2) -->
+        <tr>
+          <td class="level-2">선진 관광도시 육성</td>
+          <td class="amount">48,351,699</td>
+          <td class="amount">23,280,914</td>
+          <td class="amount">25,070,785</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 단위사업 (Level 3) -->
+        <tr>
+          <td class="level-3">관광산업 진흥</td>
+          <td class="amount">2,137,696</td>
+          <td class="amount">820,788</td>
+          <td class="amount">1,316,908</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 세부사업 (Level 4) -->
+        <tr>
+          <td class="level-4">화성시문화관광재단 관광진흥본부 지원</td>
+          <td class="amount">1,023,062</td>
+          <td class="amount">0</td>
+          <td class="amount">1,023,062</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 편성목 (Level 5) -->
+        <tr>
+          <td class="level-5">306 출연금</td>
+          <td class="amount">1,023,062</td>
+          <td class="amount">0</td>
+          <td class="amount">1,023,062</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 금액/코드 행 (Level 6) -->
+        <tr>
+          <td class="level-6"></td>
+          <td class="amount">1,023,062</td>
+          <td class="amount">0</td>
+          <td class="amount">1,023,062</td>
+          <td>01 출연금</td>
+          <td style="text-align: right; font-size: 12px;">1023062</td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 부기명 (Level 7) -->
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td colspan="2" style="padding-left: 16px; font-size: 12px; color: #666;">○화성시문화관광재단 관광진흥본부 지원 부기명</td>
+          <td colspan="2"></td>
+        </tr>
+
+        <!-- 산출식 (Level 7) -->
+        <tr>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td style="padding-left: 16px; font-size: 12px; color: #666; text-align: right;">1023062000원=1023062</td>
+          <td colspan="2"></td>
+        </tr>
+
+        <!-- 심사의견 (Level 7) - 가로로 길게 -->
+        <tr>
+          <td colspan="8" class="level-7" style="padding: 8px 16px; background: #fffbea;">
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <label style="font-size: 12px; color: #666; white-space: nowrap; margin-top: 6px;">심사의견:</label>
+              <textarea class="memo-input" placeholder="심사 내용을 입력하세요..." style="flex: 1; min-height: 50px; padding: 6px;"></textarea>
+              <button class="memo-btn" style="align-self: flex-start;">저장</button>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 다음 세부사업 -->
+        <tr>
+          <td class="level-4">관광진흥위원회 운영</td>
+          <td class="amount">1,200</td>
+          <td class="amount">1,200</td>
+          <td class="amount">0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 편성목 (Level 5) -->
+        <tr>
+          <td class="level-5">201 일반운영비</td>
+          <td class="amount">1,200</td>
+          <td class="amount">1,200</td>
+          <td class="amount">0</td>
+          <td></td>
+          <td></td>
+          <td></td>
+          <td></td>
+        </tr>
+
+        <!-- 금액/코드 행 (Level 6) -->
+        <tr>
+          <td class="level-6"></td>
+          <td class="amount">1,200</td>
+          <td class="amount">1,200</td>
+          <td class="amount">0</td>
+          <td>01 사무관리비</td>
+          <td>○관광진흥위원회 참석수당<br>1,200,000원 = 1,200</td>
+          <td></td>
+          <td>
+            <button class="action-btn">✎</button>
+            <button class="action-btn">✕</button>
+          </td>
+        </tr>
+
+        <!-- 검토 배지 (Level 7) -->
+        <tr>
+          <td colspan="8" class="level-7" style="padding: 8px 16px;">
+            <div style="font-size: 10px; color: #666; margin-bottom: 4px;">사전절차</div>
+            <div class="review-badges">
+              <span class="badge">사전</span>
+              <span class="badge">재정합의</span>
+            </div>
+          </td>
+        </tr>
+
+        <!-- 심사의견 (Level 7) - 가로로 길게 -->
+        <tr>
+          <td colspan="8" class="level-7" style="padding: 8px 16px; background: #fffbea;">
+            <div style="display: flex; gap: 8px; align-items: flex-start;">
+              <label style="font-size: 12px; color: #666; white-space: nowrap; margin-top: 6px;">심사의견:</label>
+              <textarea class="memo-input" placeholder="심사 내용을 입력하세요..." style="flex: 1; min-height: 50px; padding: 6px;"></textarea>
+              <button class="memo-btn" style="align-self: flex-start;">저장</button>
+            </div>
+          </td>
+        </tr>
+      </tbody>
+    </table>
+  </div>
+</body>
+</html>
