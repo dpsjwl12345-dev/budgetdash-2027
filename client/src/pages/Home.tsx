@@ -484,8 +484,6 @@ export default function Home() {
       { id: '5', level: 'account', label: '306 출연금', budget: 1023062, previous: 0, difference: 1023062 },
     ];
   });
-  const [statisticsFilter, setStatisticsFilter] = useState('');
-  const [noteFilter, setNoteFilter] = useState('');
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -794,9 +792,14 @@ export default function Home() {
           const line = rows[idx];
           if (!line.trim()) continue;
 
-          const commaMatch = line.match(/^,*/);
-          const indent = (commaMatch?.[0] || '').length;
           const cells = line.split(',');
+
+          // 첫 번째 비어있지 않은 셀의 위치로 들여쓰기 판단
+          let indent = 0;
+          for (let i = 0; i < cells.length; i++) {
+            if (cells[i]?.trim()) break;
+            indent++;
+          }
 
           const label = cells[indent]?.replace(/^"+|"+$/g, '').trim() || '';
           const budget = parseNumber(cells[indent + 5]);

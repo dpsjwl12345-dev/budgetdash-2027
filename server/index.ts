@@ -146,9 +146,10 @@ async function startServer() {
   });
 
   // CSV 파일에서 계층형 예산 데이터 로드
-  app.get('/api/budget/load-csv', (_req, res) => {
+  app.get('/api/budget/load-csv', (req, res) => {
     try {
-      const csvPath = 'C:\\Users\\user\\Desktop\\report (11).csv';
+      const filename = String(req.query.file || '관광진흥과.csv');
+      const csvPath = `C:\\Users\\user\\Desktop\\${filename}`;
       if (!fs.existsSync(csvPath)) {
         return res.status(404).json({ error: 'CSV 파일을 찾을 수 없습니다' });
       }
