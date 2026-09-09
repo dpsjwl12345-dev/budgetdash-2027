@@ -117,7 +117,12 @@ export default function Layout({
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
-    return () => window.removeEventListener("resize", resizeCanvas);
+    const redrawOnScroll = () => redrawHighlights(highlightStrokes);
+    window.addEventListener("scroll", redrawOnScroll, { passive: true });
+    return () => {
+      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("scroll", redrawOnScroll);
+    };
   }, [highlightStrokes]);
 
   const drawStroke = (context: CanvasRenderingContext2D, stroke: HighlightStroke) => {
@@ -127,11 +132,11 @@ export default function Layout({
     context.globalCompositeOperation = "multiply";
     context.strokeStyle = stroke.color;
     context.lineWidth = 22;
-    context.lineCap = "round";
-    context.lineJoin = "round";
+    context.lineCap = "butt";
+    context.lineJoin = "miter";
     context.beginPath();
-    context.moveTo(stroke.points[0].x, stroke.points[0].y);
-    stroke.points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
+    context.moveTo(stroke.points[0].x - window.scrollX, stroke.points[0].y - window.scrollY);
+    stroke.points.slice(1).forEach((point) => context.lineTo(point.x - window.scrollX, point.y - window.scrollY));
     context.stroke();
     context.restore();
   };
@@ -145,8 +150,8 @@ export default function Layout({
   };
 
   const getPointerPoint = (event: React.PointerEvent<HTMLCanvasElement>) => ({
-    x: event.clientX,
-    y: event.clientY,
+    x: event.clientX + window.scrollX,
+    y: event.clientY + window.scrollY,
   });
 
   const startHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
