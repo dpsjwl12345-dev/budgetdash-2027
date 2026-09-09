@@ -821,11 +821,12 @@ export default function Home() {
           }
 
           const label = cleanCells[indent] || '';
-          const budget = parseNumber(cleanCells[indent + 5]);
-          const previous = parseNumber(cleanCells[indent + 6]);
-          const difference = parseNumber(cleanCells[indent + 7]);
-          const statisticsCode = cleanCells[indent + 8] || '';
-          const description = cleanCells[indent + 9] || '';
+          // CSV 구조: 0-4는 계층(빈칸), 5는 빈칸, 6은 예산액, 7은 전년도, 8은 증감
+          const budget = parseNumber(cleanCells[6]);
+          const previous = parseNumber(cleanCells[7]);
+          const difference = parseNumber(cleanCells[8]);
+          const statisticsCode = cleanCells[9] || '';
+          const description = cleanCells[10] || '';
 
           // 첫 번째 셀만 있고 나머지는 비어있으면 부기명, 산출식 등 특별한 행
           const hasOnlyLabel = label && !budget && !previous && !difference && !statisticsCode;
