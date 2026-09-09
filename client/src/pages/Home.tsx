@@ -488,6 +488,8 @@ export default function Home() {
     const saved = localStorage.getItem('budgetProgramMemos');
     return saved ? JSON.parse(saved) : {};
   });
+  const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
+  const [memoDraft, setMemoDraft] = useState("");
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -557,14 +559,29 @@ export default function Home() {
     loadDataFromServer();
     loadExecutionDataFromServer();
     loadCsvData();
+    loadStaffDataFromServer();
   }, []);
+
+  const loadStaffDataFromServer = async () => {
+    try {
+      const response = await fetch('/api/staff/load');
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          setStaffData(data);
+        }
+      }
+    } catch (error) {
+      console.log('정원·현원 클라우드 로드 실패:', error);
+    }
+  };
 
   const loadCsvData = async () => {
     try {
       const response = await fetch('/api/budget/load-csv');
       if (response.ok) {
         const { data } = await response.json();
-        if (data && Array.isArray(data)) {
+        if (data && Array.isArray(data) && data.length > 0) {
           setBudgetHierarchyRows(data);
         }
       }
@@ -590,6 +607,20 @@ export default function Home() {
       console.warn('localStorage 저장 실패:', error);
     }
   }, [staffData]);
+
+  // 다른 탭에서 정원·현원을 수정한 경우, 오래된 탭이 최신 데이터를 덮어쓰지 않도록 동기화한다.
+  useEffect(() => {
+    const onStorage = (event: StorageEvent) => {
+      if (event.key !== 'staffData' || !event.newValue) return;
+      try {
+        setStaffData(JSON.parse(event.newValue));
+      } catch (error) {
+        console.warn('정원·현원 동기화 실패:', error);
+      }
+    };
+    window.addEventListener('storage', onStorage);
+    return () => window.removeEventListener('storage', onStorage);
+  }, []);
 
   // columnWidths 저장
   useEffect(() => {
@@ -769,9 +800,19 @@ export default function Home() {
     );
   };
 
-  const saveStaff = () => {
+  const saveStaff = async () => {
     setShowStaffModal(false);
-    showToast('부서별 정원·현원이 저장되었습니다.');
+    try {
+      await fetch('/api/staff/save', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: staffData }),
+      });
+      showToast('부서별 정원·현원이 저장되었습니다.');
+    } catch (error) {
+      console.warn('정원·현원 클라우드 저장 실패:', error);
+      showToast('정원·현원을 이 기기에만 저장했습니다 (클라우드 저장 실패).');
+    }
   };
 
   const updateProgramMemo = (rowId: string, value: string) => {
@@ -875,6 +916,35 @@ export default function Home() {
     return hierarchyData;
   };
 
+  // 부서별로 파일을 하나씩 업로드할 때, 기존에 저장된 다른 부서의 행은 그대로 두고
+  // 이번에 업로드한 부서(들)의 기존 행만 새 데이터로 교체한다.
+  const mergeHierarchyByDepartment = (existingRows: BudgetHierarchyRow[], newRows: BudgetHierarchyRow[]) => {
+    const newDeptNames = new Set(newRows.filter((row) => row.level === 'dept').map((row) => row.label));
+    if (newDeptNames.size === 0) return [...existingRows, ...newRows];
+
+    const kept: BudgetHierarchyRow[] = [];
+    let skipping = false;
+    for (const row of existingRows) {
+      if (row.level === 'dept') {
+        skipping = newDeptNames.has(row.label);
+      }
+      if (!skipping) kept.push(row);
+    }
+    return [...kept, ...newRows];
+  };
+
+  const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
+    try {
+      await fetch('/api/budget/save-csv', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: rows }),
+      });
+    } catch (error) {
+      console.warn('예산 편성 시트 클라우드 저장 실패:', error);
+    }
+  };
+
   const handleExcelUpload = async (file?: File) => {
     if (!file) return;
 
@@ -906,7 +976,11 @@ export default function Home() {
 
         const hierarchyData = buildHierarchyFromRows(cellRows);
 
-        setBudgetHierarchyRows(hierarchyData);
+        setBudgetHierarchyRows((prev) => {
+          const merged = mergeHierarchyByDepartment(prev, hierarchyData);
+          saveHierarchyToServer(merged);
+          return merged;
+        });
         showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
@@ -930,7 +1004,11 @@ export default function Home() {
         const cellRows = (matrix as unknown[][]).map((row) => row.map((cell) => String(cell ?? "")));
         const hierarchyData = buildHierarchyFromRows(cellRows);
         if (!hierarchyData.length) throw new Error("empty");
-        setBudgetHierarchyRows(hierarchyData);
+        setBudgetHierarchyRows((prev) => {
+          const merged = mergeHierarchyByDepartment(prev, hierarchyData);
+          saveHierarchyToServer(merged);
+          return merged;
+        });
         showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
         return;
       }
@@ -1358,13 +1436,13 @@ export default function Home() {
             </div>
 
             <div className="table-scroll" ref={tableRef} style={{ overflow: 'auto', border: '1px solid var(--border)' }}>
-              <table className="budget-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <table className="budget-table hierarchy-budget-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <thead>
                   <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
                     <th style={{ width: '19%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목</th>
-                    <th style={{ width: '10%', textAlign: 'right', padding: '12px 16px 12px 12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액</th>
-                    <th style={{ width: '10%', textAlign: 'right', padding: '12px 16px 12px 12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도</th>
-                    <th style={{ width: '10%', textAlign: 'right', padding: '12px 16px 12px 12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도</th>
+                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감</th>
                     <th style={{ width: '11%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px' }}>통계목</th>
                     <th style={{ width: '25%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거</th>
                     <th style={{ width: '5%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토</th>
@@ -1428,16 +1506,48 @@ export default function Home() {
                     };
 
                     const memoProgramId = memoAfterRowId[row.id];
+                    const isEditingMemo = memoProgramId && editingMemoId === memoProgramId;
                     const memoRow = memoProgramId && (
                       <tr key={`${row.id}-memo`}>
                         <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(203, 213, 225, 0.02)' }}>
-                          <input
-                            type="text"
-                            value={programMemos[memoProgramId] ?? ''}
-                            onChange={(event) => updateProgramMemo(memoProgramId, event.target.value)}
-                            placeholder="메모"
-                            style={{ width: '100%', background: 'transparent', border: '1px dashed rgba(184, 202, 222, 0.25)', borderRadius: '4px', padding: '4px 8px', color: '#b8cade', fontSize: '12px' }}
-                          />
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                            {isEditingMemo ? (
+                              <>
+                                <input
+                                  type="text"
+                                  value={memoDraft}
+                                  onChange={(event) => setMemoDraft(event.target.value)}
+                                  placeholder="메모"
+                                  autoFocus
+                                  style={{ flex: 1, background: 'transparent', border: '1px dashed rgba(184, 202, 222, 0.25)', borderRadius: '4px', padding: '4px 8px', color: '#b8cade', fontSize: '12px' }}
+                                />
+                                <button
+                                  type="button"
+                                  aria-label="메모 저장"
+                                  title="저장"
+                                  onClick={() => { updateProgramMemo(memoProgramId, memoDraft); setEditingMemoId(null); }}
+                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #5b9bf0', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', cursor: 'pointer' }}
+                                >
+                                  <Check size={12} />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <span style={{ flex: 1, fontSize: '12px', color: programMemos[memoProgramId] ? '#b8cade' : '#5f6f7f', padding: '4px 8px' }}>
+                                  {programMemos[memoProgramId] || '메모'}
+                                </span>
+                                <button
+                                  type="button"
+                                  aria-label="메모 수정"
+                                  title="수정"
+                                  onClick={() => { setMemoDraft(programMemos[memoProgramId] ?? ''); setEditingMemoId(memoProgramId); }}
+                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid rgba(184, 202, 222, 0.25)', borderRadius: '4px', background: 'transparent', color: '#8fa1b3', cursor: 'pointer' }}
+                                >
+                                  <Pencil size={12} />
+                                </button>
+                              </>
+                            )}
+                          </div>
                         </td>
                       </tr>
                     );
@@ -1465,25 +1575,25 @@ export default function Home() {
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top' }}>
+                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {row.label}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {formatNumber(row.budget)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {formatNumber(row.previous)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {formatNumber(row.difference)}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
                             {row.statisticsCode || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingRight: '16px' }}>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingRight: '16px', borderRight: '1px solid rgba(255,255,255,0.07)' }}>
                             {row.description || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}></td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', borderRight: '1px solid rgba(255,255,255,0.07)' }}></td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}>
                             {row.level === 'item' && '✎'}
                           </td>

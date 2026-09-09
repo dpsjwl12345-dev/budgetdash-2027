@@ -422,7 +422,7 @@ export default function Layout({
       <div
         style={{
           position: "fixed",
-          right: "24px",
+          left: "24px",
           bottom: "24px",
           zIndex: 41,
           display: "flex",
