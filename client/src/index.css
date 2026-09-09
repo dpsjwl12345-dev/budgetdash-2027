@@ -543,6 +543,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .total-row td:nth-child(1) { text-align: center; }
 .total-row td.col-detail,
 .total-row td.col-amount,
+.total-row td.col-change,
 .total-row td.col-city,
 .total-row td.col-national,
 .total-row td.col-province,
