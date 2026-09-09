@@ -91,6 +91,7 @@ export default function Layout({
   const [highlightStrokes, setHighlightStrokes] = useState<HighlightStroke[]>([]);
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
+  const strokeStartRef = useRef<{ x: number; y: number } | null>(null);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
@@ -150,8 +151,9 @@ export default function Layout({
 
   const startHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
     drawingRef.current = true;
+    strokeStartRef.current = getPointerPoint(event);
     event.currentTarget.setPointerCapture(event.pointerId);
-    setHighlightStrokes((strokes) => [...strokes, { color: highlightColor, points: [getPointerPoint(event)] }]);
+    setHighlightStrokes((strokes) => [...strokes, { color: highlightColor, points: [getPointerPoint(event), getPointerPoint(event)] }]);
   };
 
   const continueHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
@@ -159,8 +161,10 @@ export default function Layout({
     setHighlightStrokes((strokes) => {
       const next = [...strokes];
       const current = next[next.length - 1];
-      if (!current) return strokes;
-      current.points = [...current.points, getPointerPoint(event)];
+      const start = strokeStartRef.current;
+      if (!current || !start) return strokes;
+      // 형광펜은 자유 곡선이 아닌 시작점과 현재 위치를 잇는 직선으로 표시한다.
+      current.points = [start, getPointerPoint(event)];
       redrawHighlights(next);
       return next;
     });
@@ -168,6 +172,7 @@ export default function Layout({
 
   const finishHighlight = () => {
     drawingRef.current = false;
+    strokeStartRef.current = null;
   };
 
   return (
@@ -455,8 +460,28 @@ export default function Layout({
           </>
         )}
         {!highlightMode && (
-          <button type="button" onClick={() => setHighlightMode(true)} aria-label="형광펜 켜기" title="형광펜" className="icon-stack-btn" style={{ width: "38px", height: "38px" }}>
+          <button
+            type="button"
+            onClick={() => setHighlightMode(true)}
+            aria-label="형광펜 켜기"
+            title="형광펜"
+            style={{
+              display: "flex",
+              alignItems: "center",
+              gap: "6px",
+              height: "38px",
+              padding: "0 12px",
+              border: "1px solid #f4d35e",
+              borderRadius: "7px",
+              background: "#ffe45c",
+              color: "#2a2614",
+              fontSize: "13px",
+              fontWeight: 700,
+              cursor: "pointer",
+            }}
+          >
             <Highlighter size={18} />
+            형광펜
           </button>
         )}
       </div>
