@@ -792,21 +792,40 @@ export default function Home() {
           const line = rows[idx];
           if (!line.trim()) continue;
 
-          const cells = line.split(',');
+          // CSV 파싱: 따옴표를 고려하여 분리
+          const cells: string[] = [];
+          let current = '';
+          let inQuotes = false;
+
+          for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+              inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+              cells.push(current);
+              current = '';
+            } else {
+              current += char;
+            }
+          }
+          cells.push(current);
+
+          // 따옴표와 공백 제거
+          const cleanCells = cells.map(cell => cell.replace(/^"+|"+$/g, '').trim());
 
           // 첫 번째 비어있지 않은 셀의 위치로 들여쓰기 판단
           let indent = 0;
-          for (let i = 0; i < cells.length; i++) {
-            if (cells[i]?.trim()) break;
+          for (let i = 0; i < cleanCells.length; i++) {
+            if (cleanCells[i]) break;
             indent++;
           }
 
-          const label = cells[indent]?.replace(/^"+|"+$/g, '').trim() || '';
-          const budget = parseNumber(cells[indent + 5]);
-          const previous = parseNumber(cells[indent + 6]);
-          const difference = parseNumber(cells[indent + 7]);
-          const statisticsCode = cells[indent + 8]?.replace(/^"+|"+$/g, '').trim() || '';
-          const description = cells[indent + 9]?.replace(/^"+|"+$/g, '').trim() || '';
+          const label = cleanCells[indent] || '';
+          const budget = parseNumber(cleanCells[indent + 5]);
+          const previous = parseNumber(cleanCells[indent + 6]);
+          const difference = parseNumber(cleanCells[indent + 7]);
+          const statisticsCode = cleanCells[indent + 8] || '';
+          const description = cleanCells[indent + 9] || '';
 
           // 첫 번째 셀만 있고 나머지는 비어있으면 부기명, 산출식 등 특별한 행
           const hasOnlyLabel = label && !budget && !previous && !difference && !statisticsCode;
