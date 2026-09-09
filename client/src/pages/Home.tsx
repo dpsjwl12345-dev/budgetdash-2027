@@ -954,16 +954,16 @@ export default function Home() {
           <span className="detail-description" title={description}>{description}</span>
           {formula && <span className="detail-formula" title={formula}>{formula}</span>}
           {procedureNames.length > 0 && (
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px', marginTop: '6px' }}>
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: '3px' }}>
               {procedureNames.map((name, idx) => (
-                <span key={idx} style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '4px 8px', borderRadius: '3px', fontSize: '0.85em', fontWeight: 500 }}>{name}</span>
+                <span key={idx} style={{ display: 'inline-block', backgroundColor: '#ffe0e0', color: '#c0392b', padding: '2px 5px', borderRadius: '3px', fontSize: '0.72em', fontWeight: 500 }}>{name}</span>
               ))}
             </div>
           )}
           {(row.formulaErrors && row.formulaErrors.length > 0) && (
-            <div style={{ display: 'block', marginTop: '6px', padding: '6px', backgroundColor: '#e8f5e9', borderRadius: '3px', borderLeft: '3px solid #4caf50' }}>
+            <div style={{ display: 'block', marginTop: '3px', padding: '4px', backgroundColor: '#e8f5e9', borderRadius: '3px', borderLeft: '2px solid #4caf50' }}>
               {row.formulaErrors.map((error, idx) => (
-                <div key={idx} style={{ fontSize: '0.75em', color: '#2e7d32', marginBottom: idx < row.formulaErrors!.length - 1 ? '4px' : '0' }}>
+                <div key={idx} style={{ fontSize: '0.68em', color: '#2e7d32', marginBottom: idx < row.formulaErrors!.length - 1 ? '2px' : '0' }}>
                   {error}
                 </div>
               ))}
@@ -989,11 +989,11 @@ export default function Home() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '2px',
-                  padding: '2px 6px',
+                  padding: '1px 4px',
                   borderRadius: '3px',
                   backgroundColor: '#e8f5e9',
                   color: '#2e7d32',
-                  fontSize: '0.75em',
+                  fontSize: '0.68em',
                   fontWeight: 500,
                   border: '1px solid #4caf50',
                   cursor: 'pointer',
@@ -1018,11 +1018,11 @@ export default function Home() {
                   display: 'inline-flex',
                   alignItems: 'center',
                   gap: '2px',
-                  padding: '2px 6px',
+                  padding: '1px 4px',
                   borderRadius: '3px',
                   backgroundColor: '#fff3cd',
                   color: '#856404',
-                  fontSize: '0.75em',
+                  fontSize: '0.68em',
                   fontWeight: 500,
                   border: '1px solid #ffc107',
                   cursor: 'pointer',

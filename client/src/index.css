@@ -563,11 +563,11 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .account-code { color: #7994ad; font-size: 13px; font-weight: 600; }
 .account-name { color: #b7c9da; font-size: 13px !important; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .detail-cell { display: flex; flex-direction: column; gap: 2px; color: #b8cade; align-items: stretch; min-width: 0; padding-left: 12px; }
-.detail-description { min-width: 0; width: 100%; font-size: 13px; font-weight: 600; color: #dbe8f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
-.detail-formula { min-width: 0; width: 100%; font-size: 13px; font-weight: 500; color: #9eb0c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.detail-description { min-width: 0; width: 100%; font-size: 14px; font-weight: 600; color: #dbe8f5; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
+.detail-formula { min-width: 0; width: 100%; font-size: 14px; font-weight: 500; color: #9eb0c2; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; text-align: left; }
 .row-note { display: inline-flex; align-items: center; width: fit-content; padding: 1px 5px; border-radius: 3px; font-size: 10.5px; text-align: left; }
 .row-note-오류 { color: #ff949e; background: rgba(255, 111, 125, 0.1); } .row-note-주의 { color: #f0c476; background: rgba(241, 189, 99, 0.1); }
-.account-cell .row-note { max-width: 100%; color: #ffd166; background: rgba(255, 209, 102, 0.14); font-size: 13px; font-weight: 700; line-height: 1.4; white-space: normal; overflow-wrap: anywhere; }
+.account-cell .row-note { max-width: 100%; color: #ff949e; background: rgba(255, 111, 125, 0.08); font-size: 11px; font-weight: 600; line-height: 1.25; white-space: normal; overflow-wrap: anywhere; }
 .numeric-cell, .amount-emphasis { display: block; text-align: right; font-variant-numeric: tabular-nums; white-space: nowrap; }
 .amount-emphasis { color: #eef6fd; font-weight: 750; }
 .status-badge { display: inline-flex; align-items: center; justify-content: center; gap: var(--spacing-xs); padding: var(--spacing-sm) var(--spacing-md); border-radius: var(--radius-sm); font-size: var(--font-sm); line-height: 1.2; font-weight: 600; white-space: nowrap; transition: all 200ms ease-out; }
