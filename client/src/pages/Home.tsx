@@ -1633,28 +1633,29 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2027 신규 사업 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Total / 1000000))}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Total / 1000000))}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-header">
                 <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
               </div>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>0<span className="metric-unit">건</span></strong>
             </article>
           </section>
 
-          <section className="table-panel ledger-paper" style={{ background: '#d9dfe6' }}>
+          <section className="table-panel ledger-paper" style={{ background: '#ece7db' }}>
             <div className="table-heading" style={{ minHeight: 0, padding: '8px 19px 8px 30px' }}>
               <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
@@ -1785,7 +1786,7 @@ export default function Home() {
                     const isEditingMemo = memoProgramId && editingMemoId === memoProgramId;
                     const memoRow = memoProgramId && !hiddenMemoIds.includes(memoProgramId) && (
                       <tr key={`${row.id}-memo`}>
-                        <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(30, 58, 95, 0.04)' }}>
+                        <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(60, 50, 35, 0.05)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {isEditingMemo ? (
                               <>
@@ -1843,7 +1844,7 @@ export default function Home() {
                       return (
                         <Fragment key={row.id}>
                           <tr>
-                            <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#374357', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
+                            <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#1a1a1a', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
                               {row.label}
                             </td>
                           </tr>
@@ -1853,33 +1854,33 @@ export default function Home() {
                     }
 
                     const getColor = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '#1e3a5f';
-                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#374357';
-                      return '#111827';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return '#000000';
+                      if (row.level === 'note' || row.level === 'formula' || row.level === 'opinion') return '#1a1a1a';
+                      return '#000000';
                     };
 
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getLabelFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(0,0,0,0.18)' }}>
+                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getLabelFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {row.label}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {formatNumber(row.budget)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {formatNumber(row.previous)}
                           </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {formatNumber(row.difference)}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
                             {row.statisticsCode || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(0,0,0,0.18)' }}>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {row.description || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(0,0,0,0.18)' }}></td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}></td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
                             {row.level === 'item' && '✎'}
                           </td>
@@ -1901,7 +1902,7 @@ export default function Home() {
                   onChange={setHierarchyPage}
                 />
               </div>
-              <div style={{ textAlign: 'center', fontSize: '13px', color: '#374357', marginTop: '4px' }}>
+              <div style={{ textAlign: 'center', fontSize: '13px', color: '#1a1a1a', marginTop: '4px' }}>
                 {filteredHierarchyRows.length === 0 ? '0' : (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE + 1}–{Math.min(hierarchyPage * HIERARCHY_ROWS_PER_PAGE, filteredHierarchyRows.length)} of {filteredHierarchyRows.length}
               </div>
             </div>
