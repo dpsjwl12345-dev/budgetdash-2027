@@ -2,7 +2,7 @@
  * Civic Ledger 스타일 기준: 사용자가 제공한 참조 대시보드의 어두운 네이비 행정 업무 화면을 보존한다.
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
-import { useMemo, useRef, useState, useEffect } from "react";
+import { Fragment, useMemo, useRef, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
@@ -484,6 +484,10 @@ export default function Home() {
       { id: '5', level: 'account', label: '306 출연금', budget: 1023062, previous: 0, difference: 1023062 },
     ];
   });
+  const [programMemos, setProgramMemos] = useState<Record<string, string>>(() => {
+    const saved = localStorage.getItem('budgetProgramMemos');
+    return saved ? JSON.parse(saved) : {};
+  });
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -770,6 +774,18 @@ export default function Home() {
     showToast('부서별 정원·현원이 저장되었습니다.');
   };
 
+  const updateProgramMemo = (rowId: string, value: string) => {
+    setProgramMemos((prev) => {
+      const next = { ...prev, [rowId]: value };
+      try {
+        localStorage.setItem('budgetProgramMemos', JSON.stringify(next));
+      } catch (error) {
+        console.warn('메모 저장 실패:', error);
+      }
+      return next;
+    });
+  };
+
   const parseNumber = (value: unknown) => Number(String(value ?? "0").replace(/[^0-9.-]/g, "")) || 0;
   const pick = (record: Record<string, unknown>, keys: string[]) => {
     const key = keys.find((candidate) => Object.prototype.hasOwnProperty.call(record, candidate));
@@ -808,36 +824,38 @@ export default function Home() {
         label = cleanCells[hierIndent];
         statisticsCode = col8;
       } else if (col8.includes("○")) {
-        // 산출근거 설명 (예: "○화성시문화관광재단 지원")
-        // 산출식(9열)의 결과값은 12열에 따로 있으므로 "100,000원*13명 = 1,300"처럼 이어 붙인다.
+        // 산출근거 설명 (예: "○화성시문화관광재단 지원") — 통계목 칸에 넣고,
+        // 산출식(9열)+결과값(12열)은 그대로 산출근거 칸에 둔다.
         level = "note";
-        label = col8;
+        label = "";
+        statisticsCode = col8;
         description = col9 && col12 ? `${col9} ${col12}` : col9;
-        colSpan = 8;
       } else if (col8 && (budget || previous || difference)) {
-        // 편성목 코드 + 금액 반복 행 (예: "01 출연금") — 라벨 칸에 이미 코드가 있으므로
-        // 통계목 칸에는 같은 코드를 반복하지 않고 비워둔다.
+        // 편성목 코드 + 금액 반복 행 (예: "01 출연금") — 통계목 칸에 넣고,
+        // 통계목별 합산액(12열)은 같은 행 산출근거 칸 끝에 적는다.
         level = "item";
-        label = col8;
+        label = "";
+        statisticsCode = col8;
+        description = col12;
       } else if (col9.includes("=")) {
         // 산출식 (예: "18,689,524,000원 =")
         level = "formula";
-        label = col9 && col12 ? `${col9} ${col12}` : col9;
-        colSpan = 8;
+        label = "";
+        description = col9 && col12 ? `${col9} ${col12}` : col9;
       } else if (col8) {
         level = "opinion";
-        label = col8;
-        colSpan = 8;
+        label = "";
+        statisticsCode = col8;
       } else if (col12.startsWith("[")) {
         // 재원 내역 ([국 000] [도 000] [시 000])
         level = "note";
-        label = col12;
-        colSpan = 8;
+        label = "";
+        description = col12;
       } else {
         continue;
       }
 
-      if (!label) continue;
+      if (!label && !budget && !previous && !difference && !description && !statisticsCode) continue;
 
       hierarchyData.push({
         id: `row-${id++}`,
@@ -852,22 +870,9 @@ export default function Home() {
       });
     }
 
-    // 부기명(○...)·산출식(...=)·재원내역([국/도/시])은 별도 행이 아니라,
-    // 바로 위 통계목·편성목 행("306 출연금", "01 출연금" 등 각각 자기 줄을 유지)의
-    // "산출근거" 칸에 줄바꿈으로 이어 붙인다. 통계목·편성목은 둘 다 각자 별도 줄로 남긴다.
-    const merged: BudgetHierarchyRow[] = [];
-    for (const node of hierarchyData) {
-      const isNoteLike = node.level === 'note' || node.level === 'formula' || node.level === 'opinion';
-      const prev = merged[merged.length - 1];
-      if (isNoteLike && prev && prev.level !== 'note' && prev.level !== 'formula' && prev.level !== 'opinion') {
-        const noteText = [node.label, node.description].filter(Boolean).join('\n');
-        prev.description = prev.description ? `${prev.description}\n${noteText}` : noteText;
-        continue;
-      }
-      merged.push(node);
-    }
-
-    return merged;
+    // 원본 예산서의 행 구조를 그대로 유지한다 — 통계목·편성목·부기명·산출식 모두
+    // 합치거나 지우지 않고 원본과 동일한 순서로 각자 자기 줄에 그대로 표시한다.
+    return hierarchyData;
   };
 
   const handleExcelUpload = async (file?: File) => {
@@ -1353,21 +1358,37 @@ export default function Home() {
             </div>
 
             <div className="table-scroll" ref={tableRef} style={{ overflow: 'auto', border: '1px solid var(--border)' }}>
-              <table className="budget-table" style={{ width: '100%', borderCollapse: 'collapse' }}>
+              <table className="budget-table" style={{ width: '100%', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <thead>
                   <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                    <th style={{ width: '25%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감</th>
-                    <th style={{ width: '10%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>통계목</th>
-                    <th style={{ width: '20%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거</th>
-                    <th style={{ width: '8%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토</th>
-                    <th style={{ width: '7%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>편집</th>
+                    <th style={{ width: '19%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>부서/정책/단위/세부/과목</th>
+                    <th style={{ width: '10%', textAlign: 'right', padding: '12px 16px 12px 12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>예산액</th>
+                    <th style={{ width: '10%', textAlign: 'right', padding: '12px 16px 12px 12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>전년도</th>
+                    <th style={{ width: '10%', textAlign: 'right', padding: '12px 16px 12px 12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>증감</th>
+                    <th style={{ width: '11%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px' }}>통계목</th>
+                    <th style={{ width: '25%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>산출근거</th>
+                    <th style={{ width: '5%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>검토</th>
+                    <th style={{ width: '5%', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#fff', fontSize: '15px', borderRight: '1px solid #333' }}>편집</th>
                   </tr>
                 </thead>
                 <tbody>
-                  {budgetHierarchyRows.map((row) => {
+                  {(() => {
+                    // 각 세부사업(program) 블록이 끝나는 행(다음 program/상위 레벨이 시작되기 직전,
+                    // 또는 표의 맨 끝)에 그 세부사업의 메모 칸을 붙인다.
+                    const BOUNDARY_LEVELS: HierarchyLevel[] = ['dept', 'policy', 'unit', 'program'];
+                    let activeProgramId: string | null = null;
+                    const memoAfterRowId: Record<string, string> = {};
+                    budgetHierarchyRows.forEach((row, idx) => {
+                      if (row.level === 'program') activeProgramId = row.id;
+                      const nextRow = budgetHierarchyRows[idx + 1];
+                      const nextIsBoundaryOrEnd = !nextRow || BOUNDARY_LEVELS.includes(nextRow.level);
+                      if (activeProgramId && nextIsBoundaryOrEnd) {
+                        memoAfterRowId[row.id] = activeProgramId;
+                        activeProgramId = null;
+                      }
+                    });
+
+                    return budgetHierarchyRows.map((row) => {
                     const getPaddingLeft = () => {
                       switch (row.level) {
                         case 'dept': return '16px';
@@ -1406,15 +1427,33 @@ export default function Home() {
                       return new Intl.NumberFormat('ko-KR').format(num);
                     };
 
+                    const memoProgramId = memoAfterRowId[row.id];
+                    const memoRow = memoProgramId && (
+                      <tr key={`${row.id}-memo`}>
+                        <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(203, 213, 225, 0.02)' }}>
+                          <input
+                            type="text"
+                            value={programMemos[memoProgramId] ?? ''}
+                            onChange={(event) => updateProgramMemo(memoProgramId, event.target.value)}
+                            placeholder="메모"
+                            style={{ width: '100%', background: 'transparent', border: '1px dashed rgba(184, 202, 222, 0.25)', borderRadius: '4px', padding: '4px 8px', color: '#b8cade', fontSize: '12px' }}
+                          />
+                        </td>
+                      </tr>
+                    );
+
                     // colSpan이 있는 경우 (부기명, 산출식 등)
                     if (row.colSpan) {
                       const isRightAligned = row.level === 'formula' || row.level === 'opinion';
                       return (
-                        <tr key={row.id}>
-                          <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#8fa1b3', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
-                            {row.label}
-                          </td>
-                        </tr>
+                        <Fragment key={row.id}>
+                          <tr>
+                            <td colSpan={row.colSpan} style={{ paddingLeft: getPaddingLeft(), paddingRight: isRightAligned ? '16px' : '0', background: getBackground(), fontSize: getFontSize(), color: '#8fa1b3', borderTop: '1px solid #e0e0e0', textAlign: isRightAligned ? 'right' : 'left' }}>
+                              {row.label}
+                            </td>
+                          </tr>
+                          {memoRow}
+                        </Fragment>
                       );
                     }
 
@@ -1424,32 +1463,36 @@ export default function Home() {
                     };
 
                     return (
-                      <tr key={row.id}>
-                        <td style={{ paddingLeft: getPaddingLeft(), background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top' }}>
-                          {row.label}
-                        </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
-                          {formatNumber(row.budget)}
-                        </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
-                          {formatNumber(row.previous)}
-                        </td>
-                        <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
-                          {formatNumber(row.difference)}
-                        </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px' }}>
-                          {row.statisticsCode || ''}
-                        </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px' }}>
-                          {row.description || ''}
-                        </td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}></td>
-                        <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}>
-                          {row.level === 'item' && '✎'}
-                        </td>
-                      </tr>
+                      <Fragment key={row.id}>
+                        <tr>
+                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top' }}>
+                            {row.label}
+                          </td>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
+                            {formatNumber(row.budget)}
+                          </td>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
+                            {formatNumber(row.previous)}
+                          </td>
+                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getFontSize(), color: getColor(), verticalAlign: 'top' }}>
+                            {formatNumber(row.difference)}
+                          </td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                            {row.statisticsCode || ''}
+                          </td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingRight: '16px' }}>
+                            {row.description || ''}
+                          </td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}></td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top' }}>
+                            {row.level === 'item' && '✎'}
+                          </td>
+                        </tr>
+                        {memoRow}
+                      </Fragment>
                     );
-                  })}
+                    });
+                  })()}
                 </tbody>
               </table>
             </div>
