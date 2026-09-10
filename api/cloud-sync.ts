@@ -1,9 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Vercel 서버리스 함수 개수 제한 때문에, 예산 편성 시트(hierarchy)와 부서별
-// 정원·현원(staff) 클라우드 저장을 별도 파일 대신 이 파일 하나로 합쳐서 처리한다.
-// GET/POST /api/cloud-sync?type=hierarchy|staff
-
 function getClient() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -66,7 +62,7 @@ async function saveHierarchy(req: any, res: any) {
 
   const rows = Array.isArray(req.body?.data) ? req.body.data : [];
   if (rows.length === 0) {
-    res.status(200).json({ success: false, message: "저장할 데이터가 없습니다. 기존 데이터는 유지했습니다." });
+    res.status(200).json({ success: false, message: "저장할 데이터가 없습니다." });
     return;
   }
 
@@ -91,10 +87,11 @@ async function saveHierarchy(req: any, res: any) {
     .upsert(dbRows, { onConflict: 'id' });
 
   if (upsertError) {
-    res.status(200).json({ success: false, message: "저장 실패. 기존 데이터는 유지했습니다.", error: upsertError.message });
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
     return;
   }
 
+<<<<<<< HEAD
   const ids = dbRows.map((row: any) => row.id);
   let cleanupWarning: string | undefined;
   if (ids.length > 0) {
@@ -107,6 +104,9 @@ async function saveHierarchy(req: any, res: any) {
   }
 
   res.status(200).json({ success: true, message: cleanupWarning ? "저장 완료 (이전 삭제 항목 정리는 보류됨)" : "저장 완료", warning: cleanupWarning });
+=======
+  res.status(200).json({ success: true, message: "클라우드에 저장되었습니다 ☁️" });
+>>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
 }
 
 async function loadStaff(res: any) {
@@ -148,7 +148,7 @@ async function saveStaff(req: any, res: any) {
 
   const { error: upsertError } = await supabase.from('department_staff').upsert(rows, { onConflict: 'department' });
   if (upsertError) {
-    res.status(200).json({ success: false, message: "저장 실패. 기존 데이터는 유지했습니다.", error: upsertError.message });
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
     return;
   }
   res.status(200).json({ success: true, message: "저장 완료" });

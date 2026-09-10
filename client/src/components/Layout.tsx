@@ -10,8 +10,11 @@ import {
   ChevronDown,
   AlertCircle,
   Highlighter,
+  Eraser,
   Undo2,
   Trash2,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -90,13 +93,18 @@ export default function Layout({
   const [eraserMode, setEraserMode] = useState(false);
   const [highlightColor, setHighlightColor] = useState("#ffe45c");
   const [highlightStrokes, setHighlightStrokes] = useState<HighlightStroke[]>([]);
+  const [highlightToolbarPosition, setHighlightToolbarPosition] = useState({ left: 24, bottom: 24 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
   const strokeStartRef = useRef<{ x: number; y: number } | null>(null);
+  const toolbarDragRef = useRef<{ pointerX: number; pointerY: number; left: number; bottom: number } | null>(null);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
     setActiveNav(getActiveNavLabel());
+    setHighlightStrokes([]);
+    redrawHighlights([]);
+    setEraserMode(false);
   }, [location]);
 
   useEffect(() => {
@@ -125,6 +133,30 @@ export default function Layout({
       window.removeEventListener("scroll", redrawOnScroll);
     };
   }, [highlightStrokes]);
+
+  // 형광펜 도구 상자를 원하는 위치로 옮길 수 있게 한다.
+  useEffect(() => {
+    const handlePointerMove = (event: PointerEvent) => {
+      const drag = toolbarDragRef.current;
+      if (!drag) return;
+      const nextLeft = Math.max(8, Math.min(window.innerWidth - 180, drag.left + event.clientX - drag.pointerX));
+      const nextBottom = Math.max(8, Math.min(window.innerHeight - 56, drag.bottom - (event.clientY - drag.pointerY)));
+      setHighlightToolbarPosition({ left: nextLeft, bottom: nextBottom });
+    };
+    const stopDragging = () => { toolbarDragRef.current = null; };
+    window.addEventListener("pointermove", handlePointerMove);
+    window.addEventListener("pointerup", stopDragging);
+    return () => {
+      window.removeEventListener("pointermove", handlePointerMove);
+      window.removeEventListener("pointerup", stopDragging);
+    };
+  }, []);
+
+  const startToolbarDrag = (event: React.PointerEvent<HTMLDivElement>) => {
+    const { left, bottom } = highlightToolbarPosition;
+    toolbarDragRef.current = { pointerX: event.clientX, pointerY: event.clientY, left, bottom };
+    event.currentTarget.setPointerCapture?.(event.pointerId);
+  };
 
   const drawStroke = (context: CanvasRenderingContext2D, stroke: HighlightStroke) => {
     if (stroke.points.length < 2) return;
@@ -408,7 +440,21 @@ export default function Layout({
           })}
         </nav>
 
-        <div className="sidebar-bottom" />
+        <div className="sidebar-bottom">
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label={sidebarCollapsed ? "사이드바 펴기" : "사이드바 접기"}
+            title={sidebarCollapsed ? "사이드바 펴기" : "사이드바 접기"}
+            onClick={(event) => {
+              event.stopPropagation();
+              setSidebarCollapsed((collapsed) => !collapsed);
+            }}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            <span>{sidebarCollapsed ? "펴기" : "접기"}</span>
+          </button>
+        </div>
       </aside>
 
       <main className="main-area">
@@ -441,10 +487,12 @@ export default function Layout({
       />
 
       <div
+        onPointerDown={startToolbarDrag}
+        title="형광펜 도구를 드래그하여 이동"
         style={{
           position: "fixed",
-          left: "24px",
-          bottom: "24px",
+          left: `${highlightToolbarPosition.left}px`,
+          bottom: `${highlightToolbarPosition.bottom}px`,
           zIndex: 41,
           display: "flex",
           alignItems: "center",
@@ -454,6 +502,8 @@ export default function Layout({
           borderRadius: "10px",
           background: "var(--panel-raised)",
           boxShadow: "0 10px 28px rgba(0, 0, 0, 0.28)",
+          cursor: "grab",
+          userSelect: "none",
         }}
       >
         {highlightMode && !eraserMode && ["#ffe45c", "#7ee787", "#ff8fab"].map((color) => (
@@ -475,8 +525,8 @@ export default function Layout({
         ))}
         {highlightMode && (
           <>
-            <button type="button" onClick={() => setEraserMode(!eraserMode)} aria-label={eraserMode ? "지우기 모드 해제" : "지우기 모드"} title={eraserMode ? "지우기 모드 해제" : "지우기"} className="icon-stack-btn" style={{ width: "32px", height: "32px", background: eraserMode ? "rgba(255, 107, 107, 0.2)" : "transparent" }}>
-              <Trash2 size={16} />
+            <button type="button" onClick={() => setEraserMode(!eraserMode)} aria-label={eraserMode ? "지우기 모드 해제" : "지우개 모드"} title={eraserMode ? "지우개 모드 해제" : "지우개"} className="icon-stack-btn" style={{ width: "32px", height: "32px", background: eraserMode ? "rgba(255, 107, 107, 0.2)" : "transparent" }}>
+              <Eraser size={16} />
             </button>
             <button type="button" onClick={() => setHighlightStrokes((strokes) => strokes.slice(0, -1))} aria-label="마지막 형광펜 되돌리기" title="실행 취소" className="icon-stack-btn" style={{ width: "32px", height: "32px" }} disabled={eraserMode}>
               <Undo2 size={16} />

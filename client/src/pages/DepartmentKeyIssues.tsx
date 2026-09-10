@@ -3,6 +3,7 @@ import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type MemoItem = {
+  id?: string;
   text: string;
   date: string;
 };
@@ -20,7 +21,7 @@ export default function DepartmentKeyIssues() {
   useEffect(() => {
     const loadIssues = async () => {
       try {
-        const response = await fetch("/api/department-issues/load");
+        const response = await fetch("/api/cloud-sync?type=issues");
         if (!response.ok) throw new Error("서버 로드 실패");
         const { data } = await response.json();
         if (data && typeof data === "object" && !Array.isArray(data)) {
@@ -65,7 +66,7 @@ export default function DepartmentKeyIssues() {
       [selectedDept]: {
         memos: [
           ...existingData.memos,
-          { text: currentText, date: today }
+          { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text: currentText, date: today }
         ]
       },
     };
@@ -74,7 +75,7 @@ export default function DepartmentKeyIssues() {
     setCurrentText("");
 
     try {
-      const response = await fetch("/api/department-issues/save", {
+      const response = await fetch("/api/cloud-sync?type=issues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedIssues }),
@@ -82,6 +83,29 @@ export default function DepartmentKeyIssues() {
       if (!response.ok) throw new Error("서버 저장 실패");
     } catch (error) {
       console.warn("쟁점사항 서버 저장 실패:", error);
+    }
+  };
+
+  const handleDelete = async (memoIndex: number) => {
+    const existingData = issues[selectedDept] || { memos: [] };
+    const updatedIssues = {
+      ...issues,
+      [selectedDept]: {
+        memos: existingData.memos.filter((_, index) => index !== memoIndex),
+      },
+    };
+    setIssues(updatedIssues);
+    localStorage.setItem("departmentIssues", JSON.stringify(updatedIssues));
+
+    try {
+      const response = await fetch("/api/cloud-sync?type=issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: updatedIssues }),
+      });
+      if (!response.ok) throw new Error("서버 삭제 저장 실패");
+    } catch (error) {
+      console.warn("쟁점사항 삭제 서버 저장 실패:", error);
     }
   };
 
@@ -134,14 +158,23 @@ export default function DepartmentKeyIssues() {
               {/* 저장된 메모 표시 (최신순) */}
               <div className="saved-memos-container">
                 {issues[selectedDept]?.memos && issues[selectedDept].memos.length > 0 ? (
-                  [...issues[selectedDept].memos].reverse().map((memo, idx) => (
-                    <div key={idx} className="saved-memo-box">
+                  [...issues[selectedDept].memos].reverse().map((memo, reverseIndex) => {
+                    const memoIndex = issues[selectedDept].memos.length - 1 - reverseIndex;
+                    return (
+                    <div key={memo.id || `${memo.date}-${memoIndex}`} className="saved-memo-box">
                       <div className="memo-header">
                         <span className="memo-date">{memo.date}</span>
+                        <button
+                          type="button"
+                          className="delete-memo-button"
+                          onClick={() => handleDelete(memoIndex)}
+                          aria-label="쟁점사항 삭제"
+                        >삭제</button>
                       </div>
                       <div className="memo-content">{memo.text}</div>
                     </div>
-                  ))
+                    );
+                  })
                 ) : (
                   <div className="no-memos">저장된 메모가 없습니다</div>
                 )}
@@ -384,6 +417,22 @@ export default function DepartmentKeyIssues() {
           align-items: center;
           margin-bottom: 8px;
           gap: 8px;
+        }
+
+        .delete-memo-button {
+          margin-left: auto;
+          border: 1px solid rgba(255, 107, 125, 0.35);
+          border-radius: 5px;
+          padding: 3px 8px;
+          background: rgba(255, 107, 125, 0.08);
+          color: #ff9aa7;
+          font-size: 12px;
+          cursor: pointer;
+        }
+
+        .delete-memo-button:hover {
+          background: rgba(255, 107, 125, 0.18);
+          color: #ffd8dd;
         }
 
         .memo-date {
