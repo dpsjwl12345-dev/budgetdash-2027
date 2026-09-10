@@ -1230,13 +1230,17 @@ export default function Home() {
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
     try {
-      await fetch('/api/cloud-sync', {
+      const response = await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: rows }),
       });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
+      return true;
     } catch (error) {
       console.warn('클라우드 저장 시도 실패 (로컬 저장됨):', error);
+      return false;
     }
   };
 
@@ -1278,8 +1282,9 @@ export default function Home() {
 
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, parsedData);
-          saveHierarchyToServer(merged);
-          showToast(`${parsedData.length}개의 항목을 저장했습니다.`);
+          saveHierarchyToServer(merged).then((savedToServer) => {
+            showToast(savedToServer ? `서버에 ${parsedData.length}개의 항목을 저장했습니다.` : `${parsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
+          });
           return merged;
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1308,8 +1313,9 @@ export default function Home() {
         }
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, parsedData);
-          saveHierarchyToServer(merged);
-          showToast(`${parsedData.length}개의 항목을 저장했습니다.`);
+          saveHierarchyToServer(merged).then((savedToServer) => {
+            showToast(savedToServer ? `서버에 ${parsedData.length}개의 항목을 저장했습니다.` : `${parsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
+          });
           return merged;
         });
         return;

@@ -153,7 +153,6 @@ export default function Layout({
   }, []);
 
   const startToolbarDrag = (event: React.PointerEvent<HTMLDivElement>) => {
-    if ((event.target as HTMLElement).closest("button")) return;
     const { left, bottom } = highlightToolbarPosition;
     toolbarDragRef.current = { pointerX: event.clientX, pointerY: event.clientY, left, bottom };
     event.currentTarget.setPointerCapture?.(event.pointerId);
