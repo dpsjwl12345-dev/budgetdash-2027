@@ -3,7 +3,7 @@
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
 import { Fragment, useMemo, useRef, useState, useEffect } from "react";
-import { useLocation } from "wouter";
+import { useLocation, Link } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
@@ -1906,10 +1906,34 @@ export default function Home() {
                       return '#000000';
                     };
 
+                    const handleProgramClick = () => {
+                      if (row.level === 'program') {
+                        const url = `/budget-explainer?dept=${encodeURIComponent(department)}&item=${encodeURIComponent(row.label)}`;
+                        window.location.href = url;
+                      }
+                    };
+
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getLabelFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                          <td
+                            onClick={handleProgramClick}
+                            style={{
+                              paddingLeft: getPaddingLeft(),
+                              paddingRight: '8px',
+                              background: getBackground(),
+                              fontSize: getLabelFontSize(),
+                              fontWeight: getFontWeight(),
+                              color: getColor(),
+                              verticalAlign: 'top',
+                              paddingTop: rowSpacing,
+                              paddingBottom: rowSpacing,
+                              borderRight: '1px solid rgba(60,50,35,0.12)',
+                              cursor: row.level === 'program' ? 'pointer' : 'default',
+                              textDecoration: row.level === 'program' ? 'underline' : 'none',
+                              textDecorationColor: row.level === 'program' ? '#4a90e2' : 'transparent'
+                            }}
+                          >
                             {row.label}
                           </td>
                           <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
