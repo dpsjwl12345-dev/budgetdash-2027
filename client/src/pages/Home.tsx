@@ -48,7 +48,6 @@ import {
   Search,
   Settings2,
   SlidersHorizontal,
-  Upload,
   UsersRound,
   X,
   Database,
@@ -494,7 +493,6 @@ export default function Home() {
     return saved ? JSON.parse(saved) : [];
   });
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
   const [department, setDepartment] = useState(() => {
     const saved = localStorage.getItem('selectedDepartment');
@@ -1240,7 +1238,6 @@ export default function Home() {
         const parsedData = buildHierarchyFromRows(cellRows);
         if (parsedData.length === 0) {
           showToast("파일에서 데이터를 찾지 못했습니다.");
-          if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
 
@@ -1460,30 +1457,6 @@ export default function Home() {
     showToast("CSV 파일을 다운로드했습니다.");
   };
 
-  const downloadTemplate = () => {
-    const template = [{
-      정책사업명: "노인복지 증진",
-      단위사업명: "경로당 운영지원",
-      세부사업명: "사업명을 입력하세요",
-      편성목코드: "300",
-      통계목코드: "302-03",
-      통계목명: "민간경상보조",
-      요구산출근거: "산출근거를 입력하세요",
-      요구산출근거식: "단가 × 수량",
-      요구액: 0,
-      자체재원: 0,
-      국고보조금: 0,
-      광역보조금: 0,
-      기타: 0,
-      전년도: 0,
-    }];
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "예산편성");
-    XLSX.writeFile(workbook, "2027_본예산_편성요구서_양식.xlsx");
-    showToast("엑셀 양식을 다운로드했습니다.");
-  };
-
   const renderCell = (row: BudgetRow, key: ColumnKey) => {
     if (key === "policy") {
       const programLines = row.program.split("\n");
@@ -1633,11 +1606,6 @@ export default function Home() {
                 <h1>{year} 본예산 편성 검토</h1>
               </div>
               <div className="action-row">
-                <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
-                <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
-                  <div className="icon-stack-front"><Upload size={20} /></div>
-                  <input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} />
-                </label>
                 <div className="action-group">
                   <div style={{ position: "relative" }}>
                     <button
