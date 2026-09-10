@@ -262,11 +262,11 @@ const HIERARCHY_PROCEDURE_BADGES: {
   label: string;
   test: (ctx: { accountCode: string; itemText: string; programText: string; amount: number }) => boolean;
 }[] = [
-  { label: "💰 투자심사 대상 (20억 이상)", test: ({ amount }) => amount >= 2000000 },
-  { label: "📋 보조금 심의 대상", test: ({ accountCode }) => /^(306|307|308|402|403)/.test(accountCode) },
-  { label: "🎪 행사·축제 관련", test: ({ itemText, programText }) => /행사|축제|경기대회|공연/.test(`${itemText} ${programText}`) },
-  { label: "📦 자산취득 대상", test: ({ accountCode }) => /^405/.test(accountCode) },
-  { label: "👤 기간제 채용 사전승인 필요", test: ({ itemText }) => /기간제|임시직/.test(itemText) },
+  { label: "투심", test: ({ amount }) => amount >= 2000000 },
+  { label: "보조금", test: ({ accountCode }) => /^(306|307|308|402|403)/.test(accountCode) },
+  { label: "행사", test: ({ itemText, programText }) => /행사|축제|경기대회|공연/.test(`${itemText} ${programText}`) },
+  { label: "자산", test: ({ accountCode }) => /^405/.test(accountCode) },
+  { label: "기간제", test: ({ itemText }) => /기간제|임시직/.test(itemText) },
 ];
 
 function getHierarchyItemBadges(row: BudgetHierarchyRow, accountLabel: string, programLabel: string): string[] {
@@ -276,6 +276,54 @@ function getHierarchyItemBadges(row: BudgetHierarchyRow, accountLabel: string, p
   return HIERARCHY_PROCEDURE_BADGES.filter((rule) =>
     rule.test({ accountCode, itemText, programText: programLabel, amount })
   ).map((rule) => rule.label);
+}
+
+// "세출 통계목별 상세" 가이드의 표준 산출식 중, 이 앱에 등록된 정원·현원(staffData)만으로
+// 실제 계산값을 내서 검증할 수 있는 것만 다룬다 (위원회수당·당직비 등은 회의 횟수·근무 인원
+// 같은 이 앱에 없는 입력이 필요해 계산값을 낼 수 없으므로 제외한다).
+// - 국내여비(202-01): 현원 × 20,000 × 9 × 12
+// - 일반수용비(201-01 하위 부기): 정원 × 750,000
+// - 급식비(201-01 하위 부기): 정원 × 600,000
+type HierarchyFormulaCheck = { name: string; expected: number; actual: number };
+
+// 부기명 설명("18,750,000원 = 18,750", "750,000원*15명 = 11,250")에서 "=" 뒤의 최종 결과값을
+// 뽑아 원 단위로 환산한다. 이 표는 값이 천원 단위로 저장되어 있다.
+function parseTrailingAmountWon(text: string): number | null {
+  const tail = text.split("=").pop() ?? "";
+  const digits = tail.replace(/[^0-9]/g, "");
+  if (!digits) return null;
+  return parseInt(digits, 10) * 1000;
+}
+
+function getHierarchyFormulaCheck(
+  row: BudgetHierarchyRow,
+  accountLabel: string,
+  nearbyText: string,
+  staff: { capacity: string; current: string } | undefined
+): HierarchyFormulaCheck | null {
+  if (row.level !== "item") return null;
+  const accountCode = accountLabel.match(/^\d+/)?.[0] ?? "";
+  const itemCode = row.statisticsCode?.match(/^\d+/)?.[0] ?? "";
+  const capacity = parseInt(staff?.capacity || "0", 10);
+  const current = parseInt(staff?.current || "0", 10);
+
+  if (accountCode === "202" && itemCode === "01") {
+    const actual = (row.budget || 0) * 1000;
+    return { name: "국내여비", expected: current * 20000 * 9 * 12, actual };
+  }
+  if (accountCode === "201" && itemCode === "01") {
+    if (/일반수용비/.test(nearbyText)) {
+      const actual = parseTrailingAmountWon(nearbyText);
+      if (actual === null) return null;
+      return { name: "일반수용비", expected: capacity * 750000, actual };
+    }
+    if (/급식비/.test(nearbyText)) {
+      const actual = parseTrailingAmountWon(nearbyText);
+      if (actual === null) return null;
+      return { name: "급식비", expected: capacity * 600000, actual };
+    }
+  }
+  return null;
 }
 
 function trapTabKey(event: React.KeyboardEvent, container: HTMLElement | null) {
@@ -546,7 +594,7 @@ export default function Home() {
   });
   const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const DEFAULT_HIERARCHY_COLUMN_WIDTHS: Record<string, number> = {
-    label: 228, budget: 120, previous: 120, difference: 120, statisticsCode: 132, description: 300, review: 60, edit: 60,
+    label: 168, budget: 120, previous: 120, difference: 120, statisticsCode: 152, description: 310, review: 90, edit: 60,
   };
   const getHierarchyColumnWidth = (key: string) => columnWidths[key] ?? DEFAULT_HIERARCHY_COLUMN_WIDTHS[key];
   const staffModalRef = useRef<HTMLDivElement>(null);
@@ -1046,6 +1094,14 @@ export default function Home() {
     setHierarchyPage(1);
   }, [department, hierarchySearch, hierarchyProgramFilter, hierarchyItemFilter]);
 
+  // 2026 본예산액 카드: 부서별 예산집행현황표(executionData)를 부서로 필터한 "본예산" 합계.
+  const budget2026Original = useMemo(() => {
+    if (executionData.length === 0) return 0;
+    const filtered = department ? executionData.filter(row => row.department === department) : executionData;
+    return filtered.reduce((sum, row) => sum + row.original, 0);
+  }, [executionData, department]);
+
+  // 2026 최종예산액 카드: 같은 표의 본예산 + 추경 + 성립전 합계.
   const budget2026Total = useMemo(() => {
     if (executionData.length === 0) return 0;
     const filtered = department ? executionData.filter(row => row.department === department) : executionData;
@@ -1768,7 +1824,7 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Original / 1000000))}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
@@ -1851,6 +1907,18 @@ export default function Home() {
                       if (activeProgramId && nextIsBoundaryOrEnd) {
                         memoAfterRowId[row.id] = activeProgramId;
                         activeProgramId = null;
+                      }
+                    });
+
+                    // 편성목(item) 행 바로 다음에 딸린 부기명 행(예: "○일반수용비")의 텍스트를
+                    // 찾아둔다. 201-01(사무관리비)처럼 코드만으로는 너무 광범위한 통계목은
+                    // 이 텍스트로 실제 표준 산출식이 있는 하위 항목인지 좁혀서 판단한다.
+                    const nextNoteTextByItemId: Record<string, string> = {};
+                    filteredHierarchyRows.forEach((row, idx) => {
+                      if (row.level !== 'item') return;
+                      const nextRow = filteredHierarchyRows[idx + 1];
+                      if (nextRow && nextRow.level === 'note') {
+                        nextNoteTextByItemId[row.id] = `${nextRow.statisticsCode ?? ''} ${nextRow.description ?? ''}`;
                       }
                     });
 
@@ -1999,15 +2067,27 @@ export default function Home() {
                     const itemBadges = row.level === 'item'
                       ? getHierarchyItemBadges(row, rowAncestors?.accountRow?.label ?? '', rowAncestors?.programRow?.label ?? '')
                       : [];
-                    const badgeRow = itemBadges.length > 0 && (
+                    const formulaCheck = getHierarchyFormulaCheck(
+                      row, rowAncestors?.accountRow?.label ?? '', nextNoteTextByItemId[row.id] ?? '', staffData[department]
+                    );
+                    const itemHasFormula = !!formulaCheck && Math.abs(formulaCheck.actual - formulaCheck.expected) > 1000;
+                    const formulaLabel = formulaCheck
+                      ? `${formulaCheck.name}: 기준 ${formulaCheck.expected.toLocaleString()}원 / 등록 ${formulaCheck.actual.toLocaleString()}원`
+                      : '';
+                    const badgeRow = (itemBadges.length > 0 || itemHasFormula) && (
                       <tr key={`${row.id}-badges`}>
-                        <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22' }}>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                        <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start', gap: '6px' }}>
                             {itemBadges.map((badge) => (
                               <span key={badge} style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.15)', color: '#e67e22', fontSize: '12px', fontWeight: 600 }}>
                                 {badge}
                               </span>
                             ))}
+                            {itemHasFormula && (
+                              <span style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: '12px', fontWeight: 600 }}>
+                                산출식 불일치 · {formulaLabel}
+                              </span>
+                            )}
                           </div>
                         </td>
                       </tr>
@@ -2052,8 +2132,12 @@ export default function Home() {
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {row.description || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: '#e67e22', fontWeight: 600, verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                            {itemBadges.length > 0 && '사전'}
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                            {(itemBadges.length > 0 || itemHasFormula) && (
+                              <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', color: '#e67e22', fontSize: '11px', fontWeight: 600 }}>
+                                {[itemBadges.length > 0 && '사전', itemHasFormula && '산출식'].filter(Boolean).join(', ')}
+                              </span>
+                            )}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
                             {row.level === 'item' && (
