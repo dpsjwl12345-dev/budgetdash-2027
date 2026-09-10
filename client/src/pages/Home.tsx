@@ -514,6 +514,7 @@ export default function Home() {
     return saved ? JSON.parse(saved) : [];
   });
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
+  const [editingHierarchyRow, setEditingHierarchyRow] = useState<BudgetHierarchyRow | null>(null);
   const [year, setYear] = useState("2027");
   const [department, setDepartment] = useState(() => {
     const saved = localStorage.getItem('selectedDepartment');
@@ -550,22 +551,24 @@ export default function Home() {
   const getHierarchyColumnWidth = (key: string) => columnWidths[key] ?? DEFAULT_HIERARCHY_COLUMN_WIDTHS[key];
   const staffModalRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
+  const hierarchyEditModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Esc로 모달 닫기
   useEffect(() => {
-    if (!showStaffModal && !editingRow) return;
+    if (!showStaffModal && !editingRow && !editingHierarchyRow) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowStaffModal(false);
         setEditingRow(null);
+        setEditingHierarchyRow(null);
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showStaffModal, editingRow]);
+  }, [showStaffModal, editingRow, editingHierarchyRow]);
 
   // 모달 열림/닫힘 시 포커스 이동 (열릴 때 모달 안으로, 닫힐 때 트리거로 복귀)
   useEffect(() => {
@@ -585,6 +588,15 @@ export default function Home() {
       lastFocusedRef.current?.focus();
     }
   }, [Boolean(editingRow)]);
+
+  useEffect(() => {
+    if (editingHierarchyRow) {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      hierarchyEditModalRef.current?.querySelector<HTMLElement>("button, input, select, textarea, [href]")?.focus();
+    } else {
+      lastFocusedRef.current?.focus();
+    }
+  }, [Boolean(editingHierarchyRow)]);
 
   useEffect(() => {
     loadDataFromServer();
@@ -1496,6 +1508,20 @@ export default function Home() {
     await saveDataToServer(updatedRows);
   };
 
+  const saveHierarchyItemEdit = async () => {
+    if (!editingHierarchyRow) return;
+    const edited = {
+      ...editingHierarchyRow,
+      difference: (editingHierarchyRow.budget || 0) - (editingHierarchyRow.previous || 0),
+    };
+    const updatedRows = budgetHierarchyRows.map((row) => row.id === edited.id ? edited : row);
+    setBudgetHierarchyRows(updatedRows);
+    setEditingHierarchyRow(null);
+    showToast(`${edited.statisticsCode || edited.label || '편성목'} 항목을 저장했습니다.`);
+    const saved = await saveHierarchyToServer(updatedRows);
+    if (!saved) showToast('클라우드 저장에 실패했습니다 (이 기기에만 저장됨)');
+  };
+
   const deleteRow = async (rowId: number) => {
     const rowToDelete = budgetRows.find(row => row.id === rowId);
     const updatedRows = budgetRows.filter(row => row.id !== rowId);
@@ -2030,7 +2056,17 @@ export default function Home() {
                             {itemBadges.length > 0 && '사전'}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
-                            {row.level === 'item' && '✎'}
+                            {row.level === 'item' && (
+                              <button
+                                type="button"
+                                aria-label="편성목 편집"
+                                title="편성목 편집"
+                                onClick={() => setEditingHierarchyRow(row)}
+                                style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: 'inherit', color: 'inherit', padding: 0 }}
+                              >
+                                ✎
+                              </button>
+                            )}
                           </td>
                         </tr>
                         {memoRow}
@@ -2059,6 +2095,8 @@ export default function Home() {
 
       {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card staff-modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" />명</label><label>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
       {editingRow && <div className="modal-backdrop" onMouseDown={() => setEditingRow(null)}><div className="modal-card edit-row-modal" ref={editModalRef} role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, editModalRef.current)}><div className="modal-head"><div><span>BUDGET ITEM / EDIT</span><h2 id="edit-modal-title">예산 항목 편집</h2></div><button className="close-button" onClick={() => setEditingRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>정책<input value={editingRow.policy} onChange={(event) => setEditingRow({ ...editingRow, policy: event.target.value })} /></label><label>세부사업<input value={editingRow.program} onChange={(event) => setEditingRow({ ...editingRow, program: event.target.value })} /></label><label className="edit-wide">산출내역<input value={editingRow.detail} onChange={(event) => setEditingRow({ ...editingRow, detail: event.target.value })} /></label><label>요구액(천원)<input value={editingRow.amount} onChange={(event) => setEditingRow({ ...editingRow, amount: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingRow.previous} onChange={(event) => setEditingRow({ ...editingRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>시비(천원)<input value={editingRow.city} onChange={(event) => setEditingRow({ ...editingRow, city: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>국비(천원)<input value={editingRow.national} onChange={(event) => setEditingRow({ ...editingRow, national: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>도비(천원)<input value={editingRow.province} onChange={(event) => setEditingRow({ ...editingRow, province: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>기타(천원)<input value={editingRow.other} onChange={(event) => setEditingRow({ ...editingRow, other: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>상태<select value={editingRow.status} onChange={(event) => setEditingRow({ ...editingRow, status: event.target.value as Status })}><option>정상</option><option>주의</option><option>오류</option><option>사전</option></select></label><label className="edit-wide">검토 메모<input value={editingRow.note ?? ""} onChange={(event) => setEditingRow({ ...editingRow, note: event.target.value })} placeholder="검토 메모를 입력하세요" /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveRowEdit}>저장</AppButton></div></div></div>}
+
+      {editingHierarchyRow && <div className="modal-backdrop" onMouseDown={() => setEditingHierarchyRow(null)}><div className="modal-card edit-row-modal" ref={hierarchyEditModalRef} role="dialog" aria-modal="true" aria-labelledby="hierarchy-edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, hierarchyEditModalRef.current)}><div className="modal-head"><div><span>BUDGET LINE ITEM / EDIT</span><h2 id="hierarchy-edit-modal-title">편성목 편집</h2></div><button className="close-button" onClick={() => setEditingHierarchyRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>통계목<input value={editingHierarchyRow.statisticsCode ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, statisticsCode: event.target.value })} /></label><label>예산액(천원)<input value={editingHierarchyRow.budget ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, budget: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingHierarchyRow.previous ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label className="edit-wide">산출근거<input value={editingHierarchyRow.description ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, description: event.target.value })} /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingHierarchyRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveHierarchyItemEdit}>저장</AppButton></div></div></div>}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </Layout>
   );
