@@ -44,6 +44,9 @@ async function startServer() {
   // 파일 업로드 설정
   const upload = multer({ storage: multer.memoryStorage() });
 
+  // 테스트
+  app.get('/test', (req, res) => res.json({ ok: true }));
+
   // API 엔드포인트
   app.post('/api/budget/save', async (req, res) => {
     try {
@@ -300,6 +303,49 @@ async function startServer() {
     }
   });
 
+  // 예산 편성 시트 업로드 처리
+  app.post('/api/hierarchy/upload', upload.single('file'), async (_req, res) => {
+    try {
+      if (!_req.file) {
+        return res.status(400).json({ error: '파일을 선택해주세요' });
+      }
+
+      const workbook = XLSX.read(_req.file.buffer, { type: 'buffer' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const matrix = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+
+      const hierarchyData: any[] = [];
+      let id = 1;
+
+      const secondRowLabel = (matrix[1]?.[0] || "").toString().replace(/\s/g, "");
+      const startIdx = secondRowLabel === "총계" ? 2 : 1;
+
+      for (let idx = startIdx; idx < matrix.length; idx++) {
+        const cells = (matrix[idx] || []).map((c: any) => (c ?? "").toString().replace(/^"+|"+$/g, "").trim());
+        if (!cells.some(c => c)) continue;
+
+        const hierIndent = [0, 1, 2, 3, 4].findIndex(i => cells[i]);
+        if (hierIndent === -1) continue;
+
+        const levels = ["dept", "policy", "unit", "program", "account"];
+        hierarchyData.push({
+          id: `row-${id++}`,
+          level: levels[hierIndent],
+          label: cells[hierIndent],
+          budget: parseInt(cells[5]?.replace(/[^0-9]/g, '') || '0') || undefined,
+          previous: parseInt(cells[6]?.replace(/[^0-9]/g, '') || '0') || undefined,
+          difference: parseInt(cells[7]?.replace(/[^0-9]/g, '') || '0') || undefined,
+          statisticsCode: cells[8] || undefined,
+          description: cells[9] || undefined,
+        });
+      }
+
+      res.json({ success: true, data: hierarchyData, count: hierarchyData.length });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
   // 설명자료 API - Supabase 기반 (api/budget-explainer/*.ts 와 동일 핸들러 공유)
   // 로컬 개발(Express)과 Vercel 프로덕션(서버리스)이 같은 로직을 타도록 위임한다.
   app.get('/api/budget-explainer/data', (req, res) => explainerDataHandler(req, res));
@@ -382,9 +428,9 @@ async function startServer() {
     res.status(404).json({ error: 'Not found' });
   });
 
-  const port = process.env.PORT || 3002;
+  const port = 3002;
 
-  server.listen(port, () => {
+  server.listen(port, '0.0.0.0', () => {
     console.log(`Server running on http://localhost:${port}/`);
   });
 }
