@@ -978,7 +978,7 @@ export default function Home() {
   const budget2026Total = useMemo(() => {
     if (executionData.length === 0) return 0;
     const filtered = department ? executionData.filter(row => row.department === department) : executionData;
-    return filtered.reduce((sum, row) => sum + row.original + row.supplementary + row.preEstablishment + row.reserve, 0);
+    return filtered.reduce((sum, row) => sum + row.original + row.supplementary + row.preEstablishment, 0);
   }, [executionData, department]);
 
   const counts: Record<string, number> = {
