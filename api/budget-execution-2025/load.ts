@@ -11,12 +11,26 @@ export default async function handler(_req: any, res: any) {
     }
 
     const supabase = createClient(url, key);
-    const { data, error } = await supabase
-      .from("budget_execution_2025")
-      .select("*")
-      .order("department");
 
-    if (error) {
+    // .select('*')는 최대 1000행까지만 오니 .range()로 끝까지 받아온다(데이터가 늘어날 걸 대비).
+    const pageSize = 1000;
+    let from = 0;
+    let data: any[] = [];
+    let queryError: any = null;
+    while (true) {
+      const { data: page, error } = await supabase
+        .from("budget_execution_2025")
+        .select("*")
+        .order("department")
+        .range(from, from + pageSize - 1);
+      if (error) { queryError = error; break; }
+      if (!page || page.length === 0) break;
+      data = data.concat(page);
+      if (page.length < pageSize) break;
+      from += pageSize;
+    }
+
+    if (queryError) {
       res.status(200).json({ data: null });
       return;
     }

@@ -15,15 +15,30 @@ async function loadHierarchy(req: any, res: any) {
   }
 
   const department = req.query?.department;
-  let query = supabase
-    .from('budget_hierarchy_rows')
-    .select('*');
 
-  if (department) {
-    query = query.eq('department', department);
+  // .select('*')는 한 번에 최대 1000행까지만 반환된다(PostgREST 기본값). budget_hierarchy_rows는
+  // 전체가 9,000행을 훌쩍 넘고, 부서 지정 없이 부르면(department 없이) 한 부서 크기도 쉽게
+  // 넘어갈 수 있어 .range()로 끝까지 페이지네이션한다.
+  const pageSize = 1000;
+  let from = 0;
+  let data: any[] = [];
+  let queryError: any = null;
+  while (true) {
+    let query = supabase
+      .from('budget_hierarchy_rows')
+      .select('*')
+      .order('sort_order', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (department) query = query.eq('department', department);
+
+    const { data: page, error } = await query;
+    if (error) { queryError = error; break; }
+    if (!page || page.length === 0) break;
+    data = data.concat(page);
+    if (page.length < pageSize) break;
+    from += pageSize;
   }
-
-  const { data, error } = await query.order('sort_order', { ascending: true });
+  const error = queryError;
   console.log(`[loadHierarchy] dept=${department}, rows=${data?.length || 0}, error=${error?.message}`);
 
   if (error) {

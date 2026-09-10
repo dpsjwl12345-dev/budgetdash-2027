@@ -20,13 +20,33 @@ export default async function handler(req: any, res: any) {
     }
 
     const supabase = getSupabaseAdmin();
-    const { data: materialRows, error } = await supabase
-      .from("budget_explainer_materials")
-      .select("policy, unit, detail")
-      .eq("department", department)
-      .order("policy")
-      .order("unit")
-      .order("detail");
+
+    // .select(...)는 최대 1000행까지만 오니(PostgREST 기본 제한) .range()로 끝까지 받아온다.
+    async function fetchAllRows(build: (from: number, to: number) => any): Promise<{ data: any[]; error: any }> {
+      const pageSize = 1000;
+      let from = 0;
+      let all: any[] = [];
+      while (true) {
+        const { data: page, error } = await build(from, from + pageSize - 1);
+        if (error) return { data: [], error };
+        if (!page || page.length === 0) break;
+        all = all.concat(page);
+        if (page.length < pageSize) break;
+        from += pageSize;
+      }
+      return { data: all, error: null };
+    }
+
+    const { data: materialRows, error } = await fetchAllRows((from, to) =>
+      supabase
+        .from("budget_explainer_materials")
+        .select("policy, unit, detail")
+        .eq("department", department)
+        .order("policy")
+        .order("unit")
+        .order("detail")
+        .range(from, to)
+    );
 
     if (error) {
       res.status(500).json({ error: error.message });
@@ -37,11 +57,14 @@ export default async function handler(req: any, res: any) {
     // 정책·단위·세부사업 계층을 바로 탐색할 수 있도록 병합한다.
     // id는 업로드 시 원본 엑셀 행 순서대로 증가하는 값이라, id로 정렬하면
     // 예산서에 적힌 순서 그대로 트리가 구성된다.
-    const { data: budgetRows, error: budgetError } = await supabase
-      .from("budget_rows")
-      .select("id, policy, program, department")
-      .eq("department", department)
-      .order("id", { ascending: true });
+    const { data: budgetRows, error: budgetError } = await fetchAllRows((from, to) =>
+      supabase
+        .from("budget_rows")
+        .select("id, policy, program, department")
+        .eq("department", department)
+        .order("id", { ascending: true })
+        .range(from, to)
+    );
     if (budgetError) {
       res.status(500).json({ error: budgetError.message });
       return;

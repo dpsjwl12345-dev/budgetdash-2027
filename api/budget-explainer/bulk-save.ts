@@ -53,13 +53,24 @@ export default async function handler(req: any, res: any) {
     const supabase = getSupabaseAdmin();
     const preservedEvidence = new Map<string, any>();
     if (replaceExisting) {
-      const { data: existingRows, error: existingError } = await supabase
-        .from("budget_explainer_materials")
-        .select("policy, unit, detail, sections_json")
-        .eq("department", String(department));
-      if (existingError) {
-        res.status(500).json({ success: false, error: existingError.message });
-        return;
+      // .select('*')류는 최대 1000행까지만 오니 .range()로 끝까지 받아온다.
+      const pageSize = 1000;
+      let from = 0;
+      let existingRows: any[] = [];
+      while (true) {
+        const { data: page, error: existingError } = await supabase
+          .from("budget_explainer_materials")
+          .select("policy, unit, detail, sections_json")
+          .eq("department", String(department))
+          .range(from, from + pageSize - 1);
+        if (existingError) {
+          res.status(500).json({ success: false, error: existingError.message });
+          return;
+        }
+        if (!page || page.length === 0) break;
+        existingRows = existingRows.concat(page);
+        if (page.length < pageSize) break;
+        from += pageSize;
       }
       (existingRows || []).forEach((row: any) => {
         const evidence = row.sections_json?.evidence;
