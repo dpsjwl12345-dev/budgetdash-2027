@@ -829,14 +829,15 @@ export default function Home() {
       const matchesStatus = statusFilter === "전체" || (statusFilter === "사전" ? (row.procedures && row.procedures.length > 0) : row.status === statusFilter);
       const matchesProgram = !programFilter || getDetailName(row.program) === programFilter;
       const matchesAccount = !accountFilter || row.account === accountFilter;
-      const matchesDepartment = !department || row.department === department;
+      // 부서를 선택하기 전에는 어떤 부서의 예산도 기본으로 노출하지 않는다.
+      const matchesDepartment = Boolean(department) && row.department === department;
       return matchesSearch && matchesStatus && matchesProgram && matchesAccount && matchesDepartment;
     });
     return filtered;
   }, [budgetRows, search, statusFilter, programFilter, accountFilter, department]);
 
   const departmentRows = useMemo(
-    () => department ? budgetRows.filter((row) => row.department === department) : budgetRows,
+    () => department ? budgetRows.filter((row) => row.department === department) : [],
     [budgetRows, department],
   );
 
@@ -870,13 +871,15 @@ export default function Home() {
 
   // 상단 카드는 업로드된 예산 편성 시트(부서별 합계)를 기준으로 집계한다.
   const hierarchyTotals = useMemo(() => {
+    if (!department) return { amount: 0, previous: 0 };
     return budgetHierarchyRows
-      .filter((row) => row.level === 'dept')
+      .filter((row) => row.level === 'dept' && row.label === department)
       .reduce((sum, row) => ({ amount: sum.amount + (row.budget || 0), previous: sum.previous + (row.previous || 0) }), { amount: 0, previous: 0 });
   }, [budgetHierarchyRows]);
 
   // 2027 신규 사업 예산액 = 전년도 예산이 0인 세부사업(program)들의 예산액 합계
   const newProjectTotal = useMemo(() => {
+    if (!department) return 0;
     return budgetHierarchyRows
       .filter((row) => row.level === 'program' && !(row.previous || 0))
       .reduce((sum, row) => sum + (row.budget || 0), 0);
@@ -981,7 +984,8 @@ export default function Home() {
   // 편성 부서 / 검색어 / 세부사업 필터 / 통계목 필터를 모두 통과하는 행만 남긴다 (각 조건은 AND).
   const filteredHierarchyRows = useMemo(() => {
     const term = hierarchySearch.trim().toLowerCase();
-    if (!department && !term && !hierarchyProgramFilter && !hierarchyItemFilter) return budgetHierarchyRows;
+    // 부서를 선택하지 않은 초기 상태에서는 전체 부서 자료를 보여주지 않는다.
+    if (!department) return [];
 
     let keep: Set<string> | null = null;
     const intersect = (next: Set<string>) => {
@@ -1047,12 +1051,16 @@ export default function Home() {
   const saveStaff = async () => {
     setShowStaffModal(false);
     try {
-      await fetch('/api/cloud-sync?type=staff', {
+      const response = await fetch('/api/cloud-sync?type=staff', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: staffData }),
       });
-      showToast('부서별 정원·현원이 저장되었습니다.');
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || '서버 저장 실패');
+      }
+      showToast('서버에 부서별 정원·현원이 저장되었습니다.');
     } catch (error) {
       console.warn('정원·현원 클라우드 저장 실패:', error);
       showToast('정원·현원을 이 기기에만 저장했습니다 (클라우드 저장 실패).');
@@ -1702,7 +1710,7 @@ export default function Home() {
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
-                <div className="metric-top"><span>2027 신규 사업 예산액</span></div>
+                <div className="metric-top"><span>2027 신규 예산액</span></div>
               </div>
               <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
@@ -1714,7 +1722,7 @@ export default function Home() {
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
-                <div className="metric-top"><span>2026 예산액</span></div>
+                <div className="metric-top"><span>2026 최종예산액</span></div>
               </div>
               <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Total / 1000000))}<span className="metric-unit">백만원</span></strong>
             </article>
