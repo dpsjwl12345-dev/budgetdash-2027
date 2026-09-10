@@ -48,7 +48,6 @@ import {
   Search,
   Settings2,
   SlidersHorizontal,
-  Upload,
   UsersRound,
   X,
   Database,
@@ -475,10 +474,7 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
-  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>(() => {
-    const saved = localStorage.getItem('budgetHierarchyRows');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
   const [programMemos, setProgramMemos] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem('budgetProgramMemos');
     return saved ? JSON.parse(saved) : {};
@@ -494,7 +490,6 @@ export default function Home() {
     return saved ? JSON.parse(saved) : [];
   });
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
-  const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
   const [department, setDepartment] = useState(() => {
     const saved = localStorage.getItem('selectedDepartment');
@@ -533,6 +528,7 @@ export default function Home() {
   const editModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Esc로 모달 닫기
   useEffect(() => {
@@ -566,29 +562,13 @@ export default function Home() {
     }
   }, [Boolean(editingRow)]);
 
-  // 페이지 로드 시 클라우드 데이터를 우선 불러오고, 클라우드가 설정되지 않은 경우에만 localStorage를 사용한다.
   useEffect(() => {
     loadDataFromServer();
     loadExecutionDataFromServer();
     loadCsvData();
     loadStaffDataFromServer();
-    loadHierarchyDataFromServer();
-    fetch('/api/cloud-sync?type=memos')
-      .then((response) => response.ok ? response.json() : null)
-      .then((result) => {
-        const data = result?.data;
-        if (!data || typeof data !== 'object') return;
-        if (data.programMemos && typeof data.programMemos === 'object') {
-          setProgramMemos(data.programMemos);
-          localStorage.setItem('budgetProgramMemos', JSON.stringify(data.programMemos));
-        }
-        if (Array.isArray(data.hiddenMemoIds)) {
-          setHiddenMemoIds(data.hiddenMemoIds);
-          localStorage.setItem('budgetHiddenMemoIds', JSON.stringify(data.hiddenMemoIds));
-        }
-      })
-      .catch((error) => console.warn('예산 메모 클라우드 로드 실패:', error));
-  }, []);
+    loadHierarchyDataFromServer(department);
+  }, [department]);
 
   const loadStaffDataFromServer = async () => {
     try {
@@ -751,28 +731,20 @@ export default function Home() {
     }
   };
 
-  const loadHierarchyDataFromServer = async () => {
+  const loadHierarchyDataFromServer = async (dept?: string) => {
     try {
-      const response = await fetch('/api/cloud-sync');
+      const url = dept ? `/api/cloud-sync?department=${encodeURIComponent(dept)}` : '/api/cloud-sync';
+      const response = await fetch(url);
       if (!response.ok) throw new Error('서버 로드 실패');
       const { data } = await response.json();
       if (data && Array.isArray(data)) {
         setBudgetHierarchyRows(data);
-        localStorage.setItem('budgetHierarchyRows', JSON.stringify(data));
         return;
       }
-      const saved = localStorage.getItem('budgetHierarchyRows');
-      if (saved) setBudgetHierarchyRows(JSON.parse(saved));
+      setBudgetHierarchyRows([]);
     } catch (error) {
       console.warn('예산 편성 시트를 클라우드에서 로드 실패:', error);
-      const saved = localStorage.getItem('budgetHierarchyRows');
-      if (saved) {
-        try {
-          setBudgetHierarchyRows(JSON.parse(saved));
-        } catch (localError) {
-          console.warn('localStorage에서 데이터 로드 실패:', localError);
-        }
-      }
+      setBudgetHierarchyRows([]);
     }
   };
 
@@ -1210,6 +1182,9 @@ export default function Home() {
     return [...kept, ...newRows];
   };
 
+<<<<<<< HEAD
+  const saveHierarchyToServer = async (rows: BudgetHierarchyRow[], dept: string) => {
+=======
   const namespaceHierarchyRows = (rows: BudgetHierarchyRow[], namespace: string) => {
     const idMap = new Map<string, string>();
     rows.forEach((row, index) => idMap.set(row.id, `${namespace}-${index + 1}`));
@@ -1222,18 +1197,31 @@ export default function Home() {
 
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
+>>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
     try {
       const response = await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: rows }),
+        body: JSON.stringify({ data: rows, department: dept }),
       });
+<<<<<<< HEAD
+      const data = await response.json();
+      if (response.ok && data.success) {
+        return { success: true, message: data.message || `클라우드에 저장되었습니다 ☁️` };
+      } else {
+        return { success: false, message: data.message || `클라우드 저장 실패했습니다 ❌` };
+      }
+    } catch (error) {
+      console.error('클라우드 저장 실패:', error);
+      return { success: false, message: `클라우드 저장 실패했습니다 ❌` };
+=======
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
       return true;
     } catch (error) {
       console.warn('클라우드 저장 시도 실패 (로컬 저장됨):', error);
       return false;
+>>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
     }
   };
 
@@ -1269,15 +1257,20 @@ export default function Home() {
         const parsedData = buildHierarchyFromRows(cellRows);
         if (parsedData.length === 0) {
           showToast("파일에서 데이터를 찾지 못했습니다.");
-          if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
 
         const uniqueParsedData = namespaceHierarchyRows(parsedData, `upload-${Date.now()}`);
         setBudgetHierarchyRows((prev) => {
+<<<<<<< HEAD
+          const merged = mergeHierarchyByDepartment(prev, parsedData);
+          saveHierarchyToServer(merged, department).then((result) => {
+            showToast(result.message);
+=======
           const merged = mergeHierarchyByDepartment(prev, uniqueParsedData);
           saveHierarchyToServer(merged).then((savedToServer) => {
             showToast(savedToServer ? `서버에 ${uniqueParsedData.length}개의 항목을 저장했습니다.` : `${uniqueParsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
+>>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
           });
           return merged;
         });
@@ -1307,9 +1300,15 @@ export default function Home() {
         }
         const uniqueParsedData = namespaceHierarchyRows(parsedData, `upload-${Date.now()}`);
         setBudgetHierarchyRows((prev) => {
+<<<<<<< HEAD
+          const merged = mergeHierarchyByDepartment(prev, parsedData);
+          saveHierarchyToServer(merged, department).then((result) => {
+            showToast(result.message);
+=======
           const merged = mergeHierarchyByDepartment(prev, uniqueParsedData);
           saveHierarchyToServer(merged).then((savedToServer) => {
             showToast(savedToServer ? `서버에 ${uniqueParsedData.length}개의 항목을 저장했습니다.` : `${uniqueParsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
+>>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
           });
           return merged;
         });
@@ -1669,11 +1668,6 @@ export default function Home() {
                 <h1>{year} 본예산 편성 검토</h1>
               </div>
               <div className="action-row">
-                <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
-                <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
-                  <div className="icon-stack-front"><Upload size={20} /></div>
-                  <input ref={fileInputRef} className="upload-input" type="file" accept=".xlsx,.xls,.csv" onChange={(event) => handleExcelUpload(event.target.files?.[0])} />
-                </label>
                 <div className="action-group">
                   <div style={{ position: "relative" }}>
                     <button
@@ -1698,9 +1692,25 @@ export default function Home() {
                 </div>
               </div>
             </div>
+            <div className="action-row">
+              <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleExcelUpload(file);
+                }}
+                style={{ display: "none" }}
+              />
+              <button type="button" className="template-link" onClick={() => fileInputRef.current?.click()}>
+                파일 업로드
+              </button>
+            </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
+              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); loadHierarchyDataFromServer(value); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
@@ -1942,10 +1952,34 @@ export default function Home() {
                       return '#000000';
                     };
 
+                    const handleProgramClick = () => {
+                      if (row.level === 'program') {
+                        const url = `/budget-explainer?dept=${encodeURIComponent(department)}&item=${encodeURIComponent(row.label)}`;
+                        setLocation(url);
+                      }
+                    };
+
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td style={{ paddingLeft: getPaddingLeft(), paddingRight: '8px', background: getBackground(), fontSize: getLabelFontSize(), fontWeight: getFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                          <td
+                            onClick={handleProgramClick}
+                            style={{
+                              paddingLeft: getPaddingLeft(),
+                              paddingRight: '8px',
+                              background: getBackground(),
+                              fontSize: getLabelFontSize(),
+                              fontWeight: getFontWeight(),
+                              color: getColor(),
+                              verticalAlign: 'top',
+                              paddingTop: rowSpacing,
+                              paddingBottom: rowSpacing,
+                              borderRight: '1px solid rgba(60,50,35,0.12)',
+                              cursor: row.level === 'program' ? 'pointer' : 'default',
+                              textDecoration: row.level === 'program' ? 'underline' : 'none',
+                              textDecorationColor: row.level === 'program' ? '#4a90e2' : 'transparent'
+                            }}
+                          >
                             {row.label}
                           </td>
                           <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
