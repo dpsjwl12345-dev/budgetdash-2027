@@ -2161,8 +2161,10 @@ export default function Home() {
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {(itemBadges.length > 0 || itemHasFormula) && (
-                              <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', color: '#e67e22', fontSize: '11px', fontWeight: 600 }}>
-                                {[itemBadges.length > 0 && '사전', itemHasFormula && '산출식'].filter(Boolean).join(', ')}
+                              <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', fontSize: '11px', fontWeight: 600 }}>
+                                {itemBadges.length > 0 && <span style={{ color: '#e67e22' }}>사전</span>}
+                                {itemBadges.length > 0 && itemHasFormula && <span style={{ color: '#e67e22' }}>, </span>}
+                                {itemHasFormula && <span style={{ color: '#5b9bf0' }}>산출식</span>}
                               </span>
                             )}
                           </td>
