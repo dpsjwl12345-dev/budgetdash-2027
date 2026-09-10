@@ -121,6 +121,7 @@ const EXECUTION_COLUMNS = [
   ["unitName", 145],
   ["statisticsCode", 140],
   ["budget", 82],
+  ["formedAmount", 82],
   ["original", 82],
   ["supplementary", 78],
   ["preEstablishment", 78],
@@ -510,7 +511,7 @@ export default function BudgetExecution2026() {
           </div>
 
           <div className="table-scroll">
-            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1091px' }}>
+            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1173px' }}>
               <colgroup>
                 {EXECUTION_COLUMNS.map(([key, fallback]) => (
                   <col key={key} style={{ width: `${colWidth(key, fallback)}px` }} />
@@ -523,7 +524,7 @@ export default function BudgetExecution2026() {
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>편성액{renderResizeHandle("budget", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>편성액{renderResizeHandle("formedAmount", 82)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>본예산{renderResizeHandle("original", 82)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
