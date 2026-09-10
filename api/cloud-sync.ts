@@ -91,7 +91,6 @@ async function saveHierarchy(req: any, res: any) {
     return;
   }
 
-<<<<<<< HEAD
   const ids = dbRows.map((row: any) => row.id);
   let cleanupWarning: string | undefined;
   if (ids.length > 0) {
@@ -104,9 +103,6 @@ async function saveHierarchy(req: any, res: any) {
   }
 
   res.status(200).json({ success: true, message: cleanupWarning ? "저장 완료 (이전 삭제 항목 정리는 보류됨)" : "저장 완료", warning: cleanupWarning });
-=======
-  res.status(200).json({ success: true, message: "클라우드에 저장되었습니다 ☁️" });
->>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
 }
 
 async function loadStaff(res: any) {
