@@ -573,7 +573,7 @@ export default function Home() {
     loadCsvData();
     loadStaffDataFromServer();
     loadHierarchyDataFromServer();
-    fetch('/api/budget/memos')
+    fetch('/api/cloud-sync?type=memos')
       .then((response) => response.ok ? response.json() : null)
       .then((result) => {
         const data = result?.data;
@@ -1060,7 +1060,7 @@ export default function Home() {
   };
 
   const saveProgramMemosToServer = (nextMemos: Record<string, string>, nextHiddenMemoIds: string[]) => {
-    fetch('/api/budget/memos', {
+    fetch('/api/cloud-sync?type=memos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ programMemos: nextMemos, hiddenMemoIds: nextHiddenMemoIds }),

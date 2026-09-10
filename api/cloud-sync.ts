@@ -153,6 +153,20 @@ async function saveIssues(req: any, res: any) {
   const success = await saveToKV('departmentIssues', data);
   res.status(200).json({ success, message: success ? "쟁점사항이 클라우드에 저장되었습니다." : "클라우드 저장에 실패했습니다." });
 }
+async function loadMemos(res: any) {
+  const data = await loadFromKV('budgetProgramMemos');
+  res.status(200).json({ data: data ?? { programMemos: {}, hiddenMemoIds: [] } });
+}
+async function saveMemos(req: any, res: any) {
+  const body = req.body ?? {};
+  const data = {
+    programMemos: body.programMemos && typeof body.programMemos === 'object' ? body.programMemos : {},
+    hiddenMemoIds: Array.isArray(body.hiddenMemoIds) ? body.hiddenMemoIds : [],
+    updatedAt: new Date().toISOString(),
+  };
+  const success = await saveToKV('budgetProgramMemos', data);
+  res.status(200).json({ success, data });
+}
 
 export default async function handler(req: any, res: any) {
   try {
@@ -161,12 +175,14 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
       if (type === 'issues') return await loadIssues(res);
+      if (type === 'memos') return await loadMemos(res);
       return await loadHierarchy(res);
     }
 
     if (req.method === 'POST') {
       if (type === 'staff') return await saveStaff(req, res);
       if (type === 'issues') return await saveIssues(req, res);
+      if (type === 'memos') return await saveMemos(req, res);
       return await saveHierarchy(req, res);
     }
 
