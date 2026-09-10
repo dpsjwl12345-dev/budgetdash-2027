@@ -105,6 +105,116 @@ async function saveHierarchy(req: any, res: any) {
   res.status(200).json({ success: true, message: cleanupWarning ? "저장 완료 (이전 삭제 항목 정리는 보류됨)" : "저장 완료", warning: cleanupWarning });
 }
 
+async function loadMemos(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+
+  const department = req.query?.department;
+  let query = supabase.from('budget_program_memos').select('*');
+  if (department) query = query.eq('department', department);
+
+  const { data, error } = await query;
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+
+  const programMemos: Record<string, string> = {};
+  const hiddenMemoIds: string[] = [];
+  (data || []).forEach((row: any) => {
+    if (row.memo) programMemos[row.id] = row.memo;
+    if (row.hidden) hiddenMemoIds.push(row.id);
+  });
+
+  res.status(200).json({ data: { programMemos, hiddenMemoIds } });
+}
+
+async function saveMemos(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+
+  const programMemos = req.body?.programMemos && typeof req.body.programMemos === 'object' ? req.body.programMemos : {};
+  const hiddenMemoIds: string[] = Array.isArray(req.body?.hiddenMemoIds) ? req.body.hiddenMemoIds : [];
+  const keys = Array.from(new Set([...Object.keys(programMemos), ...hiddenMemoIds]));
+
+  if (keys.length === 0) {
+    res.status(200).json({ success: true, message: "저장할 메모가 없습니다." });
+    return;
+  }
+
+  // 메모 키는 "부서::세부사업명" 형태(department::programLabel)라 부서명을 직접 뽑아낼 수 있다.
+  const rows = keys.map((key) => ({
+    id: key,
+    department: key.split('::')[0] || '미분류',
+    memo: programMemos[key] ?? null,
+    hidden: hiddenMemoIds.includes(key),
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error: upsertError } = await supabase.from('budget_program_memos').upsert(rows, { onConflict: 'id' });
+  if (upsertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    return;
+  }
+
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
+async function loadIssues(res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const { data, error } = await supabase.from('department_issues').select('*');
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const issues: Record<string, any> = {};
+  (data || []).forEach((row: any) => {
+    try {
+      issues[row.department] = row.issues ? JSON.parse(row.issues) : { memos: [] };
+    } catch {
+      issues[row.department] = { memos: [] };
+    }
+  });
+  res.status(200).json({ data: issues });
+}
+
+async function saveIssues(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+  const issuesData = req.body?.data && typeof req.body.data === 'object' ? req.body.data : {};
+  const rows = Object.entries(issuesData).map(([department, value]) => ({
+    department,
+    issues: JSON.stringify(value),
+    updated_at: new Date().toISOString(),
+  }));
+
+  if (rows.length === 0) {
+    res.status(200).json({ success: true, message: "저장할 쟁점사항이 없습니다." });
+    return;
+  }
+
+  const { error: upsertError } = await supabase.from('department_issues').upsert(rows, { onConflict: 'department' });
+  if (upsertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    return;
+  }
+
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
 async function loadStaff(res: any) {
   const supabase = getClient();
   if (!supabase) {
@@ -156,11 +266,15 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
+      if (type === 'memos') return await loadMemos(req, res);
+      if (type === 'issues') return await loadIssues(res);
       return await loadHierarchy(req, res);
     }
 
     if (req.method === 'POST') {
       if (type === 'staff') return await saveStaff(req, res);
+      if (type === 'memos') return await saveMemos(req, res);
+      if (type === 'issues') return await saveIssues(req, res);
       return await saveHierarchy(req, res);
     }
 

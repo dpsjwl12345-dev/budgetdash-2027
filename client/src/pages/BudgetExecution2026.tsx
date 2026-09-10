@@ -310,17 +310,24 @@ export default function BudgetExecution2026() {
 
       if (!nextData.length) throw new Error("empty");
 
+      // 같은 연도라도 이번에 업로드한 부서의 기존 행만 새 데이터로 교체하고,
+      // 다른 부서의 기존 데이터는 그대로 보존한다.
+      const uploadedDepartments = new Set(nextData.map((row) => row.department));
+      const isReplaced = (row: BudgetExecution) =>
+        String(row.year ?? "2026") === selectedYear && uploadedDepartments.has(row.department);
+
       setData((previous) => [
-        ...previous.filter((row) => String(row.year ?? "2026") !== selectedYear),
+        ...previous.filter((row) => !isReplaced(row)),
         ...nextData,
       ]);
       setSelectedDepartment("");
 
+      const merged = [
+        ...data.filter((row) => !isReplaced(row)),
+        ...nextData,
+      ];
+
       try {
-        const merged = [
-          ...data.filter((row) => String(row.year ?? "2026") !== selectedYear),
-          ...nextData,
-        ];
         localStorage.setItem(`budgetExecution${selectedYear}Rows`, JSON.stringify(merged));
       } catch (error) {
         console.warn('localStorage 저장 실패:', error);
@@ -330,12 +337,7 @@ export default function BudgetExecution2026() {
         const response = await fetch(`/api/budget-execution-${selectedYear}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            data: [
-              ...data.filter((row) => String(row.year ?? "2026") !== selectedYear),
-              ...nextData,
-            ],
-          }),
+          body: JSON.stringify({ data: merged }),
         });
         if (!response.ok) {
           showToast('저장에 실패했습니다 (로컬에만 저장됨)');

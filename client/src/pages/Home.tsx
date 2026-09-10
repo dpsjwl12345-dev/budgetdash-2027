@@ -652,6 +652,7 @@ export default function Home() {
     loadCsvData();
     loadStaffDataFromServer();
     loadHierarchyDataFromServer(department);
+    loadProgramMemosFromServer(department);
   }, [department]);
 
   const loadStaffDataFromServer = async () => {
@@ -665,6 +666,24 @@ export default function Home() {
       }
     } catch (error) {
       console.log('정원·현원 클라우드 로드 실패:', error);
+    }
+  };
+
+  const loadProgramMemosFromServer = async (dept: string) => {
+    try {
+      const url = dept ? `/api/cloud-sync?type=memos&department=${encodeURIComponent(dept)}` : '/api/cloud-sync?type=memos';
+      const response = await fetch(url);
+      if (!response.ok) return;
+      const { data } = await response.json();
+      if (!data) return;
+      if (data.programMemos && typeof data.programMemos === 'object') {
+        setProgramMemos((prev) => ({ ...prev, ...data.programMemos }));
+      }
+      if (Array.isArray(data.hiddenMemoIds) && data.hiddenMemoIds.length > 0) {
+        setHiddenMemoIds((prev) => Array.from(new Set([...prev, ...data.hiddenMemoIds])));
+      }
+    } catch (error) {
+      console.log('메모 클라우드 로드 실패:', error);
     }
   };
 
@@ -1901,7 +1920,10 @@ export default function Home() {
                     let activeProgramId: string | null = null;
                     const memoAfterRowId: Record<string, string> = {};
                     filteredHierarchyRows.forEach((row, idx) => {
-                      if (row.level === 'program') activeProgramId = row.id;
+                      // 메모는 행 id가 아니라 "부서::세부사업명"으로 키를 잡는다. 행 id는
+                      // 파일을 다시 업로드할 때마다 새로 발급되므로, id로 저장하면 재업로드할
+                      // 때마다 기존에 적어둔 메모가 전부 연결이 끊겨버린다.
+                      if (row.level === 'program') activeProgramId = `${department}::${row.label}`;
                       const nextRow = filteredHierarchyRows[idx + 1];
                       const nextIsBoundaryOrEnd = !nextRow || BOUNDARY_LEVELS.includes(nextRow.level);
                       if (activeProgramId && nextIsBoundaryOrEnd) {
