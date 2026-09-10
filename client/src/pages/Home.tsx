@@ -1247,7 +1247,7 @@ export default function Home() {
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, parsedData);
           saveHierarchyToServer(merged);
-          showToast(`${parsedData.length}개의 항목을 저장했습니다.`);
+          showToast(`로컬에 ${parsedData.length}개의 항목을 저장했습니다. 💾`);
           return merged;
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1277,7 +1277,7 @@ export default function Home() {
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, parsedData);
           saveHierarchyToServer(merged);
-          showToast(`${parsedData.length}개의 항목을 저장했습니다.`);
+          showToast(`로컬에 ${parsedData.length}개의 항목을 저장했습니다. 💾`);
           return merged;
         });
         return;
