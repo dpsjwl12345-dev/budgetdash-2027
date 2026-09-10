@@ -1,29 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
 
-// Vercel 서버리스 함수 개수 제한 때문에, 예산 편성 시트(hierarchy)와 부서별
-// 정원·현원(staff) 클라우드 저장을 별도 파일 대신 이 파일 하나로 합쳐서 처리한다.
-// GET/POST /api/cloud-sync?type=hierarchy|staff
-async function loadKV(key: string) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return null;
-  const response = await fetch(`${url}/get/${key}`, { headers: { Authorization: `Bearer ${token}` } });
-  if (!response.ok) return null;
-  const body = await response.json();
-  return body?.result ? JSON.parse(body.result) : null;
-}
-async function saveKV(key: string, data: unknown) {
-  const url = process.env.KV_REST_API_URL;
-  const token = process.env.KV_REST_API_TOKEN;
-  if (!url || !token) return false;
-  const response = await fetch(`${url}/set/${key}`, {
-    method: 'POST',
-    headers: { Authorization: `Bearer ${token}` },
-    body: JSON.stringify(data),
-  });
-  return response.ok;
-}
-
 function getClient() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
   const key = process.env.SUPABASE_SERVICE_ROLE_KEY || process.env.SUPABASE_ANON_KEY || process.env.VITE_SUPABASE_ANON_KEY;
@@ -31,12 +7,14 @@ function getClient() {
   return createClient(url, key);
 }
 
-async function loadHierarchy(res: any) {
+async function loadHierarchy(req: any, res: any) {
   const supabase = getClient();
   if (!supabase) {
     res.status(200).json({ data: null });
     return;
   }
+
+  // 부서 필터 제거 - 모든 데이터 반환
   const { data, error } = await supabase
     .from('budget_hierarchy_rows')
     .select('*')
@@ -72,12 +50,7 @@ async function saveHierarchy(req: any, res: any) {
 
   const rows = Array.isArray(req.body?.data) ? req.body.data : [];
   if (rows.length === 0) {
-    const { error } = await supabase.from('budget_hierarchy_rows').delete().neq('id', '');
-    if (error) {
-      res.status(200).json({ success: false, message: "기존 예산편성 자료 삭제에 실패했습니다.", error: error.message });
-      return;
-    }
-    res.status(200).json({ success: true, message: "예산편성 자료를 모두 삭제했습니다." });
+    res.status(200).json({ success: false, message: "저장할 데이터가 없습니다." });
     return;
   }
 
@@ -101,21 +74,11 @@ async function saveHierarchy(req: any, res: any) {
     .upsert(dbRows, { onConflict: 'id' });
 
   if (upsertError) {
-    res.status(200).json({ success: false, message: "저장 실패. 기존 데이터는 유지했습니다.", error: upsertError.message });
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
     return;
   }
 
-  const ids = dbRows.map((row: any) => row.id);
-  let cleanupWarning: string | undefined;
-  if (ids.length > 0) {
-    const { error: cleanupError } = await supabase
-      .from('budget_hierarchy_rows')
-      .delete()
-      .not('id', 'in', `(${ids.map((id: string) => `"${id}"`).join(',')})`);
-    if (cleanupError) cleanupWarning = cleanupError.message;
-  }
-
-  res.status(200).json({ success: true, message: cleanupWarning ? "저장 완료 (이전 삭제 항목 정리는 보류됨)" : "저장 완료", warning: cleanupWarning });
+  res.status(200).json({ success: true, message: "클라우드에 저장되었습니다 ☁️" });
 }
 
 async function loadStaff(res: any) {
@@ -157,39 +120,10 @@ async function saveStaff(req: any, res: any) {
 
   const { error: upsertError } = await supabase.from('department_staff').upsert(rows, { onConflict: 'department' });
   if (upsertError) {
-    res.status(200).json({ success: false, message: "저장 실패. 기존 데이터는 유지했습니다.", error: upsertError.message });
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
     return;
   }
   res.status(200).json({ success: true, message: "저장 완료" });
-}
-
-async function loadIssues(res: any) {
-  const data = await loadKV('departmentIssues');
-  res.status(200).json({ data });
-}
-
-async function saveIssues(req: any, res: any) {
-  const data = req.body?.data;
-  if (!data || typeof data !== 'object' || Array.isArray(data)) {
-    res.status(400).json({ success: false, error: "유효한 쟁점사항 데이터가 필요합니다." });
-    return;
-  }
-  const success = await saveKV('departmentIssues', data);
-  res.status(200).json({ success, message: success ? "쟁점사항이 클라우드에 저장되었습니다." : "클라우드 저장에 실패했습니다." });
-}
-async function loadMemos(res: any) {
-  const data = await loadKV('budgetProgramMemos');
-  res.status(200).json({ data: data ?? { programMemos: {}, hiddenMemoIds: [] } });
-}
-async function saveMemos(req: any, res: any) {
-  const body = req.body ?? {};
-  const data = {
-    programMemos: body.programMemos && typeof body.programMemos === 'object' ? body.programMemos : {},
-    hiddenMemoIds: Array.isArray(body.hiddenMemoIds) ? body.hiddenMemoIds : [],
-    updatedAt: new Date().toISOString(),
-  };
-  const success = await saveKV('budgetProgramMemos', data);
-  res.status(200).json({ success, data });
 }
 
 export default async function handler(req: any, res: any) {
@@ -198,15 +132,11 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
-      if (type === 'issues') return await loadIssues(res);
-      if (type === 'memos') return await loadMemos(res);
-      return await loadHierarchy(res);
+      return await loadHierarchy(req, res);
     }
 
     if (req.method === 'POST') {
       if (type === 'staff') return await saveStaff(req, res);
-      if (type === 'issues') return await saveIssues(req, res);
-      if (type === 'memos') return await saveMemos(req, res);
       return await saveHierarchy(req, res);
     }
 
