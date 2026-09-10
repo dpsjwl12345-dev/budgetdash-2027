@@ -35,10 +35,13 @@ export default async function handler(req: any, res: any) {
 
     // 설명자료 PDF를 아직 올리지 않은 부서도 예산요구서의
     // 정책·단위·세부사업 계층을 바로 탐색할 수 있도록 병합한다.
+    // id는 업로드 시 원본 엑셀 행 순서대로 증가하는 값이라, id로 정렬하면
+    // 예산서에 적힌 순서 그대로 트리가 구성된다.
     const { data: budgetRows, error: budgetError } = await supabase
       .from("budget_rows")
-      .select("policy, program, department")
-      .eq("department", department);
+      .select("id, policy, program, department")
+      .eq("department", department)
+      .order("id", { ascending: true });
     if (budgetError) {
       res.status(500).json({ error: budgetError.message });
       return;

@@ -1203,9 +1203,14 @@ export default function Home() {
   };
 
   const parseNumber = (value: unknown) => Number(String(value ?? "0").replace(/[^0-9.-]/g, "")) || 0;
+  // 엑셀 헤더에 공백이 섞여 있으면("정책 사업명", "정책사업명 " 등) 완전 일치 검색이
+  // 항상 실패해 모든 행이 기본값("미분류 정책" 등)으로 떨어진다. 모든 공백을 지운 뒤
+  // 비교해 이런 표기 차이를 흡수한다.
+  const normalizeKey = (key: string) => key.replace(/\s+/g, "");
   const pick = (record: Record<string, unknown>, keys: string[]) => {
-    const key = keys.find((candidate) => Object.prototype.hasOwnProperty.call(record, candidate));
-    return key ? record[key] : "";
+    const targets = keys.map(normalizeKey);
+    const recordKey = Object.keys(record).find((candidate) => targets.includes(normalizeKey(candidate)));
+    return recordKey ? record[recordKey] : "";
   };
 
   const HIERARCHY_LEVELS: HierarchyLevel[] = ["dept", "policy", "unit", "program", "account"];
@@ -1463,7 +1468,7 @@ export default function Home() {
           const programDisplay = unitProgram ? `${unitProgram}\n${subProgram}` : subProgram;
           return {
             id: Date.now() + index,
-            policy: String(pick(record, ["정책사업명"])) || "미분류 정책",
+            policy: String(pick(record, ["정책사업명", "정책명", "정책"])) || "미분류 정책",
             program: programDisplay,
             code,
             account: accountDisplay,
