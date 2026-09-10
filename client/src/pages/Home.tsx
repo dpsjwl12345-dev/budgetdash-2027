@@ -573,6 +573,21 @@ export default function Home() {
     loadCsvData();
     loadStaffDataFromServer();
     loadHierarchyDataFromServer();
+    fetch('/api/budget-memos')
+      .then((response) => response.ok ? response.json() : null)
+      .then((result) => {
+        const data = result?.data;
+        if (!data || typeof data !== 'object') return;
+        if (data.programMemos && typeof data.programMemos === 'object') {
+          setProgramMemos(data.programMemos);
+          localStorage.setItem('budgetProgramMemos', JSON.stringify(data.programMemos));
+        }
+        if (Array.isArray(data.hiddenMemoIds)) {
+          setHiddenMemoIds(data.hiddenMemoIds);
+          localStorage.setItem('budgetHiddenMemoIds', JSON.stringify(data.hiddenMemoIds));
+        }
+      })
+      .catch((error) => console.warn('예산 메모 클라우드 로드 실패:', error));
   }, []);
 
   // 부서가 "문화예술과"일 때 샘플 데이터 자동 로드
@@ -1044,6 +1059,13 @@ export default function Home() {
     }
   };
 
+  const saveProgramMemosToServer = (nextMemos: Record<string, string>, nextHiddenMemoIds: string[]) => {
+    fetch('/api/budget-memos', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ programMemos: nextMemos, hiddenMemoIds: nextHiddenMemoIds }),
+    }).catch((error) => console.warn('예산 메모 클라우드 저장 실패:', error));
+  };
   const updateProgramMemo = (rowId: string, value: string) => {
     setProgramMemos((prev) => {
       const next = { ...prev, [rowId]: value };
@@ -1052,6 +1074,7 @@ export default function Home() {
       } catch (error) {
         console.warn('메모 저장 실패:', error);
       }
+      saveProgramMemosToServer(next, hiddenMemoIds);
       return next;
     });
   };
@@ -1065,6 +1088,7 @@ export default function Home() {
       } catch (error) {
         console.warn('메모 줄 숨김 저장 실패:', error);
       }
+      saveProgramMemosToServer(programMemos, next);
       return next;
     });
   };

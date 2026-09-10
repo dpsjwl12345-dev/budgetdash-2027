@@ -12,6 +12,8 @@ import {
   Highlighter,
   Undo2,
   Trash2,
+  PanelLeftOpen,
+  PanelLeftClose,
 } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -408,7 +410,21 @@ export default function Layout({
           })}
         </nav>
 
-        <div className="sidebar-bottom" />
+        <div className="sidebar-bottom">
+          <button
+            type="button"
+            className="sidebar-toggle"
+            aria-label={sidebarCollapsed ? "사이드바 펴기" : "사이드바 접기"}
+            title={sidebarCollapsed ? "사이드바 펴기" : "사이드바 접기"}
+            onClick={(event) => {
+              event.stopPropagation();
+              setSidebarCollapsed((collapsed) => !collapsed);
+            }}
+          >
+            {sidebarCollapsed ? <PanelLeftOpen size={17} /> : <PanelLeftClose size={17} />}
+            <span>{sidebarCollapsed ? "펴기" : "접기"}</span>
+          </button>
+        </div>
       </aside>
 
       <main className="main-area">
