@@ -1474,30 +1474,6 @@ export default function Home() {
     showToast("CSV 파일을 다운로드했습니다.");
   };
 
-  const downloadTemplate = () => {
-    const template = [{
-      정책사업명: "노인복지 증진",
-      단위사업명: "경로당 운영지원",
-      세부사업명: "사업명을 입력하세요",
-      편성목코드: "300",
-      통계목코드: "302-03",
-      통계목명: "민간경상보조",
-      요구산출근거: "산출근거를 입력하세요",
-      요구산출근거식: "단가 × 수량",
-      요구액: 0,
-      자체재원: 0,
-      국고보조금: 0,
-      광역보조금: 0,
-      기타: 0,
-      전년도: 0,
-    }];
-    const worksheet = XLSX.utils.json_to_sheet(template);
-    const workbook = XLSX.utils.book_new();
-    XLSX.utils.book_append_sheet(workbook, worksheet, "예산편성");
-    XLSX.writeFile(workbook, "2027_본예산_편성요구서_양식.xlsx");
-    showToast("엑셀 양식을 다운로드했습니다.");
-  };
-
   const renderCell = (row: BudgetRow, key: ColumnKey) => {
     if (key === "policy") {
       const programLines = row.program.split("\n");
@@ -1668,24 +1644,21 @@ export default function Home() {
                       </div>
                     )}
                   </div>
+                  <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
+                    <div className="icon-stack-front"><Upload size={20} /></div>
+                    <input
+                      ref={fileInputRef}
+                      className="upload-input"
+                      type="file"
+                      accept=".xlsx,.xls,.csv"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) handleExcelUpload(file);
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
-            </div>
-            <div className="action-row">
-              <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
-              <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
-                <div className="icon-stack-front"><Upload size={20} /></div>
-                <input
-                  ref={fileInputRef}
-                  className="upload-input"
-                  type="file"
-                  accept=".xlsx,.xls,.csv"
-                  onChange={(event) => {
-                    const file = event.target.files?.[0];
-                    if (file) handleExcelUpload(file);
-                  }}
-                />
-              </label>
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
