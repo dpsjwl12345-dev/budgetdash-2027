@@ -590,23 +590,6 @@ export default function Home() {
       .catch((error) => console.warn('예산 메모 클라우드 로드 실패:', error));
   }, []);
 
-  // 부서가 "문화예술과"일 때 샘플 데이터 자동 로드
-  useEffect(() => {
-    if (department === '문화예술과') {
-      const sampleData: BudgetHierarchyRow[] = [
-        { id: 'row-1', level: 'dept', label: '문화예술과', budget: 150000, previous: 140000 },
-        { id: 'row-2', level: 'policy', label: '문화예술육성', budget: 100000, previous: 90000 },
-        { id: 'row-3', level: 'unit', label: '예술활동지원', budget: 60000, previous: 50000 },
-        { id: 'row-4', level: 'program', label: '전시회개최', budget: 30000, previous: 25000 },
-        { id: 'row-5', level: 'account', label: '행사비', budget: 30000, previous: 25000 },
-      ];
-      setBudgetHierarchyRows(sampleData);
-      localStorage.setItem('budgetHierarchyRows', JSON.stringify(sampleData));
-      setToast(`${sampleData.length}개의 항목을 저장했습니다.`);
-      window.setTimeout(() => setToast(""), 2200);
-    }
-  }, [department]);
-
   const loadStaffDataFromServer = async () => {
     try {
       const response = await fetch('/api/cloud-sync?type=staff');
