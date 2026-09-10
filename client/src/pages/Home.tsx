@@ -475,7 +475,10 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
-  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
+  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>(() => {
+    const saved = localStorage.getItem('budgetHierarchyRows');
+    return saved ? JSON.parse(saved) : [];
+  });
   const [programMemos, setProgramMemos] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem('budgetProgramMemos');
     return saved ? JSON.parse(saved) : {};
@@ -566,6 +569,7 @@ export default function Home() {
     loadExecutionDataFromServer();
     loadCsvData();
     loadStaffDataFromServer();
+    loadHierarchyDataFromServer();
   }, []);
 
   const loadStaffDataFromServer = async () => {
@@ -725,6 +729,31 @@ export default function Home() {
         }
       } catch (error) {
         console.warn('localStorage에서 데이터 로드 실패:', error);
+      }
+    }
+  };
+
+  const loadHierarchyDataFromServer = async () => {
+    try {
+      const response = await fetch('/api/cloud-sync');
+      if (!response.ok) throw new Error('서버 로드 실패');
+      const { data } = await response.json();
+      if (data && Array.isArray(data)) {
+        setBudgetHierarchyRows(data);
+        localStorage.setItem('budgetHierarchyRows', JSON.stringify(data));
+        return;
+      }
+      const saved = localStorage.getItem('budgetHierarchyRows');
+      if (saved) setBudgetHierarchyRows(JSON.parse(saved));
+    } catch (error) {
+      console.warn('예산 편성 시트를 클라우드에서 로드 실패:', error);
+      const saved = localStorage.getItem('budgetHierarchyRows');
+      if (saved) {
+        try {
+          setBudgetHierarchyRows(JSON.parse(saved));
+        } catch (localError) {
+          console.warn('localStorage에서 데이터 로드 실패:', localError);
+        }
       }
     }
   };
@@ -1148,13 +1177,19 @@ export default function Home() {
 
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     try {
-      await fetch('/api/cloud-sync', {
+      const response = await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: rows }),
       });
+      const result = await response.json();
+      if (!result.success) {
+        console.warn('클라우드 저장 실패:', result.message);
+        localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
+      }
     } catch (error) {
       console.warn('예산 편성 시트 클라우드 저장 실패:', error);
+      localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
     }
   };
 

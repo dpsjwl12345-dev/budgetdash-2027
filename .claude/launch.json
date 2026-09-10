@@ -12,7 +12,7 @@
       "name": "server",
       "runtimeExecutable": "npx",
       "runtimeArgs": ["tsx", "server/index.ts"],
-      "port": 3001,
+      "port": 3002,
       "autoPort": false
     }
   ]
