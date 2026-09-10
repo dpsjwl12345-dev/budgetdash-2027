@@ -303,6 +303,50 @@ async function startServer() {
     }
   });
 
+  const parseHierarchyData = (matrix: any[]): any[] => {
+    const hierarchyData: any[] = [];
+    let id = 1;
+
+    const secondRowLabel = (matrix[1]?.[0] || "").toString().replace(/\s/g, "");
+    const startIdx = secondRowLabel === "총계" ? 2 : 1;
+
+    for (let idx = startIdx; idx < matrix.length; idx++) {
+      const cells = (matrix[idx] || []).map((c: any) => (c ?? "").toString().replace(/^"+|"+$/g, "").trim());
+      if (!cells.some(c => c)) continue;
+
+      const hierIndent = [0, 1, 2, 3, 4].findIndex(i => cells[i]);
+      if (hierIndent === -1) continue;
+
+      const levels = ["dept", "policy", "unit", "program", "account"];
+      hierarchyData.push({
+        id: `row-${id++}`,
+        level: levels[hierIndent],
+        label: cells[hierIndent],
+        budget: parseInt(cells[5]?.replace(/[^0-9]/g, '') || '0') || undefined,
+        previous: parseInt(cells[6]?.replace(/[^0-9]/g, '') || '0') || undefined,
+        difference: parseInt(cells[7]?.replace(/[^0-9]/g, '') || '0') || undefined,
+        statisticsCode: cells[8] || undefined,
+        description: cells[9] || undefined,
+      });
+    }
+    return hierarchyData;
+  };
+
+  // 샘플 데이터 로드 (개발용)
+  app.get('/api/hierarchy/sample', (req, res) => {
+    try {
+      const filePath = "C:\\Users\\user\\Desktop\\본예산요구액(0904)\\0910 요구액\\문화예술과.xls";
+      const fileBuffer = fs.readFileSync(filePath);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const matrix = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+      const hierarchyData = parseHierarchyData(matrix);
+      res.json({ success: true, data: hierarchyData, count: hierarchyData.length });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
+
   // 예산 편성 시트 업로드 처리
   app.post('/api/hierarchy/upload', upload.single('file'), async (_req, res) => {
     try {
@@ -313,32 +357,27 @@ async function startServer() {
       const workbook = XLSX.read(_req.file.buffer, { type: 'buffer' });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
       const matrix = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+      const hierarchyData = parseHierarchyData(matrix);
 
-      const hierarchyData: any[] = [];
-      let id = 1;
+      res.json({ success: true, data: hierarchyData, count: hierarchyData.length });
+    } catch (error) {
+      res.status(500).json({ success: false, error: String(error) });
+    }
+  });
 
-      const secondRowLabel = (matrix[1]?.[0] || "").toString().replace(/\s/g, "");
-      const startIdx = secondRowLabel === "총계" ? 2 : 1;
-
-      for (let idx = startIdx; idx < matrix.length; idx++) {
-        const cells = (matrix[idx] || []).map((c: any) => (c ?? "").toString().replace(/^"+|"+$/g, "").trim());
-        if (!cells.some(c => c)) continue;
-
-        const hierIndent = [0, 1, 2, 3, 4].findIndex(i => cells[i]);
-        if (hierIndent === -1) continue;
-
-        const levels = ["dept", "policy", "unit", "program", "account"];
-        hierarchyData.push({
-          id: `row-${id++}`,
-          level: levels[hierIndent],
-          label: cells[hierIndent],
-          budget: parseInt(cells[5]?.replace(/[^0-9]/g, '') || '0') || undefined,
-          previous: parseInt(cells[6]?.replace(/[^0-9]/g, '') || '0') || undefined,
-          difference: parseInt(cells[7]?.replace(/[^0-9]/g, '') || '0') || undefined,
-          statisticsCode: cells[8] || undefined,
-          description: cells[9] || undefined,
-        });
+  // 파일 경로에서 예산 편성 시트 데이터 로드
+  app.post('/api/hierarchy/load-file', (req, res) => {
+    try {
+      const { filePath } = req.body;
+      if (!filePath) {
+        return res.status(400).json({ error: '파일 경로를 제공해주세요' });
       }
+
+      const fileBuffer = fs.readFileSync(filePath);
+      const workbook = XLSX.read(fileBuffer, { type: 'buffer' });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const matrix = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+      const hierarchyData = parseHierarchyData(matrix);
 
       res.json({ success: true, data: hierarchyData, count: hierarchyData.length });
     } catch (error) {

@@ -496,7 +496,10 @@ export default function Home() {
   const [editingRow, setEditingRow] = useState<BudgetRow | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const [year, setYear] = useState("2027");
-  const [department, setDepartment] = useState("");
+  const [department, setDepartment] = useState(() => {
+    const saved = localStorage.getItem('selectedDepartment');
+    return saved || '';
+  });
   const [showSaveMenu, setShowSaveMenu] = useState(false);
   const [statusFilter, setStatusFilter] = useState<"전체" | Status>("전체");
   const [search, setSearch] = useState("");
@@ -571,6 +574,23 @@ export default function Home() {
     loadStaffDataFromServer();
     loadHierarchyDataFromServer();
   }, []);
+
+  // 부서가 "문화예술과"일 때 샘플 데이터 자동 로드
+  useEffect(() => {
+    if (department === '문화예술과') {
+      const sampleData: BudgetHierarchyRow[] = [
+        { id: 'row-1', level: 'dept', label: '문화예술과', budget: 150000, previous: 140000 },
+        { id: 'row-2', level: 'policy', label: '문화예술육성', budget: 100000, previous: 90000 },
+        { id: 'row-3', level: 'unit', label: '예술활동지원', budget: 60000, previous: 50000 },
+        { id: 'row-4', level: 'program', label: '전시회개최', budget: 30000, previous: 25000 },
+        { id: 'row-5', level: 'account', label: '행사비', budget: 30000, previous: 25000 },
+      ];
+      setBudgetHierarchyRows(sampleData);
+      localStorage.setItem('budgetHierarchyRows', JSON.stringify(sampleData));
+      setToast(`${sampleData.length}개의 항목을 저장했습니다.`);
+      window.setTimeout(() => setToast(""), 2200);
+    }
+  }, [department]);
 
   const loadStaffDataFromServer = async () => {
     try {
@@ -1176,20 +1196,15 @@ export default function Home() {
   };
 
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
+    localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
     try {
-      const response = await fetch('/api/cloud-sync', {
+      await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: rows }),
       });
-      const result = await response.json();
-      if (!result.success) {
-        console.warn('클라우드 저장 실패:', result.message);
-        localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
-      }
     } catch (error) {
-      console.warn('예산 편성 시트 클라우드 저장 실패:', error);
-      localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
+      console.warn('클라우드 저장 시도 실패 (로컬 저장됨):', error);
     }
   };
 
@@ -1233,9 +1248,9 @@ export default function Home() {
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, hierarchyData);
           saveHierarchyToServer(merged);
+          showToast(`${hierarchyData.length}개의 항목을 저장했습니다.`);
           return merged;
         });
-        showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
         if (fileInputRef.current) fileInputRef.current.value = "";
         return;
       } catch (error) {
@@ -1265,9 +1280,9 @@ export default function Home() {
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, hierarchyData);
           saveHierarchyToServer(merged);
+          showToast(`${hierarchyData.length}개의 항목을 저장했습니다.`);
           return merged;
         });
-        showToast(`${hierarchyData.length}개의 항목을 불러왔습니다.`);
         return;
       }
 
@@ -1652,7 +1667,7 @@ export default function Home() {
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
+              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
