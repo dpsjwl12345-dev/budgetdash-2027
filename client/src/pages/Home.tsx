@@ -1210,6 +1210,16 @@ export default function Home() {
     return [...kept, ...newRows];
   };
 
+  const namespaceHierarchyRows = (rows: BudgetHierarchyRow[], namespace: string) => {
+    const idMap = new Map<string, string>();
+    rows.forEach((row, index) => idMap.set(row.id, `${namespace}-${index + 1}`));
+    return rows.map((row) => ({
+      ...row,
+      id: idMap.get(row.id) ?? row.id,
+      parentId: row.parentId ? (idMap.get(row.parentId) ?? row.parentId) : undefined,
+    }));
+  };
+
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
     try {
@@ -1263,10 +1273,11 @@ export default function Home() {
           return;
         }
 
+        const uniqueParsedData = namespaceHierarchyRows(parsedData, `upload-${Date.now()}`);
         setBudgetHierarchyRows((prev) => {
-          const merged = mergeHierarchyByDepartment(prev, parsedData);
+          const merged = mergeHierarchyByDepartment(prev, uniqueParsedData);
           saveHierarchyToServer(merged).then((savedToServer) => {
-            showToast(savedToServer ? `서버에 ${parsedData.length}개의 항목을 저장했습니다.` : `${parsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
+            showToast(savedToServer ? `서버에 ${uniqueParsedData.length}개의 항목을 저장했습니다.` : `${uniqueParsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
           });
           return merged;
         });
@@ -1294,10 +1305,11 @@ export default function Home() {
         if (!parsedData.length) {
           throw new Error("empty");
         }
+        const uniqueParsedData = namespaceHierarchyRows(parsedData, `upload-${Date.now()}`);
         setBudgetHierarchyRows((prev) => {
-          const merged = mergeHierarchyByDepartment(prev, parsedData);
+          const merged = mergeHierarchyByDepartment(prev, uniqueParsedData);
           saveHierarchyToServer(merged).then((savedToServer) => {
-            showToast(savedToServer ? `서버에 ${parsedData.length}개의 항목을 저장했습니다.` : `${parsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
+            showToast(savedToServer ? `서버에 ${uniqueParsedData.length}개의 항목을 저장했습니다.` : `${uniqueParsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
           });
           return merged;
         });
@@ -1411,7 +1423,8 @@ export default function Home() {
         });
       });
 
-      const mergedHierarchyRows = mergeHierarchyByDepartment(budgetHierarchyRows, hierarchyRows);
+      const uniqueHierarchyRows = namespaceHierarchyRows(hierarchyRows, `upload-${Date.now()}`);
+      const mergedHierarchyRows = mergeHierarchyByDepartment(budgetHierarchyRows, uniqueHierarchyRows);
       setBudgetHierarchyRows(mergedHierarchyRows);
       const hierarchySaved = await saveHierarchyToServer(mergedHierarchyRows);
 
