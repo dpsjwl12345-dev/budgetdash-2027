@@ -1182,9 +1182,6 @@ export default function Home() {
     return [...kept, ...newRows];
   };
 
-<<<<<<< HEAD
-  const saveHierarchyToServer = async (rows: BudgetHierarchyRow[], dept: string) => {
-=======
   const namespaceHierarchyRows = (rows: BudgetHierarchyRow[], namespace: string) => {
     const idMap = new Map<string, string>();
     rows.forEach((row, index) => idMap.set(row.id, `${namespace}-${index + 1}`));
@@ -1197,31 +1194,18 @@ export default function Home() {
 
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
->>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
     try {
       const response = await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: rows, department: dept }),
+        body: JSON.stringify({ data: rows, department }),
       });
-<<<<<<< HEAD
-      const data = await response.json();
-      if (response.ok && data.success) {
-        return { success: true, message: data.message || `클라우드에 저장되었습니다 ☁️` };
-      } else {
-        return { success: false, message: data.message || `클라우드 저장 실패했습니다 ❌` };
-      }
-    } catch (error) {
-      console.error('클라우드 저장 실패:', error);
-      return { success: false, message: `클라우드 저장 실패했습니다 ❌` };
-=======
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
       return true;
     } catch (error) {
       console.warn('클라우드 저장 시도 실패 (로컬 저장됨):', error);
       return false;
->>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
     }
   };
 
@@ -1262,15 +1246,9 @@ export default function Home() {
 
         const uniqueParsedData = namespaceHierarchyRows(parsedData, `upload-${Date.now()}`);
         setBudgetHierarchyRows((prev) => {
-<<<<<<< HEAD
-          const merged = mergeHierarchyByDepartment(prev, parsedData);
-          saveHierarchyToServer(merged, department).then((result) => {
-            showToast(result.message);
-=======
           const merged = mergeHierarchyByDepartment(prev, uniqueParsedData);
           saveHierarchyToServer(merged).then((savedToServer) => {
             showToast(savedToServer ? `서버에 ${uniqueParsedData.length}개의 항목을 저장했습니다.` : `${uniqueParsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
->>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
           });
           return merged;
         });
@@ -1300,15 +1278,9 @@ export default function Home() {
         }
         const uniqueParsedData = namespaceHierarchyRows(parsedData, `upload-${Date.now()}`);
         setBudgetHierarchyRows((prev) => {
-<<<<<<< HEAD
-          const merged = mergeHierarchyByDepartment(prev, parsedData);
-          saveHierarchyToServer(merged, department).then((result) => {
-            showToast(result.message);
-=======
           const merged = mergeHierarchyByDepartment(prev, uniqueParsedData);
           saveHierarchyToServer(merged).then((savedToServer) => {
             showToast(savedToServer ? `서버에 ${uniqueParsedData.length}개의 항목을 저장했습니다.` : `${uniqueParsedData.length}개의 항목을 이 기기에만 저장했습니다.`);
->>>>>>> e038d128258b9432700f5983c3d3f0508e52589b
           });
           return merged;
         });
