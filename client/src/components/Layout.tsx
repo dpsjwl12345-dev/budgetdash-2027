@@ -240,12 +240,20 @@ export default function Layout({
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
-        <div className="brand-lockup">
+        <button
+          type="button"
+          className="brand-lockup"
+          onClick={() => {
+            setActiveNav("예산 편성 시트");
+            setLocation("/");
+          }}
+          aria-label="초기 화면으로 이동"
+        >
           <div className="sidebar-title">
             <span>지방자치단체</span>
             <span>예산편성검토</span>
           </div>
-        </div>
+        </button>
         <div className="sidebar-divider" />
         <div className="sidebar-label">WORKSPACE</div>
         <nav className="nav-list" aria-label="워크스페이스">

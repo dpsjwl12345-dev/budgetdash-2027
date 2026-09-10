@@ -202,7 +202,16 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   /* 10px matches .sidebar-label's own margin-left so the brand title, WORKSPACE
      label and nav items all share the same 26px left edge inside the sidebar. */
   margin: 2px 0 18px 10px;
+  /* 초기 화면으로 이동하는 버튼이라 <button>으로 바뀌었으니 기본 버튼 스타일을 지운다. */
+  background: none;
+  border: none;
+  padding: 0;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  width: fit-content;
 }
+.brand-lockup:hover .sidebar-title { opacity: 0.85; }
 .sidebar.collapsed .brand-lockup { justify-content: center; margin-left: 0; gap: 0; }
 .sidebar-title {
   color: #ffffff;
