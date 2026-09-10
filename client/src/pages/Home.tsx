@@ -1100,9 +1100,10 @@ export default function Home() {
         level = HIERARCHY_LEVELS[hierIndent];
         label = cleanCells[hierIndent];
         statisticsCode = col8;
-      } else if (col8.includes("○")) {
-        // 산출근거 설명 (예: "○화성시문화관광재단 지원") — 통계목 칸에 넣고,
-        // 산출식(9열)+결과값(12열)은 그대로 산출근거 칸에 둔다.
+      } else if (col8.includes("○") || col8.includes("ㅇ")) {
+        // 산출근거 설명 (예: "○화성시문화관광재단 지원", 하위 항목은 "ㅇ유지관리 용역"처럼
+        // 자음 "ㅇ"(이응)으로 표기됨 — 원 기호 "○"와 다른 문자라 별도로 걸러줘야 한다) —
+        // 통계목 칸에 넣고, 산출식(9열)+결과값(12열)은 그대로 산출근거 칸에 둔다.
         level = "note";
         label = "";
         statisticsCode = col8;
@@ -1134,13 +1135,18 @@ export default function Home() {
 
       if (!label && !budget && !previous && !difference && !description && !statisticsCode) continue;
 
+      // 부서~통계목(hierIndent) 행과 편성목(item) 행은 5~7열이 실제 금액을 나타내므로
+      // 0원도 "0"으로 그대로 보여준다. 부기명·산출식·재원내역처럼 금액이 다른 칸(설명)에
+      // 들어가는 행은 5~7열이 원래 비어있는 게 정상이라 undefined로 남겨 빈칸으로 둔다.
+      const hasOwnAmount = hierIndent !== -1 || level === "item";
+
       hierarchyData.push({
         id: `row-${id++}`,
         level,
         label,
-        budget: budget || undefined,
-        previous: previous || undefined,
-        difference: difference || undefined,
+        budget: hasOwnAmount ? budget : (budget || undefined),
+        previous: hasOwnAmount ? previous : (previous || undefined),
+        difference: hasOwnAmount ? difference : (difference || undefined),
         statisticsCode: statisticsCode || undefined,
         description: description || undefined,
         colSpan,
