@@ -3,7 +3,7 @@
  * 이번 수정 범위는 데스크톱 전체 가독성 향상이며, 정보 구조와 상태 체계는 유지하고 타이포그래피만 한 단계 크게 잡는다.
  */
 import { Fragment, useMemo, useRef, useState, useEffect } from "react";
-import { useLocation, Link } from "wouter";
+import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
@@ -1909,7 +1909,7 @@ export default function Home() {
                     const handleProgramClick = () => {
                       if (row.level === 'program') {
                         const url = `/budget-explainer?dept=${encodeURIComponent(department)}&item=${encodeURIComponent(row.label)}`;
-                        window.location.href = url;
+                        setLocation(url);
                       }
                     };
 
