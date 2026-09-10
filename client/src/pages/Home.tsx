@@ -48,6 +48,7 @@ import {
   Search,
   Settings2,
   SlidersHorizontal,
+  Upload,
   UsersRound,
   X,
   Database,
@@ -1666,19 +1667,19 @@ export default function Home() {
             </div>
             <div className="action-row">
               <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
-              <input
-                ref={fileInputRef}
-                type="file"
-                accept=".xlsx,.xls"
-                onChange={(e) => {
-                  const file = e.target.files?.[0];
-                  if (file) handleExcelUpload(file);
-                }}
-                style={{ display: "none" }}
-              />
-              <button type="button" className="template-link" onClick={() => fileInputRef.current?.click()}>
-                파일 업로드
-              </button>
+              <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
+                <div className="icon-stack-front"><Upload size={20} /></div>
+                <input
+                  ref={fileInputRef}
+                  className="upload-input"
+                  type="file"
+                  accept=".xlsx,.xls,.csv"
+                  onChange={(event) => {
+                    const file = event.target.files?.[0];
+                    if (file) handleExcelUpload(file);
+                  }}
+                />
+              </label>
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
