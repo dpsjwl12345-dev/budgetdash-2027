@@ -719,6 +719,41 @@ export default function Home() {
   };
 
   const loadExecutionDataFromServer = async () => {
+    try {
+      const response = await fetch('/api/budget-execution-2026/load');
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && Array.isArray(data) && data.length > 0) {
+          const mapped: BudgetExecution[] = data.map((row: any) => ({
+            id: row.id,
+            department: row.department,
+            policyName: row.policyName ?? row.policy_name ?? '',
+            programName: row.programName ?? row.program_name ?? '',
+            unitName: row.unitName ?? row.unit_name ?? '',
+            statisticsCode: row.statisticsCode ?? row.statistics_code ?? '',
+            original: row.original ?? 0,
+            supplementary: row.supplementary ?? 0,
+            preEstablishment: row.preEstablishment ?? row.pre_establishment ?? 0,
+            reserve: row.reserve ?? 0,
+            carryover: row.carryover ?? 0,
+            budget: row.budget ?? 0,
+            executed: row.executed ?? 0,
+            executionRate: row.executionRate ?? row.execution_rate ?? 0,
+          }));
+          setExecutionData(mapped);
+          try {
+            localStorage.setItem('budgetExecution2026Rows', JSON.stringify(mapped));
+          } catch (error) {
+            console.warn('localStorage 저장 실패:', error);
+          }
+          return;
+        }
+      }
+    } catch (error) {
+      console.warn('2026 예산집행현황 서버 로드 실패:', error);
+    }
+
+    // 서버 로드 실패/빈 응답 시 이 기기에 남아있는 마지막 데이터로 폴백한다.
     const saved = localStorage.getItem('budgetExecution2026Rows');
     if (saved) {
       try {
