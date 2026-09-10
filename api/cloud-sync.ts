@@ -97,27 +97,31 @@ async function saveHierarchy(req: any, res: any) {
     updated_at: new Date().toISOString(),
   }));
 
-  const { error: upsertError } = await supabase
+  // 이전에는 "새 행 upsert → id NOT IN (새 id 목록)으로 옛 행 삭제" 순서였는데,
+  // 부서 행 수가 많아지면 NOT IN 필터에 수백 개 id를 다 나열한 URL이 너무 길어져
+  // 삭제 요청 자체가 조용히 실패했다. 업로드할 때마다 새 id가 매번 새로 생성되므로
+  // (upload-<timestamp>-<index>) 어차피 이전 행과 겹치는 id가 없어 "부분 정리"는
+  // 애초에 의미가 없었다 — 그래서 부서 전체를 먼저 지우고 새로 넣는 방식으로 바꿔
+  // 옛 업로드 회차가 계속 누적/혼합되는 문제를 근본적으로 없앤다.
+  const { error: deleteError } = await supabase
     .from('budget_hierarchy_rows')
-    .upsert(dbRows, { onConflict: 'id' });
-
-  if (upsertError) {
-    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    .delete()
+    .eq('department', department);
+  if (deleteError) {
+    res.status(200).json({ success: false, message: "저장 실패(기존 데이터 정리 실패)", error: deleteError.message });
     return;
   }
 
-  const ids = dbRows.map((row: any) => row.id);
-  let cleanupWarning: string | undefined;
-  if (ids.length > 0) {
-    const { error: cleanupError } = await supabase
-      .from('budget_hierarchy_rows')
-      .delete()
-      .eq('department', department)
-      .not('id', 'in', `(${ids.map((id: string) => `"${id}"`).join(',')})`);
-    if (cleanupError) cleanupWarning = cleanupError.message;
+  const { error: insertError } = await supabase
+    .from('budget_hierarchy_rows')
+    .insert(dbRows);
+
+  if (insertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: insertError.message });
+    return;
   }
 
-  res.status(200).json({ success: true, message: cleanupWarning ? "저장 완료 (이전 삭제 항목 정리는 보류됨)" : "저장 완료", warning: cleanupWarning });
+  res.status(200).json({ success: true, message: "저장 완료" });
 }
 
 async function loadMemos(req: any, res: any) {
