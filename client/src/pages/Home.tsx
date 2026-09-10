@@ -255,6 +255,29 @@ function getFormulaErrors(row: BudgetRow, staffData: Record<string, { capacity: 
   return errors;
 }
 
+// 세출예산내역서(편성 시트)의 편성목(item) 행이 사전절차 대상인지 판단한다.
+// 상위 통계목(account) 코드와 편성목명·세부사업명 텍스트로 판단하며, 판단 근거가
+// 있는 항목만 편성목 행 바로 위에 배너로 표시한다 (금액 등은 원본 문서를 벗어나지 않는다).
+const HIERARCHY_PROCEDURE_BADGES: {
+  label: string;
+  test: (ctx: { accountCode: string; itemText: string; programText: string; amount: number }) => boolean;
+}[] = [
+  { label: "💰 투자심사 대상 (20억 이상)", test: ({ amount }) => amount >= 2000000 },
+  { label: "📋 보조금 심의 대상", test: ({ accountCode }) => /^(306|307|308|402|403)/.test(accountCode) },
+  { label: "🎪 행사·축제 관련", test: ({ itemText, programText }) => /행사|축제|경기대회|공연/.test(`${itemText} ${programText}`) },
+  { label: "📦 자산취득 대상", test: ({ accountCode }) => /^405/.test(accountCode) },
+  { label: "👤 기간제 채용 사전승인 필요", test: ({ itemText }) => /기간제|임시직/.test(itemText) },
+];
+
+function getHierarchyItemBadges(row: BudgetHierarchyRow, accountLabel: string, programLabel: string): string[] {
+  const accountCode = accountLabel.match(/^\d+/)?.[0] ?? "";
+  const itemText = `${row.statisticsCode ?? ""} ${row.description ?? ""}`;
+  const amount = row.budget || 0;
+  return HIERARCHY_PROCEDURE_BADGES.filter((rule) =>
+    rule.test({ accountCode, itemText, programText: programLabel, amount })
+  ).map((rule) => rule.label);
+}
+
 function trapTabKey(event: React.KeyboardEvent, container: HTMLElement | null) {
   if (event.key !== "Tab" || !container) return;
   const focusables = container.querySelectorAll<HTMLElement>(
@@ -1946,8 +1969,27 @@ export default function Home() {
                       }
                     };
 
+                    const rowAncestors = hierarchyAncestors.get(row.id);
+                    const itemBadges = row.level === 'item'
+                      ? getHierarchyItemBadges(row, rowAncestors?.accountRow?.label ?? '', rowAncestors?.programRow?.label ?? '')
+                      : [];
+                    const badgeRow = itemBadges.length > 0 && (
+                      <tr key={`${row.id}-badges`}>
+                        <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22' }}>
+                          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '6px' }}>
+                            {itemBadges.map((badge) => (
+                              <span key={badge} style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.15)', color: '#e67e22', fontSize: '12px', fontWeight: 600 }}>
+                                {badge}
+                              </span>
+                            ))}
+                          </div>
+                        </td>
+                      </tr>
+                    );
+
                     return (
                       <Fragment key={row.id}>
+                        {badgeRow}
                         <tr>
                           <td
                             onClick={handleProgramClick}
