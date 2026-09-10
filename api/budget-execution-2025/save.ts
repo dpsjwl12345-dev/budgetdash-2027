@@ -35,25 +35,40 @@ export default async function handler(req: any, res: any) {
       execution_rate: row.executionRate ?? 0,
     }));
 
-    // 업로드는 항상 해당 연도 전체를 교체하는 것을 전제로 한다 (BudgetExecution2026.tsx UI 안내 문구 참고).
-    const { error: deleteError } = await supabase
-      .from("budget_execution_2025")
-      .delete()
-      .not("id", "is", null);
-    if (deleteError) {
-      res.status(200).json({ success: false, message: "저장 실패 (기존 데이터 삭제 실패)", error: deleteError.message });
+    if (dbRows.length === 0) {
+      res.status(200).json({ success: false, message: "저장할 데이터가 없습니다." });
       return;
     }
 
-    if (dbRows.length > 0) {
-      const { error: insertError } = await supabase.from("budget_execution_2025").insert(dbRows);
-      if (insertError) {
-        res.status(200).json({ success: false, message: "저장 실패", error: insertError.message });
-        return;
-      }
+    // 부서 단위로 업로드하는 화면이므로, 이번에 업로드된 부서의 기존 행만 새 데이터로
+    // 교체한다. 테이블 전체를 지우면 이번 업로드에 없는 다른 부서 데이터까지 사라진다.
+    const uploadedDepartments = Array.from(new Set(dbRows.map((row) => row.department)));
+
+    const { error: upsertError } = await supabase
+      .from("budget_execution_2025")
+      .upsert(dbRows, { onConflict: "id" });
+    if (upsertError) {
+      res.status(200).json({ success: false, message: "저장 실패. 기존 데이터는 유지했습니다.", error: upsertError.message });
+      return;
     }
 
-    res.status(200).json({ success: true, message: "저장 완료", count: dbRows.length });
+    const ids = dbRows.map((row) => row.id);
+    let cleanupWarning: string | undefined;
+    if (ids.length > 0) {
+      const { error: cleanupError } = await supabase
+        .from("budget_execution_2025")
+        .delete()
+        .in("department", uploadedDepartments)
+        .not("id", "in", `(${ids.join(",")})`);
+      if (cleanupError) cleanupWarning = cleanupError.message;
+    }
+
+    res.status(200).json({
+      success: true,
+      message: cleanupWarning ? "저장 완료 (이전 삭제 항목 정리는 보류됨)" : "저장 완료",
+      warning: cleanupWarning,
+      count: dbRows.length,
+    });
   } catch (error) {
     res.status(500).json({ success: false, error: String(error) });
   }
