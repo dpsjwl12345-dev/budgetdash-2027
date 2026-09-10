@@ -1,9 +1,28 @@
 import { createClient } from '@supabase/supabase-js';
-import { loadFromKV, saveToKV } from '../shared/kv';
 
 // Vercel 서버리스 함수 개수 제한 때문에, 예산 편성 시트(hierarchy)와 부서별
 // 정원·현원(staff) 클라우드 저장을 별도 파일 대신 이 파일 하나로 합쳐서 처리한다.
 // GET/POST /api/cloud-sync?type=hierarchy|staff
+async function loadKV(key: string) {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return null;
+  const response = await fetch(`${url}/get/${key}`, { headers: { Authorization: `Bearer ${token}` } });
+  if (!response.ok) return null;
+  const body = await response.json();
+  return body?.result ? JSON.parse(body.result) : null;
+}
+async function saveKV(key: string, data: unknown) {
+  const url = process.env.KV_REST_API_URL;
+  const token = process.env.KV_REST_API_TOKEN;
+  if (!url || !token) return false;
+  const response = await fetch(`${url}/set/${key}`, {
+    method: 'POST',
+    headers: { Authorization: `Bearer ${token}` },
+    body: JSON.stringify(data),
+  });
+  return response.ok;
+}
 
 function getClient() {
   const url = process.env.SUPABASE_URL || process.env.VITE_SUPABASE_URL;
@@ -140,7 +159,7 @@ async function saveStaff(req: any, res: any) {
 }
 
 async function loadIssues(res: any) {
-  const data = await loadFromKV('departmentIssues');
+  const data = await loadKV('departmentIssues');
   res.status(200).json({ data });
 }
 
@@ -150,11 +169,11 @@ async function saveIssues(req: any, res: any) {
     res.status(400).json({ success: false, error: "유효한 쟁점사항 데이터가 필요합니다." });
     return;
   }
-  const success = await saveToKV('departmentIssues', data);
+  const success = await saveKV('departmentIssues', data);
   res.status(200).json({ success, message: success ? "쟁점사항이 클라우드에 저장되었습니다." : "클라우드 저장에 실패했습니다." });
 }
 async function loadMemos(res: any) {
-  const data = await loadFromKV('budgetProgramMemos');
+  const data = await loadKV('budgetProgramMemos');
   res.status(200).json({ data: data ?? { programMemos: {}, hiddenMemoIds: [] } });
 }
 async function saveMemos(req: any, res: any) {
@@ -164,7 +183,7 @@ async function saveMemos(req: any, res: any) {
     hiddenMemoIds: Array.isArray(body.hiddenMemoIds) ? body.hiddenMemoIds : [],
     updatedAt: new Date().toISOString(),
   };
-  const success = await saveToKV('budgetProgramMemos', data);
+  const success = await saveKV('budgetProgramMemos', data);
   res.status(200).json({ success, data });
 }
 
