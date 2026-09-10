@@ -11,16 +11,24 @@ function getClient() {
   return createClient(url, key);
 }
 
-async function loadHierarchy(res: any) {
+async function loadHierarchy(req: any, res: any) {
   const supabase = getClient();
   if (!supabase) {
     res.status(200).json({ data: null });
     return;
   }
-  const { data, error } = await supabase
+
+  const department = req.query?.department;
+  let query = supabase
     .from('budget_hierarchy_rows')
-    .select('*')
-    .order('sort_order', { ascending: true });
+    .select('*');
+
+  if (department) {
+    query = query.eq('department', department);
+  }
+
+  const { data, error } = await query.order('sort_order', { ascending: true });
+  console.log(`[loadHierarchy] dept=${department}, rows=${data?.length || 0}, error=${error?.message}`);
 
   if (error) {
     res.status(200).json({ data: null });
@@ -50,6 +58,12 @@ async function saveHierarchy(req: any, res: any) {
     return;
   }
 
+  const department = req.body?.department;
+  if (!department) {
+    res.status(200).json({ success: false, message: "부서 정보가 필요합니다" });
+    return;
+  }
+
   const rows = Array.isArray(req.body?.data) ? req.body.data : [];
   if (rows.length === 0) {
     res.status(200).json({ success: false, message: "저장할 데이터가 없습니다. 기존 데이터는 유지했습니다." });
@@ -58,6 +72,7 @@ async function saveHierarchy(req: any, res: any) {
 
   const dbRows = rows.map((row: any, index: number) => ({
     id: String(row.id),
+    department: department,
     level: row.level,
     label: row.label ?? '',
     budget: row.budget ?? null,
@@ -86,6 +101,7 @@ async function saveHierarchy(req: any, res: any) {
     const { error: cleanupError } = await supabase
       .from('budget_hierarchy_rows')
       .delete()
+      .eq('department', department)
       .not('id', 'in', `(${ids.map((id: string) => `"${id}"`).join(',')})`);
     if (cleanupError) cleanupWarning = cleanupError.message;
   }
@@ -144,7 +160,7 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
-      return await loadHierarchy(res);
+      return await loadHierarchy(req, res);
     }
 
     if (req.method === 'POST') {

@@ -474,10 +474,7 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
-  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>(() => {
-    const saved = localStorage.getItem('budgetHierarchyRows');
-    return saved ? JSON.parse(saved) : [];
-  });
+  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
   const [programMemos, setProgramMemos] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem('budgetProgramMemos');
     return saved ? JSON.parse(saved) : {};
@@ -570,8 +567,8 @@ export default function Home() {
     loadExecutionDataFromServer();
     loadCsvData();
     loadStaffDataFromServer();
-    loadHierarchyDataFromServer();
-  }, []);
+    loadHierarchyDataFromServer(department);
+  }, [department]);
 
   const loadStaffDataFromServer = async () => {
     try {
@@ -734,28 +731,20 @@ export default function Home() {
     }
   };
 
-  const loadHierarchyDataFromServer = async () => {
+  const loadHierarchyDataFromServer = async (dept?: string) => {
     try {
-      const response = await fetch('/api/cloud-sync');
+      const url = dept ? `/api/cloud-sync?department=${encodeURIComponent(dept)}` : '/api/cloud-sync';
+      const response = await fetch(url);
       if (!response.ok) throw new Error('서버 로드 실패');
       const { data } = await response.json();
       if (data && Array.isArray(data)) {
         setBudgetHierarchyRows(data);
-        localStorage.setItem('budgetHierarchyRows', JSON.stringify(data));
         return;
       }
-      const saved = localStorage.getItem('budgetHierarchyRows');
-      if (saved) setBudgetHierarchyRows(JSON.parse(saved));
+      setBudgetHierarchyRows([]);
     } catch (error) {
       console.warn('예산 편성 시트를 클라우드에서 로드 실패:', error);
-      const saved = localStorage.getItem('budgetHierarchyRows');
-      if (saved) {
-        try {
-          setBudgetHierarchyRows(JSON.parse(saved));
-        } catch (localError) {
-          console.warn('localStorage에서 데이터 로드 실패:', localError);
-        }
-      }
+      setBudgetHierarchyRows([]);
     }
   };
 
@@ -1183,10 +1172,11 @@ export default function Home() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: rows, department: dept }),
       });
-      if (response.ok) {
-        return { success: true, message: `클라우드에 저장되었습니다 ☁️` };
+      const data = await response.json();
+      if (response.ok && data.success) {
+        return { success: true, message: data.message || `클라우드에 저장되었습니다 ☁️` };
       } else {
-        return { success: false, message: `클라우드 저장 실패했습니다 ❌` };
+        return { success: false, message: data.message || `클라우드 저장 실패했습니다 ❌` };
       }
     } catch (error) {
       console.error('클라우드 저장 실패:', error);
@@ -1662,7 +1652,7 @@ export default function Home() {
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
+              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); loadHierarchyDataFromServer(value); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
