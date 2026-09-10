@@ -1,4 +1,5 @@
 import { createClient } from '@supabase/supabase-js';
+import { loadFromKV, saveToKV } from '../shared/kv';
 
 // Vercel 서버리스 함수 개수 제한 때문에, 예산 편성 시트(hierarchy)와 부서별
 // 정원·현원(staff) 클라우드 저장을 별도 파일 대신 이 파일 하나로 합쳐서 처리한다.
@@ -138,17 +139,34 @@ async function saveStaff(req: any, res: any) {
   res.status(200).json({ success: true, message: "저장 완료" });
 }
 
+async function loadIssues(res: any) {
+  const data = await loadFromKV('departmentIssues');
+  res.status(200).json({ data });
+}
+
+async function saveIssues(req: any, res: any) {
+  const data = req.body?.data;
+  if (!data || typeof data !== 'object' || Array.isArray(data)) {
+    res.status(400).json({ success: false, error: "유효한 쟁점사항 데이터가 필요합니다." });
+    return;
+  }
+  const success = await saveToKV('departmentIssues', data);
+  res.status(200).json({ success, message: success ? "쟁점사항이 클라우드에 저장되었습니다." : "클라우드 저장에 실패했습니다." });
+}
+
 export default async function handler(req: any, res: any) {
   try {
     const type = req.query?.type;
 
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
+      if (type === 'issues') return await loadIssues(res);
       return await loadHierarchy(res);
     }
 
     if (req.method === 'POST') {
       if (type === 'staff') return await saveStaff(req, res);
+      if (type === 'issues') return await saveIssues(req, res);
       return await saveHierarchy(req, res);
     }
 

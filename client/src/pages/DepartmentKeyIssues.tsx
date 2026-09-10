@@ -20,7 +20,7 @@ export default function DepartmentKeyIssues() {
   useEffect(() => {
     const loadIssues = async () => {
       try {
-        const response = await fetch("/api/department-issues/load");
+        const response = await fetch("/api/cloud-sync?type=issues");
         if (!response.ok) throw new Error("서버 로드 실패");
         const { data } = await response.json();
         if (data && typeof data === "object" && !Array.isArray(data)) {
@@ -74,7 +74,7 @@ export default function DepartmentKeyIssues() {
     setCurrentText("");
 
     try {
-      const response = await fetch("/api/department-issues/save", {
+      const response = await fetch("/api/cloud-sync?type=issues", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedIssues }),
