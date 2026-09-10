@@ -2026,7 +2026,9 @@ export default function Home() {
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {row.description || ''}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}></td>
+                          <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: '#e67e22', fontWeight: 600, verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                            {itemBadges.length > 0 && '사전'}
+                          </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
                             {row.level === 'item' && '✎'}
                           </td>
