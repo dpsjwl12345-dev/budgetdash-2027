@@ -70,6 +70,15 @@ async function startServer() {
             .upsert(data ?? [], { onConflict: 'id' });
 
           if (!error) {
+            const ids = data
+              .map((row: any) => Number(row?.id))
+              .filter((id: number) => Number.isFinite(id));
+            if (ids.length > 0) {
+              await supabase
+                .from('budget_rows')
+                .delete()
+                .not('id', 'in', `(${ids.join(',')})`);
+            }
             res.json({ success: true, message: '클라우드에 저장되었습니다' });
             return;
           }
@@ -312,7 +321,7 @@ async function startServer() {
 
     for (let idx = startIdx; idx < matrix.length; idx++) {
       const cells = (matrix[idx] || []).map((c: any) => (c ?? "").toString().replace(/^"+|"+$/g, "").trim());
-      if (!cells.some(c => c)) continue;
+      if (!cells.some((c: string) => c)) continue;
 
       const hierIndent = [0, 1, 2, 3, 4].findIndex(i => cells[i]);
       if (hierIndent === -1) continue;
