@@ -531,6 +531,7 @@ export default function Home() {
   const editModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   // Esc로 모달 닫기
   useEffect(() => {
@@ -564,7 +565,6 @@ export default function Home() {
     }
   }, [Boolean(editingRow)]);
 
-  // 페이지 로드 시 클라우드 데이터를 우선 불러오고, 클라우드가 설정되지 않은 경우에만 localStorage를 사용한다.
   useEffect(() => {
     loadDataFromServer();
     loadExecutionDataFromServer();
@@ -572,23 +572,6 @@ export default function Home() {
     loadStaffDataFromServer();
     loadHierarchyDataFromServer();
   }, []);
-
-  // 부서가 "문화예술과"일 때 샘플 데이터 자동 로드
-  useEffect(() => {
-    if (department === '문화예술과') {
-      const sampleData: BudgetHierarchyRow[] = [
-        { id: 'row-1', level: 'dept', label: '문화예술과', budget: 150000, previous: 140000 },
-        { id: 'row-2', level: 'policy', label: '문화예술육성', budget: 100000, previous: 90000 },
-        { id: 'row-3', level: 'unit', label: '예술활동지원', budget: 60000, previous: 50000 },
-        { id: 'row-4', level: 'program', label: '전시회개최', budget: 30000, previous: 25000 },
-        { id: 'row-5', level: 'account', label: '행사비', budget: 30000, previous: 25000 },
-      ];
-      setBudgetHierarchyRows(sampleData);
-      localStorage.setItem('budgetHierarchyRows', JSON.stringify(sampleData));
-      setToast(`${sampleData.length}개의 항목을 저장했습니다.`);
-      window.setTimeout(() => setToast(""), 2200);
-    }
-  }, [department]);
 
   const loadStaffDataFromServer = async () => {
     try {
@@ -1193,16 +1176,21 @@ export default function Home() {
     return [...kept, ...newRows];
   };
 
-  const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
-    localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
+  const saveHierarchyToServer = async (rows: BudgetHierarchyRow[], dept: string) => {
     try {
-      await fetch('/api/cloud-sync', {
+      const response = await fetch('/api/cloud-sync', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: rows }),
+        body: JSON.stringify({ data: rows, department: dept }),
       });
+      if (response.ok) {
+        return { success: true, message: `클라우드에 저장되었습니다 ☁️` };
+      } else {
+        return { success: false, message: `클라우드 저장 실패했습니다 ❌` };
+      }
     } catch (error) {
-      console.warn('클라우드 저장 시도 실패 (로컬 저장됨):', error);
+      console.error('클라우드 저장 실패:', error);
+      return { success: false, message: `클라우드 저장 실패했습니다 ❌` };
     }
   };
 
@@ -1243,8 +1231,9 @@ export default function Home() {
 
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, parsedData);
-          saveHierarchyToServer(merged);
-          showToast(`로컬에 ${parsedData.length}개의 항목을 저장했습니다. 💾`);
+          saveHierarchyToServer(merged, department).then((result) => {
+            showToast(result.message);
+          });
           return merged;
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1273,8 +1262,9 @@ export default function Home() {
         }
         setBudgetHierarchyRows((prev) => {
           const merged = mergeHierarchyByDepartment(prev, parsedData);
-          saveHierarchyToServer(merged);
-          showToast(`로컬에 ${parsedData.length}개의 항목을 저장했습니다. 💾`);
+          saveHierarchyToServer(merged, department).then((result) => {
+            showToast(result.message);
+          });
           return merged;
         });
         return;
@@ -1457,6 +1447,30 @@ export default function Home() {
     showToast("CSV 파일을 다운로드했습니다.");
   };
 
+  const downloadTemplate = () => {
+    const template = [{
+      정책사업명: "노인복지 증진",
+      단위사업명: "경로당 운영지원",
+      세부사업명: "사업명을 입력하세요",
+      편성목코드: "300",
+      통계목코드: "302-03",
+      통계목명: "민간경상보조",
+      요구산출근거: "산출근거를 입력하세요",
+      요구산출근거식: "단가 × 수량",
+      요구액: 0,
+      자체재원: 0,
+      국고보조금: 0,
+      광역보조금: 0,
+      기타: 0,
+      전년도: 0,
+    }];
+    const worksheet = XLSX.utils.json_to_sheet(template);
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "예산편성");
+    XLSX.writeFile(workbook, "2027_본예산_편성요구서_양식.xlsx");
+    showToast("엑셀 양식을 다운로드했습니다.");
+  };
+
   const renderCell = (row: BudgetRow, key: ColumnKey) => {
     if (key === "policy") {
       const programLines = row.program.split("\n");
@@ -1629,6 +1643,22 @@ export default function Home() {
                   </div>
                 </div>
               </div>
+            </div>
+            <div className="action-row">
+              <button type="button" className="template-link" onClick={downloadTemplate}>업로드 양식</button>
+              <input
+                ref={fileInputRef}
+                type="file"
+                accept=".xlsx,.xls"
+                onChange={(e) => {
+                  const file = e.target.files?.[0];
+                  if (file) handleExcelUpload(file);
+                }}
+                style={{ display: "none" }}
+              />
+              <button type="button" className="template-link" onClick={() => fileInputRef.current?.click()}>
+                파일 업로드
+              </button>
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
