@@ -278,13 +278,12 @@ function getHierarchyItemBadges(row: BudgetHierarchyRow, accountLabel: string, p
   ).map((rule) => rule.label);
 }
 
-// "세출 통계목별 상세" 가이드의 표준 산출식 중, 이 앱에 등록된 정원·현원(staffData)만으로
-// 실제 계산값을 내서 검증할 수 있는 것만 다룬다 (위원회수당·당직비 등은 회의 횟수·근무 인원
-// 같은 이 앱에 없는 입력이 필요해 계산값을 낼 수 없으므로 제외한다).
-// - 국내여비(202-01): 현원 × 20,000 × 9 × 12
-// - 일반수용비(201-01 하위 부기): 정원 × 750,000
-// - 급식비(201-01 하위 부기): 정원 × 600,000
-type HierarchyFormulaCheck = { name: string; expected: number; actual: number };
+// "세출 통계목별 상세" 가이드의 표준 산출식 중 이 앱에 등록된 정원·현원(staffData)만으로
+// 실제 계산값을 내서 검증할 수 있는 것(국내여비/일반수용비/급식비)은 등록값과 다를 때만
+// 표시한다. "수당"류(위원회수당·당직수당·심사수당 등)는 회의·근무 횟수처럼 이 앱에 없는
+// 입력이 필요해 정확한 계산은 못 하지만, 산출식 오류가 잦은 항목이라 무조건 표시해
+// 사람이 직접 산출근거를 확인하게 한다.
+type HierarchyFormulaCheck = { name: string; message: string };
 
 // 부기명 설명("18,750,000원 = 18,750", "750,000원*15명 = 11,250")에서 "=" 뒤의 최종 결과값을
 // 뽑아 원 단위로 환산한다. 이 표는 값이 천원 단위로 저장되어 있다.
@@ -309,20 +308,33 @@ function getHierarchyFormulaCheck(
 
   if (accountCode === "202" && itemCode === "01") {
     const actual = (row.budget || 0) * 1000;
-    return { name: "국내여비", expected: current * 20000 * 9 * 12, actual };
+    const expected = current * 20000 * 9 * 12;
+    if (Math.abs(actual - expected) > 1000) {
+      return { name: "국내여비", message: `국내여비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
+    }
   }
   if (accountCode === "201" && itemCode === "01") {
     if (/일반수용비/.test(nearbyText)) {
       const actual = parseTrailingAmountWon(nearbyText);
-      if (actual === null) return null;
-      return { name: "일반수용비", expected: capacity * 750000, actual };
+      const expected = capacity * 750000;
+      if (actual !== null && Math.abs(actual - expected) > 1000) {
+        return { name: "일반수용비", message: `일반수용비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
+      }
     }
     if (/급식비/.test(nearbyText)) {
       const actual = parseTrailingAmountWon(nearbyText);
-      if (actual === null) return null;
-      return { name: "급식비", expected: capacity * 600000, actual };
+      const expected = capacity * 600000;
+      if (actual !== null && Math.abs(actual - expected) > 1000) {
+        return { name: "급식비", message: `급식비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
+      }
     }
   }
+
+  const combinedText = `${row.statisticsCode ?? ""} ${row.description ?? ""} ${nearbyText}`;
+  if (/수당/.test(combinedText)) {
+    return { name: "수당", message: "수당 항목 - 산출근거 직접 확인 필요" };
+  }
+
   return null;
 }
 
@@ -1937,16 +1949,21 @@ export default function Home() {
                       }
                     });
 
-                    // 편성목(item) 행 바로 다음에 딸린 부기명 행(예: "○일반수용비")의 텍스트를
-                    // 찾아둔다. 201-01(사무관리비)처럼 코드만으로는 너무 광범위한 통계목은
-                    // 이 텍스트로 실제 표준 산출식이 있는 하위 항목인지 좁혀서 판단한다.
+                    // 편성목(item) 행 바로 다음에 연달아 딸린 부기명 행들(예: "○일반수용비",
+                    // "○급식비", "○위원회 참석수당" 등, 한 편성목 아래 여러 개가 이어질 수
+                    // 있다)의 텍스트를 전부 모아둔다. 201-01(사무관리비)처럼 코드만으로는 너무
+                    // 광범위한 통계목은 이 텍스트로 실제 표준 산출식이 있는 하위 항목인지
+                    // 좁혀서 판단한다.
                     const nextNoteTextByItemId: Record<string, string> = {};
                     filteredHierarchyRows.forEach((row, idx) => {
                       if (row.level !== 'item') return;
-                      const nextRow = filteredHierarchyRows[idx + 1];
-                      if (nextRow && nextRow.level === 'note') {
-                        nextNoteTextByItemId[row.id] = `${nextRow.statisticsCode ?? ''} ${nextRow.description ?? ''}`;
+                      const noteTexts: string[] = [];
+                      for (let j = idx + 1; j < filteredHierarchyRows.length; j++) {
+                        const nextRow = filteredHierarchyRows[j];
+                        if (nextRow.level !== 'note') break;
+                        noteTexts.push(`${nextRow.statisticsCode ?? ''} ${nextRow.description ?? ''}`);
                       }
+                      if (noteTexts.length > 0) nextNoteTextByItemId[row.id] = noteTexts.join(' ');
                     });
 
                     const pageStart = (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE;
@@ -2097,10 +2114,8 @@ export default function Home() {
                     const formulaCheck = getHierarchyFormulaCheck(
                       row, rowAncestors?.accountRow?.label ?? '', nextNoteTextByItemId[row.id] ?? '', staffData[department]
                     );
-                    const itemHasFormula = !!formulaCheck && Math.abs(formulaCheck.actual - formulaCheck.expected) > 1000;
-                    const formulaLabel = formulaCheck
-                      ? `${formulaCheck.name}: 기준 ${formulaCheck.expected.toLocaleString()}원 / 등록 ${formulaCheck.actual.toLocaleString()}원`
-                      : '';
+                    const itemHasFormula = !!formulaCheck;
+                    const formulaLabel = formulaCheck?.message ?? '';
                     const badgeRow = (itemBadges.length > 0 || itemHasFormula) && (
                       <tr key={`${row.id}-badges`}>
                         <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left' }}>
@@ -2112,7 +2127,7 @@ export default function Home() {
                             ))}
                             {itemHasFormula && (
                               <span style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: '12px', fontWeight: 600 }}>
-                                산출식 불일치 · {formulaLabel}
+                                산출식 · {formulaLabel}
                               </span>
                             )}
                           </div>
