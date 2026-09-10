@@ -1463,6 +1463,12 @@ export default function Home() {
 
       const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
       const skippedDepartmentCount = 0;
+      // 원본 예산서 엑셀은 "정책사업명"/"단위사업명" 칸을 같은 그룹 안에서 세로로 병합해
+      // 맨 윗행에만 값을 적어두는 경우가 많다. XLSX 파서는 병합된 아래쪽 셀은 빈 문자열로
+      // 읽어오므로, 그대로 두면 그 행들이 전부 "미분류 정책"/"단위사업 미지정"으로 떨어진다.
+      // 마지막으로 값이 있던 정책/단위사업명을 아래 행으로 이어받는다(carry-down).
+      let lastPolicy = "";
+      let lastUnitProgram = "";
       const importedRows = imported
         .map((record, index): BudgetRow => {
           const rawStatus = String(pick(record, ["상태", "status"]));
@@ -1475,12 +1481,16 @@ export default function Home() {
             : rawStatisticalCode;
           const statisticalName = String(pick(record, ["통계목명"])) || "";
           const accountDisplay = statisticalCode && statisticalName ? `${statisticalCode} ${statisticalName}` : statisticalCode;
-          const unitProgram = String(pick(record, ["단위사업명"])) || "";
+          const rawUnitProgram = String(pick(record, ["단위사업명"])) || "";
+          if (rawUnitProgram) lastUnitProgram = rawUnitProgram;
+          const unitProgram = rawUnitProgram || lastUnitProgram;
           const subProgram = String(pick(record, ["세부사업명"])) || "미입력 사업";
           const programDisplay = unitProgram ? `${unitProgram}\n${subProgram}` : subProgram;
+          const rawPolicy = String(pick(record, ["정책사업명", "정책명", "정책"])) || "";
+          if (rawPolicy) lastPolicy = rawPolicy;
           return {
             id: Date.now() + index,
-            policy: String(pick(record, ["정책사업명", "정책명", "정책"])) || "미분류 정책",
+            policy: rawPolicy || lastPolicy || "미분류 정책",
             program: programDisplay,
             code,
             account: accountDisplay,
