@@ -72,7 +72,12 @@ async function saveHierarchy(req: any, res: any) {
 
   const rows = Array.isArray(req.body?.data) ? req.body.data : [];
   if (rows.length === 0) {
-    res.status(200).json({ success: false, message: "저장할 데이터가 없습니다. 기존 데이터는 유지했습니다." });
+    const { error } = await supabase.from('budget_hierarchy_rows').delete().neq('id', '');
+    if (error) {
+      res.status(200).json({ success: false, message: "기존 예산편성 자료 삭제에 실패했습니다.", error: error.message });
+      return;
+    }
+    res.status(200).json({ success: true, message: "예산편성 자료를 모두 삭제했습니다." });
     return;
   }
 

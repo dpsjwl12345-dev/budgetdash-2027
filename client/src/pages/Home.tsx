@@ -1411,12 +1411,14 @@ export default function Home() {
         });
       });
 
-      setBudgetHierarchyRows(hierarchyRows);
+      const mergedHierarchyRows = mergeHierarchyByDepartment(budgetHierarchyRows, hierarchyRows);
+      setBudgetHierarchyRows(mergedHierarchyRows);
+      const hierarchySaved = await saveHierarchyToServer(mergedHierarchyRows);
 
       setBudgetRows((prevRows) => {
         const otherDepartmentRows = prevRows.filter((row) => row.department !== department);
         const allRows = [...otherDepartmentRows, ...nextRows];
-        showToast(`${department} 기존 자료를 초기화하고 ${nextRows.length}개를 등록했습니다.${skippedDepartmentCount > 0 ? ` (${skippedDepartmentCount}개 타 부서 행 제외)` : ""}`);
+        showToast(`${department} 기존 자료를 초기화하고 ${nextRows.length}개를 등록했습니다.${skippedDepartmentCount > 0 ? ` (${skippedDepartmentCount}개 타 부서 행 제외)` : ""}${hierarchySaved ? " 서버 저장 완료" : " (이 기기에만 저장됨)"}`);
         try {
           localStorage.setItem('budgetRows', JSON.stringify(allRows));
         } catch (error) {
