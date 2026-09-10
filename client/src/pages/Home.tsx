@@ -1238,17 +1238,16 @@ export default function Home() {
         });
 
         const parsedData = buildHierarchyFromRows(cellRows);
-        const hierarchyData = department ? filterHierarchyByDepartment(parsedData, department) : parsedData;
-        if (department && hierarchyData.length === 0) {
-          showToast(`파일에서 "${department}" 데이터를 찾지 못했습니다.`);
+        if (parsedData.length === 0) {
+          showToast("파일에서 데이터를 찾지 못했습니다.");
           if (fileInputRef.current) fileInputRef.current.value = "";
           return;
         }
 
         setBudgetHierarchyRows((prev) => {
-          const merged = mergeHierarchyByDepartment(prev, hierarchyData);
+          const merged = mergeHierarchyByDepartment(prev, parsedData);
           saveHierarchyToServer(merged);
-          showToast(`${hierarchyData.length}개의 항목을 저장했습니다.`);
+          showToast(`${parsedData.length}개의 항목을 저장했습니다.`);
           return merged;
         });
         if (fileInputRef.current) fileInputRef.current.value = "";
@@ -1272,15 +1271,13 @@ export default function Home() {
       if (headerFirstCell.includes("부서") && headerFirstCell.includes("과목")) {
         const cellRows = (matrix as unknown[][]).map((row) => row.map((cell) => String(cell ?? "")));
         const parsedData = buildHierarchyFromRows(cellRows);
-        const hierarchyData = department ? filterHierarchyByDepartment(parsedData, department) : parsedData;
-        if (!hierarchyData.length) {
-          if (department) throw new Error(`파일에서 "${department}" 데이터를 찾지 못했습니다.`);
+        if (!parsedData.length) {
           throw new Error("empty");
         }
         setBudgetHierarchyRows((prev) => {
-          const merged = mergeHierarchyByDepartment(prev, hierarchyData);
+          const merged = mergeHierarchyByDepartment(prev, parsedData);
           saveHierarchyToServer(merged);
-          showToast(`${hierarchyData.length}개의 항목을 저장했습니다.`);
+          showToast(`${parsedData.length}개의 항목을 저장했습니다.`);
           return merged;
         });
         return;
