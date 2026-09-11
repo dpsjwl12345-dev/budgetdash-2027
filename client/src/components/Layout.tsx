@@ -61,15 +61,21 @@ const toolItems: ToolItem[] = [
 export default function Layout({
   children,
   showToast,
+  highlightScope,
 }: {
   children: React.ReactNode;
   showToast?: (message: string) => void;
+  // 같은 경로(URL)인데 화면에 보이는 내용이 실질적으로 바뀌는 페이지(예: 예산 편성 시트의
+  // "편성 부서" 드롭다운 - URL은 그대로 "/"임)는 이걸로 형광펜을 부서별로 따로 구분해서
+  // 보관하게 한다. 안 넘기면 경로만으로 구분(기존 동작 그대로).
+  highlightScope?: string | null;
 }) {
   const [location, setLocation] = useLocation();
   const [searchParams] = useSearchParams();
   const isBudgetExplainerPage = location === "/budget-explainer";
   const currentDept = isBudgetExplainerPage ? searchParams.get("dept") : null;
   const [sidebarCollapsed, setSidebarCollapsed] = useState(isBudgetExplainerPage);
+  const highlightPathKey = highlightScope ? `${location}::${highlightScope}` : location;
 
   const getActiveNavLabel = () => {
     const navItem = navItems.find((item) => item.path === location);
@@ -101,25 +107,29 @@ export default function Layout({
   const drawingRef = useRef(false);
   const strokeStartRef = useRef<{ x: number; y: number } | null>(null);
   const toolbarDragRef = useRef<{ pointerX: number; pointerY: number; left: number; bottom: number } | null>(null);
-  // 형광펜 표시는 페이지(경로)별로 따로 보관한다 - 안 그러면 다른 메뉴 갔다가 돌아왔을 때
-  // 방금 그린 표시가 전부 사라진 것처럼 보인다(예산 편성 시트 부서 전환 때와 같은 종류의 문제).
+  // 형광펜 표시는 "경로+화면 범위(highlightScope)"별로 따로 보관한다 - 경로만으로 구분하면
+  // 예산 편성 시트처럼 URL은 그대로인데 "편성 부서" 드롭다운만으로 내용이 완전히 바뀌는
+  // 화면에서, 부서를 바꿔도 형광펜이 그 자리에 그대로 남아 다른 부서 내용 위에 겹쳐 보인다.
   const highlightStrokesRef = useRef<HighlightStroke[]>([]);
   const highlightStrokesByPathRef = useRef<Record<string, HighlightStroke[]>>({});
-  const prevLocationRef = useRef(location);
+  const prevHighlightKeyRef = useRef(highlightPathKey);
 
   useEffect(() => { highlightStrokesRef.current = highlightStrokes; }, [highlightStrokes]);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
     setActiveNav(getActiveNavLabel());
-    // 떠나는 페이지의 형광펜 표시를 저장해두고, 도착한 페이지에 저장돼 있던 표시를 복원한다.
-    highlightStrokesByPathRef.current[prevLocationRef.current] = highlightStrokesRef.current;
-    const restored = highlightStrokesByPathRef.current[location] || [];
-    prevLocationRef.current = location;
+  }, [location]);
+
+  useEffect(() => {
+    // 떠나는 화면의 형광펜 표시를 저장해두고, 도착한 화면에 저장돼 있던 표시를 복원한다.
+    highlightStrokesByPathRef.current[prevHighlightKeyRef.current] = highlightStrokesRef.current;
+    const restored = highlightStrokesByPathRef.current[highlightPathKey] || [];
+    prevHighlightKeyRef.current = highlightPathKey;
     setHighlightStrokes(restored);
     redrawHighlights(restored);
     setEraserMode(false);
-  }, [location]);
+  }, [highlightPathKey]);
 
   useEffect(() => {
     const canvas = canvasRef.current;

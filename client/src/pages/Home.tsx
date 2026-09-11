@@ -1821,7 +1821,13 @@ export default function Home() {
   };
 
   return (
-    <Layout showToast={showToast}>
+    <Layout
+      showToast={showToast}
+      // 형광펜은 화면 좌표에 고정된 그림이라, URL은 안 바뀌어도 표에 보이는 내용이
+      // 바뀌는 모든 경우(부서 전환뿐 아니라 페이지네이션·검색·필터)를 다 scope에 넣어야
+      // "다음 페이지로 넘기면 다른 행 위에 그대로 겹쳐 보이는" 문제가 안 생긴다.
+      highlightScope={[department, hierarchyPage, hierarchySearch, hierarchyProgramFilter, hierarchyItemFilter].join('::')}
+    >
       <div className="page-content">
           <section className="page-heading">
             <div className="title-area">

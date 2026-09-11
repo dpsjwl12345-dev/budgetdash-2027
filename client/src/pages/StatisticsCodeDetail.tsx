@@ -89,21 +89,67 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       title: "101-04. 기간제근로자등 보수",
       content: (
         <div className="detail-content">
-          <h3>기간제근로자 보수 편성 기준</h3>
+          <h3>기간제근로자등 보수 편성 기준</h3>
           <div className="content-section">
-            <h4>예산 요구 기본 공식</h4>
-            <p style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "12px", borderRadius: "4px", marginBottom: "12px" }}>
-              <strong>기본급 + 주휴수당 + 연차수당 = 기준단가 × 인원 × 근로(휴일/미사용연차) 일수</strong>
-            </p>
-            <p><strong>근무 일수 계산 팁:</strong> 월 평균 기준 일수는 주휴일을 포함하여 27일로 계산 (예: 6개월 고용 시 27일 × 6개월 = 162일 반영)</p>
+            <h4>1. 인건비</h4>
+            <ul>
+              <li><strong>예산 과목 (통계목):</strong> 101-04 기간제근로자등 보수 (개별 정책사업에 포함하여 요구)</li>
+              <li><strong>관할 및 주관 부서:</strong> 행정지원과 공공노무팀</li>
+              <li><strong>근거 규정:</strong> 「화성시 기간제 및 단시간근로자 관리 규정」 제6조 및 「공공부문 비정규직 처우개선 대책 및 가이드라인」</li>
+              <li><strong>사전 승인 의무:</strong> 기간제 및 단시간근로자 보수 예산을 요구하기 전에 반드시 공공노무팀으로부터 채용 적정성 심사를 받아서 정수 승인을 얻어야 예산편성이 가능합니다.</li>
+            </ul>
           </div>
           <div className="content-section">
-            <h4>4대 보험료 계산</h4>
-            <p>임금 총액의 12% 정밀 계산 반영 (국민연금 사업주 부담금 5% 인상 반영)</p>
+            <h4>2. 기간제근로자 인건비 구성요소 및 표준 산출식</h4>
+            <p>예산 요구 시 인건비 항목은 기본급, 주휴수당, 연차수당, 4대 보험료, 공정수당으로 구별하여 요구합니다.</p>
+            <div style={{ marginTop: "12px" }}>
+              <strong>① 기본급 · 주휴수당 · 연차수당</strong>
+              <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
+                <li>기본급: 일일단가(원) × 인원(명) × 근로일수(일)</li>
+                <li>주휴수당: 일일단가(원) × 인원(명) × 휴일일수(일) (일요일 및 근로자의 날)</li>
+                <li>연차수당: 일일단가(원) × 인원(명) × 미사용 연차 일수(일)</li>
+                <li style={{ marginTop: "8px" }}>
+                  <strong>통합 입력 수식:</strong>{" "}
+                  <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>기준단가(원) × 인원(명) × 근무일수(일)</code>
+                </li>
+                <li style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px", color: "var(--text-muted)" }}>월 평균 기준일수(주휴일 포함): <strong>월 27일</strong> 적용</li>
+                <li style={{ marginLeft: "20px", fontSize: "13px", color: "var(--text-muted)" }}>(예시) 6개월 고용 시 근무일수: 27일 × 6개월 = 162일 적용</li>
+              </ul>
+            </div>
+            <div style={{ marginTop: "16px" }}>
+              <strong>② 4대 보험료 (기관 부담금)</strong>
+              <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
+                <li>
+                  산출식:{" "}
+                  <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>임금 총액(원) × 12% (또는 11.75%, 원 단위까지 정확히 입력)</code>
+                </li>
+                <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>(참고) 국민연금 사업주 공제부담 비율이 4.75%에서 5%로 인상 반영되었습니다.</li>
+              </ul>
+            </div>
+            <div style={{ marginTop: "16px" }}>
+              <strong>③ 공정수당</strong>
+              <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
+                <li>
+                  산출식:{" "}
+                  <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>기간제근로자 인원수(명) × 구간별 보상지급액(원)</code>
+                </li>
+                <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>(참고) 보상지급액은 당해 연도 화성시 생활임금 확정 고시 후 산정 적용됩니다.</li>
+              </ul>
+            </div>
           </div>
           <div className="content-section">
-            <h4>공정수당</h4>
-            <p>기간제근로자 인원수 × 구간별 보상지급액 (추후 생활임금 최종 확정 후 단가 공고 예정)</p>
+            <h4>3. 직종별 단가 적용 기준</h4>
+            <p>기간제근로자의 일일 단가는 수행하는 업무 직종에 따라 <strong>생활임금 적용 직종</strong>과 <strong>최저임금 상승률 차등 적용 직종</strong>으로 분리됩니다.</p>
+            <div style={{ marginTop: "12px" }}>
+              <strong>생활임금 적용 직종</strong>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>화성시 노사협력과에서 확정 고시하는 생활임금 단가를 적용합니다.</p>
+              <p style={{ fontSize: "13px", marginTop: "4px" }}><em>해당 직종:</em> 행정실무원, 연구실무원, 도서실무원, 관제실무원, 농림실무원, 조리실무원, 경비실무원, 환경정비원, 대민종사원 등</p>
+            </div>
+            <div style={{ marginTop: "12px" }}>
+              <strong>최저임금 상승률 차등 적용 직종</strong>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>생활임금 초과 직종으로서 전년 대비 최저임금 상승률 등을 감안한 차등 단가표를 적용합니다.</p>
+              <p style={{ fontSize: "13px", marginTop: "4px" }}><em>해당 직종:</em> 사례관리실무원, 상담실무원, 조사실무원, 요양보호실무원, 기계실무원, 보건의료보조원, 보건의료실무원, 시설물관리원, 건설실무원 등</p>
+            </div>
           </div>
           <div className="content-section">
             <h4>2027년도 직종별 적용 단가</h4>
