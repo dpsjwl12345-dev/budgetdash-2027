@@ -52,6 +52,7 @@ const toolItems: ToolItem[] = [
     subItems: [
       { label: "사전절차 및 편성기준" },
       { label: "세출 통계목별 상세" },
+      { label: "산출식(함수) 전체 목록" },
     ],
   },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
@@ -79,6 +80,8 @@ export default function Layout({
         return "사전절차 및 편성기준";
       case "/statistics-code-detail":
         return "세출 통계목별 상세";
+      case "/formula-overview":
+        return "산출식(함수) 전체 목록";
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
       default:
@@ -98,12 +101,23 @@ export default function Layout({
   const drawingRef = useRef(false);
   const strokeStartRef = useRef<{ x: number; y: number } | null>(null);
   const toolbarDragRef = useRef<{ pointerX: number; pointerY: number; left: number; bottom: number } | null>(null);
+  // 형광펜 표시는 페이지(경로)별로 따로 보관한다 - 안 그러면 다른 메뉴 갔다가 돌아왔을 때
+  // 방금 그린 표시가 전부 사라진 것처럼 보인다(예산 편성 시트 부서 전환 때와 같은 종류의 문제).
+  const highlightStrokesRef = useRef<HighlightStroke[]>([]);
+  const highlightStrokesByPathRef = useRef<Record<string, HighlightStroke[]>>({});
+  const prevLocationRef = useRef(location);
+
+  useEffect(() => { highlightStrokesRef.current = highlightStrokes; }, [highlightStrokes]);
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
     setActiveNav(getActiveNavLabel());
-    setHighlightStrokes([]);
-    redrawHighlights([]);
+    // 떠나는 페이지의 형광펜 표시를 저장해두고, 도착한 페이지에 저장돼 있던 표시를 복원한다.
+    highlightStrokesByPathRef.current[prevLocationRef.current] = highlightStrokesRef.current;
+    const restored = highlightStrokesByPathRef.current[location] || [];
+    prevLocationRef.current = location;
+    setHighlightStrokes(restored);
+    redrawHighlights(restored);
     setEraserMode(false);
   }, [location]);
 
@@ -425,6 +439,8 @@ export default function Layout({
                             setLocation("/budget-establishment-guide");
                           } else if (subItem.label === "세출 통계목별 상세") {
                             setLocation("/statistics-code-detail");
+                          } else if (subItem.label === "산출식(함수) 전체 목록") {
+                            setLocation("/formula-overview");
                           } else {
                             showToast?.(`${subItem.label}은 다음 업데이트에서 제공됩니다.`);
                           }
