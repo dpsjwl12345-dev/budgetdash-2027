@@ -962,15 +962,24 @@ export default function Home() {
     return budgetHierarchyRows
       .filter((row) => row.level === 'dept' && row.label === department)
       .reduce((sum, row) => ({ amount: sum.amount + (row.budget || 0), previous: sum.previous + (row.previous || 0) }), { amount: 0, previous: 0 });
-  }, [budgetHierarchyRows]);
+  }, [budgetHierarchyRows, department]);
 
-  // 2027 신규 사업 예산액 = 전년도 예산이 0인 세부사업(program)들의 예산액 합계
+  // 2027 신규 사업 예산액 = 현재 선택된 부서에서, 전년도 예산이 0인 세부사업(program)들의 예산액 합계.
+  // budgetHierarchyRows는 여러 부서가 한 배열에 섞여 있고 program 행 자체엔 소속 부서 정보가 없어서
+  // (부모 참조 없이 순서로만 계층을 아는 구조), 가장 가까운 이전 dept 행을 따라가며 부서를 구분해야 한다.
+  // 이걸 안 하면 다른 부서의 신규사업까지 다 합쳐져서, 이 카드가 "2027 요구액"보다 커지는 오류가 난다.
   const newProjectTotal = useMemo(() => {
     if (!department) return 0;
-    return budgetHierarchyRows
-      .filter((row) => row.level === 'program' && !(row.previous || 0))
-      .reduce((sum, row) => sum + (row.budget || 0), 0);
-  }, [budgetHierarchyRows]);
+    let currentDept: string | undefined;
+    let sum = 0;
+    for (const row of budgetHierarchyRows) {
+      if (row.level === 'dept') currentDept = row.label;
+      else if (row.level === 'program' && currentDept === department && !(row.previous || 0)) {
+        sum += row.budget || 0;
+      }
+    }
+    return sum;
+  }, [budgetHierarchyRows, department]);
 
   // 세출예산내역서 표의 각 행에 대해 가장 가까운 상위 계층(부서/정책/단위/세부사업/편성목/통계목) 행을 찾아둔다.
   // 검색·필터 드롭다운이 "이 행의 조상이 조건에 맞으면 전체 하위행도 같이 보여준다" 식으로 동작하는 데 쓰인다.
