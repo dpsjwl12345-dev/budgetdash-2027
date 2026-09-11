@@ -24,9 +24,14 @@ async function loadHierarchy(req: any, res: any) {
   let data: any[] = [];
   let queryError: any = null;
   while (true) {
+    // department 미지정(전체 로드) 시 sort_order만으로 정렬하면 부서마다 0부터 다시
+    // 매겨지는 sort_order가 뒤섞여, level:'dept' 행으로 시작하는 부서별 블록 구조가
+    // 깨진다(클라이언트가 이 블록 구조를 전제로 부서를 구분한다). department를 먼저
+    // 정렬해 블록을 유지한 뒤 그 안에서 sort_order로 정렬한다.
     let query = supabase
       .from('budget_hierarchy_rows')
       .select('*')
+      .order('department', { ascending: true })
       .order('sort_order', { ascending: true })
       .range(from, from + pageSize - 1);
     if (department) query = query.eq('department', department);

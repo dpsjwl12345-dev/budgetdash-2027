@@ -1361,17 +1361,43 @@ export default function Home() {
     }));
   };
 
+  // budgetHierarchyRows는 화면에 로드된 "모든" 부서가 한 배열에 평평하게 들어있고
+  // (level:'dept' 행이 부서 경계, 그 뒤로 자식 행들이 이어지는 블록 구조), 개별 행에는
+  // 소속 부서를 알 수 있는 필드가 없다. 예전에는 저장할 때마다 이 배열 전체를 한 번의
+  // 요청으로 보내면서 서버 쪽에서 "현재 선택된 부서" 이름표 하나를 모든 행에 강제로
+  // 붙였는데, 그러면 부서가 여러 개 쌓일수록 요청 크기가 계속 커지고 다른 부서 행들이
+  // 방금 저장한 부서 이름으로 잘못 뒤바뀌는 충돌이 생겼다. 부서 블록 단위로 쪼개
+  // 각자 자기 부서 이름으로만 저장하면 두 문제 다 사라진다(요청 크기는 그 부서 크기로
+  // 고정되고, 다른 부서 행은 애초에 같이 보내지 않으니 뒤바뀔 일이 없다).
+  const groupRowsByDepartment = (rows: BudgetHierarchyRow[]) => {
+    const blocks: { department: string; rows: BudgetHierarchyRow[] }[] = [];
+    let current: { department: string; rows: BudgetHierarchyRow[] } | null = null;
+    for (const row of rows) {
+      if (row.level === 'dept') {
+        current = { department: row.label, rows: [] };
+        blocks.push(current);
+      }
+      if (current) current.rows.push(row);
+    }
+    return blocks.filter((block) => block.department && block.rows.length > 0);
+  };
+
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
     localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
+    const blocks = groupRowsByDepartment(rows);
+    if (blocks.length === 0) return true;
     try {
-      const response = await fetch('/api/cloud-sync', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ data: rows, department }),
-      });
-      const result = await response.json().catch(() => ({}));
-      if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
-      return true;
+      const results = await Promise.all(blocks.map(async (block) => {
+        const response = await fetch('/api/cloud-sync', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ data: block.rows, department: block.department }),
+        });
+        const result = await response.json().catch(() => ({}));
+        if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
+        return true;
+      }));
+      return results.every(Boolean);
     } catch (error) {
       console.warn('클라우드 저장 시도 실패 (로컬 저장됨):', error);
       return false;
