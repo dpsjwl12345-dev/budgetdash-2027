@@ -263,7 +263,10 @@ const HIERARCHY_PROCEDURE_BADGES: {
   test: (ctx: { accountCode: string; itemText: string; programText: string; amount: number }) => boolean;
 }[] = [
   { label: "투심", test: ({ amount }) => amount >= 2000000 },
-  { label: "보조금", test: ({ accountCode }) => /^(306|307|308|402|403)/.test(accountCode) },
+  // 306(출연금)은 307/308(민간이전·자치단체등이전, 실제 "보조금" 성격) 및 402/403(자본이전)과는
+  // 다른 계정이라 "보조금"으로 같이 묶으면 출연금 항목이 잘못된 뱃지를 달게 된다 - 따로 분리한다.
+  { label: "출연금", test: ({ accountCode }) => /^306/.test(accountCode) },
+  { label: "보조금", test: ({ accountCode }) => /^(307|308|402|403)/.test(accountCode) },
   { label: "행사", test: ({ itemText, programText }) => /행사|축제|경기대회|공연/.test(`${itemText} ${programText}`) },
   { label: "자산", test: ({ accountCode }) => /^405/.test(accountCode) },
   { label: "기간제", test: ({ itemText }) => /기간제|임시직/.test(itemText) },

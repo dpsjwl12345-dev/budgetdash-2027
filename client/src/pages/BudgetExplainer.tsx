@@ -3,7 +3,7 @@ import { useLocation, useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 import { processExplainerPdf } from "@/lib/pdfExplainer";
-import { ArrowUp, ChevronDown, X, Upload } from "lucide-react";
+import { ArrowLeft, ArrowUp, ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -368,21 +368,49 @@ export default function BudgetExplainer() {
       >
         <section className="page-heading" style={{ flexShrink: 0, marginBottom: "12px" }}>
           <div className="title-area">
-            <div
-              className="title-wrapper"
-              style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}
-            >
-              <span
-                style={{
-                  fontSize: "22px",
-                  fontWeight: 700,
-                  color: "var(--text-faint)",
-                  letterSpacing: "0.02em",
+            <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
+              <button
+                type="button"
+                onClick={() => {
+                  // 편성 시트가 이 부서를 기본 선택 상태로 열도록, 돌아가기 전에 저장해둔다.
+                  if (department) localStorage.setItem('selectedDepartment', department);
+                  setLocation('/');
                 }}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: "6px",
+                  padding: "7px 12px",
+                  border: "1px solid var(--line)",
+                  borderRadius: "6px",
+                  background: "var(--bg-secondary)",
+                  color: "var(--text-muted)",
+                  fontSize: "13px",
+                  fontWeight: 600,
+                  cursor: "pointer",
+                  flexShrink: 0,
+                }}
+                aria-label="예산 편성 시트로 돌아가기"
               >
-                2027 본예산
-              </span>
-              <h1 style={{ marginTop: "-4px" }}>부서별 예산설명자료</h1>
+                <ArrowLeft size={15} />
+                예산 편성 시트로
+              </button>
+              <div
+                className="title-wrapper"
+                style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}
+              >
+                <span
+                  style={{
+                    fontSize: "22px",
+                    fontWeight: 700,
+                    color: "var(--text-faint)",
+                    letterSpacing: "0.02em",
+                  }}
+                >
+                  2027 본예산
+                </span>
+                <h1 style={{ marginTop: "-4px" }}>부서별 예산설명자료</h1>
+              </div>
             </div>
             <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
               <label style={{ display: "flex", alignItems: "center", gap: "8px", color: "var(--text-muted)", fontSize: "13px" }}>
