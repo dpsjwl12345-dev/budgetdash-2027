@@ -81,6 +81,7 @@ async function saveHierarchy(req: any, res: any) {
     return;
   }
 
+  const savedAt = new Date().toISOString();
   const dbRows = rows.map((row: any, index: number) => ({
     id: String(row.id),
     department: department,
@@ -94,34 +95,33 @@ async function saveHierarchy(req: any, res: any) {
     parent_id: row.parentId ?? null,
     col_span: row.colSpan ?? null,
     sort_order: index,
-    updated_at: new Date().toISOString(),
+    updated_at: savedAt,
   }));
 
-  // 이전에는 "새 행 upsert → id NOT IN (새 id 목록)으로 옛 행 삭제" 순서였는데,
-  // 부서 행 수가 많아지면 NOT IN 필터에 수백 개 id를 다 나열한 URL이 너무 길어져
-  // 삭제 요청 자체가 조용히 실패했다. 업로드할 때마다 새 id가 매번 새로 생성되므로
-  // (upload-<timestamp>-<index>) 어차피 이전 행과 겹치는 id가 없어 "부분 정리"는
-  // 애초에 의미가 없었다 — 그래서 부서 전체를 먼저 지우고 새로 넣는 방식으로 바꿔
-  // 옛 업로드 회차가 계속 누적/혼합되는 문제를 근본적으로 없앤다.
-  const { error: deleteError } = await supabase
+  // 새 데이터를 먼저 upsert(있으면 갱신, 없으면 삽입)하고 그 다음에 옛 데이터를 정리한다.
+  // "삭제 먼저 → 삽입" 순서는 삽입이 실패(타임아웃/네트워크 오류 등)하면 부서 데이터가
+  // 통째로 사라지는 위험이 있었다. 옛 행 정리는 새 id를 전부 나열한 NOT IN 필터 대신
+  // 이번 저장의 updated_at보다 오래된 행만 지우는 방식으로, 필터 크기가 항상 일정해
+  // 행이 많은 부서에서도 URL이 길어져 조용히 실패하는 문제가 없다.
+  const { error: upsertError } = await supabase
+    .from('budget_hierarchy_rows')
+    .upsert(dbRows, { onConflict: 'id' });
+  if (upsertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    return;
+  }
+
+  const { error: cleanupError } = await supabase
     .from('budget_hierarchy_rows')
     .delete()
-    .eq('department', department);
-  if (deleteError) {
-    res.status(200).json({ success: false, message: "저장 실패(기존 데이터 정리 실패)", error: deleteError.message });
-    return;
-  }
+    .eq('department', department)
+    .lt('updated_at', savedAt);
 
-  const { error: insertError } = await supabase
-    .from('budget_hierarchy_rows')
-    .insert(dbRows);
-
-  if (insertError) {
-    res.status(200).json({ success: false, message: "저장 실패", error: insertError.message });
-    return;
-  }
-
-  res.status(200).json({ success: true, message: "저장 완료" });
+  res.status(200).json({
+    success: true,
+    message: cleanupError ? "저장 완료 (이전 데이터 정리는 보류됨)" : "저장 완료",
+    warning: cleanupError?.message,
+  });
 }
 
 async function loadMemos(req: any, res: any) {
