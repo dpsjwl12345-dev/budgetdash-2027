@@ -53,37 +53,39 @@ export default async function handler(req: any, res: any) {
       return;
     }
 
-    // 설명자료 PDF를 아직 올리지 않은 부서도 예산요구서의
+    // 설명자료 PDF를 아직 올리지 않은 부서도 예산편성시트의
     // 정책·단위·세부사업 계층을 바로 탐색할 수 있도록 병합한다.
-    // id는 업로드 시 원본 엑셀 행 순서대로 증가하는 값이라, id로 정렬하면
-    // 예산서에 적힌 순서 그대로 트리가 구성된다.
-    const { data: budgetRows, error: budgetError } = await fetchAllRows((from, to) =>
+    // budget_rows는 "부서·정책·단위·세부·과목" 계층형 업로드에서는 전혀 채워지지 않는
+    // 별도 테이블이라, 그걸 기준으로 삼으면 최신 업로드와 어긋나 전부 "미분류 정책"으로
+    // 떨어진다. 실제로 업로드가 계속 갱신하는 budget_hierarchy_rows를 기준으로 삼는다.
+    const { data: hierarchyRows, error: hierarchyError } = await fetchAllRows((from, to) =>
       supabase
-        .from("budget_rows")
-        .select("id, policy, program, department")
+        .from("budget_hierarchy_rows")
+        .select("level, label")
         .eq("department", department)
-        .order("id", { ascending: true })
+        .order("sort_order", { ascending: true })
         .range(from, to)
     );
-    if (budgetError) {
-      res.status(500).json({ error: budgetError.message });
+    if (hierarchyError) {
+      res.status(500).json({ error: hierarchyError.message });
       return;
     }
 
-    // 예산요구서와 설명자료의 계층을 병합한다. 예산요구서를 다시 업로드해
-    // budget_rows의 사업 구성이 바뀌거나 잠시 비어 있어도 기존 설명자료의
-    // 연결 경로가 사라지지 않도록 한다.
-    const budgetTreeRows = (budgetRows || []).map((row: any) => {
-        const parts = String(row.program || "")
-          .split("\n")
-          .map((part) => part.trim())
-          .filter(Boolean);
-        return {
-          policy: String(row.policy || "미분류 정책"),
-          unit: parts.length > 1 ? parts[0] : "단위사업 미지정",
-          detail: parts[parts.length - 1] || "미입력 사업",
-        };
-      });
+    // budget_hierarchy_rows에는 부서/정책/단위/세부사업/통계목 행이 원본 순서 그대로
+    // 평평하게 들어있고, 각 행이 어느 정책·단위 밑인지는 parent_id가 아니라 "그 행 앞에
+    // 마지막으로 나온 policy/unit 행"으로 정해진다(업로드 파서가 순서 기반으로 만들기
+    // 때문). 그래서 순서대로 훑으며 마지막 policy/unit을 추적해 세부사업(level: program)
+    // 이 나올 때마다 그 경로를 기록한다.
+    const budgetTreeRows: { policy: string; unit: string; detail: string }[] = [];
+    let currentPolicy = "미분류 정책";
+    let currentUnit = "단위사업 미지정";
+    for (const row of hierarchyRows || []) {
+      if (row.level === "policy") { currentPolicy = row.label || "미분류 정책"; currentUnit = "단위사업 미지정"; }
+      else if (row.level === "unit") { currentUnit = row.label || "단위사업 미지정"; }
+      else if (row.level === "program") {
+        budgetTreeRows.push({ policy: currentPolicy, unit: currentUnit, detail: row.label || "미입력 사업" });
+      }
+    }
     const materialTreeRows = (materialRows || []).map((row: any) => ({
       policy: String(row.policy || "미분류 정책"),
       unit: String(row.unit || "단위사업 미지정"),
