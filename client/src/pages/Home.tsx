@@ -663,7 +663,6 @@ export default function Home() {
     loadExecutionDataFromServer();
     loadCsvData();
     loadStaffDataFromServer();
-    loadHierarchyDataFromServer(department);
     loadProgramMemosFromServer(department);
   }, [department]);
 
@@ -878,23 +877,6 @@ export default function Home() {
       } catch (error) {
         console.warn('localStorage에서 데이터 로드 실패:', error);
       }
-    }
-  };
-
-  const loadHierarchyDataFromServer = async (dept?: string) => {
-    try {
-      const url = dept ? `/api/cloud-sync?department=${encodeURIComponent(dept)}` : '/api/cloud-sync';
-      const response = await fetch(url);
-      if (!response.ok) throw new Error('서버 로드 실패');
-      const { data } = await response.json();
-      if (data && Array.isArray(data)) {
-        setBudgetHierarchyRows(data);
-        return;
-      }
-      setBudgetHierarchyRows([]);
-    } catch (error) {
-      console.warn('예산 편성 시트를 클라우드에서 로드 실패:', error);
-      setBudgetHierarchyRows([]);
     }
   };
 
@@ -1874,7 +1856,7 @@ export default function Home() {
             </div>
             <div className="context-bar">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); loadHierarchyDataFromServer(value); }} label="편성 부서" /></div>
+              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
