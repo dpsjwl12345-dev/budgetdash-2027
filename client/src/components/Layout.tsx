@@ -169,7 +169,11 @@ export default function Layout({
   const startToolbarDrag = (event: React.PointerEvent<HTMLDivElement>) => {
     const { left, bottom } = highlightToolbarPosition;
     toolbarDragRef.current = { pointerX: event.clientX, pointerY: event.clientY, left, bottom };
-    event.currentTarget.setPointerCapture?.(event.pointerId);
+    // 드래그 추적은 아래 window 레벨 pointermove/pointerup 리스너로 이미 다 처리된다
+    // (포인터가 이 div 밖으로 나가도 동작함). 그런데 여기서 setPointerCapture를 걸면
+    // 브라우저가 뒤이은 click 이벤트의 대상을 이 div로 강제로 바꿔버려서, 정작 그 안의
+    // "형광펜 켜기" 버튼 등을 그냥 한 번 클릭해도 그 버튼의 onClick이 씹히는(안 눌리는)
+    // 문제가 생긴다. 캡처가 애초에 불필요하니 아예 없앤다.
   };
 
   const drawStroke = (context: CanvasRenderingContext2D, stroke: HighlightStroke) => {
