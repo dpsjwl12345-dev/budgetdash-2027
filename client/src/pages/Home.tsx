@@ -2152,6 +2152,12 @@ export default function Home() {
                     );
                     const itemHasFormula = !!formulaCheck;
                     const formulaLabel = formulaCheck?.message ?? '';
+                    // 부기명(note) 행이 설명하는 편성목(item)이 전년도 예산 없이 2027년에
+                    // 처음 편성된 항목이면(전년도 0원, 올해는 금액 있음) 산출근거 앞에
+                    // "신규" 표시를 붙인다.
+                    const isNewItemNote = row.level === 'note'
+                      && !(rowAncestors?.itemRow?.previous || 0)
+                      && (rowAncestors?.itemRow?.budget || 0) > 0;
                     const badgeRow = (itemBadges.length > 0 || itemHasFormula) && (
                       <tr key={`${row.id}-badges`}>
                         <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left' }}>
@@ -2208,6 +2214,11 @@ export default function Home() {
                             {row.statisticsCode || ''}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                            {isNewItemNote && (
+                              <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(214, 69, 90, 0.15)', color: '#d6455a', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                신규
+                              </span>
+                            )}
                             {row.description || ''}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
