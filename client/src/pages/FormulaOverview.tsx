@@ -21,8 +21,8 @@ const FORMULA_ENTRIES: FormulaEntry[] = [
     category: "인건비(100)",
     code: "101-04",
     title: "기간제근로자등 보수",
-    item: "① 기본급",
-    condition: "일일단가 기준",
+    item: "기본급",
+    condition: "일일단가(2027 생활임금 적용 직종 기준 일급 102,000원) × 근로일수",
     formula: "일일단가(원) × 인원(명) × 근로일수(일)",
     duplicatedInEstablishmentGuide: false,
   },
@@ -30,8 +30,8 @@ const FORMULA_ENTRIES: FormulaEntry[] = [
     category: "인건비(100)",
     code: "101-04",
     title: "기간제근로자등 보수",
-    item: "① 주휴수당",
-    condition: "일요일 및 근로자의 날",
+    item: "주휴수당",
+    condition: "일요일 및 근로자의 날 기준, 일일단가(생활임금 직종 일급 102,000원)",
     formula: "일일단가(원) × 인원(명) × 휴일일수(일)",
     duplicatedInEstablishmentGuide: false,
   },
@@ -39,8 +39,8 @@ const FORMULA_ENTRIES: FormulaEntry[] = [
     category: "인건비(100)",
     code: "101-04",
     title: "기간제근로자등 보수",
-    item: "① 연차수당",
-    condition: "미사용 연차 기준",
+    item: "연차수당",
+    condition: "미사용 연차 기준, 일일단가(생활임금 직종 일급 102,000원)",
     formula: "일일단가(원) × 인원(명) × 미사용 연차 일수(일)",
     duplicatedInEstablishmentGuide: false,
   },
@@ -48,8 +48,17 @@ const FORMULA_ENTRIES: FormulaEntry[] = [
     category: "인건비(100)",
     code: "101-04",
     title: "기간제근로자등 보수",
-    item: "① 기본급·주휴수당·연차수당 통합 입력 수식",
-    condition: "월 평균 기준일수(주휴일 포함) 27일 적용 (예: 6개월 고용 = 27일×6개월 = 162일)",
+    item: "공정수당",
+    condition: "보상지급액은 당해 연도 화성시 생활임금 확정 고시 후 산정",
+    formula: "기간제근로자 인원수(명) × 구간별 보상지급액(원)",
+    duplicatedInEstablishmentGuide: false,
+  },
+  {
+    category: "인건비(100)",
+    code: "101-04",
+    title: "기간제근로자등 보수",
+    item: "기본급·주휴수당·연차수당 통합 산출식",
+    condition: "월 평균 기준일수(주휴일 포함) 27일 적용 (예: 생활임금 직종 6개월 고용 = 일급 102,000원 × 162일 = 16,524,000원)",
     formula: "기준단가(원) × 인원(명) × 근무일수(일)",
     duplicatedInEstablishmentGuide: false,
   },
@@ -57,18 +66,9 @@ const FORMULA_ENTRIES: FormulaEntry[] = [
     category: "인건비(100)",
     code: "101-04",
     title: "기간제근로자등 보수",
-    item: "② 4대 보험료 (기관 부담금)",
+    item: "4대 보험료 (기관 부담금)",
     condition: "국민연금 사업주 부담 4.75%→5% 인상 반영",
     formula: "임금 총액(원) × 12% (또는 11.75%, 원 단위까지 정확히 입력)",
-    duplicatedInEstablishmentGuide: false,
-  },
-  {
-    category: "인건비(100)",
-    code: "101-04",
-    title: "기간제근로자등 보수",
-    item: "③ 공정수당",
-    condition: "보상지급액은 당해 연도 화성시 생활임금 확정 고시 후 산정",
-    formula: "기간제근로자 인원수(명) × 구간별 보상지급액(원)",
     duplicatedInEstablishmentGuide: false,
   },
   {
@@ -230,17 +230,27 @@ const CLASSIFICATION_NOTE = {
 
 export default function FormulaOverview() {
   const [search, setSearch] = useState("");
+  const [codeFilter, setCodeFilter] = useState<string | null>(null);
+
+  const codeOptions = useMemo(() => {
+    const seen = new Map<string, string>();
+    FORMULA_ENTRIES.forEach((entry) => {
+      if (!seen.has(entry.code)) seen.set(entry.code, entry.title);
+    });
+    return Array.from(seen.entries());
+  }, []);
 
   const filtered = useMemo(() => {
     const term = search.trim().toLowerCase();
-    if (!term) return FORMULA_ENTRIES;
-    return FORMULA_ENTRIES.filter((entry) =>
-      [entry.category, entry.code, entry.title, entry.item, entry.condition ?? "", entry.formula]
+    return FORMULA_ENTRIES.filter((entry) => {
+      if (codeFilter && entry.code !== codeFilter) return false;
+      if (!term) return true;
+      return [entry.category, entry.code, entry.title, entry.item, entry.condition ?? "", entry.formula]
         .join(" ")
         .toLowerCase()
-        .includes(term)
-    );
-  }, [search]);
+        .includes(term);
+    });
+  }, [search, codeFilter]);
 
   return (
     <Layout>
@@ -264,6 +274,26 @@ export default function FormulaOverview() {
               </strong>
               <p>“{CLASSIFICATION_NOTE.quote}”</p>
               <p className="classification-rule">{CLASSIFICATION_NOTE.rule}</p>
+            </div>
+
+            <div className="code-filter-row">
+              <button
+                type="button"
+                className={`code-filter-chip ${codeFilter === null ? "active" : ""}`}
+                onClick={() => setCodeFilter(null)}
+              >
+                전체
+              </button>
+              {codeOptions.map(([code, title]) => (
+                <button
+                  key={code}
+                  type="button"
+                  className={`code-filter-chip ${codeFilter === code ? "active" : ""}`}
+                  onClick={() => setCodeFilter(codeFilter === code ? null : code)}
+                >
+                  {code} · {title}
+                </button>
+              ))}
             </div>
 
             <input
@@ -369,6 +399,38 @@ export default function FormulaOverview() {
         .classification-rule {
           font-weight: 600;
           color: var(--text) !important;
+        }
+
+        .code-filter-row {
+          display: flex;
+          flex-wrap: wrap;
+          gap: 8px;
+          margin-bottom: 14px;
+        }
+
+        .code-filter-chip {
+          padding: 6px 12px;
+          border-radius: 999px;
+          border: 1px solid var(--border);
+          background: var(--bg-elevated);
+          color: var(--text-muted);
+          font-size: 12.5px;
+          font-weight: 500;
+          cursor: pointer;
+          white-space: nowrap;
+          transition: all 150ms ease-out;
+        }
+
+        .code-filter-chip:hover {
+          border-color: rgba(91, 155, 240, 0.5);
+          color: var(--text);
+        }
+
+        .code-filter-chip.active {
+          background: rgba(91, 155, 240, 0.18);
+          border-color: #5b9bf0;
+          color: #5b9bf0;
+          font-weight: 700;
         }
 
         .formula-search {

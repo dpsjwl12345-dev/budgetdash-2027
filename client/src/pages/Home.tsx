@@ -255,30 +255,79 @@ function getFormulaErrors(row: BudgetRow, staffData: Record<string, { capacity: 
   return errors;
 }
 
+// 재정전략 가이드의 "[비목 및 규모별 사무전결 및 재정합의 기준]" 표를 그대로 코드로 옮긴 결재선 판정.
+// 일반 사업은 4단계(시장/부시장/국장/과장), 축제·행사성 사업은 기준표에 3단계만 있어
+// (1억 초과=시장, 5천만~1억=부시장) 그 아래 구간은 일반 기준의 최하단(과장)과 동일하게 취급한다.
+// "국장"은 기준표의 "실·국·소·단장 전결"을 줄여 쓴 것이다.
+// 기준표는 "시비" 금액 기준인데, 편성 시트 트리뷰(BudgetHierarchyRow)에는 시비/국비/도비가 갈라진
+// 컬럼이 없고 총 요구액(budget)만 있어 부득이 총 요구액으로 판정한다 - 국비·도비 매칭 비중이 큰
+// 사업은 실제 시비 기준보다 한 단계 높은 결재선으로 뜰 수 있으니 참고용으로만 쓸 것.
+// 금액 단위는 이 트리뷰 전체와 동일하게 천원(row.budget) 기준이다.
+// 10억=1,000,000 / 5억=500,000 / 1억=100,000 / 5천만=50,000 (모두 천원)
+function getApprovalLine(requestAmount: number, isFestival: boolean): string {
+  if (isFestival) {
+    if (requestAmount > 100000) return "시장";
+    if (requestAmount > 50000) return "부시장";
+    return "과장";
+  }
+  if (requestAmount > 1000000) return "시장";
+  if (requestAmount > 500000) return "부시장";
+  if (requestAmount > 100000) return "국장";
+  return "과장";
+}
+
 // 세출예산내역서(편성 시트)의 편성목(item) 행이 사전절차 대상인지 판단한다.
 // 상위 통계목(account) 코드와 편성목명·세부사업명 텍스트로 판단하며, 판단 근거가
 // 있는 항목만 편성목 행 바로 위에 배너로 표시한다 (금액 등은 원본 문서를 벗어나지 않는다).
+type HierarchyBadgeCtx = { accountCode: string; itemText: string; programText: string; amount: number };
 const HIERARCHY_PROCEDURE_BADGES: {
-  label: string;
-  test: (ctx: { accountCode: string; itemText: string; programText: string; amount: number }) => boolean;
+  label: string | ((ctx: HierarchyBadgeCtx) => string);
+  test: (ctx: HierarchyBadgeCtx) => boolean;
 }[] = [
+  // 재정합의는 모든 사업에 예외 없이 적용되므로(사전절차 체크리스트 01번, "편성 원천 불가") 항상 뜨되,
+  // 금액 구간에 따라 실제 결재선을 라벨에 그대로 표시한다.
+  {
+    label: (ctx) => {
+      const isFestival = /행사|축제|경기대회|공연/.test(`${ctx.itemText} ${ctx.programText}`);
+      return getApprovalLine(ctx.amount, isFestival);
+    },
+    test: () => true,
+  },
   { label: "투심", test: ({ amount }) => amount >= 2000000 },
   // 306(출연금)은 307/308(민간이전·자치단체등이전, 실제 "보조금" 성격) 및 402/403(자본이전)과는
   // 다른 계정이라 "보조금"으로 같이 묶으면 출연금 항목이 잘못된 뱃지를 달게 된다 - 따로 분리한다.
   { label: "출연금", test: ({ accountCode }) => /^306/.test(accountCode) },
-  { label: "보조금", test: ({ accountCode }) => /^(307|308|402|403)/.test(accountCode) },
+  // 308-13(공기관등에 대한 경상적 위탁사업비)은 출연기관에 특정 사업을 대행시키는 위탁사업비이지
+  // 민간에 주는 보조금이 아니다 - "보조금심의" 대상 코드 목록(subsidyCodes, 아래 참고)에서도
+  // 308-13은 원래부터 빠져 있는데 이 뱃지 규칙만 "308"로 뭉뚱그려 잘못 걸리고 있었다.
+  { label: "보조금", test: ({ accountCode }) => /^(307|402|403)/.test(accountCode) || (/^308/.test(accountCode) && !/^308-13/.test(accountCode)) },
   { label: "행사", test: ({ itemText, programText }) => /행사|축제|경기대회|공연/.test(`${itemText} ${programText}`) },
   { label: "자산", test: ({ accountCode }) => /^405/.test(accountCode) },
   { label: "기간제", test: ({ itemText }) => /기간제|임시직/.test(itemText) },
+  // 06. 용역과제 심의 - "1,000만 원 이상 학술·기술 용역 대상. 단, '시설비 및 부대비'(401) 비목의
+  // 설계비·감리비는 심의 제외 대상"(가이드 원문). 401 코드는 명시적으로 제외한다.
+  {
+    label: "용역",
+    test: ({ itemText, accountCode, amount }) =>
+      /용역/.test(itemText) && amount >= 10000 && !/^401/.test(accountCode),
+  },
+  // 14. 교육경비 보조금 심의 - "교육경비 보조금 심의, 교육청 협의 및 편성 불가"(가이드 원문).
+  // "교육"만으로 잡으면 직원 역량교육 같은 운영성 경비까지 잘못 걸리므로 "교육경비"로 좁힌다.
+  { label: "교육", test: ({ itemText, programText }) => /교육경비/.test(`${itemText} ${programText}`) },
+  // 10. 공무국외출장 사전 협의 - 국외업무여비 통계목(202-02) 또는 국외·해외출장 텍스트 기준.
+  { label: "국외", test: ({ accountCode, itemText, programText }) => /^202-02/.test(accountCode) || /국외출장|해외출장/.test(`${itemText} ${programText}`) },
+  // 15. 사회보장제도 복지부 사전 협의 - 사회보장적수혜금 통계목(301-01) 또는 사회보장 텍스트 기준.
+  { label: "복지", test: ({ accountCode, itemText, programText }) => /^301-01/.test(accountCode) || /사회보장/.test(`${itemText} ${programText}`) },
 ];
 
 function getHierarchyItemBadges(row: BudgetHierarchyRow, accountLabel: string, programLabel: string): string[] {
   const accountCode = accountLabel.match(/^\d+/)?.[0] ?? "";
   const itemText = `${row.statisticsCode ?? ""} ${row.description ?? ""}`;
   const amount = row.budget || 0;
-  return HIERARCHY_PROCEDURE_BADGES.filter((rule) =>
-    rule.test({ accountCode, itemText, programText: programLabel, amount })
-  ).map((rule) => rule.label);
+  const ctx: HierarchyBadgeCtx = { accountCode, itemText, programText: programLabel, amount };
+  return HIERARCHY_PROCEDURE_BADGES.filter((rule) => rule.test(ctx)).map((rule) =>
+    typeof rule.label === "function" ? rule.label(ctx) : rule.label
+  );
 }
 
 // "세출 통계목별 상세" 가이드의 표준 산출식 중 이 앱에 등록된 정원·현원(staffData)만으로
