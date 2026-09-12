@@ -597,6 +597,9 @@ export default function Home() {
   const [currentPage, setCurrentPage] = useState(1);
   const [hierarchyPage, setHierarchyPage] = useState(1);
   const HIERARCHY_ROWS_PER_PAGE = 30;
+  // PDF 인쇄 중에는 현재 페이지 30행만이 아니라 필터링된 전체 행을 보여줘야 하므로,
+  // 인쇄가 시작되면 잠깐 페이지네이션을 끄고 전체 행을 렌더링한 뒤 인쇄 대화상자를 띄운다.
+  const [isPrintMode, setIsPrintMode] = useState(false);
   const [hierarchySearch, setHierarchySearch] = useState("");
   const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState("");
   const [hierarchyItemFilter, setHierarchyItemFilter] = useState("");
@@ -1680,6 +1683,29 @@ export default function Home() {
     showToast("CSV 파일을 다운로드했습니다.");
   };
 
+  // "PDF" 메뉴는 별도 PDF 렌더링 없이, 지금 화면의 세출예산내역서를 그대로 인쇄 미리보기로
+  // 띄운다(브라우저 인쇄 대화상자에서 "PDF로 저장"을 고르면 곧 파일로 남는다). 단, 화면에는
+  // 페이지당 30행만 그려져 있으므로 인쇄 전에 잠깐 전체 행을 그리도록 전환해야 한다.
+  const handlePdfExport = () => {
+    showToast("인쇄 미리보기를 준비했습니다.");
+    setIsPrintMode(true);
+  };
+
+  // 전체 행 전환(isPrintMode)이 화면에 그려진 다음 프레임에 인쇄 대화상자를 띄운다 -
+  // 곧바로 호출하면 아직 페이지네이션된 행이 그려진 채로 인쇄될 수 있다.
+  useEffect(() => {
+    if (!isPrintMode) return;
+    const timer = window.setTimeout(() => window.print(), 150);
+    return () => window.clearTimeout(timer);
+  }, [isPrintMode]);
+
+  // 인쇄 대화상자를 닫으면(취소하든 실제로 인쇄하든) 다시 페이지네이션 화면으로 되돌린다.
+  useEffect(() => {
+    const handleAfterPrint = () => setIsPrintMode(false);
+    window.addEventListener("afterprint", handleAfterPrint);
+    return () => window.removeEventListener("afterprint", handleAfterPrint);
+  }, []);
+
   const renderCell = (row: BudgetRow, key: ColumnKey) => {
     if (key === "policy") {
       const programLines = row.program.split("\n");
@@ -1834,7 +1860,7 @@ export default function Home() {
               <div className="title-wrapper budget-page-title">
                 <h1>{year} 본예산 편성 검토</h1>
               </div>
-              <div className="action-row">
+              <div className="action-row no-print">
                 <div className="action-group">
                   <div style={{ position: "relative" }}>
                     <button
@@ -1850,7 +1876,7 @@ export default function Home() {
                         <button onClick={() => { exportToCsv(); setShowSaveMenu(false); }}>
                           CSV
                         </button>
-                        <button onClick={() => { showToast("인쇄 미리보기를 준비했습니다."); setShowSaveMenu(false); }}>
+                        <button onClick={() => { handlePdfExport(); setShowSaveMenu(false); }}>
                           PDF
                         </button>
                       </div>
@@ -1872,14 +1898,14 @@ export default function Home() {
                 </div>
               </div>
             </div>
-            <div className="context-bar">
+            <div className="context-bar no-print">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
               <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
 
-          <section className="metric-grid" aria-label="예산 요약">
+          <section className="metric-grid no-print" aria-label="예산 요약">
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
@@ -1916,7 +1942,7 @@ export default function Home() {
             <div className="table-heading" style={{ minHeight: 0, padding: '8px 19px 8px 30px' }}>
               <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
-                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div className="no-print" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', color: '#6b7280', pointerEvents: 'none' }} />
                   <input
                     type="text"
@@ -2003,7 +2029,9 @@ export default function Home() {
                     });
 
                     const pageStart = (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE;
-                    const pagedRows = filteredHierarchyRows.slice(pageStart, pageStart + HIERARCHY_ROWS_PER_PAGE);
+                    const pagedRows = isPrintMode
+                      ? filteredHierarchyRows
+                      : filteredHierarchyRows.slice(pageStart, pageStart + HIERARCHY_ROWS_PER_PAGE);
 
                     return pagedRows.map((row) => {
                     const getPaddingLeft = () => {
@@ -2253,7 +2281,7 @@ export default function Home() {
               </table>
             </div>
 
-            <div className="table-footer" style={{ marginTop: '16px' }}>
+            <div className="table-footer no-print" style={{ marginTop: '16px' }}>
               <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
                 <Pagination
                   page={hierarchyPage}

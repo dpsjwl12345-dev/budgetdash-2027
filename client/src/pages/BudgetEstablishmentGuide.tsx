@@ -1,30 +1,26 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 
-type TabKey = "재정전략" | "사업 타당성" | "대외 의사결정 및 자산 관리" | "운영 및 사회적 가치" | "지방투자사업" | "시설비" | "자산 취득" | "기간제근로자";
+type TabKey = "체크리스트" | "재정전략" | "사업 타당성" | "대외 의사결정 및 자산 관리" | "운영 및 사회적 가치";
 
 const TABS: { key: TabKey; label: string }[] = [
+  { key: "체크리스트", label: "체크리스트" },
   { key: "재정전략", label: "재정전략" },
   { key: "사업 타당성", label: "사업 타당성" },
   { key: "대외 의사결정 및 자산 관리", label: "대외 의사결정 및 자산 관리" },
   { key: "운영 및 사회적 가치", label: "운영 및 사회적 가치" },
-  { key: "지방투자사업", label: "지방투자사업" },
-  { key: "시설비", label: "시설비" },
-  { key: "자산 취득", label: "자산 취득" },
-  { key: "기간제근로자", label: "기간제근로자" },
 ];
 
 export default function BudgetEstablishmentGuide() {
-  const [activeTab, setActiveTab] = useState<TabKey>("재정전략");
+  const [activeTab, setActiveTab] = useState<TabKey>("체크리스트");
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "재정전략":
+      case "체크리스트":
         return (
           <div className="tab-content">
-            <h2>재정전략 <span className="guide-subtitle">거시적 재정 건전성 확보를 위한 핵심 심사</span></h2>
+            <h2>16대 사전 행정절차 체크리스트 <span className="guide-subtitle">사전 행정절차 자가진단 종합 체크리스트</span></h2>
 
-            <h3>📑 [실무 가이드] 16대 사전 행정절차 자가진단 종합 체크리스트</h3>
             <table className="content-table">
               <thead>
                 <tr>
@@ -121,6 +117,12 @@ export default function BudgetEstablishmentGuide() {
                 </tr>
               </tbody>
             </table>
+          </div>
+        );
+      case "재정전략":
+        return (
+          <div className="tab-content">
+            <h2>재정전략 <span className="guide-subtitle">거시적 재정 건전성 확보를 위한 핵심 심사</span></h2>
 
             <h3>📋 01. 재정합의: 예산재정과 협조결재 (필수)</h3>
             <p>사업계획 수립 시 반드시 예산재정과(소관 예산팀)와 협조결재를 완료해야 합니다.</p>
@@ -351,164 +353,6 @@ export default function BudgetEstablishmentGuide() {
               <h4>재난안전 페널티</h4>
               <p>e호조 4대 속성정보(분야, 유형, 법적분류, 단계) 누락 시, 보통교부세 및 소방안전교부세의 대규모 감액 페널티가 발생합니다.</p>
               <p style={{ marginTop: '8px' }}>• 지정 기준: 세부사업 내 안전 예산 비중이 50% 이상일 경우 전체를 재난안전사업으로 지정해야 합니다.</p>
-            </div>
-          </div>
-        );
-      case "지방투자사업":
-        return (
-          <div className="tab-content">
-            <h2>지방투자사업 <span className="guide-subtitle">투자심사 대상 금액 및 절차 기준</span></h2>
-
-            <h3>💰 지방재정 투자심사 대상 금액 기준</h3>
-            <table className="content-table">
-              <thead>
-                <tr>
-                  <th>사업 구분</th>
-                  <th>자체 심사 기준</th>
-                  <th>경기도 심사 기준</th>
-                  <th>비고</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>일반 자체사업</td>
-                  <td>전액 자체재원 20억 원 이상</td>
-                  <td>-</td>
-                  <td>자체재원 기준</td>
-                </tr>
-                <tr>
-                  <td>이전재원 포함 사업</td>
-                  <td>-</td>
-                  <td>20억 원 이상 ~ 200억 원 미만</td>
-                  <td>인구 100만 이상 기준 적용</td>
-                </tr>
-                <tr>
-                  <td>행사성 사업</td>
-                  <td>1억 원 이상 ~ 3억 원 미만</td>
-                  <td>3억 원 이상 ~ 200억 원 미만</td>
-                  <td>축제 및 행사 대상</td>
-                </tr>
-                <tr>
-                  <td>자체 청사·문화시설</td>
-                  <td>20억 원 이상 ~ 60억 원 미만</td>
-                  <td>60억 원 이상</td>
-                  <td>신축사업 기준</td>
-                </tr>
-              </tbody>
-            </table>
-
-            <div className="alert-box">
-              <strong>📅 심사 의뢰 시기</strong>
-              <p>사업계획 수립 후 기본설계(생략 시 실시설계) 용역 예산안 편성 전에 완료되어야 합니다.</p>
-            </div>
-          </div>
-        );
-      case "시설비":
-        return (
-          <div className="tab-content">
-            <h2>시설비 <span className="guide-subtitle">시설비 통계목 이원화 및 단계별 편성 기준</span></h2>
-
-            <h3>📌 2027년도 핵심 개정: 시설비 통계목의 이원화 분리</h3>
-            <p>포괄 편성으로 인한 예산의 불용 및 이월을 근절하기 위해 토지매입 및 보상 경비를 시설비에서 완전히 분리해 이력을 관리합니다.</p>
-
-            <div className="structure-box">
-              <p><strong>기존:</strong> 시설비 (401-01) 내에 토지매입비, 보상비, 설계비, 공사비 포괄 편성</p>
-              <p style={{ textAlign: 'center', color: '#5b9bf0', margin: '12px 0' }}>▼ (2027년도 개편안)</p>
-              <p><strong>신설:</strong> 시설공사 보상비 (401-01)</p>
-              <p style={{ paddingLeft: '16px', color: 'var(--text-muted)' }}>토지매입비, 지장물보상비, 손실보상비, 감정평가수수료 등</p>
-              <p><strong>개정:</strong> 시설비 (401-02)</p>
-              <p style={{ paddingLeft: '16px', color: 'var(--text-muted)' }}>기본/실시설계비, 공사비, 시설 안전진단 및 점검비 등</p>
-            </div>
-
-            <h3>🚧 시설비 단계별 편성 원칙 (이월·불용 최소화)</h3>
-            <p>연도 내에 집행 가능한 실제 사업비만 요구해야 하며, 임의로 단계를 건너뛰어 공사비를 일괄 요구할 수 없습니다.</p>
-
-            <table className="content-table">
-              <thead>
-                <tr>
-                  <th>단계</th>
-                  <th>편성 내용</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>1단계</td>
-                  <td>사전조사 및 기본계획 수립, 설계비 요구</td>
-                </tr>
-                <tr>
-                  <td>2단계</td>
-                  <td>용지보상비 요구 (설계 완료 단계)</td>
-                </tr>
-                <tr>
-                  <td>3단계</td>
-                  <td>보상이 100% 완료(추진)된 시점에 한하여 실제 공사비 요구</td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        );
-      case "자산 취득":
-        return (
-          <div className="tab-content">
-            <h2>자산 취득 <span className="guide-subtitle">주요 물품 정수 승인 및 친환경 원칙</span></h2>
-
-            <h3>📌 주요 물품 및 공용차량 정수 승인 제도</h3>
-
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>정의</h4>
-                <p>조달청 고시 주요물품(59종) 취득 예산 요구 시 사전에 총괄물품관리관의 승인을 받아 정수를 확보하는 절차입니다.</p>
-              </div>
-              <div className="info-card">
-                <h4>핵심 규칙</h4>
-                <p>정수 승인을 득하지 못한 정수대상 물품은 예산 요구서 등록 자체가 불가합니다. 1개월 이상의 공용차량 임차 요구 시에도 사전 정수 승인이 필수적입니다.</p>
-              </div>
-            </div>
-
-            <div className="content-section-alt">
-              <h4>🎯 대표 정수물품 (59종 중 주요 품목)</h4>
-              <p>노트북컴퓨터, 에어컨, 냉난방기, 비디오프로젝터, 디지털캠코더 등</p>
-            </div>
-
-            <div className="alert-box">
-              <strong>🌱 친환경 원칙</strong>
-              <p>새로 구매하거나 임차하는 모든 공용차량은 반드시 <strong>친환경차량(저공해자동차)</strong>으로 반영해야 합니다.</p>
-            </div>
-          </div>
-        );
-      case "기간제근로자":
-        return (
-          <div className="tab-content">
-            <h2>기간제근로자 <span className="guide-subtitle">채용 사전 승인 및 급여 산정 기준</span></h2>
-
-            <h3>📋 기간제근로자 채용 사전 승인</h3>
-
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>정의</h4>
-                <p>사업 부서에서 기간제 및 단시간근로자 보수(101-04) 예산을 편성하기 전에 채용의 적정성을 미리 심사받는 단계입니다.</p>
-              </div>
-              <div className="info-card">
-                <h4>담당 부서</h4>
-                <p>행정지원과 공공노무팀</p>
-              </div>
-            </div>
-
-            <h3>⚙️ 채용 승인 기준 및 요령</h3>
-
-            <div className="content-section-alt">
-              <h4>1. 우선 배정 대상</h4>
-              <p>특정 용역이나 국도비 보조사업 수행, 또는 청사·공원 환경정비 등 필수적인 유지보수 목적에 우선 배정됩니다.</p>
-            </div>
-
-            <div className="content-section-alt">
-              <h4>2. 제한 대상</h4>
-              <p>일상적인 부서 업무의 단순 행정 보조나 상시고용 성격의 채용은 제한됩니다.</p>
-            </div>
-
-            <div className="content-section-alt">
-              <h4>3. 급여 산정 기준</h4>
-              <p>매년 고시되는 화성시 생활임금 단가를 정확히 준수하여 기본급, 주휴수당, 연차수당을 계산해야 합니다.</p>
             </div>
           </div>
         );
