@@ -8,11 +8,13 @@
       content="width=device-width, initial-scale=1.0, maximum-scale=1" />
     <title>Civic Ledger · 예산편성관리 개선본</title>
     <link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='7' fill='%230f1419'/%3E%3Cg fill='none' stroke='%23ff9d4d' stroke-width='2.6' stroke-linecap='round'%3E%3Cpath d='M9 21V13'/%3E%3Cpath d='M16 21V9'/%3E%3Cpath d='M23 21V16'/%3E%3C/g%3E%3C/svg%3E" />
-    <!-- THIS IS THE START OF A COMMENT BLOCK, BLOCK TO BE DELETED: Google Fonts here, example:
-    <link rel="preconnect" href="https://fonts.googleapis.com" />
-    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet" />
-    THIS IS THE END OF A COMMENT BLOCK, BLOCK TO BE DELETED -->
+    <!-- 웹폰트는 비차단으로 받는다. 예전처럼 index.css 안에서 @import 하면 render-blocking이라
+         사내망에서 cdn.jsdelivr.net 이 차단됐을 때 연결이 끊길 때까지 화면이 백지로 남는다.
+         못 불러오면 font-family 폴백(system-ui)으로 떨어지고 화면 자체는 정상적으로 뜬다. -->
+    <link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css" />
+    <link rel="stylesheet" media="print" onload="this.media='all'"
+      href="https://cdn.jsdelivr.net/gh/fonts-archive/GmarketSans/GmarketSans.css" />
   </head>
 
   <body>

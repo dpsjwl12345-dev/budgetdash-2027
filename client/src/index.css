@@ -2,8 +2,9 @@
  * Civic Ledger 스타일 기준: 참조 화면의 어두운 네이비 행정 업무 대시보드를 보존한다.
  * 이번 수정 범위는 전체 가독성 향상이다. 모바일 재배치와 정보 구조 변경은 하지 않는다.
  */
-@import url("https://cdn.jsdelivr.net/gh/orioncactus/pretendard@v1.3.9/dist/web/static/pretendard.css");
-@import url("https://cdn.jsdelivr.net/gh/fonts-archive/GmarketSans/GmarketSans.css");
+/* Pretendard / Gmarket Sans는 여기서 @import 하지 않는다. 번들 CSS 안의 @import는 render-blocking이라
+   사내망에서 cdn.jsdelivr.net 이 차단되면 연결이 끊길 때까지 화면이 백지로 남았다.
+   index.html에서 media="print" -> onload 방식으로 비차단 로드한다. */
 @import "tw-animate-css";
 /* Preflight(브라우저 기본 스타일 리셋)는 기존 커스텀 CSS와 충돌할 수 있어 제외하고,
    테마 변수 + 유틸리티 클래스만 활성화한다 (shadcn/ui 컴포넌트가 이 클래스들에 의존함). */

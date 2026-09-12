@@ -723,11 +723,17 @@ export default function Home() {
     }
   }, [Boolean(editingHierarchyRow)]);
 
+  // 아래 넷은 부서와 무관한 전체 데이터다(예산행 246KB, 계층 CSV 453KB 등). 예전에는 department가
+  // 의존성에 들어 있어서 부서를 바꿀 때마다 이걸 통째로 다시 받느라 매번 3초씩 걸렸다. 최초 1회만 받는다.
   useEffect(() => {
     loadDataFromServer();
     loadExecutionDataFromServer();
     loadCsvData();
     loadStaffDataFromServer();
+  }, []);
+
+  // 부서가 실제로 영향을 주는 건 메모뿐이다.
+  useEffect(() => {
     loadProgramMemosFromServer(department);
   }, [department]);
 
