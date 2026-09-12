@@ -653,14 +653,14 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       title: "301-01. 사회보장적수혜금",
       content: (
         <div className="detail-content">
-          <h3>사회보장적수혜금 단일화</h3>
+          <h3>사회보장적수혜금 편성 기준</h3>
           <div className="content-section">
-            <h4>📌 개정 사항 (통계목 통합)</h4>
-            <p><strong>기존에 복잡했던 국고보조재원, 취약계층지방재원 등 3개 재원별 통계목이 사회보장적수혜금(301-01) 하나로 완전히 통합됨</strong></p>
+            <h4>📌 기본 정의</h4>
+            <p>사회보장 또는 사회복지 증진 정책에 따라 취약 계층, 아동, 장애인 등 수혜자에게 현금이나 현물로 직접 지원하는 보상 경비입니다.</p>
           </div>
           <div className="content-section">
-            <h4>📌 현금성 복지경비 편성 기준</h4>
-            <p>현금성 복지경비 편성 시 통합 기준을 준수합니다.</p>
+            <h4>📌 2027년 핵심 개정</h4>
+            <p>기존에 재원에 따라 분리되어 있던 3개 통계목(국고보조재원 301-01, 취약계층지방재원 301-02, 지방재원 301-03)이 <strong>사회보장적수혜금(301-01) 단일 통계목</strong>으로 통합 정비되었습니다. 현금성 복지경비 지출에 대한 페널티 제도 폐지 등 국가 정책 여건 변화를 반영한 조치입니다.</p>
           </div>
         </div>
       ),
@@ -670,14 +670,35 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       title: "301-08. 민간인 국외여비",
       content: (
         <div className="detail-content">
-          <h3>민간인 국외여비 엄격 제한</h3>
+          <h3>민간인 국외여비 편성 기준</h3>
           <div className="content-section">
-            <h4>📌 편성 불허 사항</h4>
-            <p>사업수행 전문가가 아닌 단순 이·통장, 지역 학생 등을 대상으로 포상 성격으로 지급하는 관행적인 해외연수 목적 여비 편성은 <strong>강력히 불허</strong>합니다.</p>
+            <h4>📌 기본 정의</h4>
+            <p>시의 공식 정책 사업 수행을 위해 학계, 언론, 전문가 등이 자문 목적으로 국외 출장을 동행할 때 지급하는 여비입니다.</p>
           </div>
           <div className="content-section">
-            <h4>📌 준용 기준</h4>
-            <p>포상성·관행적 국외연수는 편성이 금지됩니다. 강력한 규제 지침을 준수합니다.</p>
+            <h4>📌 2027년 핵심 개정</h4>
+            <p>사업 수행 목적과 직접적인 관계가 없는 민간인(지역 이·통장, 지역 학생 등)을 대상으로 지원하던 관행적인 해외연수 및 포상성 여비 목적의 편성이 <strong>전면 금지</strong>됩니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "301-09",
+      title: "301-09. 행사실비 지원금",
+      content: (
+        <div className="detail-content">
+          <h3>행사실비 지원금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>시가 주관하는 각종 행사나 교육 등에 참여하는 <strong>민간인에게 지급하는 실비 성격의 경비 및 사례금</strong>을 처리합니다.</p>
+          </div>
+          <div className="content-section">
+            <h4>📌 적용 범위</h4>
+            <ul>
+              <li><strong>민간인 실비 보상:</strong> 시가 주관하는 교육, 세미나, 공청회, 회의, 훈련 등에 참석하는 민간인에게 지급하는 급식비(매식비 1식 9천 원 이내) 및 교통비</li>
+              <li><strong>출연자·발표자 사례금:</strong> 체육행사, 문화제 행사, 세미나·공청회 등의 출연자 및 발표자에게 지급하는 반대급부적 사례금 <em>(※ 단순 참가자에게는 지급 불가)</em></li>
+              <li><strong>행사 참석·견학 실비:</strong> 국가(지방) 단위 행사 참석 및 산업시찰·견학·참여를 위해 소요되는 실비</li>
+            </ul>
           </div>
         </div>
       ),
@@ -707,36 +728,182 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       title: "304-04. 보험료 부담금 등",
       content: (
         <div className="detail-content">
-          <h3>보험료 부담금 편성 기준</h3>
+          <h3>보험료 부담금 등 편성 기준</h3>
           <div className="content-section">
-            <h4>📌 포함 범위</h4>
-            <p>공무직 외에 <strong>청원경찰 고용보험 부담금의 시 의무 납부분</strong>을 포함하여 명확히 산정합니다.</p>
+            <h4>📌 기본 정의</h4>
+            <p>자치단체가 고용한 소속 근로자의 4대 사회보험 기관 부담금 및 법정 퇴직금입니다.</p>
+          </div>
+          <div className="content-section">
+            <h4>📌 2027년 핵심 개정</h4>
+            <p>기존 '공무직근로자 보험료 부담금 등'에서 <strong>보험료 부담금 등(304-04)</strong>으로 명칭이 개정되었으며, 적용 대상에 <strong>청원경찰의 고용보험 부담금</strong> 편성 규정이 명시적으로 추가되었습니다.</p>
           </div>
         </div>
       ),
     },
     {
-      id: "307",
-      title: "307. 민간보조금 (경상 / 법정운영 / 행사)",
+      id: "307-02",
+      title: "307-02. 민간경상사업보조",
       content: (
         <div className="detail-content">
-          <h3>민간단체 법정운영비 보조 기준</h3>
+          <h3>민간경상사업보조 편성 기준</h3>
           <div className="content-section">
-            <h4>📌 편성 원칙</h4>
-            <p><strong>명시적 법령 근거가 규정된 단체에 한하여</strong> 인건비, 사무관리비, 임차료 등으로 용도를 한정하여 요구하며, 포괄적 지원은 금지됩니다.</p>
+            <h4>📌 기본 정의</h4>
+            <p>민간이 추진하는 공익 사업을 권장하기 위한 경상 사업비입니다.</p>
           </div>
           <div className="content-section">
-            <h4>📌 허용 용도</h4>
-            <ul>
-              <li>인건비</li>
-              <li>사무관리비</li>
-              <li>임차료</li>
-              <li>기타 인정되는 운영경비</li>
-            </ul>
+            <h4>📌 유의 사항</h4>
+            <p>단체 자체 운영비와 섞어서 지원할 수 없으며, 제3자 재위탁은 금지됩니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-03",
+      title: "307-03. 민간단체 법정운영비보조",
+      content: (
+        <div className="detail-content">
+          <h3>민간단체 법정운영비보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>명시적 법령 근거가 있는 단체에 한하여 기본 업무수행에 필요한 인건비, 사무관리비, 임차료를 지원합니다.</p>
           </div>
           <div className="content-section">
-            <h4>📌 보조금 한도액</h4>
-            <p>보조금 총 한도액: 1,094억 원</p>
+            <h4>📌 유의 사항</h4>
+            <p>포괄적 총액 지원은 금지됩니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-04",
+      title: "307-04. 민간행사사업보조",
+      content: (
+        <div className="detail-content">
+          <h3>민간행사사업보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>민간 주관 행사를 권장하기 위한 보조금입니다.</p>
+          </div>
+          <div className="content-section">
+            <h4>📌 유의 사항</h4>
+            <p>임시 무대·부스 등 가설물 설치비는 포함할 수 있으나, 시가 직접 주관하는 행사를 우회하여 편성하는 것은 금지됩니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-05",
+      title: "307-05. 민간위탁금",
+      content: (
+        <div className="detail-content">
+          <h3>민간위탁금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>자치단체 사무를 민간에 위탁·대행할 때 소요되는 경상 경비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-08",
+      title: "307-08. 이차보전금",
+      content: (
+        <div className="detail-content">
+          <h3>이차보전금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>특정 목적 자금이 일반 금리보다 낮게 조달될 수 있도록 금리 차액을 지원하는 경비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-09",
+      title: "307-09. 운수업계보조금",
+      content: (
+        <div className="detail-content">
+          <h3>운수업계보조금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>버스·택시·화물자동차 유류세 인상분 보전(유가보조금) 및 비수익 노선 손실 보전 보조금입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-10",
+      title: "307-10. 사회복지시설 법정운영비보조",
+      content: (
+        <div className="detail-content">
+          <h3>사회복지시설 법정운영비보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>법령에 명시적 근거가 있는 사회복지시설의 운영비를 지원합니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "307-11",
+      title: "307-11. 사회복지사업보조",
+      content: (
+        <div className="detail-content">
+          <h3>사회복지사업보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>「사회복지사업법」 등 복지 정책 관련 민간 경상 사업비를 지원합니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "308-01",
+      title: "308-01. 자치단체 경상보조금",
+      content: (
+        <div className="detail-content">
+          <h3>자치단체 경상보조금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>광역(시·도)이 관할 기초(시·군·구)나 타 자치단체에 지급하는 경상 보조금입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "308-07",
+      title: "308-07. 자치단체간부담금",
+      content: (
+        <div className="detail-content">
+          <h3>자치단체간부담금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>법령 또는 협약에 따라 지자체 간 상호 공동 부담하는 경비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "308-08",
+      title: "308-08. 교육기관에 대한 보조",
+      content: (
+        <div className="detail-content">
+          <h3>교육기관에 대한 보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>각급 학교(초·중·고)의 급식, 교육정보화, 시설개선 및 교육과정 운영을 지원하는 보조금입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "308-09",
+      title: "308-09. 지역대학에 대한 경상보조",
+      content: (
+        <div className="detail-content">
+          <h3>지역대학에 대한 경상보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>「지방대학 및 지역균형인재 육성에 관한 법률」 등에 따른 대학 지원 경상 경비입니다.</p>
           </div>
         </div>
       ),
@@ -747,6 +914,10 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       content: (
         <div className="detail-content">
           <h3>공기관 위탁사업비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>공기관(한국지역정보개발원 등) 또는 지자체조합에 자본형성적 사업 외의 일반 사업을 위탁·대행할 때 소요되는 제반 경비 및 정부광고료입니다.</p>
+          </div>
           <div className="content-section">
             <h4>📌 분리 편성 원칙</h4>
             <p><strong>출연기관(도시공사, 문화관광재단 등)의 기본 운영경비가 아닌 특정 사업 대행 시에는 출연금이 아닌 위탁사업비 목으로 철저히 구분 편성</strong>합니다.</p>
@@ -822,6 +993,32 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       ),
     },
     {
+      id: "401-03",
+      title: "401-03. 감리비",
+      content: (
+        <div className="detail-content">
+          <h3>감리비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>공사 및 재산 취득에 직접 소요되는 법정 공사 감리비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "401-04",
+      title: "401-04. 시설부대비",
+      content: (
+        <div className="detail-content">
+          <h3>시설부대비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>공사 현장 관리·감독에 직접 소요되는 공공요금, 여비, 수용비, 현장 감독 피복비(명찰, 헬멧, 장화 등)입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
       id: "402-01",
       title: "402-01. 민간자본사업보조",
       content: (
@@ -856,6 +1053,84 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
               <li><strong>지방보조금 사전 심의:</strong> 예산 요구 전, 반드시 지방보조금관리위원회 심의를 완료하여 승인을 득한 사업에 한해서만 예산을 반영할 수 있습니다.</li>
               <li><strong>보조금 총액한도액 관리:</strong> 화성시 전체 민간보조금 총액 한도(2027년도 예상 한도액 1,094억 원) 범위 내에서 부서별 한도액 배분을 준수하여야 합니다.</li>
             </ul>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "402-02",
+      title: "402-02. 민간위탁사업비",
+      content: (
+        <div className="detail-content">
+          <h3>민간위탁사업비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>지방자치단체 사무를 민간에 위탁하여 자본적 성격의 사업(시설물 축조 등 자산 형성이 수반되는 위탁사업)을 수행하게 할 때 소요되는 경비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "403-01",
+      title: "403-01. 자치단체자본보조",
+      content: (
+        <div className="detail-content">
+          <h3>자치단체자본보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>다른 지방자치단체(시·군·구 등)의 자본 형성적 사업을 지원하기 위해 교부하는 보조금입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "403-02",
+      title: "403-02. 공기관 등에 대한 자본적 위탁사업비",
+      content: (
+        <div className="detail-content">
+          <h3>공기관 등에 대한 자본적 위탁사업비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>공사·공단 등 공기관에 자본적 성격의 사업(시설 신·증축 등)을 위탁하여 수행하게 할 때 소요되는 경비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "403-03",
+      title: "403-03. 예비군육성지원 자본보조",
+      content: (
+        <div className="detail-content">
+          <h3>예비군육성지원 자본보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>예비군 육성을 지원하기 위한 시설·장비 등 자본 형성적 지출에 대한 보조금입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "403-04",
+      title: "403-04. 지역대학에 대한 자본보조",
+      content: (
+        <div className="detail-content">
+          <h3>지역대학에 대한 자본보조 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>지역 소재 대학의 시설 확충 등 자본 형성적 사업을 지원하기 위해 교부하는 보조금입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "404-01",
+      title: "404-01. 공사·공단 자본전출금",
+      content: (
+        <div className="detail-content">
+          <h3>공사·공단 자본전출금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>지방공사·공단의 자본 형성(시설 투자 등)을 지원하기 위해 지방자치단체 예산에서 출연·전출하는 경비입니다.</p>
           </div>
         </div>
       ),
@@ -908,6 +1183,10 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             <h4>📌 친환경 의무 정책</h4>
             <p>신규 또는 교체로 구매·임차하는 모든 공용차량은 반드시 <strong>친환경차량(저공해자동차 100%)</strong>으로 예산을 반영하여야 합니다.</p>
           </div>
+          <div className="content-section">
+            <h4>📌 유의 사항</h4>
+            <p><strong>사용 중인 비품이 정상 작동함에도 단순 노후·구형이라는 이유만으로 신품 교체 예산을 요구할 수 없습니다.</strong> 고장·파손 등으로 실사용이 불가능하거나 내용연수를 경과한 경우에 한해 교체를 검토합니다.</p>
+          </div>
         </div>
       ),
     },
@@ -924,8 +1203,96 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             <p><strong>기존에 상환 기금 종류별로 7개로 쪼개져 있던 국내차입 원금상환 통계목이 국내차입금상환(601-01) 하나로 통폐합</strong>되었습니다.</p>
           </div>
           <div className="content-section">
-            <h4>📌 편성 기준</h4>
-            <p>통폐합된 기준에 따라 채무 원금 상환을 편성합니다.</p>
+            <h4>📌 포함 대상</h4>
+            <ul>
+              <li>지역개발기금 차입금 원금 상환</li>
+              <li>금융기관(은행) 차입금 원금 상환</li>
+              <li>중앙정부 특별회계 융자금 원금 상환</li>
+              <li>지방채증권 원금 상환</li>
+            </ul>
+          </div>
+          <div className="content-section">
+            <h4>📌 유의 사항</h4>
+            <p><strong>601(원금상환) 예산은 임의로 다른 목적에 전용할 수 없습니다.</strong> 다만 601과 311(차입금이자상환) 사이에서만 예외적으로 상호 전용이 허용됩니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "601-02",
+      title: "601-02. 해외차입금상환",
+      content: (
+        <div className="detail-content">
+          <h3>해외차입금상환 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>외국 정부·국제기구 등으로부터 도입한 차입금의 원금을 상환하는 경비입니다. 국내차입금상환(601-01)과 재원을 구분하여 별도 통계목으로 편성합니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "602-01",
+      title: "602-01. 일반예치금",
+      content: (
+        <div className="detail-content">
+          <h3>일반예치금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>특별한 목적이나 법령상 의무 없이 여유 자금을 금융기관 등에 예치하는 경비입니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "602-02",
+      title: "602-02. 의무예치금",
+      content: (
+        <div className="detail-content">
+          <h3>의무예치금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>법령 또는 계약 등에 따라 예치가 의무화된 자금을 예치하는 경비입니다. 목적 없이 예치하는 일반예치금(602-01)과 구분됩니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "801-01",
+      title: "801-01. 일반예비비",
+      content: (
+        <div className="detail-content">
+          <h3>일반예비비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 편성 한도</h4>
+            <p>예측하지 못한 지출 또는 예산 초과 지출에 충당하기 위한 경비로, <strong>예산총액의 1% 이내</strong>에서 편성합니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "801-02",
+      title: "801-02. 재해·재난목적예비비",
+      content: (
+        <div className="detail-content">
+          <h3>재해·재난목적예비비 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>재해·재난 발생 시 응급 복구 및 대응에 소요되는 경비에 충당하기 위해 별도로 편성하는 예비비입니다. 용도가 한정되어 있어 일반예비비(801-01)와 구분 관리합니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "801-03",
+      title: "801-03. 예비금",
+      subtitle: <StarredSubtitle>[2027년 신설]</StarredSubtitle>,
+      content: (
+        <div className="detail-content">
+          <h3>예비금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 2027년 핵심 개정</h4>
+            <p><strong>2027년에 신설된 통계목</strong>으로, 기존 예비비 체계와 별도로 운용되는 예비 재원입니다.</p>
           </div>
         </div>
       ),
@@ -938,7 +1305,24 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
           <h3>국고보조금 반환금 편성 기준</h3>
           <div className="content-section">
             <h4>📌 사전 계상 승인</h4>
-            <p>보조금 집행 후 정산 처리가 완료되었다면, 중앙부처에서 정식 반납 고지서를 발부하기 전이라도 <strong>미리 예산안에 자금을 계상하여 고지 즉시 즉각 반납</strong>할 수 있습니다.</p>
+            <p>보조금 집행 후 <strong>정산 처리가 완료</strong>되었다면, 중앙부처에서 정식 반납 고지서를 발부하기 전이라도 미리 예산안에 자금을 계상해 둘 수 있습니다.</p>
+          </div>
+          <div className="content-section">
+            <h4>📌 집행 규칙</h4>
+            <p>계상해 둔 반환금은 <strong>중앙부처의 반납 고지가 있는 즉시 지체 없이 집행(반납)</strong>하여야 합니다.</p>
+          </div>
+        </div>
+      ),
+    },
+    {
+      id: "802-02",
+      title: "802-02. 시·도비보조금 반환금",
+      content: (
+        <div className="detail-content">
+          <h3>시·도비보조금 반환금 편성 기준</h3>
+          <div className="content-section">
+            <h4>📌 기본 정의</h4>
+            <p>도(道) 등 광역자치단체로부터 교부받은 보조금의 정산 후 잔액을 반환하는 경비입니다. 국고보조금 반환금(802-01)과 동일한 사전 계상·고지 즉시 집행 원칙이 적용됩니다.</p>
           </div>
         </div>
       ),
@@ -955,7 +1339,7 @@ export default function StatisticsCodeDetail() {
   const selectedItemData = selectedItemId ? currentItems.find((item) => item.id === selectedItemId) : null;
 
   return (
-    <Layout>
+    <Layout highlightScope={[activeTab, selectedItemId].join('::')}>
       <div className="page-content">
         <section className="page-heading">
           <h1>세출 통계목별 상세</h1>
@@ -1077,7 +1461,8 @@ export default function StatisticsCodeDetail() {
         .guide-content-wrapper {
           display: flex;
           gap: 0;
-          height: calc(100vh - 350px);
+          height: calc(100vh - 220px);
+          min-height: 680px;
         }
 
         .guide-subtabs {

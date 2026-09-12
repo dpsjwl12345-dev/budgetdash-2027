@@ -650,7 +650,9 @@ export default function Home() {
   // 인쇄가 시작되면 잠깐 페이지네이션을 끄고 전체 행을 렌더링한 뒤 인쇄 대화상자를 띄운다.
   const [isPrintMode, setIsPrintMode] = useState(false);
   const [hierarchySearch, setHierarchySearch] = useState("");
-  const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState("");
+  const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState(() => {
+    return localStorage.getItem('returnToHierarchyProgram') || '';
+  });
   const [hierarchyItemFilter, setHierarchyItemFilter] = useState("");
   const [rowSpacing, setRowSpacing] = useState(4);
   const [programFilter, setProgramFilter] = useState("");
@@ -670,6 +672,14 @@ export default function Home() {
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // 설명자료 화면에서 "편성 시트로 돌아가기"로 넘어온 경우, 다음에 이 페이지를
+  // 다시 방문했을 때 필터가 그대로 남아있지 않도록 한 번 쓰고 지운다.
+  useEffect(() => {
+    if (localStorage.getItem('returnToHierarchyProgram')) {
+      localStorage.removeItem('returnToHierarchyProgram');
+    }
+  }, []);
 
   // Esc로 모달 닫기
   useEffect(() => {

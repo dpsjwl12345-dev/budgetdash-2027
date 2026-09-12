@@ -110,7 +110,7 @@ export default function DepartmentKeyIssues() {
   };
 
   return (
-    <Layout>
+    <Layout highlightScope={selectedDept}>
       <div className="page-content">
         <section className="page-heading">
           <h1>부서별 주요 쟁점사항</h1>

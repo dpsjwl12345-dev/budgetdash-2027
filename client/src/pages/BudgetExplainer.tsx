@@ -249,6 +249,15 @@ export default function BudgetExplainer() {
     }
   };
 
+  // 편성 시트에서 이 세부사업을 클릭해 여기로 넘어왔던 경우, 돌아갈 때도 부서
+  // 검색과 세부사업 찾기를 처음부터 다시 하지 않도록 두 값을 저장해둔다.
+  const handleReturnToSheet = () => {
+    const detail = selectedPath.split("|").pop() || requestedItem;
+    if (department) localStorage.setItem('selectedDepartment', department);
+    if (detail) localStorage.setItem('returnToHierarchyProgram', detail);
+    setLocation('/');
+  };
+
   const TreeNodeRenderer = ({
     node,
     path = "",
@@ -369,32 +378,6 @@ export default function BudgetExplainer() {
         <section className="page-heading" style={{ flexShrink: 0, marginBottom: "12px" }}>
           <div className="title-area">
             <div style={{ display: "flex", alignItems: "center", gap: "14px" }}>
-              <button
-                type="button"
-                onClick={() => {
-                  // 편성 시트가 이 부서를 기본 선택 상태로 열도록, 돌아가기 전에 저장해둔다.
-                  if (department) localStorage.setItem('selectedDepartment', department);
-                  setLocation('/');
-                }}
-                style={{
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "6px",
-                  padding: "7px 12px",
-                  border: "1px solid var(--line)",
-                  borderRadius: "6px",
-                  background: "var(--bg-secondary)",
-                  color: "var(--text-muted)",
-                  fontSize: "13px",
-                  fontWeight: 600,
-                  cursor: "pointer",
-                  flexShrink: 0,
-                }}
-                aria-label="예산 편성 시트로 돌아가기"
-              >
-                <ArrowLeft size={15} />
-                예산 편성 시트로
-              </button>
               <div
                 className="title-wrapper"
                 style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}
@@ -583,6 +566,28 @@ export default function BudgetExplainer() {
                     + 증빙자료 등록
                     <input type="file" hidden accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.hwp,.png,.jpg,.jpeg" onChange={handleEvidenceUpload} />
                   </label>
+                </div>
+                <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px 0" }}>
+                  <button
+                    type="button"
+                    onClick={handleReturnToSheet}
+                    style={{
+                      display: "flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      width: "32px",
+                      height: "32px",
+                      border: "1px solid var(--line)",
+                      borderRadius: "6px",
+                      background: "var(--bg-secondary)",
+                      color: "var(--text-muted)",
+                      cursor: "pointer",
+                    }}
+                    aria-label="이 세부사업의 편성 시트로 돌아가기"
+                    title="편성 시트로 돌아가기"
+                  >
+                    <ArrowLeft size={16} />
+                  </button>
                 </div>
                 {material?.sections_json?.evidence && material.sections_json.evidence.length > 0 && (
                   <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px 0" }}>
