@@ -35,15 +35,15 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>지방공무원 보수 편성 기준</h3>
           <div className="content-section">
-            <h4>편성 정원 기준</h4>
+            <h4>📌 편성 정원 기준</h4>
             <p>2026년 8월 31일 기준 정원 또는 현원 반영</p>
           </div>
           <div className="content-section">
-            <h4>적용 단가 기준</h4>
+            <h4>📌 적용 단가 기준</h4>
             <p>2026년도 공무원 봉급표 기준</p>
           </div>
           <div className="content-section">
-            <h4>법정 수당 요율표</h4>
+            <h4>📌 법정 수당 요율표</h4>
             <ul>
               <li><strong>대우공무원수당:</strong> 월봉급액의 4.1%</li>
               <li><strong>관리업무수당:</strong> 월봉급액의 9%</li>
@@ -64,18 +64,18 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>공무직(무기계약) 근로자 보수 편성 기준</h3>
           <div className="content-section">
-            <h4>급여 단가</h4>
+            <h4>📌 급여 단가</h4>
             <p>「화성시-화성시공무직노동조합 임금협약」 단가 엄격 준수</p>
           </div>
           <div className="content-section">
-            <h4>명절휴가비</h4>
+            <h4>📌 명절휴가비</h4>
             <ul>
               <li>기본급의 120% 편성</li>
               <li>설·추석 각 60% 분할 지급</li>
             </ul>
           </div>
           <div className="content-section">
-            <h4>실무 필수 규칙</h4>
+            <h4>📌 실무 필수 규칙</h4>
             <ul>
               <li>공무직 여비: 공무원과 동일하게 국내여비(202-01) 목에 통합 요구</li>
               <li>현업 공무직 피복비: 인건비가 아닌 사무관리비(201-01) 일반운영비에 요구</li>
@@ -91,7 +91,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>기간제근로자등 보수 편성 기준</h3>
           <div className="content-section">
-            <h4>1. 인건비</h4>
+            <h4>📌 1. 인건비</h4>
             <ul>
               <li><strong>예산 과목 (통계목):</strong> 101-04 기간제근로자등 보수 (개별 정책사업에 포함하여 요구)</li>
               <li><strong>관할 및 주관 부서:</strong> 행정지원과 공공노무팀</li>
@@ -100,7 +100,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </ul>
           </div>
           <div className="content-section">
-            <h4>2. 기간제근로자 인건비 구성요소 및 표준 산출식</h4>
+            <h4>📌 2. 기간제근로자 인건비 구성요소 및 표준 산출식</h4>
             <p>예산 요구 시 인건비 항목은 기본급, 주휴수당, 연차수당, 4대 보험료, 공정수당으로 구별하여 요구합니다.</p>
             <div style={{ marginTop: "12px" }}>
               <strong>① 기본급 · 주휴수당 · 연차수당</strong>
@@ -109,7 +109,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
                 <li>주휴수당: 일일단가(원) × 인원(명) × 휴일일수(일) (일요일 및 근로자의 날)</li>
                 <li>연차수당: 일일단가(원) × 인원(명) × 미사용 연차 일수(일)</li>
                 <li style={{ marginTop: "8px" }}>
-                  <strong>통합 입력 수식:</strong>{" "}
+                  <strong>표준 산출식:</strong>{" "}
                   <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>기준단가(원) × 인원(명) × 근무일수(일)</code>
                 </li>
                 <li style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px", color: "var(--text-muted)" }}>월 평균 기준일수(주휴일 포함): <strong>월 27일</strong> 적용</li>
@@ -120,7 +120,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
               <strong>② 4대 보험료 (기관 부담금)</strong>
               <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
                 <li>
-                  산출식:{" "}
+                  표준 산출식:{" "}
                   <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>임금 총액(원) × 12% (또는 11.75%, 원 단위까지 정확히 입력)</code>
                 </li>
                 <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>(참고) 국민연금 사업주 공제부담 비율이 4.75%에서 5%로 인상 반영되었습니다.</li>
@@ -130,7 +130,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
               <strong>③ 공정수당</strong>
               <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
                 <li>
-                  산출식:{" "}
+                  표준 산출식:{" "}
                   <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>기간제근로자 인원수(명) × 구간별 보상지급액(원)</code>
                 </li>
                 <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>(참고) 보상지급액은 당해 연도 화성시 생활임금 확정 고시 후 산정 적용됩니다.</li>
@@ -138,7 +138,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </div>
           </div>
           <div className="content-section">
-            <h4>3. 직종별 단가 적용 기준</h4>
+            <h4>📌 3. 직종별 단가 적용 기준</h4>
             <p>기간제근로자의 일일 단가는 수행하는 업무 직종에 따라 <strong>생활임금 적용 직종</strong>과 <strong>최저임금 상승률 차등 적용 직종</strong>으로 분리됩니다.</p>
             <div style={{ marginTop: "12px" }}>
               <strong>생활임금 적용 직종</strong>
@@ -152,7 +152,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </div>
           </div>
           <div className="content-section">
-            <h4>2027년도 직종별 적용 단가</h4>
+            <h4>📌 2027년도 직종별 적용 단가</h4>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "12px", fontSize: "14px" }}>
               <thead>
                 <tr style={{ backgroundColor: "rgba(118, 157, 194, 0.15)", borderBottom: "2px solid rgba(118, 157, 194, 0.3)" }}>
@@ -252,10 +252,10 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
               <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>법령 및 조례 등에 의해 설치된 위원회의 심의 참석 수당 (단, 개별 조례에 따로 단가가 명시된 경우는 조례 단가 우선 적용)</p>
               <ul style={{ marginLeft: "20px" }}>
                 <li><strong>대면 심의 수당:</strong> 1회당 100,000원 (회의 시간이 2시간을 초과할 경우 50,000원 추가 지급 가능)
-                  <div style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px" }}>산출식: <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>100,000원(또는 150,000원) × 참석 위원 수(명) × 회의 횟수(회)</code></div>
+                  <div style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px" }}>표준 산출식: <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>100,000원(또는 150,000원) × 참석 위원 수(명) × 회의 횟수(회)</code></div>
                 </li>
                 <li><strong>서면 심의 수당:</strong> 1회당 50,000원
-                  <div style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px" }}>산출식: <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>50,000원 × 심의 위원 수(명) × 심의 횟수(회)</code></div>
+                  <div style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px" }}>표준 산출식: <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>50,000원 × 심의 위원 수(명) × 심의 횟수(회)</code></div>
                 </li>
               </ul>
             </div>
@@ -618,9 +618,9 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
       title: "204-03. 특정업무경비",
       content: (
         <div className="detail-content">
-          <h3>특정업무경비 편성기준</h3>
+          <h3>특정업무경비 편성 기준</h3>
           <div className="content-section">
-            <h4>기본 활동비</h4>
+            <h4>📌 기본 활동비</h4>
             <ul>
               <li><strong>대민활동비:</strong> 월 50,000원 (6급 이하 정규직 및 청원경찰)</li>
               <li><strong>특별사법경찰관 수사활동비:</strong> 월 200,000원 (특사경 지명을 받은 실무 과장 및 담당자)</li>
@@ -628,14 +628,14 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </ul>
           </div>
           <div className="content-section">
-            <h4>분야별 활동비</h4>
+            <h4>📌 분야별 활동비</h4>
             <ul>
               <li><strong>세무활동비 / 예산활동비:</strong> 월 150,000원</li>
               <li><strong>재난·안전 활동비:</strong> 월 80,000원 (수당 규정상 재난안전 대상자)</li>
             </ul>
           </div>
           <div className="content-section">
-            <h4>선택항목 (지자체 설정)</h4>
+            <h4>📌 선택항목 (지자체 설정)</h4>
             <ul>
               <li>감사담당: 월 80,000원</li>
               <li>여론·동향: 월 100,000원</li>
@@ -654,11 +654,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>사회보장적수혜금 단일화</h3>
           <div className="content-section">
-            <h4>개정 사항 (통계목 통합)</h4>
+            <h4>📌 개정 사항 (통계목 통합)</h4>
             <p><strong>기존에 복잡했던 국고보조재원, 취약계층지방재원 등 3개 재원별 통계목이 사회보장적수혜금(301-01) 하나로 완전히 통합됨</strong></p>
           </div>
           <div className="content-section">
-            <h4>현금성 복지경비 편성 기준</h4>
+            <h4>📌 현금성 복지경비 편성 기준</h4>
             <p>현금성 복지경비 편성 시 통합 기준을 준수합니다.</p>
           </div>
         </div>
@@ -671,11 +671,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>민간인 국외여비 엄격 제한</h3>
           <div className="content-section">
-            <h4>편성 불허 사항</h4>
+            <h4>📌 편성 불허 사항</h4>
             <p>사업수행 전문가가 아닌 단순 이·통장, 지역 학생 등을 대상으로 포상 성격으로 지급하는 관행적인 해외연수 목적 여비 편성은 <strong>강력히 불허</strong>합니다.</p>
           </div>
           <div className="content-section">
-            <h4>준용 기준</h4>
+            <h4>📌 준용 기준</h4>
             <p>포상성·관행적 국외연수는 편성이 금지됩니다. 강력한 규제 지침을 준수합니다.</p>
           </div>
         </div>
@@ -688,11 +688,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>자원봉사자 실비보상 기준</h3>
           <div className="content-section">
-            <h4>적용 대상</h4>
+            <h4>📌 적용 대상</h4>
             <p>시 주관 프로그램 참여 자원봉사자 대상 (1일 4시간 이상 활동 시 적용)</p>
           </div>
           <div className="content-section">
-            <h4>실비보상 단가</h4>
+            <h4>📌 실비보상 단가</h4>
             <ul>
               <li><strong>교통비:</strong> 1일 4,000원 이내</li>
               <li><strong>급식비:</strong> 1일 10,000원 이내</li>
@@ -708,7 +708,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>보험료 부담금 편성 기준</h3>
           <div className="content-section">
-            <h4>포함 범위</h4>
+            <h4>📌 포함 범위</h4>
             <p>공무직 외에 <strong>청원경찰 고용보험 부담금의 시 의무 납부분</strong>을 포함하여 명확히 산정합니다.</p>
           </div>
         </div>
@@ -721,11 +721,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>민간단체 법정운영비 보조 기준</h3>
           <div className="content-section">
-            <h4>편성 원칙</h4>
+            <h4>📌 편성 원칙</h4>
             <p><strong>명시적 법령 근거가 규정된 단체에 한하여</strong> 인건비, 사무관리비, 임차료 등으로 용도를 한정하여 요구하며, 포괄적 지원은 금지됩니다.</p>
           </div>
           <div className="content-section">
-            <h4>허용 용도</h4>
+            <h4>📌 허용 용도</h4>
             <ul>
               <li>인건비</li>
               <li>사무관리비</li>
@@ -734,7 +734,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </ul>
           </div>
           <div className="content-section">
-            <h4>보조금 한도액</h4>
+            <h4>📌 보조금 한도액</h4>
             <p>보조금 총 한도액: 1,094억 원</p>
           </div>
         </div>
@@ -747,11 +747,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>공기관 위탁사업비 편성 기준</h3>
           <div className="content-section">
-            <h4>분리 편성 원칙</h4>
+            <h4>📌 분리 편성 원칙</h4>
             <p><strong>출연기관(도시공사, 문화관광재단 등)의 기본 운영경비가 아닌 특정 사업 대행 시에는 출연금이 아닌 위탁사업비 목으로 철저히 구분 편성</strong>합니다.</p>
           </div>
           <div className="content-section">
-            <h4>편성 구분</h4>
+            <h4>📌 편성 구분</h4>
             <ul>
               <li><strong>출연금:</strong> 기관의 기본 운영경비</li>
               <li><strong>위탁사업비:</strong> 특정 사업 대행 경비</li>
@@ -770,7 +770,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>시설공사 보상비 편성 기준</h3>
           <div className="content-section">
-            <h4>적용 대상 예산 범위</h4>
+            <h4>📌 적용 대상 예산 범위</h4>
             <ul>
               <li>사무실, 공장, 공원 및 대단위 토목공사에 편입되는 토지 매입 대금</li>
               <li>건물 및 지장물 손실보상금, 영업권·어업권 보상금 및 이전비</li>
@@ -778,7 +778,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </ul>
           </div>
           <div className="content-section">
-            <h4>편성 시 필수 요건</h4>
+            <h4>📌 편성 시 필수 요건</h4>
             <ul>
               <li><strong>[자산 증가 필수]</strong> 예산 지출을 통해 시(市)의 공공자산 증가가 실질적으로 수반되는 경우에만 편성</li>
               <li><strong>보상 가격은 감정평가를 우선</strong>하되 없을 시 공시지가나 유사 실적 참조</li>
@@ -796,7 +796,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>시설비 편성 기준</h3>
           <div className="content-section">
-            <h4>편성 범위 (신규 기준)</h4>
+            <h4>📌 편성 범위 (신규 기준)</h4>
             <ul>
               <li>기본조사설계비 및 실시설계비, 설계공모비</li>
               <li>실제 도로·하천의 건설 및 개·보수 순공사비</li>
@@ -805,11 +805,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </ul>
           </div>
           <div className="content-section">
-            <h4>배제 대상 (중요 변경)</h4>
+            <h4>📌 배제 대상 (중요 변경)</h4>
             <p><strong>토지매입비 및 대규모 보상비 요구 일체 배제</strong> (모두 보상비 목으로 이관 완료)</p>
           </div>
           <div className="content-section">
-            <h4>⚠️ 시설비 단계별 편성 의무 룰 (집행률 관리)</h4>
+            <h4>📌 시설비 단계별 편성 의무 룰 (집행률 관리)</h4>
             <p style={{ marginBottom: "12px" }}>예산의 이월·불용 최소화를 위해 공정별 집행계획을 감안하여 실제 지출할 단계의 금액만 요구 가능합니다.</p>
             <div style={{ backgroundColor: "rgba(118, 157, 194, 0.08)", padding: "12px", borderRadius: "4px" }}>
               <p style={{ marginTop: 0 }}><strong>1단계:</strong> 사전조사 및 기본계획 수립, 설계비(실시설계비 등) 요구</p>
@@ -827,23 +827,23 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>민간자본사업보조 편성 기준</h3>
           <div className="content-section">
-            <h4>기본 정의</h4>
+            <h4>📌 기본 정의</h4>
             <p>민간이 자체적으로 추진하는 자본 형성적 사업(시설물 축조, 대규모 수선, 자본재 및 고가 장비 도입 등)을 지원하기 위해 지방자치단체가 민간 보조사업자에게 교부하는 <strong>자본 지출 성격의 보조금</strong>입니다.</p>
           </div>
           <div className="content-section">
-            <h4>2027년도 주요 개정 사항</h4>
+            <h4>📌 2027년도 주요 개정 사항</h4>
             <p><strong>재원구분 통계목 통합:</strong> 기존에는 자체재원 보조와 이전재원(국·도비 등) 보조로 번거롭게 나누어 관리되던 민간자본 보조 통계목이 '민간자본사업보조(402-01)' 단일 통계목으로 완전히 통합되었습니다.</p>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>💡 <em>실무 팁: e호조 시스템 입력 시에는 하나의 통계목으로 통일하되, 보통교부세 산정 등을 위해 시스템 내부 속성(정보관리사업)에서 재원 구분을 분류하여 관리합니다.</em></p>
           </div>
           <div className="content-section">
-            <h4>예산 편성 대상 및 범위</h4>
+            <h4>📌 예산 편성 대상 및 범위</h4>
             <ul>
               <li><strong>시설 신·증축 및 개보수:</strong> 민간 단체나 법인이 소유·운영하는 시설물의 신축, 증축, 개축 및 대수선 공사 비용 지원</li>
               <li><strong>자본재 및 고가 장비 구입:</strong> 내용연수가 다년인 기계장비, 공장 설비, 전문 의료·과학 장비 등 민간의 유형자산 형성을 돕기 위한 물품 취득비 지원</li>
             </ul>
           </div>
           <div className="content-section">
-            <h4>⚠️ 예산 편성 시 실무 유의사항 (필수 체크)</h4>
+            <h4>📌 예산 편성 시 실무 유의사항 (필수 체크)</h4>
             <div style={{ backgroundColor: "rgba(255, 193, 7, 0.1)", padding: "12px", borderRadius: "4px", marginBottom: "12px" }}>
               <strong>경상적 경비 편성 절대 금지</strong>
               <ul style={{ marginTop: "8px" }}>
@@ -866,12 +866,12 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>자산및물품취득비 편성 기준</h3>
           <div className="content-section">
-            <h4>정수 배정 사전 승인제</h4>
+            <h4>📌 정수 배정 사전 승인제</h4>
             <p><strong>주요 정수관리 물품 및 공용차량 임차(1개월 이상)는 예산 요구 전 반드시 물품 부서의 정수 배정 승인을 받아야 요구 등록이 가능</strong>합니다.</p>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>대표적 정수 물품(59종): 노트북컴퓨터, 에어컨, 빔프로젝터, 디지털캠코더 등</p>
           </div>
           <div className="content-section">
-            <h4>💻 2027년도 다기능 사무기기 주요 물품 표준 단가</h4>
+            <h4>📌 2027년도 다기능 사무기기 주요 물품 표준 단가</h4>
             <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "12px", fontSize: "13px" }}>
               <thead>
                 <tr style={{ backgroundColor: "rgba(118, 157, 194, 0.15)", borderBottom: "2px solid rgba(118, 157, 194, 0.3)" }}>
@@ -904,7 +904,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             </table>
           </div>
           <div className="content-section">
-            <h4>🌱 친환경 의무 정책</h4>
+            <h4>📌 친환경 의무 정책</h4>
             <p>신규 또는 교체로 구매·임차하는 모든 공용차량은 반드시 <strong>친환경차량(저공해자동차 100%)</strong>으로 예산을 반영하여야 합니다.</p>
           </div>
         </div>
@@ -919,11 +919,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>국내차입금상환 편성 기준</h3>
           <div className="content-section">
-            <h4>통계목 대폭 간소화</h4>
+            <h4>📌 통계목 대폭 간소화</h4>
             <p><strong>기존에 상환 기금 종류별로 7개로 쪼개져 있던 국내차입 원금상환 통계목이 국내차입금상환(601-01) 하나로 통폐합</strong>되었습니다.</p>
           </div>
           <div className="content-section">
-            <h4>편성 기준</h4>
+            <h4>📌 편성 기준</h4>
             <p>통폐합된 기준에 따라 채무 원금 상환을 편성합니다.</p>
           </div>
         </div>
@@ -936,7 +936,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
         <div className="detail-content">
           <h3>국고보조금 반환금 편성 기준</h3>
           <div className="content-section">
-            <h4>사전 계상 승인</h4>
+            <h4>📌 사전 계상 승인</h4>
             <p>보조금 집행 후 정산 처리가 완료되었다면, 중앙부처에서 정식 반납 고지서를 발부하기 전이라도 <strong>미리 예산안에 자금을 계상하여 고지 즉시 즉각 반납</strong>할 수 있습니다.</p>
           </div>
         </div>
@@ -1141,9 +1141,9 @@ export default function StatisticsCodeDetail() {
 
         .guide-detail-area {
           flex: 1;
-          padding: 32px 40px;
-          background: rgba(255, 255, 255, 0.95);
-          color: #1a1a1a;
+          padding: 24px 28px;
+          background: transparent;
+          color: var(--text);
           overflow-y: auto;
         }
 
@@ -1165,77 +1165,91 @@ export default function StatisticsCodeDetail() {
           width: 100%;
           display: flex;
           flex-direction: column;
-          gap: 16px;
+          gap: 14px;
         }
 
         .detail-content h3 {
-          font-size: 28px;
+          font-size: 22px;
           font-weight: 800;
-          color: #000;
-          margin-bottom: 40px;
+          color: var(--text);
+          margin: 0 0 16px;
           border-bottom: 3px solid #5b9bf0;
-          padding-bottom: 20px;
+          padding-bottom: 10px;
           letter-spacing: -0.5px;
         }
 
         .content-section {
-          margin-bottom: 32px;
-          padding: 20px 24px;
-          background: rgba(118, 157, 194, 0.08);
+          margin-bottom: 0;
+          padding: 14px 18px;
+          background: var(--bg-elevated);
           border-radius: 8px;
           border-left: 4px solid #5b9bf0;
         }
 
         .content-section h4 {
-          font-size: 19px;
+          font-size: 17px;
           font-weight: 700;
-          color: #1a3a66;
-          margin-bottom: 20px;
+          color: #7cb2f5;
+          margin-bottom: 10px;
           margin-top: 0;
           letter-spacing: -0.3px;
         }
 
         .content-section ul {
-          padding-left: 28px;
+          padding-left: 24px;
           margin: 0;
         }
 
         .content-section li {
-          margin: 10px 0;
-          font-size: 16px !important;
-          color: #222 !important;
+          margin: 6px 0;
+          font-size: 15px !important;
+          color: var(--text-muted) !important;
           line-height: 1.5;
         }
 
         .content-section p {
-          font-size: 16px !important;
-          color: #222 !important;
+          font-size: 15px !important;
+          color: var(--text-muted) !important;
           line-height: 1.5;
           margin: 0;
         }
 
         .content-section strong {
-          color: #000 !important;
+          color: var(--text) !important;
         }
 
         .content-section table {
-          font-size: 16px !important;
-          color: #222 !important;
-        }
-
-        .content-section ul {
-          color: #222 !important;
+          font-size: 15px !important;
+          color: var(--text-muted) !important;
         }
 
         .content-section * {
-          font-size: 16px !important;
-          color: #222 !important;
+          font-size: 15px !important;
+          color: var(--text-muted) !important;
           line-height: 1.5 !important;
         }
 
         .content-section h4 {
-          font-size: 19px !important;
-          color: #1a3a66 !important;
+          font-size: 17px !important;
+          color: #7cb2f5 !important;
+        }
+
+        .content-section strong {
+          color: var(--text) !important;
+        }
+
+        .content-section code {
+          background: rgba(91, 155, 240, 0.14) !important;
+          color: #9dc3f7 !important;
+        }
+
+        .content-section th {
+          color: var(--text) !important;
+          background: rgba(91, 155, 240, 0.1) !important;
+        }
+
+        .content-section td {
+          color: var(--text-muted) !important;
         }
 
       `}</style>
