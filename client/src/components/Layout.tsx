@@ -50,7 +50,7 @@ const toolItems: ToolItem[] = [
     label: "예산 편성 가이드",
     icon: SlidersHorizontal,
     subItems: [
-      { label: "사전절차 및 편성기준" },
+      { label: "사전절차" },
       { label: "세출 통계목별 상세" },
       { label: "산출식(함수) 전체 목록" },
     ],
@@ -83,7 +83,7 @@ export default function Layout({
 
     switch (location) {
       case "/budget-establishment-guide":
-        return "사전절차 및 편성기준";
+        return "사전절차";
       case "/statistics-code-detail":
         return "세출 통계목별 상세";
       case "/formula-overview":
@@ -264,7 +264,7 @@ export default function Layout({
   return (
     <div className="app-shell">
       <aside
-        className={`sidebar ${sidebarCollapsed ? "collapsed" : ""}`}
+        className={`sidebar no-print ${sidebarCollapsed ? "collapsed" : ""}`}
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
       >
@@ -449,7 +449,7 @@ export default function Layout({
                           transition: "all 0.15s",
                         }}
                         onClick={() => {
-                          if (subItem.label === "사전절차 및 편성기준") {
+                          if (subItem.label === "사전절차") {
                             setLocation("/budget-establishment-guide");
                           } else if (subItem.label === "세출 통계목별 상세") {
                             setLocation("/statistics-code-detail");
@@ -496,7 +496,7 @@ export default function Layout({
       </aside>
 
       <main className="main-area">
-        <header className="topbar">
+        <header className="topbar no-print">
           <div className="breadcrumbs">
             <span>DASHBOARDS</span>
             <ChevronRight size={14} />
@@ -509,6 +509,7 @@ export default function Layout({
 
       <canvas
         ref={canvasRef}
+        className="no-print"
         aria-hidden={!highlightMode}
         onPointerDown={highlightMode ? startHighlight : undefined}
         onPointerMove={highlightMode ? continueHighlight : undefined}
@@ -525,6 +526,7 @@ export default function Layout({
       />
 
       <div
+        className="no-print"
         onPointerDown={startToolbarDrag}
         title="형광펜 도구를 드래그하여 이동"
         style={{

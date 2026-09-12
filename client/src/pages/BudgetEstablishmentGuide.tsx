@@ -1,411 +1,358 @@
 import { useState } from "react";
 import Layout from "@/components/Layout";
 
-type TabKey = "세입예산" | "행정운영경비" | "보조금·행사" | "국도비·전환" | "지방투자사업" | "시설비" | "자산 취득" | "기간제근로자";
+type TabKey = "체크리스트" | "재정전략" | "사업 타당성" | "대외 의사결정 및 자산 관리" | "운영 및 사회적 가치";
 
 const TABS: { key: TabKey; label: string }[] = [
-  { key: "세입예산", label: "세입예산" },
-  { key: "행정운영경비", label: "행정운영경비" },
-  { key: "보조금·행사", label: "보조금·행사" },
-  { key: "국도비·전환", label: "국도비·전환" },
-  { key: "지방투자사업", label: "지방투자사업" },
-  { key: "시설비", label: "시설비" },
-  { key: "자산 취득", label: "자산 취득" },
-  { key: "기간제근로자", label: "기간제근로자" },
+  { key: "체크리스트", label: "체크리스트" },
+  { key: "재정전략", label: "재정전략" },
+  { key: "사업 타당성", label: "사업 타당성" },
+  { key: "대외 의사결정 및 자산 관리", label: "대외 의사결정 및 자산 관리" },
+  { key: "운영 및 사회적 가치", label: "운영 및 사회적 가치" },
 ];
 
 export default function BudgetEstablishmentGuide() {
-  const [activeTab, setActiveTab] = useState<TabKey>("세입예산");
+  const [activeTab, setActiveTab] = useState<TabKey>("체크리스트");
 
   const renderTabContent = () => {
     switch (activeTab) {
-      case "세입예산":
+      case "체크리스트":
         return (
           <div className="tab-content">
-            <h2>세입예산 <span className="guide-subtitle">세외수입 및 이전재원 요구</span></h2>
+            <h2>16대 사전 행정절차 체크리스트 <span className="guide-subtitle">사전 행정절차 자가진단 종합 체크리스트</span></h2>
 
-            <h3>📌 세입 분류별 핵심 정의</h3>
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>지방세</h4>
-                <p>최근 5년간의 징수 추이와 현년도 세수여건 등을 종합 분석하여 요구합니다.</p>
-              </div>
-              <div className="info-card">
-                <h4>세외수입</h4>
-                <p>자치단체 자체 수입으로, 요구 전에 반드시 세정과(세외수입관리팀)와 재정합의를 거쳐야 합니다.</p>
-              </div>
-              <div className="info-card">
-                <h4>보조금 반환수입</h4>
-                <p>지난 연도 지방보조금 및 위탁비 정산 잔액과 이자 수입입니다.</p>
-              </div>
-            </div>
-
-            <div className="alert-box">
-              <strong>🚨 [필수 선행]</strong>
-              <p>세입 요구 전 반드시 세정과 주관으로 시장님 보고 및 결재를 완료해야 합니다.</p>
-            </div>
-
-            <div className="alert-box">
-              <strong>🚨 [작성 주체]</strong>
-              <p>재배정 사업을 포함하여, 실제 세출 예산을 편성하여 집행했던 사업 부서가 직접 세입 예산으로 요구해야 합니다.</p>
-            </div>
-
-            <h3>📝 세외수입 실무 검토 팁</h3>
             <table className="content-table">
               <thead>
                 <tr>
-                  <th>세입 목</th>
-                  <th>산출 및 요구 기준</th>
-                  <th>e호조 입력 시 유의사항</th>
+                  <th style={{ width: '70px' }}>단계</th>
+                  <th style={{ width: '50px' }}>번호</th>
+                  <th>사전 행정절차 항목</th>
+                  <th>편성 가능 여부 및 누락 시 페널티</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>토지 임대</td>
-                  <td>• 공시지가 기준 산출</td>
-                  <td>무상임대 경과 재산은 유상임대로 즉시 전환</td>
+                  <td rowSpan={2} style={{ textAlign: 'center', fontWeight: 600 }}>계획</td>
+                  <td style={{ textAlign: 'center' }}>01</td>
+                  <td>예산 수립 전 재정합의</td>
+                  <td>편성 원천 불가</td>
                 </tr>
                 <tr>
-                  <td>사용료·수수료</td>
-                  <td>• 징수 실적 및 2027년 특수요인 분석 반영</td>
-                  <td>사용료·수수료 현실화 계획 마련 및 조례 검토</td>
+                  <td style={{ textAlign: 'center' }}>03</td>
+                  <td>중기지방재정계획 반영 여부</td>
+                  <td>투자심사 진행 불가 / 편성 불가</td>
                 </tr>
                 <tr>
-                  <td>재산 매각</td>
-                  <td>• 공유재산관리계획 처분 승인액 반영</td>
-                  <td>분할 납부 시 당해 연도 분입 예정액만 계상</td>
+                  <td rowSpan={6} style={{ textAlign: 'center', fontWeight: 600 }}>심사</td>
+                  <td style={{ textAlign: 'center' }}>02</td>
+                  <td>지방재정 투자심사</td>
+                  <td>설계비 및 공사비 요구 불가</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>04</td>
+                  <td>지방재정영향평가</td>
+                  <td>사업 추진 절차 중단</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>05</td>
+                  <td>지방보조금 관리위원회 심의</td>
+                  <td>세출예산 반영 불가</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>06</td>
+                  <td>용역과제 심의 (1,000만 원↑)</td>
+                  <td>용역 발주 불가</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>13</td>
+                  <td>축제 경비 심의 및 환류 적용</td>
+                  <td>평가 등급에 따른 강제 삭감</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>14</td>
+                  <td>교육경비 보조금 심의</td>
+                  <td>교육청 협의 및 편성 불가</td>
+                </tr>
+                <tr>
+                  <td rowSpan={2} style={{ textAlign: 'center', fontWeight: 600 }}>의결</td>
+                  <td style={{ textAlign: 'center' }}>07</td>
+                  <td>출연금·민간위탁 의회 사전의결</td>
+                  <td>의회 예산 심사 거부 사유</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>11</td>
+                  <td>공유재산관리계획 승인</td>
+                  <td>사업 부지 취득 및 공사 불가</td>
+                </tr>
+                <tr>
+                  <td rowSpan={6} style={{ textAlign: 'center', fontWeight: 600 }}>운영</td>
+                  <td style={{ textAlign: 'center' }}>08</td>
+                  <td>정보화사업 사전승인 및 보안 15%</td>
+                  <td>보안예산 미달 시 보완 지시</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>09</td>
+                  <td>기간제근로자 채용 승인 (정수)</td>
+                  <td>인건비 편성 불가</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>10</td>
+                  <td>공무국외출장 사전 협의 (201-01 분리)</td>
+                  <td>위반 시 여비 환수 및 징계</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>12</td>
+                  <td>물품·차량 정수 승인 (친환경 100%)</td>
+                  <td>e호조 시스템 등록 차단</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>15</td>
+                  <td>사회보장제도 복지부 사전 협의</td>
+                  <td>협의 미완료 시 편성 절대 불가</td>
+                </tr>
+                <tr>
+                  <td style={{ textAlign: 'center' }}>16</td>
+                  <td>재난안전 4대 속성정보 입력</td>
+                  <td>보통/소방안전교부세 감액</td>
                 </tr>
               </tbody>
             </table>
           </div>
         );
-      case "행정운영경비":
+      case "재정전략":
         return (
           <div className="tab-content">
-            <h2>행정운영경비 및 부서 기본경비 <span className="guide-subtitle">기본경비 및 급식·여비 기준</span></h2>
+            <h2>재정전략 <span className="guide-subtitle">거시적 재정 건전성 확보를 위한 핵심 심사</span></h2>
 
-            <h3>📌 통상 업무 기본 경비 배분 기준</h3>
-            <div className="rules-container">
-              <div className="rule-item">
-                <h4>일반수용비 (정원 기준)</h4>
-                <p>부서 소모품비, 피복비, 도서구입비, 범용 S/W 구입비, 장비 임차료 등.</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 배분 한도: 공무원 정원 1인당 연 750,000원 (2026. 10. 기준 정원 적용).</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 표준 산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>750,000원 × 부서 공무원 정원(명) = 총요구액(원)</code></p>
-              </div>
-              <div className="rule-item">
-                <h4>급식비 (특근매식비)</h4>
-                <p>통상 업무 수행을 위한 급식비.</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 배분 한도: 공무원 정원 1인당 연 600,000원 (인허가 등 격무·기피 가점 부서도 동일 단가 적용하되 정책사업으로 편성 가능).</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 표준 산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>600,000원 × 부서 공무원 정원(명) = 총요구액(원)</code></p>
-              </div>
-            </div>
-
-            <h3>📌 위원회 수당 및 법정 당직비 기준</h3>
-            <div className="rules-container">
-              <div className="rule-item">
-                <h4>위원회 참석수당</h4>
-                <p>법령 및 조례 등에 의해 설치된 위원회의 심의 참석 수당 (단, 개별 조례에 따로 단가가 명시된 경우는 조례 단가 우선 적용).</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}><strong>대면 심의 수당:</strong> 1회당 100,000원. (회의 시간이 2시간을 초과할 경우 50,000원 추가 지급 가능).</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>100,000원(또는 150,000원) × 참석 위원 수(명) × 회의 횟수(회)</code></p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}><strong>서면 심의 수당:</strong> 1회당 50,000원.</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>50,000원 × 심의 위원 수(명) × 심의 횟수(회)</code></p>
-              </div>
-              <div className="rule-item">
-                <h4>일·숙직 수당</h4>
-                <p>「화성시 지방공무원 당직 및 비상근무 규칙」에 따라 당직근무 명령을 받고 근무하는 자에게 지급하는 수당.</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 일직 및 숙직 근무: 1회당 60,000원.</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 재택 당직근무: 1회당 30,000원.</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>표준 산출식: <code style={{ background: 'rgba(118, 157, 194, 0.1)', padding: '2px 4px', borderRadius: '3px' }}>60,000원(또는 30,000원) × 근무 인원(명) × 365일</code></p>
-              </div>
-            </div>
-
-            <h3>📌 현업직종 피복비 기준</h3>
-            <div className="rules-container">
-              <div className="rule-item">
-                <h4>청원경찰 피복비</h4>
-                <p>연간 총 266,000원 범위 내 반영.</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>산출 세부 내역: 근무복 상의 50,000원 × 2회 + 근무복 하의 104,000원 + 단화 62,000원.</p>
-              </div>
-              <div className="rule-item">
-                <h4>환경미화원 피복비</h4>
-                <p>연간 총 700,000원 범위 내 반영.</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>산출 세부 내역: 상·하복 500,000원 + 안전장구(안전화 등) 200,000원.</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px', color: '#e67e22' }}>※ 방역·조리·도로보수 등 기타 현업직종은 부서 요구 시 예산재정과 별도 검토.</p>
-              </div>
-            </div>
-
-            <h3>📌 행사 지원 차출 및 특수 매식비 기준</h3>
-            <div className="rules-container">
-              <div className="rule-item">
-                <h4>행사 차출 공무원 지급경비</h4>
-                <p>시 주관 행사·축제 지원을 위해 공무원이 휴일 근무를 하는 경우 지급하는 실비보상 경비 (반드시 201-01 사무관리비로만 편성해야 하며, 동일 근무시간에 대한 시간외수당 및 관리업무수당 중복 지급은 절대 불가함).</p>
-                <p style={{ margin: '8px 0 0 0', fontSize: '13px' }}>• 반일 (4시간 이하) 차출: 60,000원.</p>
-                <p style={{ margin: '4px 0 0 0', fontSize: '13px' }}>• 1일 상한 (4시간 초과) 차출: 120,000원 범위 내에서 실제 근무시간에 비례하여 지급.</p>
-              </div>
-              <div className="rule-item">
-                <h4>출동 매식비</h4>
-                <p>화재·구급 현장 출동 소방공무원에 대한 매식비 및 출동간식비 지원 (단, 훈련출동 시 간식비 미지급 준수).</p>
-              </div>
-              <div className="rule-item">
-                <h4>구내식당 운영비</h4>
-                <p>자치단체 조례에 근거하여 구내식당이 후생복지시설에 포함되고 명시적 지원 근거가 규정된 경우에 한하여, 주·부식대 및 연료비 등 구내식당 운영 경비를 예산으로 편성 가능.</p>
-              </div>
-            </div>
-          </div>
-        );
-      case "보조금·행사":
-        return (
-          <div className="tab-content">
-            <h2>지방보조금 및 행사 <span className="guide-subtitle">민간보조금 한도 관리 및 평가 환류</span></h2>
-
-            <h3>📌 핵심 개념 정의</h3>
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>지방보조금</h4>
-                <p>민간이나 시설의 기본 운영 또는 공익사업 수행을 지원하기 위해 지자체가 교부하는 예산입니다.</p>
-              </div>
-              <div className="info-card">
-                <h4>민간단체 법정운영비 보조</h4>
-                <p>명시적 법령 근거가 있는 경우에 한하여 인건비, 사무관리비, 임차료 등으로 범위를 엄격히 제한하여 편성하며, 포괄적 지원은 절대 불가합니다.</p>
-              </div>
-            </div>
+            <h3>📋 01. 재정합의: 예산재정과 협조결재 (필수)</h3>
+            <p>사업계획 수립 시 반드시 예산재정과(소관 예산팀)와 협조결재를 완료해야 합니다.</p>
 
             <div className="alert-box">
-              <strong>🚨 2027 한도액</strong>
-              <p>화성시 총 보조금 한도액은 1,094억 원(예상) 범위 내에서 관리됩니다.</p>
+              <strong>🚨 [필수]</strong>
+              <p>재정합의 없이 시의회 보고나 보도자료 배포를 선행하는 행위는 엄격히 금지됩니다.</p>
             </div>
 
-            <h3>⚠️ 평가 부진 사업의 예산 삭감 및 페널티 기준</h3>
+            <h3 style={{ fontSize: '16px' }}>[비목 및 규모별 사무전결 및 재정합의 기준]</h3>
             <table className="content-table">
               <thead>
                 <tr>
-                  <th>평가 결과</th>
-                  <th>조치 방안</th>
+                  <th>구분</th>
+                  <th>전결권자</th>
+                  <th>축제·행사성 사업 기준</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>성과평가 미흡 (60점 미만)</td>
-                  <td>예산 삭감 검토 (최대 50% 감액)</td>
+                  <td>시비 10억 원 초과</td>
+                  <td>시장 결재</td>
+                  <td>1억 원 초과 (시장)</td>
                 </tr>
                 <tr>
-                  <td>유지필요성 미흡 (60점 미만)</td>
-                  <td>원칙적으로 사업 폐지</td>
+                  <td>시비 5억~10억 이하</td>
+                  <td>부시장 전결</td>
+                  <td>5천만~1억 이하 (부시장)</td>
                 </tr>
                 <tr>
-                  <td>집행률 부진 (집행률 70% 미만)</td>
-                  <td>다음 연도 예산 요구 시 삭감 검토</td>
+                  <td><strong>시비 1억~5억 이하</strong></td>
+                  <td>실·국·소·단장 전결</td>
+                  <td>5천만 원 이하 (실·국장)</td>
                 </tr>
-              </tbody>
-            </table>
-
-            <h3>🎪 행사·축제 예산 필수 규칙</h3>
-            <div className="content-section-alt">
-              <h4>시 주관 행사 보조금 편성 금지</h4>
-              <p>시가 사실상 주관하는 행사는 보조금(민간행사사업보조)으로 우회 편성할 수 없으며, 반드시 행사운영비(201-03)로 세출 직접 편성 후 집행해야 합니다.</p>
-            </div>
-
-            <div className="content-section-alt">
-              <h4>행사 차출 공무원 실비</h4>
-              <p>휴일에 행사 지원으로 차출된 공무원 경비는 시간외수당 대신 사무관리비(201-01) 내 행사차출경비로 편성합니다.</p>
-              <p style={{ fontSize: '13px', color: '#e67e22', marginTop: '8px' }}>• 반일 4시간 이하: 6만 원<br/>• 4시간 초과 시 1일 최대 12만 원</p>
-            </div>
-          </div>
-        );
-      case "국도비·전환":
-        return (
-          <div className="tab-content">
-            <h2>국·도비 및 전환사업 <span className="guide-subtitle">매칭 비율 및 전환사업 독립 편성</span></h2>
-
-            <h3>📌 핵심 개념 정의</h3>
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>국·도비 보조사업</h4>
-                <p>중앙정부나 도로부터 재원을 지원받아 시비와 매칭하여 추진하는 사업입니다.</p>
-              </div>
-              <div className="info-card">
-                <h4>전환사업</h4>
-                <p>국가에서 지방으로 사무와 재원이 이전되어 지방세 재원으로 추진하는 사업입니다.</p>
-              </div>
-            </div>
-
-            <h3>🚨 매칭 및 편성 실무 규칙</h3>
-            <div className="rules-container">
-              <div className="rule-item">
-                <h4>공모·신청 전 필수 절차</h4>
-                <p>의무적 매칭을 제외한 국도비 신청 전 "예산재정과 재정합의" 완료</p>
-              </div>
-              <div className="rule-item">
-                <h4>시비 매칭 한도 제한</h4>
-                <p>정해진 매칭 비율 외 추가 시비 증액 편성 금지 (자체 추가 요구 시 별도 사업 분리)</p>
-              </div>
-              <div className="rule-item">
-                <h4>전환사업 단독 분리</h4>
-                <p>전환사업은 일반 사업과 섞지 않고 "단독 세부사업 단위"로 완전히 분리 편성</p>
-              </div>
-            </div>
-
-            <div className="alert-box">
-              <strong>📋 e호조 입력 매뉴얼</strong>
-              <p>전환사업 등록 시 시스템 내 '전환사업 여부', '단계', '기존 국고내역명' 속성을 반드시 누락 없이 체크해야 합니다.</p>
-            </div>
-          </div>
-        );
-      case "지방투자사업":
-        return (
-          <div className="tab-content">
-            <h2>지방투자사업 <span className="guide-subtitle">투자심사 대상 금액 및 절차 기준</span></h2>
-
-            <h3>💰 지방재정 투자심사 대상 금액 기준</h3>
-            <table className="content-table">
-              <thead>
                 <tr>
-                  <th>사업 구분</th>
-                  <th>자체 심사 기준</th>
-                  <th>경기도 심사 기준</th>
-                  <th>비고</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td>일반 자체사업</td>
-                  <td>전액 자체재원 20억 원 이상</td>
+                  <td>시비 1억 원 이하</td>
+                  <td>과장 전결</td>
                   <td>-</td>
-                  <td>자체재원 기준</td>
                 </tr>
                 <tr>
-                  <td>이전재원 포함 사업</td>
+                  <td>민간보조/보상(신규)</td>
+                  <td>부시장 전결</td>
                   <td>-</td>
-                  <td>20억 원 이상 ~ 200억 원 미만</td>
-                  <td>인구 100만 이상 기준 적용</td>
-                </tr>
-                <tr>
-                  <td>행사성 사업</td>
-                  <td>1억 원 이상 ~ 3억 원 미만</td>
-                  <td>3억 원 이상 ~ 200억 원 미만</td>
-                  <td>축제 및 행사 대상</td>
-                </tr>
-                <tr>
-                  <td>자체 청사·문화시설</td>
-                  <td>20억 원 이상 ~ 60억 원 미만</td>
-                  <td>60억 원 이상</td>
-                  <td>신축사업 기준</td>
                 </tr>
               </tbody>
             </table>
 
-            <div className="alert-box">
-              <strong>📅 심사 의뢰 시기</strong>
-              <p>사업계획 수립 후 기본설계(생략 시 실시설계) 용역 예산안 편성 전에 완료되어야 합니다.</p>
+            <h3>📊 02. 투자심사 및 04. 영향평가</h3>
+            <p>총사업비 기준에 따라 심사 주체가 결정되며, 통과 여부에 따라 예산 요구 가능 여부가 결정됩니다.</p>
+
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>투자심사 주체</h4>
+                <p>20억 이상 자체사업(시), 20억~200억 미만 이전재원 사업(도), 200억 이상(중앙).</p>
+              </div>
+              <div className="rule-item">
+                <h4>재심사 요건</h4>
+                <p>총사업비 30% 이상 증액 시 반드시 재심사를 통과해야 합니다. (물가상승분 제외)</p>
+              </div>
+              <div className="rule-item">
+                <h4>영향평가</h4>
+                <p>10억 이상 행사성 사업 또는 시비 50억 이상(총사업비 100억 이상) 공모사업은 응모 전 영향평가가 필수입니다.</p>
+              </div>
             </div>
+
+            <h3>🗂️ 03. 중기지방재정계획 반영 (2027~2031)</h3>
+            <div className="alert-box">
+              <strong>🚨 [미반영 시 불이익]</strong>
+              <p>계획 미반영 시 투자심사 및 지방채 발행이 불가합니다.</p>
+            </div>
+            <p>5년간 투자합계가 20억 원 이상인 사업은 반드시 포함되어야 하며, 예외 사유(재난·재해 등)는 엄격히 제한적으로만 적용됩니다.</p>
           </div>
         );
-      case "시설비":
+      case "사업 타당성":
         return (
           <div className="tab-content">
-            <h2>시설비 <span className="guide-subtitle">시설비 통계목 이원화 및 단계별 편성 기준</span></h2>
+            <h2>사업 타당성 <span className="guide-subtitle">비목별 세부 심의 및 성과 환류 체계</span></h2>
 
-            <h3>📌 2027년도 핵심 개정: 시설비 통계목의 이원화 분리</h3>
-            <p>포괄 편성으로 인한 예산의 불용 및 이월을 근절하기 위해 토지매입 및 보상 경비를 시설비에서 완전히 분리해 이력을 관리합니다.</p>
+            <h3>📋 05. 지방보조금 및 14. 교육경비 (예산재정과/교육지원과)</h3>
+            <p>2027년도부터 성과평가 환류 기준이 강화되었습니다.</p>
 
-            <div className="structure-box">
-              <p><strong>기존:</strong> 시설비 (401-01) 내에 토지매입비, 보상비, 설계비, 공사비 포괄 편성</p>
-              <p style={{ textAlign: 'center', color: '#5b9bf0', margin: '12px 0' }}>▼ (2027년도 개편안)</p>
-              <p><strong>신설:</strong> 시설공사 보상비 (401-01)</p>
-              <p style={{ paddingLeft: '16px', color: 'var(--text-muted)' }}>토지매입비, 지장물보상비, 손실보상비, 감정평가수수료 등</p>
-              <p><strong>개정:</strong> 시설비 (401-02)</p>
-              <p style={{ paddingLeft: '16px', color: 'var(--text-muted)' }}>기본/실시설계비, 공사비, 시설 안전진단 및 점검비 등</p>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>성과 환류</h4>
+                <p>성과평가 60점 미만(미흡) 시 최대 50% 감액, 3년 주기 평가 미흡 시 원칙적 폐지.</p>
+              </div>
+              <div className="rule-item">
+                <h4>심의 제외</h4>
+                <p>국·도비 매칭 사업은 심의에서 제외되나, 자체 재원 사업은 반드시 관리위원회 심의를 득해야 합니다.</p>
+              </div>
             </div>
 
-            <h3>🚧 시설비 단계별 편성 원칙 (이월·불용 최소화)</h3>
-            <p>연도 내에 집행 가능한 실제 사업비만 요구해야 하며, 임의로 단계를 건너뛰어 공사비를 일괄 요구할 수 없습니다.</p>
+            <h3>📋 06. 용역과제 및 13. 축제 경비 (정책기획관/문화예술과)</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>용역과제 심의</h4>
+                <p>1,000만 원 이상 학술·기술 용역 대상. 단, '시설비 및 부대비' 비목의 설계비·감리비는 심의 제외 대상임을 확인하십시오. (정책협력팀 주관)</p>
+              </div>
+              <div className="rule-item">
+                <h4>축제 경비 환류</h4>
+                <p>1억 원 이상 축제는 평가 등급에 따라 예산이 강제 조정됩니다.</p>
+              </div>
+            </div>
 
             <table className="content-table">
               <thead>
                 <tr>
-                  <th>단계</th>
-                  <th>편성 내용</th>
+                  <th>등급</th>
+                  <th>기준</th>
+                  <th>조정 내용</th>
                 </tr>
               </thead>
               <tbody>
                 <tr>
-                  <td>1단계</td>
-                  <td>사전조사 및 기본계획 수립, 설계비 요구</td>
+                  <td>S등급</td>
+                  <td>90점 이상</td>
+                  <td>최대 20% 증액 가능</td>
                 </tr>
                 <tr>
-                  <td>2단계</td>
-                  <td>용지보상비 요구 (설계 완료 단계)</td>
+                  <td>A등급</td>
+                  <td>80점 이상</td>
+                  <td>최대 10% 증액 가능</td>
                 </tr>
                 <tr>
-                  <td>3단계</td>
-                  <td>보상이 100% 완료(추진)된 시점에 한하여 실제 공사비 요구</td>
+                  <td>B등급</td>
+                  <td>60~80점</td>
+                  <td>동결 또는 10% 감액</td>
+                </tr>
+                <tr>
+                  <td>C등급</td>
+                  <td>60점 미만</td>
+                  <td>30% 강력 삭감</td>
                 </tr>
               </tbody>
             </table>
           </div>
         );
-      case "자산 취득":
+      case "대외 의사결정 및 자산 관리":
         return (
           <div className="tab-content">
-            <h2>자산 취득 <span className="guide-subtitle">주요 물품 정수 승인 및 친환경 원칙</span></h2>
+            <h2>대외 의사결정 및 자산 관리 <span className="guide-subtitle">의회 동의 및 물품·차량 관리</span></h2>
 
-            <h3>📌 주요 물품 및 공용차량 정수 승인 제도</h3>
-
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>정의</h4>
-                <p>조달청 고시 주요물품(59종) 취득 예산 요구 시 사전에 총괄물품관리관의 승인을 받아 정수를 확보하는 절차입니다.</p>
+            <h3>📋 07. 의회 사전의결 및 11. 공유재산관리계획 (재산관리과)</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>출연금</h4>
+                <p>직전 대비 10% 이상 증액 시 타당성 심의 및 의회 사전 동의가 절대적 전제조건입니다.</p>
               </div>
-              <div className="info-card">
-                <h4>핵심 규칙</h4>
-                <p>정수 승인을 득하지 못한 정수대상 물품은 예산 요구서 등록 자체가 불가합니다. 1개월 이상의 공용차량 임차 요구 시에도 사전 정수 승인이 필수적입니다.</p>
+              <div className="rule-item">
+                <h4>공유재산 기준</h4>
+                <p>10억 원 이상 또는 1,000㎡ 이상 취득 시 관리계획 승인 필요.</p>
               </div>
-            </div>
-
-            <div className="content-section-alt">
-              <h4>🎯 대표 정수물품 (59종 중 주요 품목)</h4>
-              <p>노트북컴퓨터, 에어컨, 냉난방기, 비디오프로젝터, 디지털캠코더 등</p>
             </div>
 
             <div className="alert-box">
-              <strong>🌱 친환경 원칙</strong>
-              <p>새로 구매하거나 임차하는 모든 공용차량은 반드시 <strong>친환경차량(저공해자동차)</strong>으로 반영해야 합니다.</p>
+              <strong>⚠️ 주의 사항 (동시 제출 금지)</strong>
+              <p>예산안과 공유재산관리계획안의 동일 회기 동시 제출은 원칙적으로 불허합니다. 선행 절차로서 관리계획 승인을 반드시 먼저 득해야 합니다.</p>
+            </div>
+
+            <h3>📋 12. 물품 및 차량 정수 승인 (회계과/재산관리과)</h3>
+            <p>정수 승인 없이 e호조 등록이 불가하며, 아래의 표준 단가를 준수해야 합니다.</p>
+
+            <table className="content-table">
+              <thead>
+                <tr>
+                  <th>정수 물품</th>
+                  <th>표준 단가</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td>데스크탑 컴퓨터</td>
+                  <td>100만 원 (모니터 포함 시 126만 원)</td>
+                </tr>
+                <tr>
+                  <td>노트북</td>
+                  <td>150만 원</td>
+                </tr>
+                <tr>
+                  <td>A3 컬러 레이저프린터</td>
+                  <td>180만 원</td>
+                </tr>
+              </tbody>
+            </table>
+
+            <div className="alert-box">
+              <strong>🌱 친환경차 의무화</strong>
+              <p>「대기환경보전법」에 따라 신규 구매 및 1개월 이상 임차하는 모든 차량은 친환경차량(저공해자동차) 100% 반영이 법적 의무입니다.</p>
             </div>
           </div>
         );
-      case "기간제근로자":
+      case "운영 및 사회적 가치":
         return (
           <div className="tab-content">
-            <h2>기간제근로자 <span className="guide-subtitle">채용 사전 승인 및 급여 산정 기준</span></h2>
+            <h2>운영 및 사회적 가치 <span className="guide-subtitle">인적 자원 및 시민 안전망 구축</span></h2>
 
-            <h3>📋 기간제근로자 채용 사전 승인</h3>
-
-            <div className="cards-grid">
-              <div className="info-card">
-                <h4>정의</h4>
-                <p>사업 부서에서 기간제 및 단시간근로자 보수(101-04) 예산을 편성하기 전에 채용의 적정성을 미리 심사받는 단계입니다.</p>
+            <h3>📋 08. 정보화사업 및 09. 인력 관리 (정보통신과/행정지원과)</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>정보보호 예산</h4>
+                <p>전체 정보화 예산의 15%를 정보보호 비목으로 의무 편성해야 하며, e호조 입력 시 '정보화' 및 '정보보호' 속성을 필히 태깅하십시오.</p>
               </div>
-              <div className="info-card">
-                <h4>담당 부서</h4>
-                <p>행정지원과 공공노무팀</p>
+              <div className="rule-item">
+                <h4>기간제 근로자 (공공노무팀)</h4>
+                <p>'상시고용 회피'를 위한 쪼개기 계약은 엄격히 금지됩니다. 화성시 생활임금 단가 적용 여부를 확인하십시오.</p>
               </div>
             </div>
 
-            <h3>⚙️ 채용 승인 기준 및 요령</h3>
+            <h3>📋 10. 공무국외출장 (행정지원과 교류협력팀)</h3>
+            <div className="rules-container">
+              <div className="rule-item">
+                <h4>비목 분리</h4>
+                <p>현지 차량 임차비, 통역비 등 부대비용은 여비가 아닌 <strong>사무관리비(201-01)</strong>로 별도 산출해야 합니다.</p>
+              </div>
+              <div className="rule-item">
+                <h4>청렴 행정</h4>
+                <p>출장 비위로 징계받은 의원의 경우, 차년도 관련 여비 삭감은 의무 사항이며 타 항목 전용은 불가합니다.</p>
+              </div>
+            </div>
 
-            <div className="content-section-alt">
-              <h4>1. 우선 배정 대상</h4>
-              <p>특정 용역이나 국도비 보조사업 수행, 또는 청사·공원 환경정비 등 필수적인 유지보수 목적에 우선 배정됩니다.</p>
+            <h3>📋 15. 사회보장 및 16. 재난안전 (복지정책과/안전정책과)</h3>
+            <div className="alert-box">
+              <strong>🚨 [복지부 사전협의]</strong>
+              <p>보건복지부 협의 완료 전 예산 편성은 절대 불가합니다. (쟁점 안건 시 6개월 이상 소요)</p>
             </div>
 
             <div className="content-section-alt">
-              <h4>2. 제한 대상</h4>
-              <p>일상적인 부서 업무의 단순 행정 보조나 상시고용 성격의 채용은 제한됩니다.</p>
-            </div>
-
-            <div className="content-section-alt">
-              <h4>3. 급여 산정 기준</h4>
-              <p>매년 고시되는 화성시 생활임금 단가를 정확히 준수하여 기본급, 주휴수당, 연차수당을 계산해야 합니다.</p>
+              <h4>재난안전 페널티</h4>
+              <p>e호조 4대 속성정보(분야, 유형, 법적분류, 단계) 누락 시, 보통교부세 및 소방안전교부세의 대규모 감액 페널티가 발생합니다.</p>
+              <p style={{ marginTop: '8px' }}>• 지정 기준: 세부사업 내 안전 예산 비중이 50% 이상일 경우 전체를 재난안전사업으로 지정해야 합니다.</p>
             </div>
           </div>
         );
@@ -418,7 +365,7 @@ export default function BudgetEstablishmentGuide() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>사전절차 및 편성기준</h1>
+          <h1>사전절차</h1>
         </section>
 
         <section className="guide-section">
@@ -474,13 +421,13 @@ export default function BudgetEstablishmentGuide() {
 
         .guide-tab {
           flex-shrink: 0;
-          padding: 14px 18px;
+          padding: 16px 32px;
           background: none;
           border: none;
           border-bottom: 3px solid transparent;
           color: var(--text-muted);
-          font-size: 15px;
-          font-weight: 500;
+          font-size: 16px;
+          font-weight: 600;
           cursor: pointer;
           transition: all 0.2s;
           white-space: nowrap;
@@ -495,7 +442,7 @@ export default function BudgetEstablishmentGuide() {
         .guide-tab.active {
           color: #5b9bf0;
           border-bottom-color: #5b9bf0;
-          font-weight: 600;
+          font-weight: 700;
         }
 
         .guide-content {

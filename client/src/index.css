@@ -1076,3 +1076,37 @@ select option {
   .execution-filter-bar { max-width: 100%; overflow-x: auto; }
   .execution-filter-bar .execution-filter-segment > button { min-width: 125px; }
 }
+
+/*
+ * 다운로드 > PDF: 별도 PDF 생성 라이브러리 없이 브라우저 인쇄(Ctrl+P의 "PDF로 저장")를
+ * 그대로 활용한다. 인쇄 시에는 사이드바·상단바·형광펜 도구·버튼류·필터류를 전부 감추고
+ * 세출예산내역서 표(이미 종이 느낌의 밝은 배경으로 되어 있다)만 남긴다.
+ */
+@media print {
+  .no-print { display: none !important; }
+
+  @page { size: A4 landscape; margin: 10mm; }
+
+  body, .app-shell, .main-area, .page-content { background: #fff !important; }
+  .main-area { margin: 0 !important; padding: 0 !important; }
+
+  .table-panel.ledger-paper {
+    box-shadow: none !important;
+    border: none !important;
+    margin: 0 !important;
+  }
+
+  .table-scroll { overflow: visible !important; height: auto !important; max-height: none !important; }
+
+  table.budget-table.hierarchy-budget-table {
+    width: 100% !important;
+    min-width: 0 !important;
+    table-layout: auto !important;
+    font-size: 11px !important;
+  }
+
+  table.budget-table.hierarchy-budget-table th,
+  table.budget-table.hierarchy-budget-table td {
+    font-size: 11px !important;
+  }
+}

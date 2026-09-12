@@ -1,7 +1,7 @@
 import { useMemo, useState } from "react";
 import Layout from "@/components/Layout";
 
-// 이 페이지는 "사전절차 및 편성기준"과 "세출 통계목별 상세" 두 가이드 페이지 안에 흩어져 있는
+// 이 페이지는 "사전절차"와 "세출 통계목별 상세" 두 가이드 페이지 안에 흩어져 있는
 // 모든 산출식(단가×인원×기간 형태의 계산 공식)을 한 화면에 모아 보여주기만 한다.
 // 두 가이드 본문의 산출식이 맞는지 틀린지는 여기서 판단하지 않는다 - 사용자가 직접 하나씩
 // 검토할 수 있도록 "지금 코드에 어떤 산출식이 박혀 있는지"를 빠짐없이 노출하는 것이 유일한 목적이다.
@@ -252,7 +252,7 @@ export default function FormulaOverview() {
         <section className="guide-section">
           <div className="guide-content">
             <p className="intro-text">
-              "사전절차 및 편성기준"과 "세출 통계목별 상세" 두 가이드 안에 흩어져 있는 산출식을
+              "사전절차"와 "세출 통계목별 상세" 두 가이드 안에 흩어져 있는 산출식을
               전부 이 표 하나로 모았습니다. 계산식이 맞는지는 판단하지 않았으니, 아래 내용을
               직접 확인해주세요. "중복" 표시가 있는 항목은 두 가이드 페이지에 같은 내용이 그대로
               복사되어 있는 항목입니다.
@@ -316,8 +316,8 @@ export default function FormulaOverview() {
             </table>
 
             <p className="formula-footer">
-              총 {FORMULA_ENTRIES.length}건 (출처: 세출 통계목별 상세 - 물건비 탭 전부. 사전절차 및
-              편성기준의 산출식 5건은 전부 여기 있는 항목의 완전한 복사본이라 별도로 목록에 추가하지
+              총 {FORMULA_ENTRIES.length}건 (출처: 세출 통계목별 상세 - 물건비 탭 전부. 사전절차의
+              산출식 5건은 전부 여기 있는 항목의 완전한 복사본이라 별도로 목록에 추가하지
               않고 "중복" 표시로만 남겼습니다.)
             </p>
           </div>
