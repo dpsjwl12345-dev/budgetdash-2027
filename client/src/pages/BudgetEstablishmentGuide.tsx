@@ -388,16 +388,18 @@ export default function BudgetEstablishmentGuide() {
       </div>
 
       <style>{`
-        @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@400;500;600;700&display=swap');
-
+        /* 예전엔 Noto Sans KR을 Google Fonts에서 받았는데, 그 폰트는 유니코드 범위별로 496개
+           파일로 쪼개져 있어 자체 호스팅이 비현실적이고(전부 받으면 용량이 크다), 이 페이지만
+           별도 폰트를 쓰는 것도 사이트 전체 기본 폰트(Pretendard)와 불일치했다. 이미 자체
+           호스팅 중인 Pretendard로 통일해 외부 요청과 폰트 불일치를 동시에 없앤다. */
         .tab-content {
-          font-family: 'Noto Sans KR', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+          font-family: 'Pretendard', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
         }
 
         .tab-content h2,
         .tab-content h3,
         .tab-content h4 {
-          font-family: 'Noto Sans KR', sans-serif;
+          font-family: 'Pretendard', sans-serif;
         }
 
         .guide-section {
