@@ -131,6 +131,14 @@ export default function Layout({
     setEraserMode(false);
   }, [highlightPathKey]);
 
+  // 형광펜 캔버스는 예전엔 "뷰포트 크기"로만 그려두고, 스크롤할 때마다 각 획의 좌표에서
+  // window.scrollX/Y를 빼서 화면에 다시 그리는 방식이었다. 이 재계산이 스크롤 이벤트에만
+  // 맞춰져 있어서, 탭/필터 전환으로 표 행 수가 바뀌어 문서 높이가 변하는 시점과 스크롤 위치가
+  // 어긋나면 형광펜이 원래 표시하던 내용 위에서 벗어나 떠 보였다.
+  // 캔버스를 "문서 전체 크기"로 두고 절대 위치(absolute)로 배치하면, 다른 본문 콘텐츠와 똑같이
+  // 브라우저가 알아서 스크롤에 맞춰 같이 움직여준다 - 스크롤마다 좌표를 다시 계산해서 그릴
+  // 필요 자체가 없어져 이 문제가 구조적으로 사라진다. 문서 높이가 바뀌는 모든 경우(탭 전환,
+  // 필터, 비동기 로딩 등)는 ResizeObserver로 감시해서 그때마다 캔버스 크기만 맞춰준다.
   useEffect(() => {
     const canvas = canvasRef.current;
     if (!canvas) return;
@@ -139,24 +147,26 @@ export default function Layout({
 
     const resizeCanvas = () => {
       const ratio = window.devicePixelRatio || 1;
-      canvas.width = window.innerWidth * ratio;
-      canvas.height = window.innerHeight * ratio;
-      canvas.style.width = `${window.innerWidth}px`;
-      canvas.style.height = `${window.innerHeight}px`;
+      const docWidth = Math.max(document.documentElement.scrollWidth, window.innerWidth);
+      const docHeight = Math.max(document.documentElement.scrollHeight, window.innerHeight);
+      canvas.width = docWidth * ratio;
+      canvas.height = docHeight * ratio;
+      canvas.style.width = `${docWidth}px`;
+      canvas.style.height = `${docHeight}px`;
       context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      context.clearRect(0, 0, window.innerWidth, window.innerHeight);
-      highlightStrokes.forEach((stroke) => drawStroke(context, stroke));
+      context.clearRect(0, 0, docWidth, docHeight);
+      highlightStrokesRef.current.forEach((stroke) => drawStroke(context, stroke));
     };
 
     resizeCanvas();
     window.addEventListener("resize", resizeCanvas);
-    const redrawOnScroll = () => redrawHighlights(highlightStrokes);
-    window.addEventListener("scroll", redrawOnScroll, { passive: true });
+    const resizeObserver = new ResizeObserver(() => resizeCanvas());
+    resizeObserver.observe(document.documentElement);
     return () => {
       window.removeEventListener("resize", resizeCanvas);
-      window.removeEventListener("scroll", redrawOnScroll);
+      resizeObserver.disconnect();
     };
-  }, [highlightStrokes]);
+  }, []);
 
   // 형광펜 도구 상자를 원하는 위치로 옮길 수 있게 한다.
   useEffect(() => {
@@ -196,8 +206,11 @@ export default function Layout({
     context.lineCap = "butt";
     context.lineJoin = "miter";
     context.beginPath();
-    context.moveTo(stroke.points[0].x - window.scrollX, stroke.points[0].y - window.scrollY);
-    stroke.points.slice(1).forEach((point) => context.lineTo(point.x - window.scrollX, point.y - window.scrollY));
+    // 캔버스가 이제 문서 전체 크기이고 문서 좌표(0,0)와 캔버스 좌표(0,0)가 그대로 일치하므로
+    // (점을 저장할 때 이미 scrollX/Y를 더해 문서 절대좌표로 저장해뒀다 - getPointerPoint 참고),
+    // 그릴 때 스크롤을 다시 빼는 보정이 필요 없다.
+    context.moveTo(stroke.points[0].x, stroke.points[0].y);
+    stroke.points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
     context.stroke();
     context.restore();
   };
@@ -206,7 +219,9 @@ export default function Layout({
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
-    context.clearRect(0, 0, window.innerWidth, window.innerHeight);
+    // setTransform(ratio, ...)로 이미 스케일된 좌표계라 canvas.width/height(물리 픽셀)를 그대로
+    // 넘겨도 실제 필요한 영역보다 넓게(=안전하게) 지워질 뿐 문제없다.
+    context.clearRect(0, 0, canvas.width, canvas.height);
     strokes.forEach((stroke) => drawStroke(context, stroke));
   };
 
@@ -516,8 +531,12 @@ export default function Layout({
         onPointerUp={highlightMode ? finishHighlight : undefined}
         onPointerCancel={highlightMode ? finishHighlight : undefined}
         style={{
-          position: "fixed",
-          inset: 0,
+          // fixed(뷰포트 고정)가 아니라 absolute(문서 기준)로 둬서, 스크롤할 때 다른 본문
+          // 콘텐츠와 똑같이 브라우저가 알아서 같이 움직여준다 - 위치가 아예 어긋날 일이 없다.
+          // 크기(width/height)는 문서 전체 높이에 맞춰 JS에서 직접 지정한다(위 resizeCanvas).
+          position: "absolute",
+          top: 0,
+          left: 0,
           // 도구를 닫아도 캔버스가 콘텐츠 위에 남아 기존 표시를 계속 보여준다.
           zIndex: 40,
           pointerEvents: highlightMode ? "auto" : "none",
