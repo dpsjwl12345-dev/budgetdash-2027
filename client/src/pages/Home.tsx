@@ -481,6 +481,9 @@ function Dropdown({
   );
 }
 
+// 세부사업/통계목 헤더 필터: 여러 값을 동시에 고를 수 있다(다중 선택). "전체"만 선택을 초기화하며
+// 닫고, 나머지 항목은 눌러도 드롭다운이 안 닫혀서 이어서 여러 개를 계속 고를 수 있다 - 닫으려면
+// 바깥을 클릭하거나 Esc를 누른다(기존 열림/닫힘 로직 그대로).
 function HeaderFilterDropdown({
   label,
   value,
@@ -489,9 +492,9 @@ function HeaderFilterDropdown({
   align = "left",
 }: {
   label: string;
-  value: string;
+  value: string[];
   options: string[];
-  onChange: (value: string) => void;
+  onChange: (value: string[]) => void;
   align?: "left" | "right";
 }) {
   const [open, setOpen] = useState(false);
@@ -518,6 +521,10 @@ function HeaderFilterDropdown({
   }, [open]);
 
   const filtered = options.filter((option) => option.toLowerCase().includes(query.toLowerCase()));
+  const toggleOption = (option: string) => {
+    onChange(value.includes(option) ? value.filter((v) => v !== option) : [...value, option]);
+  };
+  const triggerLabel = value.length === 0 ? label : value.length === 1 ? value[0] : `${value[0]} 외 ${value.length - 1}개`;
 
   return (
     <div className="th-filter" ref={containerRef}>
@@ -529,7 +536,7 @@ function HeaderFilterDropdown({
         aria-label={`${label} 필터`}
         onClick={() => setOpen((prev) => !prev)}
       >
-        <span className="th-filter-label" title={value || undefined}>{value || label}</span>
+        <span className="th-filter-label" title={value.join(', ') || undefined}>{triggerLabel}</span>
         <ChevronDown size={14} className={`th-filter-icon ${open ? "open" : ""}`} />
       </button>
       {open && (
@@ -545,33 +552,33 @@ function HeaderFilterDropdown({
             <button
               type="button"
               role="option"
-              aria-selected={value === ""}
-              className={`dropdown-option ${value === "" ? "selected" : ""}`}
+              aria-selected={value.length === 0}
+              className={`dropdown-option ${value.length === 0 ? "selected" : ""}`}
               onClick={() => {
-                onChange("");
+                onChange([]);
                 setOpen(false);
               }}
             >
               <span className="option-text">전체</span>
-              {value === "" && <Check size={14} className="option-check" />}
+              {value.length === 0 && <Check size={14} className="option-check" />}
             </button>
             {filtered.length === 0 && <div className="dropdown-empty">일치하는 항목이 없습니다</div>}
-            {filtered.map((option) => (
-              <button
-                type="button"
-                key={option}
-                role="option"
-                aria-selected={option === value}
-                className={`dropdown-option ${option === value ? "selected" : ""}`}
-                onClick={() => {
-                  onChange(option);
-                  setOpen(false);
-                }}
-              >
-                <span className="option-text">{option}</span>
-                {option === value && <Check size={14} className="option-check" />}
-              </button>
-            ))}
+            {filtered.map((option) => {
+              const isSelected = value.includes(option);
+              return (
+                <button
+                  type="button"
+                  key={option}
+                  role="option"
+                  aria-selected={isSelected}
+                  className={`dropdown-option ${isSelected ? "selected" : ""}`}
+                  onClick={() => toggleOption(option)}
+                >
+                  <span className="option-text">{option}</span>
+                  {isSelected && <Check size={14} className="option-check" />}
+                </button>
+              );
+            })}
           </div>
         </div>
       )}
@@ -650,10 +657,13 @@ export default function Home() {
   // 인쇄가 시작되면 잠깐 페이지네이션을 끄고 전체 행을 렌더링한 뒤 인쇄 대화상자를 띄운다.
   const [isPrintMode, setIsPrintMode] = useState(false);
   const [hierarchySearch, setHierarchySearch] = useState("");
-  const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState(() => {
-    return localStorage.getItem('returnToHierarchyProgram') || '';
+  // 다중 선택 가능(배열). 예산설명자료 화면에서 "돌아가기"로 넘어올 때는 항상 세부사업 하나만
+  // 지정해서 돌아오므로 그 하나를 담은 배열로 시작한다.
+  const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState<string[]>(() => {
+    const returned = localStorage.getItem('returnToHierarchyProgram');
+    return returned ? [returned] : [];
   });
-  const [hierarchyItemFilter, setHierarchyItemFilter] = useState("");
+  const [hierarchyItemFilter, setHierarchyItemFilter] = useState<string[]>([]);
   const [rowSpacing, setRowSpacing] = useState(4);
   const [programFilter, setProgramFilter] = useState("");
   const [accountFilter, setAccountFilter] = useState("");
@@ -1077,31 +1087,33 @@ export default function Home() {
     return map;
   }, [budgetHierarchyRows]);
 
-  // 세부사업 드롭다운 필터 값 목록 (세부사업명만, 중복 제거)
+  // 세부사업 드롭다운 필터 값 목록 (세부사업명만, 중복 제거).
+  // budgetHierarchyRows는 모든 부서의 행이 한 배열에 섞여 있는데, 부서 필터링 없이 돌면
+  // 지금 선택된 부서와 무관한 다른 부서 세부사업까지 목록에 다 섞여 나온다 - 반드시
+  // hierarchyAncestors로 각 행의 소속 부서를 확인해서, 현재 선택된 department 소속인
+  // 행만 목록에 넣는다.
   const uniqueHierarchyPrograms = useMemo(() => {
     const seen = new Set<string>();
     const list: string[] = [];
     for (const row of budgetHierarchyRows) {
-      if (row.level === 'program' && row.label && !seen.has(row.label)) {
-        seen.add(row.label);
-        list.push(row.label);
-      }
+      if (row.level !== 'program' || !row.label) continue;
+      if (department && hierarchyAncestors.get(row.id)?.deptRow?.label !== department) continue;
+      if (!seen.has(row.label)) { seen.add(row.label); list.push(row.label); }
     }
     return list;
-  }, [budgetHierarchyRows]);
+  }, [budgetHierarchyRows, hierarchyAncestors, department]);
 
-  // 통계목 드롭다운 필터 값 목록 (통계목만, 중복 제거)
+  // 통계목 드롭다운 필터 값 목록 (통계목만, 중복 제거) - 위와 같은 이유로 부서 범위 안에서만 모은다.
   const uniqueHierarchyItems = useMemo(() => {
     const seen = new Set<string>();
     const list: string[] = [];
     for (const row of budgetHierarchyRows) {
-      if (row.level === 'item' && row.statisticsCode && !seen.has(row.statisticsCode)) {
-        seen.add(row.statisticsCode);
-        list.push(row.statisticsCode);
-      }
+      if (row.level !== 'item' || !row.statisticsCode) continue;
+      if (department && hierarchyAncestors.get(row.id)?.deptRow?.label !== department) continue;
+      if (!seen.has(row.statisticsCode)) { seen.add(row.statisticsCode); list.push(row.statisticsCode); }
     }
     return list;
-  }, [budgetHierarchyRows]);
+  }, [budgetHierarchyRows, hierarchyAncestors, department]);
 
   // 조건에 맞는 행(직접 매치)을 찾은 뒤, 그 행의 조상(문맥 표시용)과 자손(하위 내역) 전체를
   // 함께 "표시할 행"으로 넓혀준다. 조상은 직접 매치 집합에 섞으면 안 된다 — 섞으면 같은 조상을
@@ -1171,13 +1183,14 @@ export default function Home() {
         return text.includes(term);
       }));
     }
-    if (hierarchyProgramFilter) {
+    // 다중 선택된 값들은 서로 OR로 묶는다(세부사업 A 또는 B) - 다른 필터 종류끼리는 그대로 AND.
+    if (hierarchyProgramFilter.length > 0) {
       intersect(expandHierarchyMatches(budgetHierarchyRows, hierarchyAncestors, (row) =>
-        row.level === 'program' && row.label === hierarchyProgramFilter));
+        row.level === 'program' && hierarchyProgramFilter.includes(row.label)));
     }
-    if (hierarchyItemFilter) {
+    if (hierarchyItemFilter.length > 0) {
       intersect(expandHierarchyMatches(budgetHierarchyRows, hierarchyAncestors, (row) =>
-        row.level === 'item' && row.statisticsCode === hierarchyItemFilter));
+        row.level === 'item' && !!row.statisticsCode && hierarchyItemFilter.includes(row.statisticsCode)));
     }
 
     return budgetHierarchyRows.filter((row) => keep!.has(row.id));
@@ -1965,7 +1978,7 @@ export default function Home() {
             </div>
             <div className="context-bar no-print">
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
-              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); }} label="편성 부서" /></div>
+              <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); setHierarchyProgramFilter([]); setHierarchyItemFilter([]); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
             </div>
           </section>
