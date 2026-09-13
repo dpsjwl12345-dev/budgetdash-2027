@@ -443,7 +443,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .metric-card { min-height: 105px; padding: var(--spacing-lg); border: 1px solid rgba(164, 192, 221, 0.2); border-top: 3px solid color-mix(in srgb, var(--tint, #cbd5e1) 70%, transparent); border-radius: var(--radius-lg); background: rgba(13, 33, 54, 0.55); transition: all 200ms ease-out; display: flex; flex-direction: column; }
 .metric-card:hover { background: rgba(13, 33, 54, 0.68); border-color: var(--line-strong); }
 .metric-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.metric-top { display: flex; align-items: center; color: #c0d0df; font-size: 18px; font-weight: 600; line-height: 1.4; white-space: nowrap; }
+.metric-top { display: flex; align-items: center; color: #c0d0df; font-size: 18px; font-weight: 600; line-height: 1.4; white-space: normal; word-break: keep-all; }
 .metric-top .unit { color: #8fa1b3; font-size: 12px; font-weight: 600; }
 .metric-top svg { color: var(--tint, #64748b); }
 .metric-card > strong { display: block; margin-top: 9px; color: #edf5fe; font-size: 28px; line-height: 1.1; letter-spacing: -0.045em; font-weight: 700; font-variant-numeric: tabular-nums; }

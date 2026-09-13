@@ -136,6 +136,46 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
                 </li>
                 <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>(참고) 보상지급액은 당해 연도 화성시 생활임금 확정 고시 후 산정 적용됩니다.</li>
               </ul>
+              <div style={{ marginTop: "12px" }}>
+                <p style={{ fontSize: "13px", fontWeight: 600, marginBottom: "6px" }}>지급금액 (2027년 화성형 공정수당 지급 기준)</p>
+                <table style={{ width: "100%", borderCollapse: "collapse", fontSize: "14px" }}>
+                  <thead>
+                    <tr style={{ backgroundColor: "rgba(118, 157, 194, 0.15)", borderBottom: "2px solid rgba(118, 157, 194, 0.3)" }}>
+                      <th style={{ padding: "8px", textAlign: "left", borderRight: "1px solid rgba(118, 157, 194, 0.2)" }}>근무기간</th>
+                      <th style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.2)" }}>1~2개월 미만</th>
+                      <th style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.2)" }}>3~4개월 미만</th>
+                      <th style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.2)" }}>5~6개월 미만</th>
+                      <th style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.2)" }}>7~8개월 미만</th>
+                      <th style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.2)" }}>9~10개월 미만</th>
+                      <th style={{ padding: "8px", textAlign: "center" }}>11~12개월 미만</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr style={{ borderBottom: "1px solid rgba(118, 157, 194, 0.1)" }}>
+                      <td style={{ padding: "8px", fontWeight: 600, borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>보상지급률</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>10%</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>9.5%</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>9%</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>8.5%</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>8.5%</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>8.5%</td>
+                    </tr>
+                    <tr>
+                      <td style={{ padding: "8px", fontWeight: 600, borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>공정수당</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>400천원</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>886천원</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>1,319천원</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>1,699천원</td>
+                      <td style={{ padding: "8px", textAlign: "center", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>2,152천원</td>
+                      <td style={{ padding: "8px", textAlign: "center" }}>2,605천원</td>
+                    </tr>
+                  </tbody>
+                </table>
+                <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
+                  <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>공정수당 산식: 2027년 화성시 생활임금(12,750원) × 보상지급률 × 구간별 근무기간 평균 고려</li>
+                  <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>1개월 미만: 근무기간 고려하여 일할계산</li>
+                </ul>
+              </div>
             </div>
           </div>
           <div className="content-section">

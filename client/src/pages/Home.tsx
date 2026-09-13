@@ -130,6 +130,74 @@ const departmentOptions = [
   { value: "전국체전추진단", label: "전국체전추진단" },
 ];
 
+// 화성시 주요투자사업 대시보드(https://hwaseong-major-investment-dashboard.vercel.app/)에 등록된
+// 부서별 관리사업(세부사업) 명단. 예산 편성 시트의 세부사업명이 여기 있으면 "주요" 배지를 붙이고,
+// "2027년 주요투자사업 예산액" 카드 집계에도 포함한다. 이름이 같아도 부서가 다르면 다른 사업으로
+// 취급하므로 부서별로 분리해서 관리한다.
+const MAJOR_INVESTMENT_PROGRAMS: Record<string, string[]> = {
+  문화예술과: [
+    "동탄복합문화센터 공간개선",
+    "화성예술의전당 소공연장 조성",
+    "화성 시립미술관 건립",
+    "농수산대학 유휴부지 공연장 건립",
+    "석우동 51번지 복합문화시설 건립",
+    "화성남양 문화예술공간 조성",
+    "효행구 대규모 공연장 건립",
+    "정남면 복합문화센터 건립",
+    "화성시 공룡과학센터 건립",
+    "화성시 테마 어린이 과학관 건립",
+    "병점 복합문화센터 조성",
+    "아트큐브 예술숲 건립",
+  ],
+  문화유산과: [
+    "화성시역사박물관 건립",
+    "만년제 복원 및 정비",
+  ],
+  독립기념관: [
+    "화성독립운동역사문화공원 조성",
+    "쌍봉산 기념탑 조성",
+  ],
+  관광진흥과: [
+    "서해안 관광벨트 주차장 및 도로 조성",
+    "제부도 도시계획도로 중로2 3호선 외 3개소 개설",
+    "고렴산 해상공원 조성",
+    "국화도 해안데크 정비",
+    "궁평 종합관광지 조성",
+    "제부지역 관광 인프라 확충",
+    "도서지역 레저선박 계류시설 설치",
+    "서해안 황금해안길 조성",
+  ],
+  도서관정책과: [
+    "화성시 독서문화공간 조성",
+    "반월도서관 건립",
+    "다올공원도서관 건립",
+    "둥지나래어린이도서관 리모델링(시그니처 종합형)",
+  ],
+  체육진흥과: [
+    "화성 동부 반다비체육센터 건립",
+    "비봉 다목적체육관 건립",
+    "남양 체육복합센터 조성",
+    "장안 다목적복합센터 건립",
+    "비봉체육공원 야구장 개선",
+    "비봉체육공원 실내야구연습장 개축",
+    "봉담 생태체육공원 테니스장 설치",
+    "화성 파크골프장 조성",
+    "화성FC 기반시설 확충",
+    "화성 돔야구장 건립",
+    "서해선 교량하부 체육시설 조성",
+    "오음공원 테니스장 조성",
+  ],
+  전국체전추진단: [
+    "롤러스포츠 경기장 건립",
+    "석우동 축구장 건립",
+    "2027년 전국체육대회 경기장 개보수",
+  ],
+};
+
+function isMajorInvestmentProgram(department: string, label: string): boolean {
+  return MAJOR_INVESTMENT_PROGRAMS[department]?.includes(label) ?? false;
+}
+
 const columns = [
   ["policy", "정책 · 단위 · 세부사업"],
   ["account", "편성목·통계목"],
@@ -1063,6 +1131,22 @@ export default function Home() {
     return sum;
   }, [budgetHierarchyRows, department]);
 
+  // 2027년 주요투자사업 예산액 = 현재 선택된 부서에서, 화성시 주요투자사업 대시보드에 등록된
+  // 세부사업(MAJOR_INVESTMENT_PROGRAMS)들의 예산액 합계. newProjectTotal과 같은 방식으로
+  // 가장 가까운 이전 dept 행을 따라가며 부서를 구분한다.
+  const majorInvestmentTotal = useMemo(() => {
+    if (!department) return 0;
+    let currentDept: string | undefined;
+    let sum = 0;
+    for (const row of budgetHierarchyRows) {
+      if (row.level === 'dept') currentDept = row.label;
+      else if (row.level === 'program' && currentDept === department && isMajorInvestmentProgram(department, row.label)) {
+        sum += row.budget || 0;
+      }
+    }
+    return sum;
+  }, [budgetHierarchyRows, department]);
+
   // 세출예산내역서 표의 각 행에 대해 가장 가까운 상위 계층(부서/정책/단위/세부사업/편성목/통계목) 행을 찾아둔다.
   // 검색·필터 드롭다운이 "이 행의 조상이 조건에 맞으면 전체 하위행도 같이 보여준다" 식으로 동작하는 데 쓰인다.
   const hierarchyAncestors = useMemo(() => {
@@ -1206,13 +1290,6 @@ export default function Home() {
     if (executionData.length === 0) return 0;
     const filtered = department ? executionData.filter(row => row.department === department) : executionData;
     return filtered.reduce((sum, row) => sum + row.original, 0);
-  }, [executionData, department]);
-
-  // 2026 최종예산액 카드: 같은 표의 본예산 + 추경 + 성립전 합계.
-  const budget2026Total = useMemo(() => {
-    if (executionData.length === 0) return 0;
-    const filtered = department ? executionData.filter(row => row.department === department) : executionData;
-    return filtered.reduce((sum, row) => sum + row.original + row.supplementary + row.preEstablishment, 0);
   }, [executionData, department]);
 
   const counts: Record<string, number> = {
@@ -1997,17 +2074,17 @@ export default function Home() {
               </div>
               <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
+            <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
+              <div className="metric-header">
+                <div className="metric-top"><span>2027 주요투자사업 예산액</span></div>
+              </div>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(majorInvestmentTotal)}<span className="metric-unit">백만원</span></strong>
+            </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
               <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Original / 1000000))}<span className="metric-unit">백만원</span></strong>
-            </article>
-            <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
-              <div className="metric-header">
-                <div className="metric-top"><span>2026 최종예산액</span></div>
-              </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Total / 1000000))}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-header">
@@ -2265,6 +2342,8 @@ export default function Home() {
                     const isNewItemNote = row.level === 'note'
                       && !(rowAncestors?.itemRow?.previous || 0)
                       && (rowAncestors?.itemRow?.budget || 0) > 0;
+                    // 화성시 주요투자사업 대시보드에 등록된 세부사업이면 사업명 앞에 "주요" 배지를 붙인다.
+                    const isMajorProgram = row.level === 'program' && isMajorInvestmentProgram(department, row.label);
                     const badgeRow = (itemBadges.length > 0 || itemHasFormula) && (
                       <tr key={`${row.id}-badges`}>
                         <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left' }}>
@@ -2306,6 +2385,11 @@ export default function Home() {
                               textDecorationColor: row.level === 'program' ? '#4a90e2' : 'transparent'
                             }}
                           >
+                            {isMajorProgram && (
+                              <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                주요
+                              </span>
+                            )}
                             {row.label}
                           </td>
                           <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
