@@ -181,9 +181,10 @@ function getApplicableProcedures(row: BudgetRow): number[] {
     if (amount >= 10000) applicable.push(4);
   }
 
-  // 5번 보조금심의 - 통계목 코드
+  // 5번 보조금심의 - 통계목 코드, 또는 신규(전년도 예산 없음) 행사운영비 사업(민간 행사대행·보조 성격이 섞여 있어 함께 심의)
   const subsidyCodes = ["307-02", "307-03", "307-04", "307-09", "307-10", "307-11", "402-01", "308-01", "308-08", "308-09", "308-12", "403-01", "403-03", "403-04"];
-  if (subsidyCodes.some(code => row.account.includes(code))) applicable.push(5);
+  const isNewEventOperationExpense = text.includes("행사운영비") && !row.previous;
+  if (subsidyCodes.some(code => row.account.includes(code)) || isNewEventOperationExpense) applicable.push(5);
 
   // 6번 용역심의 - 용역 + 10 백만원(1천만원) 이상
   if (text.includes("용역") && amount >= 10) applicable.push(6);
@@ -191,8 +192,8 @@ function getApplicableProcedures(row: BudgetRow): number[] {
   // 7번 출연금 - 출연/출자/위탁
   if (text.includes("출연") || text.includes("출자") || text.includes("위탁")) applicable.push(7);
 
-  // 8번 정보화 - 정보화/정보시스템/소프트웨어
-  if (text.includes("정보화") || text.includes("정보시스템") || text.includes("소프트웨어") || text.includes("db")) applicable.push(8);
+  // 8번 정보화 - 정보화/정보시스템/소프트웨어/전산개발비
+  if (text.includes("정보화") || text.includes("정보시스템") || text.includes("소프트웨어") || text.includes("db") || text.includes("전산")) applicable.push(8);
 
   // 9번 기간제근로자 - 기간제/임시직
   if (text.includes("기간제") || text.includes("임시직")) applicable.push(9);
