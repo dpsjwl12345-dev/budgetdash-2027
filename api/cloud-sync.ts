@@ -165,7 +165,10 @@ async function saveMemos(req: any, res: any) {
 
   const programMemos = req.body?.programMemos && typeof req.body.programMemos === 'object' ? req.body.programMemos : {};
   const hiddenMemoIds: string[] = Array.isArray(req.body?.hiddenMemoIds) ? req.body.hiddenMemoIds : [];
-  const keys = Array.from(new Set([...Object.keys(programMemos), ...hiddenMemoIds]));
+  // syncKeys: 메모 본문도 없고 숨김도 아닌 키(= 숨김을 막 해제한 줄)는 위 두 목록 어디에도
+  // 안 들어가서, 그대로 두면 서버의 hidden 표시가 영영 안 풀린다.
+  const syncKeys: string[] = Array.isArray(req.body?.syncKeys) ? req.body.syncKeys : [];
+  const keys = Array.from(new Set([...Object.keys(programMemos), ...hiddenMemoIds, ...syncKeys]));
 
   if (keys.length === 0) {
     res.status(200).json({ success: true, message: "저장할 메모가 없습니다." });

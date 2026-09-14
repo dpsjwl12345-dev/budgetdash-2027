@@ -260,6 +260,9 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .sidebar.collapsed .sidebar-toggle span { display: none; }
 
 .main-area {
+  /* 형광펜 캔버스가 이 안에 absolute로 깔린다. position을 주지 않으면 캔버스가 문서 기준으로
+     잡혀서, 사이드바가 접히고 펴질 때 본문만 좌우로 움직이고 형광펜은 제자리에 남는다. */
+  position: relative;
   flex: 1;
   min-width: 0;
   background: var(--ink);

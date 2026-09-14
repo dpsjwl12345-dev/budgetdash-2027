@@ -693,6 +693,9 @@ export default function Home() {
   });
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [memoDraft, setMemoDraft] = useState("");
+  // X(숨기기)를 누른 직후 "정말 숨길까요?"를 묻는 동안의 대상. 연필(수정) 버튼과 22px 간격이라
+  // 잘못 눌리기 쉬운데, 예전엔 그 한 번으로 메모 줄이 모든 기기에서 영구히 사라졌다.
+  const [pendingHideId, setPendingHideId] = useState<string | null>(null);
   const [hiddenMemoIds, setHiddenMemoIds] = useState<string[]>(() => {
     const saved = localStorage.getItem('budgetHiddenMemoIds');
     return saved ? JSON.parse(saved) : [];
@@ -1333,11 +1336,13 @@ export default function Home() {
     }
   };
 
-  const saveProgramMemosToServer = (nextMemos: Record<string, string>, nextHiddenMemoIds: string[]) => {
+  // syncKeys: 메모 본문도 없고 숨김도 아닌 키는 어느 목록에도 안 들어가 서버까지 전달되지 않는다.
+  // 숨김을 해제할 때 그 키를 여기에 실어 서버 쪽 표시도 확실히 풀어준다.
+  const saveProgramMemosToServer = (nextMemos: Record<string, string>, nextHiddenMemoIds: string[], syncKeys: string[] = []) => {
     fetch('/api/cloud-sync?type=memos', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ programMemos: nextMemos, hiddenMemoIds: nextHiddenMemoIds }),
+      body: JSON.stringify({ programMemos: nextMemos, hiddenMemoIds: nextHiddenMemoIds, syncKeys }),
     }).catch((error) => console.warn('예산 메모 클라우드 저장 실패:', error));
   };
   const updateProgramMemo = (rowId: string, value: string) => {
@@ -1363,6 +1368,24 @@ export default function Home() {
         console.warn('메모 줄 숨김 저장 실패:', error);
       }
       saveProgramMemosToServer(programMemos, next);
+      return next;
+    });
+  };
+
+  // 숨긴 메모 줄은 반드시 되돌릴 수 있어야 한다. 숨김 목록은 클라우드에 저장되고 불러올 때
+  // 합집합으로만 커지기 때문에(loadProgramMemosFromServer 참고), 되돌리는 수단이 없으면
+  // 실수로 누른 X 하나가 모든 기기에서 영구히 유지된다. 메모 본문은 서버에 그대로 남아 있는데
+  // 화면에만 안 나오니 사용자에게는 "써둔 메모가 사라졌다"로 보인다.
+  const unhideMemoRows = (ids: string[]) => {
+    if (ids.length === 0) return;
+    setHiddenMemoIds((prev) => {
+      const next = prev.filter((id) => !ids.includes(id));
+      try {
+        localStorage.setItem('budgetHiddenMemoIds', JSON.stringify(next));
+      } catch (error) {
+        console.warn('메모 줄 숨김 해제 저장 실패:', error);
+      }
+      saveProgramMemosToServer(programMemos, next, ids);
       return next;
     });
   };
@@ -2283,15 +2306,43 @@ export default function Home() {
                                 >
                                   <Pencil size={12} />
                                 </button>
-                                <button
-                                  type="button"
-                                  aria-label="메모 줄 삭제"
-                                  title="이 메모 줄 삭제"
-                                  onClick={() => hideMemoRow(memoProgramId)}
-                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #b7c2cf', borderRadius: '4px', background: 'transparent', color: '#9b2c2c', cursor: 'pointer' }}
-                                >
-                                  <X size={12} />
-                                </button>
+                                {pendingHideId === memoProgramId ? (
+                                  <>
+                                    <span style={{ flexShrink: 0, fontSize: '11px', color: '#9b2c2c' }}>이 메모 줄을 숨길까요?</span>
+                                    <button
+                                      type="button"
+                                      aria-label="메모 줄 숨기기 확인"
+                                      title="숨기기"
+                                      onClick={() => { hideMemoRow(memoProgramId); setPendingHideId(null); }}
+                                      style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #9b2c2c', borderRadius: '4px', background: 'rgba(155, 44, 44, 0.12)', color: '#9b2c2c', cursor: 'pointer' }}
+                                    >
+                                      <Check size={12} />
+                                    </button>
+                                    <button
+                                      type="button"
+                                      aria-label="메모 줄 숨기기 취소"
+                                      title="취소"
+                                      onClick={() => setPendingHideId(null)}
+                                      style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #b7c2cf', borderRadius: '4px', background: 'transparent', color: '#475569', cursor: 'pointer' }}
+                                    >
+                                      <X size={12} />
+                                    </button>
+                                  </>
+                                ) : (
+                                  <button
+                                    type="button"
+                                    aria-label="메모 줄 숨기기"
+                                    title="이 메모 줄 숨기기"
+                                    onClick={() => {
+                                      // 써둔 메모가 있는 줄은 한 번 더 물어본다. 빈 줄은 바로 정리해도 잃을 게 없다.
+                                      if (programMemos[memoProgramId]) setPendingHideId(memoProgramId);
+                                      else hideMemoRow(memoProgramId);
+                                    }}
+                                    style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #b7c2cf', borderRadius: '4px', background: 'transparent', color: '#9b2c2c', cursor: 'pointer' }}
+                                  >
+                                    <X size={12} />
+                                  </button>
+                                )}
                               </>
                             )}
                           </div>
@@ -2455,6 +2506,22 @@ export default function Home() {
               <div style={{ textAlign: 'center', fontSize: '13px', color: '#1a1a1a', marginTop: '4px' }}>
                 {filteredHierarchyRows.length === 0 ? '0' : (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE + 1}–{Math.min(hierarchyPage * HIERARCHY_ROWS_PER_PAGE, filteredHierarchyRows.length)} of {filteredHierarchyRows.length}
               </div>
+              {(() => {
+                // 숨긴 메모 줄이 있으면 항상 되돌릴 수단을 같이 보여준다.
+                const hiddenHere = hiddenMemoIds.filter((id) => id.startsWith(`${department}::`));
+                if (hiddenHere.length === 0) return null;
+                return (
+                  <div style={{ textAlign: 'center', marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      onClick={() => unhideMemoRows(hiddenHere)}
+                      style={{ border: '1px solid #b7c2cf', borderRadius: '6px', background: 'transparent', color: '#1a1a1a', fontSize: '12px', padding: '4px 10px', cursor: 'pointer' }}
+                    >
+                      숨긴 메모 줄 {hiddenHere.length}개 다시 보기
+                    </button>
+                  </div>
+                );
+              })()}
             </div>
           </section>
         </div>
