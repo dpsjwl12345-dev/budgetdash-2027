@@ -169,11 +169,6 @@ const MAJOR_INVESTMENT_PROGRAMS: Record<string, string[]> = {
     "화성돔구장",
     "축구전용경기장 건립",
   ],
-  전국체전추진단: [
-    "롤러스포츠 경기장 건립",
-    "석우동 축구장 건립",
-    "2027년 전국체육대회 경기장 개보수",
-  ],
 };
 
 function isMajorInvestmentProgram(department: string, label: string): boolean {
