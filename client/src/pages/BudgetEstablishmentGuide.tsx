@@ -186,6 +186,14 @@ export default function BudgetEstablishmentGuide() {
                 <h4>영향평가</h4>
                 <p>10억 이상 행사성 사업 또는 시비 50억 이상(총사업비 100억 이상) 공모사업은 응모 전 영향평가가 필수입니다.</p>
               </div>
+              <div className="rule-item">
+                <h4>LIMAC 타당성조사 (총사업비 500억 이상)</h4>
+                <ul>
+                  <li><strong>대상기준:</strong> 총사업비 500억 원 이상 신규 투자사업</li>
+                  <li><strong>면제사유:</strong> 예비타당성조사 완료, 사업계획 적정성 검토 완료, 민자사업 적격성 조사 완료 등</li>
+                  <li><strong>연계 규칙:</strong> LIMAC 타당성조사 결과서 및 반영 여부를 첨부하여 투자심사 의뢰</li>
+                </ul>
+              </div>
             </div>
 
             <h3>🗂️ 03. 중기지방재정계획 반영 (2027~2031)</h3>
