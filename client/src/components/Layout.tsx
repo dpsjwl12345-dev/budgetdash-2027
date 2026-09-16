@@ -101,7 +101,6 @@ export default function Layout({
   const [highlightMode, setHighlightMode] = useState(false);
   const [eraserMode, setEraserMode] = useState(false);
   const [highlightColor, setHighlightColor] = useState("#ffe45c");
-  const [highlightStrokes, setHighlightStrokes] = useState<HighlightStroke[]>([]);
   const [highlightToolbarPosition, setHighlightToolbarPosition] = useState({ left: 24, bottom: 24 });
   const canvasRef = useRef<HTMLCanvasElement>(null);
   const drawingRef = useRef(false);
@@ -113,8 +112,17 @@ export default function Layout({
   const highlightStrokesRef = useRef<HighlightStroke[]>([]);
   const highlightStrokesByPathRef = useRef<Record<string, HighlightStroke[]>>({});
   const prevHighlightKeyRef = useRef(highlightPathKey);
+  const mainAreaRef = useRef<HTMLElement>(null);
 
-  useEffect(() => { highlightStrokesRef.current = highlightStrokes; }, [highlightStrokes]);
+  // 획 목록은 캔버스에만 그려지고 리액트 화면에는 나타나지 않는다. 예전엔 목록을 state로 들고
+  // ref는 useEffect로 뒤늦게 맞췄는데, 그 한 박자 사이에 다시 칠하기(resizeCanvas 등)가 끼어들면
+  // 캔버스가 "직전 목록"으로 칠해졌다. 방금 그은 획이 사라지거나, 페이지를 넘긴 직후 이전 페이지
+  // 획이 새 내용 위에 다시 칠해지던 증상이 전부 이 시차에서 나왔다. 목록은 ref 하나만 두고 항상
+  // 이 함수로만 바꿔서, 목록이 바뀌는 순간과 캔버스가 칠해지는 순간이 절대 어긋나지 않게 한다.
+  const applyStrokes = (next: HighlightStroke[]) => {
+    highlightStrokesRef.current = next;
+    redrawHighlights(next);
+  };
 
   useEffect(() => {
     setSidebarCollapsed(isBudgetExplainerPage);
@@ -126,44 +134,33 @@ export default function Layout({
     highlightStrokesByPathRef.current[prevHighlightKeyRef.current] = highlightStrokesRef.current;
     const restored = highlightStrokesByPathRef.current[highlightPathKey] || [];
     prevHighlightKeyRef.current = highlightPathKey;
-    setHighlightStrokes(restored);
-    redrawHighlights(restored);
+    applyStrokes(restored);
     setEraserMode(false);
   }, [highlightPathKey]);
 
-  // 형광펜 캔버스는 예전엔 "뷰포트 크기"로만 그려두고, 스크롤할 때마다 각 획의 좌표에서
-  // window.scrollX/Y를 빼서 화면에 다시 그리는 방식이었다. 이 재계산이 스크롤 이벤트에만
-  // 맞춰져 있어서, 탭/필터 전환으로 표 행 수가 바뀌어 문서 높이가 변하는 시점과 스크롤 위치가
-  // 어긋나면 형광펜이 원래 표시하던 내용 위에서 벗어나 떠 보였다.
-  // 캔버스를 "문서 전체 크기"로 두고 절대 위치(absolute)로 배치하면, 다른 본문 콘텐츠와 똑같이
-  // 브라우저가 알아서 스크롤에 맞춰 같이 움직여준다 - 스크롤마다 좌표를 다시 계산해서 그릴
-  // 필요 자체가 없어져 이 문제가 구조적으로 사라진다. 문서 높이가 바뀌는 모든 경우(탭 전환,
-  // 필터, 비동기 로딩 등)는 ResizeObserver로 감시해서 그때마다 캔버스 크기만 맞춰준다.
+  // 형광펜 캔버스는 본문(main) 안에 본문과 똑같은 크기로 깔아둔다. 그러면 스크롤이든, 사이드바가
+  // 접히고 펴지며 본문이 좌우로 움직이는 것이든, 브라우저가 캔버스를 본문과 함께 움직여주므로
+  // 형광펜이 글자에서 어긋날 일이 없다.
+  //
+  // 크기를 맞추는 시점이 관건인데, 예전엔 ResizeObserver 하나에만 맡겼다가 실패했다. 이 페이지에서
+  // ResizeObserver 콜백은 실제로 한 번도 오지 않았고(본문 높이를 강제로 3000px로 바꿔도 0회),
+  // 그 결과 캔버스가 처음 잡힌 크기(730px)에 그대로 머물러 그 아래에 칠한 형광펜이 통째로 잘려
+  // 사라졌다. 그래서 이제 ResizeObserver는 "빠른 길"로만 두고, 크기 맞추기는 형광펜을 다시 그리는
+  // 모든 경로(redrawHighlights)에서 직접 한다. 크기가 그대로면 아무 일도 하지 않으므로 비용도 없다.
   useEffect(() => {
-    const canvas = canvasRef.current;
-    if (!canvas) return;
-    const context = canvas.getContext("2d");
-    if (!context) return;
+    const repaint = () => redrawHighlights(highlightStrokesRef.current);
+    const repaintIfResized = () => { if (syncCanvasSize()) repaint(); };
 
-    const resizeCanvas = () => {
-      const ratio = window.devicePixelRatio || 1;
-      const docWidth = Math.max(document.documentElement.scrollWidth, window.innerWidth);
-      const docHeight = Math.max(document.documentElement.scrollHeight, window.innerHeight);
-      canvas.width = docWidth * ratio;
-      canvas.height = docHeight * ratio;
-      canvas.style.width = `${docWidth}px`;
-      canvas.style.height = `${docHeight}px`;
-      context.setTransform(ratio, 0, 0, ratio, 0, 0);
-      context.clearRect(0, 0, docWidth, docHeight);
-      highlightStrokesRef.current.forEach((stroke) => drawStroke(context, stroke));
-    };
-
-    resizeCanvas();
-    window.addEventListener("resize", resizeCanvas);
-    const resizeObserver = new ResizeObserver(() => resizeCanvas());
-    resizeObserver.observe(document.documentElement);
+    repaint();
+    window.addEventListener("resize", repaint);
+    // 본문이 뒤늦게 길어지는 경우(자료 비동기 로딩 등)를 잡기 위한 보정. 스크롤은 확실히 오는
+    // 이벤트이고, 크기가 안 변했으면 즉시 빠져나오므로 스크롤 성능에 영향을 주지 않는다.
+    window.addEventListener("scroll", repaintIfResized, { passive: true });
+    const resizeObserver = new ResizeObserver(repaintIfResized);
+    if (mainAreaRef.current) resizeObserver.observe(mainAreaRef.current);
     return () => {
-      window.removeEventListener("resize", resizeCanvas);
+      window.removeEventListener("resize", repaint);
+      window.removeEventListener("scroll", repaintIfResized);
       resizeObserver.disconnect();
     };
   }, []);
@@ -206,29 +203,55 @@ export default function Layout({
     context.lineCap = "butt";
     context.lineJoin = "miter";
     context.beginPath();
-    // 캔버스가 이제 문서 전체 크기이고 문서 좌표(0,0)와 캔버스 좌표(0,0)가 그대로 일치하므로
-    // (점을 저장할 때 이미 scrollX/Y를 더해 문서 절대좌표로 저장해뒀다 - getPointerPoint 참고),
-    // 그릴 때 스크롤을 다시 빼는 보정이 필요 없다.
+    // 점을 저장할 때 이미 캔버스 기준 좌표로 바꿔뒀고(getPointerPoint 참고) 캔버스는 본문 전체를
+    // 덮고 있으므로, 그릴 때 스크롤이나 사이드바 위치를 다시 보정할 필요가 없다.
     context.moveTo(stroke.points[0].x, stroke.points[0].y);
     stroke.points.slice(1).forEach((point) => context.lineTo(point.x, point.y));
     context.stroke();
     context.restore();
   };
 
+  // 캔버스를 본문 크기에 맞춘다. 크기가 그대로면 아무것도 하지 않고 false를 돌려준다
+  // (캔버스는 width/height를 대입하는 순간 그려둔 내용이 지워지므로 불필요한 대입을 피한다).
+  const syncCanvasSize = () => {
+    const canvas = canvasRef.current;
+    const main = mainAreaRef.current;
+    if (!canvas || !main) return false;
+    const width = Math.max(main.scrollWidth, main.clientWidth);
+    const height = Math.max(main.scrollHeight, main.clientHeight);
+    if (width === 0 || height === 0) return false;
+    if (canvas.style.width === `${width}px` && canvas.style.height === `${height}px`) return false;
+    const ratio = window.devicePixelRatio || 1;
+    canvas.width = width * ratio;
+    canvas.height = height * ratio;
+    canvas.style.width = `${width}px`;
+    canvas.style.height = `${height}px`;
+    return true;
+  };
+
   const redrawHighlights = (strokes: HighlightStroke[]) => {
+    // 그리기 직전에 항상 크기를 맞춘다. 표 행 수나 필터가 바뀌어 본문 높이가 달라진 상태에서
+    // 옛 크기 그대로 그리면, 늘어난 부분에 칠한 형광펜이 캔버스 밖이라 보이지 않는다.
+    syncCanvasSize();
     const canvas = canvasRef.current;
     const context = canvas?.getContext("2d");
     if (!canvas || !context) return;
+    const ratio = window.devicePixelRatio || 1;
+    context.setTransform(ratio, 0, 0, ratio, 0, 0);
     // setTransform(ratio, ...)로 이미 스케일된 좌표계라 canvas.width/height(물리 픽셀)를 그대로
     // 넘겨도 실제 필요한 영역보다 넓게(=안전하게) 지워질 뿐 문제없다.
     context.clearRect(0, 0, canvas.width, canvas.height);
     strokes.forEach((stroke) => drawStroke(context, stroke));
   };
 
-  const getPointerPoint = (event: React.PointerEvent<HTMLCanvasElement>) => ({
-    x: event.clientX + window.scrollX,
-    y: event.clientY + window.scrollY,
-  });
+  // 캔버스가 본문(main) 안에 본문과 같은 크기로 깔려 있으므로, 캔버스 자신의 화면상 위치를
+  // 기준으로 좌표를 잡으면 스크롤이든 사이드바 접힘이든 전부 자동으로 반영된다. 예전의 "문서
+  // 절대좌표"(clientX + scrollX)는 사이드바가 hover로 접히고 펴질 때 본문이 좌우로 188px
+  // 움직이는 것을 반영하지 못해, 그 순간 형광펜만 글자에서 옆으로 밀려 보였다.
+  const getPointerPoint = (event: React.PointerEvent<HTMLCanvasElement>) => {
+    const rect = event.currentTarget.getBoundingClientRect();
+    return { x: event.clientX - rect.left, y: event.clientY - rect.top };
+  };
 
   const startHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (eraserMode) {
@@ -238,21 +261,17 @@ export default function Layout({
     drawingRef.current = true;
     strokeStartRef.current = getPointerPoint(event);
     event.currentTarget.setPointerCapture(event.pointerId);
-    setHighlightStrokes((strokes) => [...strokes, { color: highlightColor, points: [getPointerPoint(event), getPointerPoint(event)] }]);
+    applyStrokes([...highlightStrokesRef.current, { color: highlightColor, points: [getPointerPoint(event), getPointerPoint(event)] }]);
   };
 
   const continueHighlight = (event: React.PointerEvent<HTMLCanvasElement>) => {
     if (!drawingRef.current || eraserMode) return;
-    setHighlightStrokes((strokes) => {
-      const next = [...strokes];
-      const current = next[next.length - 1];
-      const start = strokeStartRef.current;
-      if (!current || !start) return strokes;
-      // 형광펜은 자유 곡선이 아닌 시작점과 현재 위치를 잇는 직선으로 표시한다.
-      current.points = [start, getPointerPoint(event)];
-      redrawHighlights(next);
-      return next;
-    });
+    const strokes = highlightStrokesRef.current;
+    const current = strokes[strokes.length - 1];
+    const start = strokeStartRef.current;
+    if (!current || !start) return;
+    // 형광펜은 자유 곡선이 아닌 시작점과 현재 위치를 잇는 직선으로 표시한다.
+    applyStrokes([...strokes.slice(0, -1), { ...current, points: [start, getPointerPoint(event)] }]);
   };
 
   const finishHighlight = () => {
@@ -264,16 +283,9 @@ export default function Layout({
     const clickPoint = getPointerPoint(event);
     const eraserRadius = 30;
 
-    setHighlightStrokes((strokes) => {
-      const filtered = strokes.filter((stroke) => {
-        return !stroke.points.some(
-          (point) =>
-            Math.hypot(point.x - clickPoint.x, point.y - clickPoint.y) <= eraserRadius
-        );
-      });
-      redrawHighlights(filtered);
-      return filtered;
-    });
+    applyStrokes(highlightStrokesRef.current.filter((stroke) => !stroke.points.some(
+      (point) => Math.hypot(point.x - clickPoint.x, point.y - clickPoint.y) <= eraserRadius
+    )));
   };
 
   return (
@@ -510,7 +522,7 @@ export default function Layout({
         </div>
       </aside>
 
-      <main className="main-area">
+      <main className="main-area" ref={mainAreaRef}>
         <header className="topbar no-print">
           <div className="breadcrumbs">
             <span>DASHBOARDS</span>
@@ -520,29 +532,30 @@ export default function Layout({
         </header>
 
         {children}
-      </main>
 
-      <canvas
-        ref={canvasRef}
-        className="no-print"
-        aria-hidden={!highlightMode}
-        onPointerDown={highlightMode ? startHighlight : undefined}
-        onPointerMove={highlightMode ? continueHighlight : undefined}
-        onPointerUp={highlightMode ? finishHighlight : undefined}
-        onPointerCancel={highlightMode ? finishHighlight : undefined}
-        style={{
-          // fixed(뷰포트 고정)가 아니라 absolute(문서 기준)로 둬서, 스크롤할 때 다른 본문
-          // 콘텐츠와 똑같이 브라우저가 알아서 같이 움직여준다 - 위치가 아예 어긋날 일이 없다.
-          // 크기(width/height)는 문서 전체 높이에 맞춰 JS에서 직접 지정한다(위 resizeCanvas).
-          position: "absolute",
-          top: 0,
-          left: 0,
-          // 도구를 닫아도 캔버스가 콘텐츠 위에 남아 기존 표시를 계속 보여준다.
-          zIndex: 40,
-          pointerEvents: highlightMode ? "auto" : "none",
-          cursor: highlightMode ? (eraserMode ? "not-allowed" : "crosshair") : "default",
-        }}
-      />
+        <canvas
+          ref={canvasRef}
+          className="no-print"
+          aria-hidden={!highlightMode}
+          onPointerDown={highlightMode ? startHighlight : undefined}
+          onPointerMove={highlightMode ? continueHighlight : undefined}
+          onPointerUp={highlightMode ? finishHighlight : undefined}
+          onPointerCancel={highlightMode ? finishHighlight : undefined}
+          style={{
+            // 본문(main) 안에 본문과 똑같은 크기로 깔아둔다. 사이드바가 접히고 펴지면서 본문이
+            // 좌우로 움직여도 캔버스가 본문과 함께 움직이므로 형광펜이 글자에서 어긋나지 않는다.
+            // 뷰포트 기준 fixed도, 문서 기준 absolute도 이 가로 이동은 따라가지 못했다.
+            // 크기(width/height)는 본문 전체 크기에 맞춰 JS에서 직접 지정한다(위 resizeCanvas).
+            position: "absolute",
+            top: 0,
+            left: 0,
+            // 도구를 닫아도 캔버스가 콘텐츠 위에 남아 기존 표시를 계속 보여준다.
+            zIndex: 40,
+            pointerEvents: highlightMode ? "auto" : "none",
+            cursor: highlightMode ? (eraserMode ? "not-allowed" : "crosshair") : "default",
+          }}
+        />
+      </main>
 
       <div
         className="no-print"
@@ -587,10 +600,10 @@ export default function Layout({
             <button type="button" onClick={() => setEraserMode(!eraserMode)} aria-label={eraserMode ? "지우기 모드 해제" : "지우개 모드"} title={eraserMode ? "지우개 모드 해제" : "지우개"} className="icon-stack-btn" style={{ width: "32px", height: "32px", background: eraserMode ? "rgba(255, 107, 107, 0.2)" : "transparent" }}>
               <Eraser size={16} />
             </button>
-            <button type="button" onClick={() => setHighlightStrokes((strokes) => strokes.slice(0, -1))} aria-label="마지막 형광펜 되돌리기" title="실행 취소" className="icon-stack-btn" style={{ width: "32px", height: "32px" }} disabled={eraserMode}>
+            <button type="button" onClick={() => applyStrokes(highlightStrokesRef.current.slice(0, -1))} aria-label="마지막 형광펜 되돌리기" title="실행 취소" className="icon-stack-btn" style={{ width: "32px", height: "32px" }} disabled={eraserMode}>
               <Undo2 size={16} />
             </button>
-            <button type="button" onClick={() => { setHighlightStrokes([]); redrawHighlights([]); setEraserMode(false); }} aria-label="형광펜 전체 지우기" title="전체 지우기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
+            <button type="button" onClick={() => { applyStrokes([]); setEraserMode(false); }} aria-label="형광펜 전체 지우기" title="전체 지우기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
               <Trash2 size={16} />
             </button>
             <button type="button" onClick={() => { setHighlightMode(false); setEraserMode(false); }} aria-label="형광펜 닫기" title="닫기" className="icon-stack-btn" style={{ width: "32px", height: "32px" }}>
