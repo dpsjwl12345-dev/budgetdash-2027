@@ -1380,12 +1380,6 @@ export default function Home() {
     setHierarchyPage(1);
   }, [department, hierarchySearch, hierarchyProgramFilter, hierarchyItemFilter]);
 
-  // 2026 본예산액 카드: 부서별 예산집행현황표(executionData)를 부서로 필터한 "본예산" 합계.
-  const budget2026Original = useMemo(() => {
-    if (executionData.length === 0) return 0;
-    const filtered = department ? executionData.filter(row => row.department === department) : executionData;
-    return filtered.reduce((sum, row) => sum + row.original, 0);
-  }, [executionData, department]);
 
   const counts: Record<string, number> = {
     전체: departmentRows.length,
@@ -2215,7 +2209,7 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(budget2026Original / 1000000))}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card metric-alert">
               <div className="metric-header">
