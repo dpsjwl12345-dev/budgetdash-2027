@@ -298,10 +298,12 @@ function getFormulaErrors(row: BudgetRow, staffData: Record<string, { capacity: 
   const capacity = parseInt(staffData[department]?.capacity || "0");
 
   // 국내여비: 현원 × 20,000 × 9 × 12 (국외여비 제외)
+  // 이 기준액은 상한이고, 실제 출장 빈도에 따라 부서 재량으로 그 아래로 편성할 수 있다
+  // (고정 비율이 없다) - 기준을 초과했을 때만 오류로 표시한다.
   if ((accountText.includes("국내여비") && !accountText.includes("국외여비")) || accountText.includes("202-01")) {
     const expectedAmount = currentStaff * 20000 * 9 * 12;
-    if (Math.abs(row.amount - expectedAmount) > 1000) {
-      errors.push(`국내여비: 현원 ${currentStaff} × 20,000 × 9 × 12 = ${expectedAmount.toLocaleString()}원`);
+    if (row.amount - expectedAmount > 1000) {
+      errors.push(`국내여비: 현원 ${currentStaff} × 20,000 × 9 × 12 = ${expectedAmount.toLocaleString()}원 (상한 초과)`);
     }
   }
 
@@ -415,10 +417,46 @@ function parseTrailingAmountWon(text: string): number | null {
   return parseInt(digits, 10) * 1000;
 }
 
+// 정원가산업무추진비(203-02) 본청 기준 - 현원 구간별 누적 단가 합산.
+// 화성시 부서는 전부 본청 소속이라 본청 단가표만 적용한다.
+function calcStaffProportionalExpense203_02(current: number): number {
+  const tiers = [
+    { upTo: 100, rate: 80000 },
+    { upTo: 300, rate: 60000 },
+    { upTo: 600, rate: 45000 },
+    { upTo: 800, rate: 30000 },
+    { upTo: Infinity, rate: 15000 },
+  ];
+  let remaining = current;
+  let prevCap = 0;
+  let total = 0;
+  for (const tier of tiers) {
+    if (remaining <= 0) break;
+    const countInTier = Math.min(remaining, tier.upTo - prevCap);
+    total += countInTier * tier.rate;
+    remaining -= countInTier;
+    prevCap = tier.upTo;
+  }
+  return total;
+}
+
+// 부서운영업무추진비(203-04) - 현원 구간별 월정 기준액 × 12월.
+function calcDepartmentOperatingExpense203_04(current: number): number {
+  let monthly: number;
+  if (current <= 5) monthly = 100000;
+  else if (current <= 10) monthly = 175000;
+  else if (current <= 15) monthly = 250000;
+  else if (current <= 20) monthly = 300000;
+  else if (current <= 25) monthly = 350000;
+  else if (current <= 30) monthly = 400000;
+  else monthly = 400000 + (current - 30) * 5000;
+  return monthly * 12;
+}
+
 function getHierarchyFormulaCheck(
   row: BudgetHierarchyRow,
   accountLabel: string,
-  nearbyText: string,
+  noteLines: string[],
   staff: { capacity: string; current: string } | undefined
 ): HierarchyFormulaCheck | null {
   if (row.level !== "item") return null;
@@ -426,28 +464,51 @@ function getHierarchyFormulaCheck(
   const itemCode = row.statisticsCode?.match(/^\d+/)?.[0] ?? "";
   const capacity = parseInt(staff?.capacity || "0", 10);
   const current = parseInt(staff?.current || "0", 10);
+  const nearbyText = noteLines.join(" ");
 
   if (accountCode === "202" && itemCode === "01") {
     const actual = (row.budget || 0) * 1000;
     const expected = current * 20000 * 9 * 12;
-    if (Math.abs(actual - expected) > 1000) {
-      return { name: "국내여비", message: `국내여비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
+    // 국내여비는 "20,000원×현원×9일×12월"이 상한 기준이고, 실제 출장 빈도에 따라 부서 재량으로
+    // 그 아래로 편성할 수 있다(고정 비율이 없다) - 기준을 초과했을 때만 오류로 표시한다.
+    if (actual - expected > 1000) {
+      return { name: "국내여비", message: `국내여비: 기준(상한) ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 - 기준 초과` };
     }
   }
   if (accountCode === "201" && itemCode === "01") {
-    if (/일반수용비/.test(nearbyText)) {
-      const actual = parseTrailingAmountWon(nearbyText);
+    // 한 편성목(item) 아래 일반수용비·급식비 부기가 같이 있을 수 있어, 합쳐진 텍스트가 아니라
+    // 각 항목 이름이 실제로 적힌 그 줄에서만 금액을 뽑아야 한다(안 그러면 서로의 금액을 섞어 씀).
+    const generalLine = noteLines.find((line) => /일반수용비/.test(line));
+    if (generalLine) {
+      const actual = parseTrailingAmountWon(generalLine);
       const expected = capacity * 750000;
       if (actual !== null && Math.abs(actual - expected) > 1000) {
         return { name: "일반수용비", message: `일반수용비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
       }
     }
-    if (/급식비/.test(nearbyText)) {
-      const actual = parseTrailingAmountWon(nearbyText);
+    const mealLine = noteLines.find((line) => /급식비/.test(line));
+    if (mealLine) {
+      const actual = parseTrailingAmountWon(mealLine);
       const expected = capacity * 600000;
       if (actual !== null && Math.abs(actual - expected) > 1000) {
         return { name: "급식비", message: `급식비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
       }
+    }
+  }
+  // 정원가산업무추진비 - 현원 구간별 누적 단가 합산(본청 기준).
+  if (accountCode === "203" && itemCode === "02") {
+    const actual = (row.budget || 0) * 1000;
+    const expected = calcStaffProportionalExpense203_02(current);
+    if (Math.abs(actual - expected) > 1000) {
+      return { name: "정원가산업무추진비", message: `정원가산업무추진비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 (현원 ${current}명, 본청 기준)` };
+    }
+  }
+  // 부서운영업무추진비 - 현원 구간별 월정 기준액 × 12월.
+  if (accountCode === "203" && itemCode === "04") {
+    const actual = (row.budget || 0) * 1000;
+    const expected = calcDepartmentOperatingExpense203_04(current);
+    if (Math.abs(actual - expected) > 1000) {
+      return { name: "부서운영업무추진비", message: `부서운영업무추진비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 (현원 ${current}명)` };
     }
   }
 
@@ -697,6 +758,13 @@ export default function Home() {
     const saved = localStorage.getItem('budgetHiddenMemoIds');
     return saved ? JSON.parse(saved) : [];
   });
+  // 산출식/사전절차 배너를 "확인함" 처리한 편성목(item) row id 목록. 이 앱을 쓰는 이 브라우저에서만
+  // 유지되는 확인 표시라, 다른 컴퓨터나 다른 검토자에게는 공유되지 않는다.
+  const [confirmedBadgeIds, setConfirmedBadgeIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('budgetConfirmedBadgeIds');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [confirmingBadgeRowId, setConfirmingBadgeRowId] = useState<string | null>(null);
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -748,6 +816,7 @@ export default function Home() {
   const staffModalRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
   const hierarchyEditModalRef = useRef<HTMLDivElement>(null);
+  const badgeConfirmModalRef = useRef<HTMLDivElement>(null);
   const lastFocusedRef = useRef<HTMLElement | null>(null);
   const tableRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
@@ -1365,6 +1434,20 @@ export default function Home() {
       saveProgramMemosToServer(programMemos, next);
       return next;
     });
+  };
+
+  const confirmBadgeRow = (rowId: string) => {
+    setConfirmedBadgeIds((prev) => {
+      if (prev.includes(rowId)) return prev;
+      const next = [...prev, rowId];
+      try {
+        localStorage.setItem('budgetConfirmedBadgeIds', JSON.stringify(next));
+      } catch (error) {
+        console.warn('배너 확인 저장 실패:', error);
+      }
+      return next;
+    });
+    setConfirmingBadgeRowId(null);
   };
 
   const parseNumber = (value: unknown) => Number(String(value ?? "0").replace(/[^0-9.-]/g, "")) || 0;
@@ -2172,7 +2255,7 @@ export default function Home() {
                     // 있다)의 텍스트를 전부 모아둔다. 201-01(사무관리비)처럼 코드만으로는 너무
                     // 광범위한 통계목은 이 텍스트로 실제 표준 산출식이 있는 하위 항목인지
                     // 좁혀서 판단한다.
-                    const nextNoteTextByItemId: Record<string, string> = {};
+                    const nextNoteLinesByItemId: Record<string, string[]> = {};
                     filteredHierarchyRows.forEach((row, idx) => {
                       if (row.level !== 'item') return;
                       const noteTexts: string[] = [];
@@ -2181,7 +2264,7 @@ export default function Home() {
                         if (nextRow.level !== 'note') break;
                         noteTexts.push(`${nextRow.statisticsCode ?? ''} ${nextRow.description ?? ''}`);
                       }
-                      if (noteTexts.length > 0) nextNoteTextByItemId[row.id] = noteTexts.join(' ');
+                      if (noteTexts.length > 0) nextNoteLinesByItemId[row.id] = noteTexts;
                     });
 
                     const pageStart = (hierarchyPage - 1) * HIERARCHY_ROWS_PER_PAGE;
@@ -2332,7 +2415,7 @@ export default function Home() {
                       ? getHierarchyItemBadges(row, rowAncestors?.accountRow?.label ?? '', rowAncestors?.programRow?.label ?? '')
                       : [];
                     const formulaCheck = getHierarchyFormulaCheck(
-                      row, rowAncestors?.accountRow?.label ?? '', nextNoteTextByItemId[row.id] ?? '', staffData[department]
+                      row, rowAncestors?.accountRow?.label ?? '', nextNoteLinesByItemId[row.id] ?? [], staffData[department]
                     );
                     const itemHasFormula = !!formulaCheck;
                     const formulaLabel = formulaCheck?.message ?? '';
@@ -2344,10 +2427,15 @@ export default function Home() {
                       && (rowAncestors?.itemRow?.budget || 0) > 0;
                     // 화성시 주요투자사업 대시보드에 등록된 세부사업이면 사업명 앞에 "주요" 배지를 붙인다.
                     const isMajorProgram = row.level === 'program' && isMajorInvestmentProgram(department, row.label);
-                    const badgeRow = (itemBadges.length > 0 || itemHasFormula) && (
+                    const badgeRow = (itemBadges.length > 0 || itemHasFormula) && !confirmedBadgeIds.includes(row.id) && (
                       <tr key={`${row.id}-badges`}>
-                        <td colSpan={8} style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left' }}>
-                          <div style={{ display: 'flex', flexWrap: 'wrap', justifyContent: 'flex-start', gap: '6px' }}>
+                        <td
+                          colSpan={8}
+                          onClick={() => setConfirmingBadgeRowId(row.id)}
+                          title="클릭하여 검토 확인 처리"
+                          style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left', cursor: 'pointer' }}
+                        >
+                          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start', gap: '6px' }}>
                             {itemBadges.map((badge) => (
                               <span key={badge} style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.15)', color: '#e67e22', fontSize: '12px', fontWeight: 600 }}>
                                 {badge}
@@ -2358,6 +2446,9 @@ export default function Home() {
                                 산출식 · {formulaLabel}
                               </span>
                             )}
+                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', marginLeft: 'auto', color: '#8a94a0', fontSize: '11px' }}>
+                              <Check size={12} /> 확인 처리
+                            </span>
                           </div>
                         </td>
                       </tr>
@@ -2463,6 +2554,7 @@ export default function Home() {
       {editingRow && <div className="modal-backdrop" onMouseDown={() => setEditingRow(null)}><div className="modal-card edit-row-modal" ref={editModalRef} role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, editModalRef.current)}><div className="modal-head"><div><span>BUDGET ITEM / EDIT</span><h2 id="edit-modal-title">예산 항목 편집</h2></div><button className="close-button" onClick={() => setEditingRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>정책<input value={editingRow.policy} onChange={(event) => setEditingRow({ ...editingRow, policy: event.target.value })} /></label><label>세부사업<input value={editingRow.program} onChange={(event) => setEditingRow({ ...editingRow, program: event.target.value })} /></label><label className="edit-wide">산출내역<input value={editingRow.detail} onChange={(event) => setEditingRow({ ...editingRow, detail: event.target.value })} /></label><label>요구액(천원)<input value={editingRow.amount} onChange={(event) => setEditingRow({ ...editingRow, amount: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingRow.previous} onChange={(event) => setEditingRow({ ...editingRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>시비(천원)<input value={editingRow.city} onChange={(event) => setEditingRow({ ...editingRow, city: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>국비(천원)<input value={editingRow.national} onChange={(event) => setEditingRow({ ...editingRow, national: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>도비(천원)<input value={editingRow.province} onChange={(event) => setEditingRow({ ...editingRow, province: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>기타(천원)<input value={editingRow.other} onChange={(event) => setEditingRow({ ...editingRow, other: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>상태<select value={editingRow.status} onChange={(event) => setEditingRow({ ...editingRow, status: event.target.value as Status })}><option>정상</option><option>주의</option><option>오류</option><option>사전</option></select></label><label className="edit-wide">검토 메모<input value={editingRow.note ?? ""} onChange={(event) => setEditingRow({ ...editingRow, note: event.target.value })} placeholder="검토 메모를 입력하세요" /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveRowEdit}>저장</AppButton></div></div></div>}
 
       {editingHierarchyRow && <div className="modal-backdrop" onMouseDown={() => setEditingHierarchyRow(null)}><div className="modal-card edit-row-modal" ref={hierarchyEditModalRef} role="dialog" aria-modal="true" aria-labelledby="hierarchy-edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, hierarchyEditModalRef.current)}><div className="modal-head"><div><span>BUDGET LINE ITEM / EDIT</span><h2 id="hierarchy-edit-modal-title">편성목 편집</h2></div><button className="close-button" onClick={() => setEditingHierarchyRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>통계목<input value={editingHierarchyRow.statisticsCode ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, statisticsCode: event.target.value })} /></label><label>예산액(천원)<input value={editingHierarchyRow.budget ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, budget: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingHierarchyRow.previous ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label className="edit-wide">산출근거<input value={editingHierarchyRow.description ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, description: event.target.value })} /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingHierarchyRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveHierarchyItemEdit}>저장</AppButton></div></div></div>}
+      {confirmingBadgeRowId && <div className="modal-backdrop" onMouseDown={() => setConfirmingBadgeRowId(null)}><div className="modal-card" ref={badgeConfirmModalRef} role="dialog" aria-modal="true" aria-labelledby="badge-confirm-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, badgeConfirmModalRef.current)}><div className="modal-head"><div><span>REVIEW</span><h2 id="badge-confirm-modal-title">확인하셨습니까?</h2></div><button className="close-button" onClick={() => setConfirmingBadgeRowId(null)} aria-label="닫기"><X size={19} /></button></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setConfirmingBadgeRowId(null)}>취소</AppButton><AppButton variant="primary" onClick={() => confirmBadgeRow(confirmingBadgeRowId)}>확인</AppButton></div></div></div>}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </Layout>
   );

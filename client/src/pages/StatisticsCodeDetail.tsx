@@ -549,9 +549,9 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
           </div>
           <div className="content-section">
             <h4>📌 203-02. 정원가산업무추진비 (Staff-proportional Operating Expenses)</h4>
-            <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>소속 직원의 사기진작, 격려, 동호회 지원 등을 위해 정원에 가산하여 지원하는 경비</p>
+            <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>소속 직원의 사기진작, 격려, 동호회 지원 등을 위해 현원에 가산하여 지원하는 경비</p>
             <div style={{ marginTop: "12px" }}>
-              <strong>기준 단가 (정원 구간별 누적 합산)</strong>
+              <strong>기준 단가 (현원 구간별 누적 합산)</strong>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "8px", fontSize: "12px" }}>
                 <thead>
                   <tr style={{ backgroundColor: "rgba(118, 157, 194, 0.15)", borderBottom: "1px solid rgba(118, 157, 194, 0.2)" }}>
@@ -570,10 +570,10 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             <div style={{ marginTop: "16px" }}>
               <strong style={{ fontSize: "14px" }}>🧮 표준 산출식</strong>
               <div style={{ marginTop: "10px", backgroundColor: "rgba(91, 155, 240, 0.2)", border: "2px solid #5b9bf0", padding: "14px 16px", borderRadius: "6px", fontFamily: "monospace", fontWeight: "500", fontSize: "13px", lineHeight: "1.7", color: "var(--text)" }}>
-                부서 대상 인원이 본청 소속 120명인 경우: (100명 × 80,000원) + (20명 × 60,000원) = 9,200,000원
+                부서 대상 인원(현원)이 본청 소속 120명인 경우: (100명 × 80,000원) + (20명 × 60,000원) = 9,200,000원
               </div>
               <div style={{ marginTop: "8px", backgroundColor: "rgba(91, 155, 240, 0.2)", border: "2px solid #5b9bf0", padding: "14px 16px", borderRadius: "6px", fontFamily: "monospace", fontWeight: "500", fontSize: "13px", lineHeight: "1.7", color: "var(--text)" }}>
-                부서 대상 인원이 사업소 소속 150명인 경우: (100명 × 40,000원) + (50명 × 30,000원) = 5,500,000원
+                부서 대상 인원(현원)이 사업소 소속 150명인 경우: (100명 × 40,000원) + (50명 × 30,000원) = 5,500,000원
               </div>
             </div>
           </div>
@@ -589,11 +589,11 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             <h4>📌 203-04. 부서운영업무추진비 (Department Operating Expenses)</h4>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>통상적인 실·과 조직 운영에 필수적으로 소요되는 다과 경비 등 제잡비</p>
             <div style={{ marginTop: "12px" }}>
-              <strong>부서 정원별 월정 기준</strong>
+              <strong>부서 현원별 월정 기준</strong>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "8px", fontSize: "12px" }}>
                 <thead>
                   <tr style={{ backgroundColor: "rgba(118, 157, 194, 0.15)", borderBottom: "1px solid rgba(118, 157, 194, 0.2)" }}>
-                    <th style={{ padding: "6px", textAlign: "left", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>부서 정원</th>
+                    <th style={{ padding: "6px", textAlign: "left", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>부서 현원</th>
                     <th style={{ padding: "6px", textAlign: "left", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>월 기준 요율</th>
                     <th style={{ padding: "6px", textAlign: "left" }}>연간 편성 한도액</th>
                   </tr>
@@ -640,10 +640,10 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             <div style={{ marginTop: "12px" }}>
               <strong style={{ fontSize: "14px" }}>🧮 표준 산출식</strong>
               <div style={{ marginTop: "10px", backgroundColor: "rgba(91, 155, 240, 0.2)", border: "2px solid #5b9bf0", padding: "14px 16px", borderRadius: "6px", fontFamily: "monospace", fontWeight: "500", fontSize: "13px", lineHeight: "1.7", color: "var(--text)" }}>
-                30인 이하 부서 (예: 정원 18명): 300,000원 × 12월 = 3,600,000원
+                30인 이하 부서 (예: 현원 18명): 300,000원 × 12월 = 3,600,000원
               </div>
               <div style={{ marginTop: "8px", backgroundColor: "rgba(91, 155, 240, 0.2)", border: "2px solid #5b9bf0", padding: "14px 16px", borderRadius: "6px", fontFamily: "monospace", fontWeight: "500", fontSize: "13px", lineHeight: "1.7", color: "var(--text)" }}>
-                31인 이상 부서 (예: 정원 35명): [400,000원 + (5명 × 5,000원)] × 12월 = 5,100,000원
+                31인 이상 부서 (예: 현원 35명): [400,000원 + (5명 × 5,000원)] × 12월 = 5,100,000원
               </div>
             </div>
             <div style={{ marginTop: "12px", backgroundColor: "rgba(230, 126, 34, 0.1)", padding: "8px", borderRadius: "4px", borderLeft: "3px solid #e67e22" }}>
