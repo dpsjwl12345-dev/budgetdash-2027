@@ -453,6 +453,24 @@ function calcDepartmentOperatingExpense203_04(current: number): number {
   return monthly * 12;
 }
 
+// 부기명(note) 줄들 안에서 keyword가 적힌 줄(예: "○일반수용비")을 찾은 뒤, 그 줄부터 다음
+// 다른 keyword(예: "○급식비")가 나오기 전까지 범위 안에서 "=" 있는 첫 금액을 찾는다. 라벨과
+// 계산식이 같은 줄에 있을 수도, 라벨 줄 다음에 계산식 줄이 따로 이어질 수도 있어 이렇게 찾아야
+// 한다 - 라벨 줄에서만 찾으면 계산식이 다음 줄에 있는 경우 못 찾고, 전체를 합친 문자열에서
+// 찾으면 다른 항목(급식비 등)의 금액을 잘못 가져오게 된다.
+function findNoteAmountForKeyword(noteLines: string[], keyword: RegExp, otherKeywords: RegExp[]): number | null {
+  const startIdx = noteLines.findIndex((line) => keyword.test(line));
+  if (startIdx === -1) return null;
+  for (let i = startIdx; i < noteLines.length; i++) {
+    if (i > startIdx && otherKeywords.some((other) => other.test(noteLines[i]))) break;
+    // "=" 없는 줄(라벨만 있는 줄 등)은 통계목 코드 숫자 같은 걸 금액으로 잘못 집을 수 있어 건너뛴다.
+    if (!noteLines[i].includes("=")) continue;
+    const amount = parseTrailingAmountWon(noteLines[i]);
+    if (amount !== null) return amount;
+  }
+  return null;
+}
+
 function getHierarchyFormulaCheck(
   row: BudgetHierarchyRow,
   accountLabel: string,
@@ -469,29 +487,29 @@ function getHierarchyFormulaCheck(
   if (accountCode === "202" && itemCode === "01") {
     const actual = (row.budget || 0) * 1000;
     const expected = current * 20000 * 9 * 12;
-    // 국내여비는 "20,000원×현원×9일×12월"이 상한 기준이고, 실제 출장 빈도에 따라 부서 재량으로
-    // 그 아래로 편성할 수 있다(고정 비율이 없다) - 기준을 초과했을 때만 오류로 표시한다.
-    if (actual - expected > 1000) {
-      return { name: "국내여비", message: `국내여비: 기준(상한) ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 - 기준 초과` };
+    // 국내여비는 "20,000원×현원×9일×12월"이 상한 기준이고, 실제 출장 빈도(부서 재량, 고정 비율 없음)에
+    // 따라 그 아래로도 정상 편성될 수 있다 - 그래서 "다르다=오류"로 단정하지 않고, 기준값과
+    // 등록값이 다를 때마다 참고용으로 계속 띄워서 사람이 직접 근거를 확인하게 한다.
+    if (Math.abs(actual - expected) > 1000) {
+      return { name: "국내여비", message: `국내여비: 기준(상한) ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 - 참고(부서 재량으로 낮을 수 있음)` };
     }
   }
   if (accountCode === "201" && itemCode === "01") {
-    // 한 편성목(item) 아래 일반수용비·급식비 부기가 같이 있을 수 있어, 합쳐진 텍스트가 아니라
-    // 각 항목 이름이 실제로 적힌 그 줄에서만 금액을 뽑아야 한다(안 그러면 서로의 금액을 섞어 씀).
-    const generalLine = noteLines.find((line) => /일반수용비/.test(line));
-    if (generalLine) {
-      const actual = parseTrailingAmountWon(generalLine);
+    // 한 편성목(item) 아래 일반수용비·급식비 부기가 같이 있을 수 있고, 라벨 줄("○일반수용비")과
+    // 계산식 줄("750,000원×15명=11,250,000원")이 따로 나뉘어 있을 수도 있다 - 라벨이 적힌 줄부터
+    // 다음 다른 항목이 나오기 전까지 범위에서 "=" 있는 첫 금액을 찾는다.
+    const generalActual = findNoteAmountForKeyword(noteLines, /일반수용비/, [/급식비/]);
+    if (generalActual !== null) {
       const expected = capacity * 750000;
-      if (actual !== null && Math.abs(actual - expected) > 1000) {
-        return { name: "일반수용비", message: `일반수용비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
+      if (Math.abs(generalActual - expected) > 1000) {
+        return { name: "일반수용비", message: `일반수용비: 기준 ${expected.toLocaleString()}원 / 등록 ${generalActual.toLocaleString()}원` };
       }
     }
-    const mealLine = noteLines.find((line) => /급식비/.test(line));
-    if (mealLine) {
-      const actual = parseTrailingAmountWon(mealLine);
+    const mealActual = findNoteAmountForKeyword(noteLines, /급식비/, [/일반수용비/]);
+    if (mealActual !== null) {
       const expected = capacity * 600000;
-      if (actual !== null && Math.abs(actual - expected) > 1000) {
-        return { name: "급식비", message: `급식비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원` };
+      if (Math.abs(mealActual - expected) > 1000) {
+        return { name: "급식비", message: `급식비: 기준 ${expected.toLocaleString()}원 / 등록 ${mealActual.toLocaleString()}원` };
       }
     }
   }
@@ -761,13 +779,18 @@ export default function Home() {
     const saved = localStorage.getItem('budgetHiddenMemoIds');
     return saved ? JSON.parse(saved) : [];
   });
-  // 산출식/사전절차 배너를 "확인함" 처리한 편성목(item) row id 목록. 이 앱을 쓰는 이 브라우저에서만
-  // 유지되는 확인 표시라, 다른 컴퓨터나 다른 검토자에게는 공유되지 않는다.
-  const [confirmedBadgeIds, setConfirmedBadgeIds] = useState<string[]>(() => {
-    const saved = localStorage.getItem('budgetConfirmedBadgeIds');
+  // "검토" 열의 사전/산출식 버튼을 각각 "확인함" 처리한 편성목(item) row id 목록. 사전절차와
+  // 산출식은 서로 다른 확인 대상이라 목록을 따로 관리한다. 이 앱을 쓰는 이 브라우저에서만 유지되는
+  // 확인 표시라, 다른 컴퓨터나 다른 검토자에게는 공유되지 않는다.
+  const [confirmedProcedureIds, setConfirmedProcedureIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('budgetConfirmedProcedureIds');
     return saved ? JSON.parse(saved) : [];
   });
-  const [confirmingBadgeRowId, setConfirmingBadgeRowId] = useState<string | null>(null);
+  const [confirmedFormulaIds, setConfirmedFormulaIds] = useState<string[]>(() => {
+    const saved = localStorage.getItem('budgetConfirmedFormulaIds');
+    return saved ? JSON.parse(saved) : [];
+  });
+  const [confirmingBadge, setConfirmingBadge] = useState<{ rowId: string; type: 'procedure' | 'formula'; detail: string } | null>(null);
   const [executionData, setExecutionData] = useState<BudgetExecution[]>(() => {
     const saved = localStorage.getItem('budgetExecution2026Rows');
     return saved ? JSON.parse(saved) : [];
@@ -1441,18 +1464,20 @@ export default function Home() {
     });
   };
 
-  const confirmBadgeRow = (rowId: string) => {
-    setConfirmedBadgeIds((prev) => {
+  const confirmBadge = (rowId: string, type: 'procedure' | 'formula') => {
+    const setIds = type === 'procedure' ? setConfirmedProcedureIds : setConfirmedFormulaIds;
+    const storageKey = type === 'procedure' ? 'budgetConfirmedProcedureIds' : 'budgetConfirmedFormulaIds';
+    setIds((prev) => {
       if (prev.includes(rowId)) return prev;
       const next = [...prev, rowId];
       try {
-        localStorage.setItem('budgetConfirmedBadgeIds', JSON.stringify(next));
+        localStorage.setItem(storageKey, JSON.stringify(next));
       } catch (error) {
-        console.warn('배너 확인 저장 실패:', error);
+        console.warn('검토 확인 저장 실패:', error);
       }
       return next;
     });
-    setConfirmingBadgeRowId(null);
+    setConfirmingBadge(null);
   };
 
   // 숨긴 메모 줄은 반드시 되돌릴 수 있어야 한다. 숨김 목록은 클라우드에 저장되고 불러올 때
@@ -2470,6 +2495,12 @@ export default function Home() {
                     );
                     const itemHasFormula = !!formulaCheck;
                     const formulaLabel = formulaCheck?.message ?? '';
+                    // "검토" 열의 사전/산출식 버튼은 각각 따로 확인 처리할 수 있다 - 확인한 쪽만
+                    // 숨기고, 아직 확인 안 한 쪽은 계속 보여야 한다.
+                    const procedureConfirmed = confirmedProcedureIds.includes(row.id);
+                    const formulaConfirmed = confirmedFormulaIds.includes(row.id);
+                    const showProcedureButton = itemBadges.length > 0 && !procedureConfirmed;
+                    const showFormulaButton = itemHasFormula && !formulaConfirmed;
                     // 부기명(note) 행이 설명하는 편성목(item)이 전년도 예산 없이 2027년에
                     // 처음 편성된 항목이면(전년도 0원, 올해는 금액 있음) 산출근거 앞에
                     // "신규" 표시를 붙인다.
@@ -2478,36 +2509,9 @@ export default function Home() {
                       && (rowAncestors?.itemRow?.budget || 0) > 0;
                     // 화성시 주요투자사업 대시보드에 등록된 세부사업이면 사업명 앞에 "주요" 배지를 붙인다.
                     const isMajorProgram = row.level === 'program' && isMajorInvestmentProgram(department, row.label);
-                    const badgeRow = (itemBadges.length > 0 || itemHasFormula) && !confirmedBadgeIds.includes(row.id) && (
-                      <tr key={`${row.id}-badges`}>
-                        <td
-                          colSpan={8}
-                          onClick={() => setConfirmingBadgeRowId(row.id)}
-                          title="클릭하여 검토 확인 처리"
-                          style={{ paddingLeft: getPaddingLeft(), paddingRight: '16px', paddingTop: '6px', paddingBottom: '6px', background: 'rgba(230, 126, 34, 0.08)', borderLeft: '3px solid #e67e22', textAlign: 'left', cursor: 'pointer' }}
-                        >
-                          <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'center', justifyContent: 'flex-start', gap: '6px' }}>
-                            {itemBadges.map((badge) => (
-                              <span key={badge} style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.15)', color: '#e67e22', fontSize: '12px', fontWeight: 600 }}>
-                                {badge}
-                              </span>
-                            ))}
-                            {itemHasFormula && (
-                              <span style={{ display: 'inline-block', padding: '3px 8px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: '12px', fontWeight: 600 }}>
-                                산출식 · {formulaLabel}
-                              </span>
-                            )}
-                            <span style={{ display: 'inline-flex', alignItems: 'center', gap: '3px', marginLeft: 'auto', color: '#8a94a0', fontSize: '11px' }}>
-                              <Check size={12} /> 확인 처리
-                            </span>
-                          </div>
-                        </td>
-                      </tr>
-                    );
 
                     return (
                       <Fragment key={row.id}>
-                        {badgeRow}
                         <tr>
                           <td
                             onClick={handleProgramClick}
@@ -2555,13 +2559,28 @@ export default function Home() {
                             {row.description || ''}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                            {(itemBadges.length > 0 || itemHasFormula) && (
-                              <span style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', fontSize: '11px', fontWeight: 600 }}>
-                                {itemBadges.length > 0 && <span style={{ color: '#e67e22' }}>사전</span>}
-                                {itemBadges.length > 0 && itemHasFormula && <span style={{ color: '#e67e22' }}>, </span>}
-                                {itemHasFormula && <span style={{ color: '#5b9bf0' }}>산출식</span>}
-                              </span>
-                            )}
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center' }}>
+                              {showProcedureButton && (
+                                <button
+                                  type="button"
+                                  title="클릭하여 사전절차 확인 처리"
+                                  onClick={() => setConfirmingBadge({ rowId: row.id, type: 'procedure', detail: itemBadges.join(', ') })}
+                                  style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', fontSize: '11px', fontWeight: 600, color: '#e67e22', cursor: 'pointer' }}
+                                >
+                                  사전
+                                </button>
+                              )}
+                              {showFormulaButton && (
+                                <button
+                                  type="button"
+                                  title="클릭하여 산출식 확인 처리"
+                                  onClick={() => setConfirmingBadge({ rowId: row.id, type: 'formula', detail: formulaLabel })}
+                                  style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.12)', border: '1px solid rgba(91, 155, 240, 0.4)', fontSize: '11px', fontWeight: 600, color: '#5b9bf0', cursor: 'pointer' }}
+                                >
+                                  산출식
+                                </button>
+                              )}
+                            </div>
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>
                             {row.level === 'item' && (
@@ -2621,7 +2640,7 @@ export default function Home() {
       {editingRow && <div className="modal-backdrop" onMouseDown={() => setEditingRow(null)}><div className="modal-card edit-row-modal" ref={editModalRef} role="dialog" aria-modal="true" aria-labelledby="edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, editModalRef.current)}><div className="modal-head"><div><span>BUDGET ITEM / EDIT</span><h2 id="edit-modal-title">예산 항목 편집</h2></div><button className="close-button" onClick={() => setEditingRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>정책<input value={editingRow.policy} onChange={(event) => setEditingRow({ ...editingRow, policy: event.target.value })} /></label><label>세부사업<input value={editingRow.program} onChange={(event) => setEditingRow({ ...editingRow, program: event.target.value })} /></label><label className="edit-wide">산출내역<input value={editingRow.detail} onChange={(event) => setEditingRow({ ...editingRow, detail: event.target.value })} /></label><label>요구액(천원)<input value={editingRow.amount} onChange={(event) => setEditingRow({ ...editingRow, amount: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingRow.previous} onChange={(event) => setEditingRow({ ...editingRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>시비(천원)<input value={editingRow.city} onChange={(event) => setEditingRow({ ...editingRow, city: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>국비(천원)<input value={editingRow.national} onChange={(event) => setEditingRow({ ...editingRow, national: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>도비(천원)<input value={editingRow.province} onChange={(event) => setEditingRow({ ...editingRow, province: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>기타(천원)<input value={editingRow.other} onChange={(event) => setEditingRow({ ...editingRow, other: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>상태<select value={editingRow.status} onChange={(event) => setEditingRow({ ...editingRow, status: event.target.value as Status })}><option>정상</option><option>주의</option><option>오류</option><option>사전</option></select></label><label className="edit-wide">검토 메모<input value={editingRow.note ?? ""} onChange={(event) => setEditingRow({ ...editingRow, note: event.target.value })} placeholder="검토 메모를 입력하세요" /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveRowEdit}>저장</AppButton></div></div></div>}
 
       {editingHierarchyRow && <div className="modal-backdrop" onMouseDown={() => setEditingHierarchyRow(null)}><div className="modal-card edit-row-modal" ref={hierarchyEditModalRef} role="dialog" aria-modal="true" aria-labelledby="hierarchy-edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, hierarchyEditModalRef.current)}><div className="modal-head"><div><span>BUDGET LINE ITEM / EDIT</span><h2 id="hierarchy-edit-modal-title">편성목 편집</h2></div><button className="close-button" onClick={() => setEditingHierarchyRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>통계목<input value={editingHierarchyRow.statisticsCode ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, statisticsCode: event.target.value })} /></label><label>예산액(천원)<input value={editingHierarchyRow.budget ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, budget: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingHierarchyRow.previous ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label className="edit-wide">산출근거<input value={editingHierarchyRow.description ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, description: event.target.value })} /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingHierarchyRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveHierarchyItemEdit}>저장</AppButton></div></div></div>}
-      {confirmingBadgeRowId && <div className="modal-backdrop" onMouseDown={() => setConfirmingBadgeRowId(null)}><div className="modal-card" ref={badgeConfirmModalRef} role="dialog" aria-modal="true" aria-labelledby="badge-confirm-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, badgeConfirmModalRef.current)}><div className="modal-head"><div><span>REVIEW</span><h2 id="badge-confirm-modal-title">확인하셨습니까?</h2></div><button className="close-button" onClick={() => setConfirmingBadgeRowId(null)} aria-label="닫기"><X size={19} /></button></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setConfirmingBadgeRowId(null)}>취소</AppButton><AppButton variant="primary" onClick={() => confirmBadgeRow(confirmingBadgeRowId)}>확인</AppButton></div></div></div>}
+      {confirmingBadge && <div className="modal-backdrop" onMouseDown={() => setConfirmingBadge(null)}><div className="modal-card" ref={badgeConfirmModalRef} role="dialog" aria-modal="true" aria-labelledby="badge-confirm-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, badgeConfirmModalRef.current)}><div className="modal-head"><div><span>REVIEW · {confirmingBadge.type === 'procedure' ? '사전절차' : '산출식'}</span><h2 id="badge-confirm-modal-title">확인하셨습니까?</h2></div><button className="close-button" onClick={() => setConfirmingBadge(null)} aria-label="닫기"><X size={19} /></button></div>{confirmingBadge.detail && <p style={{ padding: '0 24px', fontSize: '13px', color: 'var(--text-muted)' }}>{confirmingBadge.detail}</p>}<div className="modal-actions"><AppButton variant="ghost" onClick={() => setConfirmingBadge(null)}>취소</AppButton><AppButton variant="primary" onClick={() => confirmBadge(confirmingBadge.rowId, confirmingBadge.type)}>확인</AppButton></div></div></div>}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </Layout>
   );
