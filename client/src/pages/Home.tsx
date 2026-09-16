@@ -2303,7 +2303,10 @@ export default function Home() {
                       const noteTexts: string[] = [];
                       for (let j = idx + 1; j < filteredHierarchyRows.length; j++) {
                         const nextRow = filteredHierarchyRows[j];
-                        if (nextRow.level !== 'note') break;
+                        // 부기명("○일반수용비")과 그 계산 결과값이 'note'가 아니라 별도의
+                        // 'formula' 레벨 행으로 따로 떨어져 나오는 경우가 있어("18,750,000원 = 18,750"),
+                        // 'formula'도 같이 모아야 라벨 다음 줄의 계산값을 찾을 수 있다.
+                        if (nextRow.level !== 'note' && nextRow.level !== 'formula') break;
                         noteTexts.push(`${nextRow.statisticsCode ?? ''} ${nextRow.description ?? ''}`);
                       }
                       if (noteTexts.length > 0) nextNoteLinesByItemId[row.id] = noteTexts;
