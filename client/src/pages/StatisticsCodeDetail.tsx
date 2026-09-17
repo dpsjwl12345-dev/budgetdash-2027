@@ -309,6 +309,39 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
                 <li style={{ marginTop: "8px" }}>표준 산출식: <code style={{ backgroundColor: "rgba(118, 157, 194, 0.1)", padding: "2px 4px", borderRadius: "3px" }}>60,000원(또는 30,000원) × 근무 인원(명) × 365일</code></li>
               </ul>
             </div>
+            <div style={{ marginTop: "16px" }}>
+              <strong>자문 및 심사수당</strong>
+              <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "8px", fontSize: "13px" }}>
+                <thead>
+                  <tr style={{ backgroundColor: "rgba(118, 157, 194, 0.15)", borderBottom: "1px solid rgba(118, 157, 194, 0.2)" }}>
+                    <th style={{ padding: "6px", textAlign: "left", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>구분</th>
+                    <th style={{ padding: "6px", textAlign: "left", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>실적 기준</th>
+                    <th style={{ padding: "6px", textAlign: "left" }}>지급액</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr style={{ borderBottom: "1px solid rgba(118, 157, 194, 0.1)" }}>
+                    <td rowSpan={2} style={{ padding: "6px", borderRight: "1px solid rgba(118, 157, 194, 0.1)", verticalAlign: "top" }}>자문수당</td>
+                    <td style={{ padding: "6px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>교육훈련 및 정책연구 관련 T/F 자문 역할 수행자</td>
+                    <td style={{ padding: "6px" }}>최초 1시간 10만원<br/>초과 매시간 10만원</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid rgba(118, 157, 194, 0.1)" }}>
+                    <td style={{ padding: "6px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>E-mail, 서면 자문 요청 시</td>
+                    <td style={{ padding: "6px" }}>1회당 10만원</td>
+                  </tr>
+                  <tr style={{ borderBottom: "1px solid rgba(118, 157, 194, 0.1)" }}>
+                    <td rowSpan={2} style={{ padding: "6px", borderRight: "1px solid rgba(118, 157, 194, 0.1)", verticalAlign: "top" }}>심사수당</td>
+                    <td style={{ padding: "6px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>내용 심사수당</td>
+                    <td style={{ padding: "6px" }}>1부당 2만원</td>
+                  </tr>
+                  <tr>
+                    <td style={{ padding: "6px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>발표 심사수당</td>
+                    <td style={{ padding: "6px" }}>시간당 6만원</td>
+                  </tr>
+                </tbody>
+              </table>
+              <p style={{ fontSize: "12px", color: "var(--text-muted)", marginTop: "6px" }}>주) 내용심사수당 지급 시 보고서 분량을 감안하여 지급기준의 50% 범위 내에서 가감하여 지급 가능</p>
+            </div>
           </div>
           <div className="content-section">
             <h4>📌 현업직종 피복비 기준</h4>
