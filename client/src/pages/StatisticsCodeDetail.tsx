@@ -589,6 +589,15 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
             <h4>📌 203-04. 부서운영업무추진비 (Department Operating Expenses)</h4>
             <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "8px" }}>통상적인 실·과 조직 운영에 필수적으로 소요되는 다과 경비 등 제잡비</p>
             <div style={{ marginTop: "12px" }}>
+              <strong>인원(현원) 적용 기준</strong>
+              <p style={{ fontSize: "13px", color: "var(--text-muted)", marginTop: "4px" }}>적용기준: 2026.10.1. 기준</p>
+              <ul style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px" }}>
+                <li>공무원, 공무직, 청원경찰: 정원 기준</li>
+                <li>기간제 근로자: 정수 승인 기준</li>
+                <li>임기제, 파견자 등: 현원 기준</li>
+              </ul>
+            </div>
+            <div style={{ marginTop: "12px" }}>
               <strong>부서 현원별 월정 기준</strong>
               <table style={{ width: "100%", borderCollapse: "collapse", marginTop: "8px", fontSize: "12px" }}>
                 <thead>
