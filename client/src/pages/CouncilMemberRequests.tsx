@@ -3,9 +3,11 @@ import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
+type RequesterType = "시장" | "시의원";
 
 type CouncilRequest = {
   id: string;
+  requesterType: RequesterType;
   memberName: string;
   department: string;
   content: string;
@@ -15,11 +17,13 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
+const REQUESTER_TYPE_OPTIONS: RequesterType[] = ["시의원", "시장"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 
 const emptyForm = () => ({
+  requesterType: "시의원" as RequesterType,
   memberName: "",
   department: DEPARTMENTS[0] || "",
   content: "",
@@ -65,6 +69,7 @@ export default function CouncilMemberRequests() {
 
     const newItem: CouncilRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      requesterType: form.requesterType,
       memberName: form.memberName.trim(),
       department: form.department,
       content: form.content.trim(),
@@ -131,14 +136,23 @@ export default function CouncilMemberRequests() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>시의원 요구사항</h1>
+          <h1>시장, 시의원 요구사항</h1>
         </section>
 
         <section className="request-form-section">
           <div className="form-row">
+            <select
+              className="form-input type-select"
+              value={form.requesterType}
+              onChange={(e) => setForm({ ...form, requesterType: e.target.value as RequesterType })}
+            >
+              {REQUESTER_TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
             <input
               className="form-input member-input"
-              placeholder="의원명"
+              placeholder="이름"
               value={form.memberName}
               onChange={(e) => setForm({ ...form, memberName: e.target.value })}
             />
@@ -190,7 +204,8 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th className="col-member">의원명</th>
+                <th className="col-type">구분</th>
+                <th className="col-member">이름</th>
                 <th className="col-dept">부서</th>
                 <th className="col-content">요구내용</th>
                 <th className="col-date">요구일</th>
@@ -204,6 +219,9 @@ export default function CouncilMemberRequests() {
                 requests.map((item, index) => (
                   <tr key={item.id}>
                     <td className="col-num">{requests.length - index}</td>
+                    <td className="col-type">
+                      <span className={`type-badge type-${item.requesterType}`}>{item.requesterType}</span>
+                    </td>
                     <td className="col-member">{item.memberName}</td>
                     <td className="col-dept">{item.department}</td>
                     <td className="col-content">{item.content}</td>
@@ -225,14 +243,14 @@ export default function CouncilMemberRequests() {
                         type="button"
                         className="delete-button"
                         onClick={() => handleDelete(item.id)}
-                        aria-label="시의원 요구사항 삭제"
+                        aria-label="요구사항 삭제"
                       >삭제</button>
                     </td>
                   </tr>
                 ))
               ) : (
                 <tr>
-                  <td colSpan={8} className="empty-row">등록된 시의원 요구사항이 없습니다</td>
+                  <td colSpan={9} className="empty-row">등록된 요구사항이 없습니다</td>
                 </tr>
               )}
             </tbody>
@@ -290,6 +308,10 @@ export default function CouncilMemberRequests() {
 
         .form-input::placeholder {
           color: var(--text-muted);
+        }
+
+        .type-select {
+          flex: 0 0 90px;
         }
 
         .member-input {
@@ -378,6 +400,11 @@ export default function CouncilMemberRequests() {
           font-weight: 600;
         }
 
+        .col-type {
+          width: 64px;
+          text-align: center;
+        }
+
         .col-dept {
           width: 120px;
         }
@@ -436,6 +463,28 @@ export default function CouncilMemberRequests() {
           background: rgba(217, 173, 82, 0.08);
         }
 
+        .type-badge {
+          display: inline-block;
+          border-radius: 5px;
+          border: 1px solid var(--border);
+          font-size: 12px;
+          font-weight: 600;
+          padding: 3px 8px;
+          white-space: nowrap;
+        }
+
+        .type-badge.type-시장 {
+          color: #b98cf0;
+          border-color: rgba(185, 140, 240, 0.35);
+          background: rgba(185, 140, 240, 0.1);
+        }
+
+        .type-badge.type-시의원 {
+          color: #5b9bf0;
+          border-color: rgba(91, 155, 240, 0.35);
+          background: rgba(91, 155, 240, 0.08);
+        }
+
         .delete-button {
           border: 1px solid rgba(255, 107, 125, 0.35);
           border-radius: 5px;
@@ -462,6 +511,7 @@ export default function CouncilMemberRequests() {
             flex-wrap: wrap;
           }
 
+          .type-select,
           .member-input,
           .dept-select,
           .status-select,

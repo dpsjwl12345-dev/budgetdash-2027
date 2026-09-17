@@ -258,6 +258,7 @@ async function loadCouncilRequests(res: any) {
   }
   const requests = (data || []).map((row: any) => ({
     id: row.id,
+    requesterType: row.requester_type ?? '시의원',
     memberName: row.member_name ?? '',
     department: row.department ?? '',
     content: row.content ?? '',
@@ -282,6 +283,7 @@ async function saveCouncilRequest(req: any, res: any) {
 
   const { error: upsertError } = await supabase.from('council_member_requests').upsert({
     id: String(item.id),
+    requester_type: item.requesterType ?? '시의원',
     member_name: item.memberName ?? '',
     department: item.department ?? '',
     content: item.content ?? '',
