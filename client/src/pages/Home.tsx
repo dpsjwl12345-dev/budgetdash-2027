@@ -480,18 +480,23 @@ function findNoteAmountForKeyword(noteLines: string[], keyword: RegExp, otherKey
   return null;
 }
 
-function getHierarchyFormulaCheck(
+// 한 편성목(item) 아래 일반수용비·급식비처럼 표준 산출식이 여러 개 걸려 있을 수 있어,
+// 첫 번째로 어긋난 항목만 찾고 멈추면 나머지 항목의 산출식 오류가 화면에서 사라진다
+// (예: 일반수용비와 급식비가 둘 다 정원 기준과 다르면 급식비 쪽 배지가 통째로 안 뜸).
+// 그래서 배열로 전부 모아서 돌려주고, 화면에서는 사전절차 배지처럼 여러 개를 합쳐서 보여준다.
+function getHierarchyFormulaChecks(
   row: BudgetHierarchyRow,
   accountLabel: string,
   noteLines: string[],
   staff: { capacity: string; current: string } | undefined
-): HierarchyFormulaCheck | null {
-  if (row.level !== "item") return null;
+): HierarchyFormulaCheck[] {
+  if (row.level !== "item") return [];
   const accountCode = accountLabel.match(/^\d+/)?.[0] ?? "";
   const itemCode = row.statisticsCode?.match(/^\d+/)?.[0] ?? "";
   const capacity = parseInt(staff?.capacity || "0", 10);
   const current = parseInt(staff?.current || "0", 10);
   const nearbyText = noteLines.join(" ");
+  const results: HierarchyFormulaCheck[] = [];
 
   if (accountCode === "202" && itemCode === "01") {
     const actual = (row.budget || 0) * 1000;
@@ -500,7 +505,7 @@ function getHierarchyFormulaCheck(
     // 따라 그 아래로도 정상 편성될 수 있다 - 그래서 "다르다=오류"로 단정하지 않고, 기준값과
     // 등록값이 다를 때마다 참고용으로 계속 띄워서 사람이 직접 근거를 확인하게 한다.
     if (Math.abs(actual - expected) > 1000) {
-      return { name: "국내여비", message: `국내여비: 기준(상한) ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 - 참고(부서 재량으로 낮을 수 있음)` };
+      results.push({ name: "국내여비", message: `국내여비: 기준(상한) ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 - 참고(부서 재량으로 낮을 수 있음)` });
     }
   }
   if (accountCode === "201" && itemCode === "01") {
@@ -511,14 +516,14 @@ function getHierarchyFormulaCheck(
     if (generalActual !== null) {
       const expected = capacity * 750000;
       if (Math.abs(generalActual - expected) > 1000) {
-        return { name: "일반수용비", message: `일반수용비: 기준 ${expected.toLocaleString()}원 / 등록 ${generalActual.toLocaleString()}원` };
+        results.push({ name: "일반수용비", message: `일반수용비: 기준 ${expected.toLocaleString()}원 / 등록 ${generalActual.toLocaleString()}원` });
       }
     }
     const mealActual = findNoteAmountForKeyword(noteLines, /급식비/, [/일반수용비/]);
     if (mealActual !== null) {
       const expected = capacity * 600000;
       if (Math.abs(mealActual - expected) > 1000) {
-        return { name: "급식비", message: `급식비: 기준 ${expected.toLocaleString()}원 / 등록 ${mealActual.toLocaleString()}원` };
+        results.push({ name: "급식비", message: `급식비: 기준 ${expected.toLocaleString()}원 / 등록 ${mealActual.toLocaleString()}원` });
       }
     }
   }
@@ -527,7 +532,7 @@ function getHierarchyFormulaCheck(
     const actual = (row.budget || 0) * 1000;
     const expected = calcStaffProportionalExpense203_02(current);
     if (Math.abs(actual - expected) > 1000) {
-      return { name: "정원가산업무추진비", message: `정원가산업무추진비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 (현원 ${current}명, 본청 기준)` };
+      results.push({ name: "정원가산업무추진비", message: `정원가산업무추진비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 (현원 ${current}명, 본청 기준)` });
     }
   }
   // 부서운영업무추진비 - 현원 구간별 월정 기준액 × 12월.
@@ -535,16 +540,18 @@ function getHierarchyFormulaCheck(
     const actual = (row.budget || 0) * 1000;
     const expected = calcDepartmentOperatingExpense203_04(current);
     if (Math.abs(actual - expected) > 1000) {
-      return { name: "부서운영업무추진비", message: `부서운영업무추진비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 (현원 ${current}명)` };
+      results.push({ name: "부서운영업무추진비", message: `부서운영업무추진비: 기준 ${expected.toLocaleString()}원 / 등록 ${actual.toLocaleString()}원 (현원 ${current}명)` });
     }
   }
 
-  const combinedText = `${row.statisticsCode ?? ""} ${row.description ?? ""} ${nearbyText}`;
-  if (/수당/.test(combinedText)) {
-    return { name: "수당", message: "수당 항목 - 산출근거 직접 확인 필요" };
+  if (results.length === 0) {
+    const combinedText = `${row.statisticsCode ?? ""} ${row.description ?? ""} ${nearbyText}`;
+    if (/수당/.test(combinedText)) {
+      results.push({ name: "수당", message: "수당 항목 - 산출근거 직접 확인 필요" });
+    }
   }
 
-  return null;
+  return results;
 }
 
 function trapTabKey(event: React.KeyboardEvent, container: HTMLElement | null) {
@@ -2496,11 +2503,11 @@ export default function Home() {
                     const itemBadges = row.level === 'item'
                       ? getHierarchyItemBadges(row, rowAncestors?.accountRow?.label ?? '', rowAncestors?.programRow?.label ?? '')
                       : [];
-                    const formulaCheck = getHierarchyFormulaCheck(
+                    const formulaChecks = getHierarchyFormulaChecks(
                       row, rowAncestors?.accountRow?.label ?? '', nextNoteLinesByItemId[row.id] ?? [], staffData[department]
                     );
-                    const itemHasFormula = !!formulaCheck;
-                    const formulaLabel = formulaCheck?.message ?? '';
+                    const itemHasFormula = formulaChecks.length > 0;
+                    const formulaLabel = formulaChecks.map((check) => check.message).join(' / ');
                     // "검토" 열의 사전/산출식 버튼은 각각 따로 확인 처리할 수 있다 - 확인한 쪽만
                     // 숨기고, 아직 확인 안 한 쪽은 계속 보여야 한다.
                     const procedureConfirmed = confirmedProcedureIds.includes(row.id);
