@@ -84,7 +84,7 @@ export default function TempWorkerWageCalculator() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>기간제근로자 인건비 계산기</h1>
+          <h1>기간제 인건비 계산기</h1>
         </section>
 
         <section className="guide-section">
@@ -95,7 +95,7 @@ export default function TempWorkerWageCalculator() {
               반드시 공공노무팀의 채용 적정성 심사(정수 승인)를 먼저 받아야 합니다.
             </p>
 
-            <div className="calc-grid">
+            <div className="calc-layout">
               <div className="calc-inputs">
                 <div className="calc-field">
                   <label>직종 (화성시 생활임금 기준 - 빠른 채우기)</label>
@@ -275,16 +275,16 @@ export default function TempWorkerWageCalculator() {
           margin: 0 0 24px 0;
         }
 
-        .calc-grid {
-          display: grid;
-          grid-template-columns: minmax(280px, 360px) 1fr;
-          gap: 32px;
+        .calc-layout {
+          display: flex;
+          flex-direction: column;
+          gap: 28px;
         }
 
         .calc-inputs {
-          display: flex;
-          flex-direction: column;
-          gap: 18px;
+          display: grid;
+          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          gap: 18px 24px;
         }
 
         .calc-field {
@@ -349,7 +349,7 @@ export default function TempWorkerWageCalculator() {
           border: 1px solid var(--border);
           border-radius: 8px;
           padding: 24px;
-          align-self: start;
+          max-width: 640px;
         }
 
         .calc-result h3 {
@@ -406,12 +406,6 @@ export default function TempWorkerWageCalculator() {
           margin-top: 10px;
           font-size: 12.5px;
           color: var(--text-muted);
-        }
-
-        @media (max-width: 900px) {
-          .calc-grid {
-            grid-template-columns: 1fr;
-          }
         }
       `}</style>
     </Layout>
