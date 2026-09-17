@@ -53,6 +53,7 @@ const toolItems: ToolItem[] = [
       { label: "사전절차" },
       { label: "세출 통계목별 상세" },
       { label: "산출식(함수) 전체 목록" },
+      { label: "기간제근로자 인건비 계산기" },
     ],
   },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
@@ -482,6 +483,8 @@ export default function Layout({
                             setLocation("/statistics-code-detail");
                           } else if (subItem.label === "산출식(함수) 전체 목록") {
                             setLocation("/formula-overview");
+                          } else if (subItem.label === "기간제근로자 인건비 계산기") {
+                            setLocation("/temp-worker-wage-calculator");
                           } else {
                             showToast?.(`${subItem.label}은 다음 업데이트에서 제공됩니다.`);
                           }

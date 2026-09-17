@@ -112,6 +112,11 @@ const PROCEDURE_NAMES: Record<number, string> = {
   16: "재난안전"
 };
 
+// 5번 "보조금심의"(보조금관리위원회 심의 대상) 통계목 코드 - 예산요구서 화면(getApplicableProcedures)과
+// 편성 시트 배너(HIERARCHY_PROCEDURE_BADGES)가 서로 다른 기준으로 "보조금"을 판정하지 않도록
+// 하나로 모아 공유한다.
+const SUBSIDY_REVIEW_CODES = ["307-02", "307-03", "307-04", "307-09", "307-10", "307-11", "402-01", "308-01", "308-08", "308-09", "308-12", "403-01", "403-03", "403-04"];
+
 const yearOptions = [
   { value: "2027", label: "2027년" },
   { value: "2026", label: "2026년" },
@@ -250,9 +255,8 @@ function getApplicableProcedures(row: BudgetRow): number[] {
   }
 
   // 5번 보조금심의 - 통계목 코드, 또는 신규(전년도 예산 없음) 행사운영비 사업(민간 행사대행·보조 성격이 섞여 있어 함께 심의)
-  const subsidyCodes = ["307-02", "307-03", "307-04", "307-09", "307-10", "307-11", "402-01", "308-01", "308-08", "308-09", "308-12", "403-01", "403-03", "403-04"];
   const isNewEventOperationExpense = text.includes("행사운영비") && !row.previous;
-  if (subsidyCodes.some(code => row.account.includes(code)) || isNewEventOperationExpense) applicable.push(5);
+  if (SUBSIDY_REVIEW_CODES.some(code => row.account.includes(code)) || isNewEventOperationExpense) applicable.push(5);
 
   // 6번 용역심의 - 용역 + 10 백만원(1천만원) 이상
   if (text.includes("용역") && amount >= 10) applicable.push(6);
@@ -350,7 +354,7 @@ function getApprovalLine(requestAmount: number, isFestival: boolean): string {
 // 세출예산내역서(편성 시트)의 편성목(item) 행이 사전절차 대상인지 판단한다.
 // 상위 통계목(account) 코드와 편성목명·세부사업명 텍스트로 판단하며, 판단 근거가
 // 있는 항목만 편성목 행 바로 위에 배너로 표시한다 (금액 등은 원본 문서를 벗어나지 않는다).
-type HierarchyBadgeCtx = { accountCode: string; itemText: string; programText: string; amount: number };
+type HierarchyBadgeCtx = { accountCode: string; fullCode: string; itemText: string; programText: string; amount: number };
 const HIERARCHY_PROCEDURE_BADGES: {
   label: string | ((ctx: HierarchyBadgeCtx) => string);
   test: (ctx: HierarchyBadgeCtx) => boolean;
@@ -368,13 +372,16 @@ const HIERARCHY_PROCEDURE_BADGES: {
   // 306(출연금)은 307/308(민간이전·자치단체등이전, 실제 "보조금" 성격) 및 402/403(자본이전)과는
   // 다른 계정이라 "보조금"으로 같이 묶으면 출연금 항목이 잘못된 뱃지를 달게 된다 - 따로 분리한다.
   { label: "출연금", test: ({ accountCode }) => /^306/.test(accountCode) },
-  // 308-13(공기관등에 대한 경상적 위탁사업비)은 출연기관에 특정 사업을 대행시키는 위탁사업비이지
-  // 민간에 주는 보조금이 아니다 - "보조금심의" 대상 코드 목록(subsidyCodes, 아래 참고)에서도
-  // 308-13은 원래부터 빠져 있는데 이 뱃지 규칙만 "308"로 뭉뚱그려 잘못 걸리고 있었다.
-  { label: "보조금", test: ({ accountCode }) => /^(307|402|403)/.test(accountCode) || (/^308/.test(accountCode) && !/^308-13/.test(accountCode)) },
+  // 보조금관리위원회 심의 대상 여부는 "307/402/403/308 전체"처럼 대분류로 뭉뚱그리면 안 되고
+  // 실제 심의 대상 통계목(SUBSIDY_REVIEW_CODES, getApplicableProcedures 5번과 동일한 기준)에
+  // 편성액이 있을 때만 떠야 한다 - 이전에는 accountCode가 3자리 대분류로만 잘려 들어와
+  // "308-13 제외" 같은 세부 코드 조건이 애초에 걸리지도 않는 채 대분류 전체가 다 걸렸었다.
+  { label: "보조금", test: ({ fullCode, amount }) => SUBSIDY_REVIEW_CODES.includes(fullCode) && amount > 0 },
   { label: "행사", test: ({ itemText, programText }) => /행사|축제|경기대회|공연/.test(`${itemText} ${programText}`) },
   { label: "자산", test: ({ accountCode }) => /^405/.test(accountCode) },
-  { label: "기간제", test: ({ itemText }) => /기간제|임시직/.test(itemText) },
+  // 기간제근로자등 보수(101-04) - 코드 기준으로 먼저 잡고, 통계목명이 다르게 적힌 경우를 대비해
+  // "기간제/임시직" 텍스트 매칭도 그대로 남겨둔다(둘 중 하나만 맞아도 뜬다).
+  { label: "기간제", test: ({ fullCode, itemText }) => fullCode === "101-04" || /기간제|임시직/.test(itemText) },
   // 06. 용역과제 심의 - "1,000만 원 이상 학술·기술 용역 대상. 단, '시설비 및 부대비'(401) 비목의
   // 설계비·감리비는 심의 제외 대상"(가이드 원문). 401 코드는 명시적으로 제외한다.
   {
@@ -393,9 +400,11 @@ const HIERARCHY_PROCEDURE_BADGES: {
 
 function getHierarchyItemBadges(row: BudgetHierarchyRow, accountLabel: string, programLabel: string): string[] {
   const accountCode = accountLabel.match(/^\d+/)?.[0] ?? "";
+  const itemCode = row.statisticsCode?.match(/^\d+/)?.[0] ?? "";
+  const fullCode = accountCode && itemCode ? `${accountCode}-${itemCode}` : "";
   const itemText = `${row.statisticsCode ?? ""} ${row.description ?? ""}`;
   const amount = row.budget || 0;
-  const ctx: HierarchyBadgeCtx = { accountCode, itemText, programText: programLabel, amount };
+  const ctx: HierarchyBadgeCtx = { accountCode, fullCode, itemText, programText: programLabel, amount };
   return HIERARCHY_PROCEDURE_BADGES.filter((rule) => rule.test(ctx)).map((rule) =>
     typeof rule.label === "function" ? rule.label(ctx) : rule.label
   );
