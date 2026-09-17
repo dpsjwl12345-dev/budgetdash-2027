@@ -29,6 +29,10 @@
     {
       "source": "/department-key-issues",
       "destination": "/index.html"
+    },
+    {
+      "source": "/council-member-requests",
+      "destination": "/index.html"
     }
   ]
 }
