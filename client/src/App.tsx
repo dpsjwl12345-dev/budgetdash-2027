@@ -12,6 +12,7 @@ import StatisticsCodeDetail from "./pages/StatisticsCodeDetail";
 import FormulaOverview from "./pages/FormulaOverview";
 import DepartmentKeyIssues from "./pages/DepartmentKeyIssues";
 import TempWorkerWageCalculator from "./pages/TempWorkerWageCalculator";
+import CouncilMemberRequests from "./pages/CouncilMemberRequests";
 
 
 function Router() {
@@ -25,6 +26,7 @@ function Router() {
       <Route path={"/formula-overview"} component={FormulaOverview} />
       <Route path={"/temp-worker-wage-calculator"} component={TempWorkerWageCalculator} />
       <Route path={"/department-key-issues"} component={DepartmentKeyIssues} />
+      <Route path={"/council-member-requests"} component={CouncilMemberRequests} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route: keep the single-file HTML usable from a local file path. */}
       <Route component={Home} />

@@ -9,6 +9,7 @@ import {
   X,
   ChevronDown,
   AlertCircle,
+  Landmark,
   Highlighter,
   Eraser,
   Undo2,
@@ -57,6 +58,7 @@ const toolItems: ToolItem[] = [
     ],
   },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
+  { label: "시의원 요구사항", icon: Landmark, path: "/council-member-requests" },
 ];
 
 export default function Layout({
@@ -91,6 +93,8 @@ export default function Layout({
         return "산출식(함수) 전체 목록";
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
+      case "/council-member-requests":
+        return "시의원 요구사항";
       default:
         return "예산 편성 시트";
     }
