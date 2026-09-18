@@ -3,7 +3,7 @@ import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
-type RequesterType = "시장" | "시의원";
+type RequesterType = "시장" | "부시장" | "시의원";
 
 type CouncilRequest = {
   id: string;
@@ -17,7 +17,7 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
-const REQUESTER_TYPE_OPTIONS: RequesterType[] = ["시의원", "시장"];
+const REQUESTER_TYPE_OPTIONS: RequesterType[] = ["시의원", "시장", "부시장"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
@@ -483,6 +483,12 @@ export default function CouncilMemberRequests() {
           color: #5b9bf0;
           border-color: rgba(91, 155, 240, 0.35);
           background: rgba(91, 155, 240, 0.08);
+        }
+
+        .type-badge.type-부시장 {
+          color: #52c4d9;
+          border-color: rgba(82, 196, 217, 0.35);
+          background: rgba(82, 196, 217, 0.1);
         }
 
         .delete-button {
