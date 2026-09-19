@@ -990,6 +990,8 @@ export default function BudgetExplainer() {
                       <div key={i} style={{ position: "relative", maxWidth: "100%" }}>
                         <img
                           src={src}
+                          loading="lazy"
+                          decoding="async"
                           alt={`${selectedInstitution} 설명자료 ${i + 1}페이지`}
                           style={{
                             display: "block",
