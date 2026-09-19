@@ -160,8 +160,9 @@ export default async function handler(req: any, res: any) {
     const { data: institutionRows, error: institutionError } = await fetchAllRows((from, to) =>
       supabase
         .from("institution_materials")
-        .select("institution")
+        .select("institution, sort_order")
         .eq("department", department)
+        .order("sort_order", { ascending: true })
         .order("institution")
         .range(from, to)
     );

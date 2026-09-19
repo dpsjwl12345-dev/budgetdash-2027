@@ -3,7 +3,7 @@ import { useLocation, useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 import { processExplainerPdf, renderPdfPagesAsImages } from "@/lib/pdfExplainer";
-import { ArrowLeft, ArrowUp, ChevronDown, X, Upload } from "lucide-react";
+import { ArrowLeft, ArrowUp, ChevronDown, ChevronUp, X, Upload } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -296,6 +296,59 @@ export default function BudgetExplainer() {
       alert(error instanceof Error ? error.message : "페이지 삭제에 실패했습니다");
     } finally {
       setDeletingPageIndex(null);
+    }
+  };
+
+  // 목록에서 위·아래로 자리를 바꾼다.
+  const handleMoveInstitution = async (name: string, direction: -1 | 1) => {
+    const index = institutions.indexOf(name);
+    const target = index + direction;
+    if (index < 0 || target < 0 || target >= institutions.length) return;
+    const other = institutions[target];
+
+    // 화면은 먼저 바꾸고, 실패하면 되돌린다.
+    const previous = institutions;
+    const next = [...institutions];
+    next[index] = other;
+    next[target] = name;
+    setInstitutions(next);
+
+    try {
+      const response = await fetch("/api/budget-explainer/material-edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "swapInstitutionOrder", department, institutionA: name, institutionB: other }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "순서 변경 실패");
+    } catch (error) {
+      console.error("순서 변경 실패:", error);
+      setInstitutions(previous);
+      alert(error instanceof Error ? error.message : "순서 변경에 실패했습니다");
+    }
+  };
+
+  // 기관 항목을 올려둔 페이지까지 통째로 지운다.
+  const handleDeleteInstitution = async (name: string) => {
+    if (!window.confirm(`"${name}" 항목을 올려둔 자료까지 모두 삭제합니다. 계속할까요?`)) return;
+
+    try {
+      const response = await fetch("/api/budget-explainer/material-edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "deleteInstitution", department, institution: name }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "삭제 실패");
+
+      setInstitutions((prev) => prev.filter((item) => item !== name));
+      if (selectedInstitution === name) {
+        setSelectedInstitution("");
+        setInstitutionMaterial(null);
+      }
+    } catch (error) {
+      console.error("기관 항목 삭제 실패:", error);
+      alert(error instanceof Error ? error.message : "삭제에 실패했습니다");
     }
   };
 
@@ -712,34 +765,90 @@ export default function BudgetExplainer() {
                   </button>
                   {institutionSectionExpanded && (
                     <div>
-                      {institutions.map((name) => {
+                      {institutions.map((name, index) => {
                         const isSelected = selectedInstitution === name;
+                        const iconButtonStyle = {
+                          display: "flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          width: "20px",
+                          height: "20px",
+                          padding: 0,
+                          border: "none",
+                          borderRadius: "4px",
+                          background: "transparent",
+                          color: "var(--text-muted)",
+                          cursor: "pointer",
+                          flexShrink: 0,
+                        } as const;
                         return (
-                          <button
+                          <div
                             key={name}
-                            onClick={() => {
-                              setSelectedPath("");
-                              setSelectedInstitution(name);
-                            }}
                             style={{
-                              paddingLeft: "28px",
-                              paddingRight: "12px",
-                              height: "36px",
                               display: "flex",
                               alignItems: "center",
-                              fontSize: "13px",
-                              color: isSelected ? "var(--text)" : "var(--text-muted)",
+                              gap: "2px",
+                              paddingLeft: "28px",
+                              paddingRight: "6px",
+                              height: "36px",
                               backgroundColor: isSelected ? "rgba(118, 157, 194, 0.14)" : "transparent",
                               border: "1px solid var(--line)",
                               borderRadius: "6px",
-                              cursor: "pointer",
-                              textAlign: "left",
                               margin: "4px 0",
-                              width: "100%",
                             }}
                           >
-                            <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
-                          </button>
+                            <button
+                              onClick={() => {
+                                setSelectedPath("");
+                                setSelectedInstitution(name);
+                              }}
+                              style={{
+                                flex: 1,
+                                minWidth: 0,
+                                height: "100%",
+                                display: "flex",
+                                alignItems: "center",
+                                fontSize: "13px",
+                                color: isSelected ? "var(--text)" : "var(--text-muted)",
+                                background: "transparent",
+                                border: "none",
+                                cursor: "pointer",
+                                textAlign: "left",
+                                padding: 0,
+                              }}
+                            >
+                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveInstitution(name, -1)}
+                              disabled={index === 0}
+                              title="위로"
+                              aria-label={`${name} 위로 이동`}
+                              style={{ ...iconButtonStyle, opacity: index === 0 ? 0.25 : 1 }}
+                            >
+                              <ChevronUp size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleMoveInstitution(name, 1)}
+                              disabled={index === institutions.length - 1}
+                              title="아래로"
+                              aria-label={`${name} 아래로 이동`}
+                              style={{ ...iconButtonStyle, opacity: index === institutions.length - 1 ? 0.25 : 1 }}
+                            >
+                              <ChevronDown size={14} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeleteInstitution(name)}
+                              title="이 항목 삭제"
+                              aria-label={`${name} 삭제`}
+                              style={iconButtonStyle}
+                            >
+                              <X size={14} />
+                            </button>
+                          </div>
                         );
                       })}
                       <div style={{ display: "flex", gap: "6px", paddingLeft: "28px", margin: "8px 0" }}>

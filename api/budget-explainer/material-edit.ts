@@ -174,6 +174,51 @@ async function deleteInstitutionPage(req: any, res: any) {
   res.status(200).json({ success: true, count: typeof data === "number" ? data : 0 });
 }
 
+// 기관 항목을 통째로 지운다 (올려둔 페이지도 함께 사라진다).
+async function deleteInstitution(req: any, res: any) {
+  const { department, institution } = req.body ?? {};
+  if (!department || !institution) {
+    res.status(400).json({ success: false, error: "부서와 기관명이 필요합니다" });
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const key = { department: String(department), institution: String(institution) };
+
+  const { error: pagesError } = await supabase.from("institution_material_pages").delete().match(key);
+  if (pagesError) {
+    res.status(500).json({ success: false, error: pagesError.message });
+    return;
+  }
+  const { error } = await supabase.from("institution_materials").delete().match(key);
+  if (error) {
+    res.status(500).json({ success: false, error: error.message });
+    return;
+  }
+  res.status(200).json({ success: true });
+}
+
+// 목록에서 위·아래로 자리를 바꿔 순서를 정한다.
+async function swapInstitutionOrder(req: any, res: any) {
+  const { department, institutionA, institutionB } = req.body ?? {};
+  if (!department || !institutionA || !institutionB) {
+    res.status(400).json({ success: false, error: "부서와 바꿼 두 항목이 필요합니다" });
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+  const { error } = await supabase.rpc("swap_institution_order", {
+    p_department: String(department),
+    p_institution_a: String(institutionA),
+    p_institution_b: String(institutionB),
+  });
+  if (error) {
+    res.status(500).json({ success: false, error: error.message });
+    return;
+  }
+  res.status(200).json({ success: true });
+}
+
 export default async function handler(req: any, res: any) {
   if (req.method !== "POST") {
     res.status(405).json({ success: false, error: "Method not allowed" });
@@ -188,6 +233,10 @@ export default async function handler(req: any, res: any) {
       await saveInstitution(req, res);
     } else if (action === "deleteInstitutionPage") {
       await deleteInstitutionPage(req, res);
+    } else if (action === "deleteInstitution") {
+      await deleteInstitution(req, res);
+    } else if (action === "swapInstitutionOrder") {
+      await swapInstitutionOrder(req, res);
     } else {
       res.status(400).json({ success: false, error: "알 수 없는 action입니다" });
     }
