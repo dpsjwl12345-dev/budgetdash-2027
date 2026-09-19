@@ -82,6 +82,8 @@ export default function BudgetExplainer() {
   const [institutionUploading, setInstitutionUploading] = useState(false);
   const [institutionUploadProgress, setInstitutionUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [deletingInstitutionPageIndex, setDeletingInstitutionPageIndex] = useState<number | null>(null);
+  // 순서 저장 요청이 서로 앞지르지 않도록 누른 차례대로 이어 보낸다.
+  const orderSaveRef = useRef<Promise<void>>(Promise.resolve());
 
   useEffect(() => {
     const handleScroll = () => setShowBackToTop(window.scrollY > 400);
@@ -299,32 +301,45 @@ export default function BudgetExplainer() {
     }
   };
 
-  // 목록에서 위·아래로 자리를 바꾼다.
-  const handleMoveInstitution = async (name: string, direction: -1 | 1) => {
-    const index = institutions.indexOf(name);
-    const target = index + direction;
-    if (index < 0 || target < 0 || target >= institutions.length) return;
-    const other = institutions[target];
+  // 목록에서 위·아래로 자리를 바꾼다. 버튼을 연달아 눌러도 어긋나지 않도록
+  // 바뀐 "전체 순서"를 저장하고, 요청은 누른 차례대로 하나씩 보낸다.
+  const handleMoveInstitution = (name: string, direction: -1 | 1) => {
+    setInstitutions((prev) => {
+      const index = prev.indexOf(name);
+      const target = index + direction;
+      if (index < 0 || target < 0 || target >= prev.length) return prev;
 
-    // 화면은 먼저 바꾸고, 실패하면 되돌린다.
-    const previous = institutions;
-    const next = [...institutions];
-    next[index] = other;
-    next[target] = name;
-    setInstitutions(next);
+      const next = [...prev];
+      next[index] = prev[target];
+      next[target] = name;
 
+      orderSaveRef.current = orderSaveRef.current
+        .then(() => saveInstitutionOrder(next))
+        .catch(() => undefined);
+      return next;
+    });
+  };
+
+  const saveInstitutionOrder = async (order: string[]) => {
     try {
       const response = await fetch("/api/budget-explainer/material-edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "swapInstitutionOrder", department, institutionA: name, institutionB: other }),
+        body: JSON.stringify({ action: "setInstitutionOrder", department, order }),
       });
       const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "순서 변경 실패");
+      if (!response.ok || !result.success) throw new Error(result.error || "순서 저장 실패");
     } catch (error) {
-      console.error("순서 변경 실패:", error);
-      setInstitutions(previous);
-      alert(error instanceof Error ? error.message : "순서 변경에 실패했습니다");
+      console.error("순서 저장 실패:", error);
+      alert(error instanceof Error ? error.message : "순서 저장에 실패했습니다");
+      // 저장에 실패하면 서버에 있는 순서로 되돌린다.
+      try {
+        const response = await fetch(`/api/budget-explainer/data?department=${encodeURIComponent(department)}`);
+        const { institutions: latest } = await response.json();
+        if (Array.isArray(latest)) setInstitutions(latest);
+      } catch {
+        // 되돌리기까지 실패하면 다음 새로고침 때 맞춰진다.
+      }
     }
   };
 

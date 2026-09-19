@@ -226,25 +226,26 @@ async function deleteInstitution(req: any, res: any) {
   res.status(200).json({ success: true });
 }
 
-// 목록에서 위·아래로 자리를 바꿔 순서를 정한다.
-async function swapInstitutionOrder(req: any, res: any) {
-  const { department, institutionA, institutionB } = req.body ?? {};
-  if (!department || !institutionA || !institutionB) {
-    res.status(400).json({ success: false, error: "부서와 바꿼 두 항목이 필요합니다" });
+// 부서의 기관 목록 순서를 통째로 저장한다.
+// 자리바꿈을 한 번씩 보내면 버튼을 연달아 누를 때 요청이 엇갈려 화면과 DB가
+// 달라지므로, 화면에 보이는 전체 순서를 그대로 받아 덮어쓴다.
+async function setInstitutionOrder(req: any, res: any) {
+  const { department, order } = req.body ?? {};
+  if (!department || !Array.isArray(order) || order.length === 0) {
+    res.status(400).json({ success: false, error: "부서와 순서 목록이 필요합니다" });
     return;
   }
 
   const supabase = getSupabaseAdmin();
-  const { error } = await supabase.rpc("swap_institution_order", {
+  const { data, error } = await supabase.rpc("set_institution_order", {
     p_department: String(department),
-    p_institution_a: String(institutionA),
-    p_institution_b: String(institutionB),
+    p_order: order.map((name: unknown) => String(name)),
   });
   if (error) {
     res.status(500).json({ success: false, error: error.message });
     return;
   }
-  res.status(200).json({ success: true });
+  res.status(200).json({ success: true, updated: typeof data === "number" ? data : 0 });
 }
 
 export default async function handler(req: any, res: any) {
@@ -263,8 +264,8 @@ export default async function handler(req: any, res: any) {
       await deleteInstitutionPage(req, res);
     } else if (action === "deleteInstitution") {
       await deleteInstitution(req, res);
-    } else if (action === "swapInstitutionOrder") {
-      await swapInstitutionOrder(req, res);
+    } else if (action === "setInstitutionOrder") {
+      await setInstitutionOrder(req, res);
     } else {
       res.status(400).json({ success: false, error: "알 수 없는 action입니다" });
     }
