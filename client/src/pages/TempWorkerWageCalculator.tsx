@@ -178,8 +178,13 @@ export default function TempWorkerWageCalculator() {
                 </div>
               </div>
 
+              <div className="calc-output">
               <div className="calc-result">
-                <h3>계산 결과</h3>
+                <h3>인건비 내역</h3>
+                <div className="calc-result-row total calc-result-total-top">
+                  <span>총 인건비</span>
+                  <strong>{won(result.total)}</strong>
+                </div>
                 <div className="calc-result-row">
                   <span><span className="calc-result-no">①</span>기본급·주휴수당 (통합)</span>
                   <strong>{won(result.basePlusWeeklyPay)}</strong>
@@ -217,15 +222,9 @@ export default function TempWorkerWageCalculator() {
                     {result.tier.amount.toLocaleString()}원 × {result.people}명
                   </div>
                 )}
-
-                <div className="calc-result-row total">
-                  <span>총 인건비</span>
-                  <strong>{won(result.total)}</strong>
-                </div>
               </div>
-            </div>
 
-            <div className="calc-reference">
+              <div className="calc-reference">
               <h4>참고 - 2027년 화성형 공정수당 지급 기준</h4>
               <table className="content-table">
                 <thead>
@@ -245,8 +244,10 @@ export default function TempWorkerWageCalculator() {
                   ))}
                 </tbody>
               </table>
-              <p className="calc-footnote">1개월 미만은 근무기간을 고려해 일할계산합니다. (자세한 산출식·직종별 단가는 "세출 통계목별 상세 &gt; 인건비(100) &gt; 101-04" 탭 참고)</p>
+                <p className="calc-footnote">1개월 미만은 근무기간을 고려해 일할계산합니다. (자세한 산출식·직종별 단가는 "세출 통계목별 상세 &gt; 인건비(100) &gt; 101-04" 탭 참고)</p>
+              </div>
             </div>
+          </div>
           </div>
         </section>
       </div>
@@ -357,12 +358,31 @@ export default function TempWorkerWageCalculator() {
           color: #5b9bf0;
         }
 
+        /* 결과 박스와 공정수당 참고표를 가로로 나란히 둔다. */
+        .calc-output {
+          display: grid;
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          gap: 24px;
+          align-items: start;
+        }
+
+        @media (max-width: 1100px) {
+          .calc-output {
+            grid-template-columns: minmax(0, 1fr);
+          }
+        }
+
         .calc-result {
           background: var(--bg-elevated);
           border: 1px solid var(--border);
           border-radius: 8px;
           padding: 24px;
-          max-width: 640px;
+        }
+
+        .calc-result-total-top {
+          margin-bottom: 8px;
+          padding-bottom: 14px;
+          border-bottom: 1px solid var(--border);
         }
 
         .calc-result h3 {
