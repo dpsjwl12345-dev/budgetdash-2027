@@ -2,7 +2,7 @@ import { useEffect, useState, useRef, useCallback } from "react";
 import { useLocation, useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
-import { processExplainerPdf } from "@/lib/pdfExplainer";
+import { processExplainerPdf, renderPdfPagesAsImages } from "@/lib/pdfExplainer";
 import { ArrowLeft, ArrowUp, ChevronDown, X, Upload } from "lucide-react";
 
 type TreeNode = {
@@ -15,7 +15,13 @@ type TreeNode = {
 type Material = {
   id?: number;
   file_name?: string;
-  sections_json?: { images?: string[]; evidence?: EvidenceFile[] } | null;
+  sections_json?: {
+    images?: string[];
+    evidence?: EvidenceFile[];
+    // 기관(재단·공사 등)이 세부사업 단위로 개별 업로드하는, 부서 설명자료와는 별도의 설명자료.
+    orgImages?: string[];
+    orgFileName?: string | null;
+  } | null;
   uploaded_at?: string;
 };
 
@@ -66,6 +72,9 @@ export default function BudgetExplainer() {
   const [uploading, setUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [showBackToTop, setShowBackToTop] = useState(false);
+  const [explainerTab, setExplainerTab] = useState<"dept" | "org">("dept");
+  const [orgUploading, setOrgUploading] = useState(false);
+  const [deletingPageKey, setDeletingPageKey] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -116,6 +125,7 @@ export default function BudgetExplainer() {
 
   // 설명자료 로드
   useEffect(() => {
+    setExplainerTab("dept");
     if (!selectedPath) {
       setMaterial(null);
       return;
@@ -204,33 +214,21 @@ export default function BudgetExplainer() {
     }
   };
 
-  const handleEvidenceUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
+
+  // 재단·공사 등 기관이 세부사업 단위로 개별 제출한 PDF를 올리면, 블록 탐지 없이
+  // 페이지를 그대로 이미지로 렌더링해 "기관 설명자료" 탭에 붙인다(재업로드 시 전체 교체).
+  const handleOrgMaterialUpload = async (event: React.ChangeEvent<HTMLInputElement>) => {
     const file = event.target.files?.[0];
     if (!file || !selectedPath) return;
-    if (file.size > 2 * 1024 * 1024) {
-      alert("증빙자료는 2MB 이하만 등록할 수 있습니다");
-      event.target.value = "";
-      return;
-    }
 
+    setOrgUploading(true);
     try {
-      const dataUrl = await new Promise<string>((resolve, reject) => {
-        const reader = new FileReader();
-        reader.onload = () => resolve(String(reader.result));
-        reader.onerror = () => reject(new Error("파일을 읽지 못했습니다"));
-        reader.readAsDataURL(file);
-      });
+      const images = await renderPdfPagesAsImages(file);
       const [dept, policy, unit, detail] = selectedPath.split("|");
-      const response = await fetch("/api/budget-explainer/save-evidence", {
+      const response = await fetch("/api/budget-explainer/save-org-material", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          department: dept,
-          policy,
-          unit,
-          detail,
-          evidence: { name: file.name, type: file.type, size: file.size, dataUrl },
-        }),
+        body: JSON.stringify({ department: dept, policy, unit, detail, fileName: file.name, images }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "저장 실패");
@@ -240,12 +238,44 @@ export default function BudgetExplainer() {
       );
       const materialResult = await materialResponse.json();
       setMaterial(materialResult.data || null);
-      alert("증빙자료를 등록했습니다");
     } catch (error) {
-      console.error("증빙자료 업로드 실패:", error);
-      alert(error instanceof Error ? error.message : "증빙자료 등록에 실패했습니다");
+      console.error("기관 설명자료 업로드 실패:", error);
+      alert(error instanceof Error ? error.message : "기관 설명자료 업로드에 실패했습니다");
     } finally {
+      setOrgUploading(false);
       event.target.value = "";
+    }
+  };
+
+  // 부서 PDF 자동 분할이 다음 세부사업 페이지까지 꼬리를 물고 들어온 경우처럼, 잘못
+  // 섞인 페이지 한 장을 직접 지운다. field는 sections_json.images/orgImages 중 하나.
+  const handleDeletePage = async (field: "images" | "orgImages", index: number) => {
+    if (!selectedPath) return;
+    if (!window.confirm("이 페이지를 삭제하시겠습니까? 되돌릴 수 없습니다.")) return;
+
+    const pageKey = `${field}-${index}`;
+    setDeletingPageKey(pageKey);
+    try {
+      const [dept, policy, unit, detail] = selectedPath.split("|");
+      const response = await fetch("/api/budget-explainer/delete-page", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ department: dept, policy, unit, detail, field, index }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "삭제 실패");
+
+      setMaterial((prev) => {
+        if (!prev?.sections_json) return prev;
+        const nextImages = [...(prev.sections_json[field] || [])];
+        nextImages.splice(index, 1);
+        return { ...prev, sections_json: { ...prev.sections_json, [field]: nextImages } };
+      });
+    } catch (error) {
+      console.error("페이지 삭제 실패:", error);
+      alert(error instanceof Error ? error.message : "페이지 삭제에 실패했습니다");
+    } finally {
+      setDeletingPageKey(null);
     }
   };
 
@@ -560,13 +590,6 @@ export default function BudgetExplainer() {
                   </h2>
                 </div>
 
-                <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", gap: "12px", padding: "10px 0", borderBottom: "1px solid var(--line)" }}>
-                  <strong style={{ fontSize: "14px" }}>세부사업 증빙자료</strong>
-                  <label className="template-link" style={{ cursor: "pointer" }}>
-                    + 증빙자료 등록
-                    <input type="file" hidden accept=".pdf,.xlsx,.xls,.csv,.doc,.docx,.hwp,.png,.jpg,.jpeg" onChange={handleEvidenceUpload} />
-                  </label>
-                </div>
                 <div style={{ display: "flex", justifyContent: "flex-end", padding: "10px 0" }}>
                   <button
                     type="button"
@@ -589,50 +612,160 @@ export default function BudgetExplainer() {
                     <ArrowLeft size={16} />
                   </button>
                 </div>
-                {material?.sections_json?.evidence && material.sections_json.evidence.length > 0 && (
-                  <div style={{ display: "flex", flexWrap: "wrap", gap: "8px", padding: "12px 0" }}>
-                    {material.sections_json.evidence.map((file) => (
-                      <a key={`${file.name}-${file.dataUrl.slice(-12)}`} href={file.dataUrl} download={file.name} target="_blank" rel="noreferrer" style={{ padding: "8px 10px", border: "1px solid var(--line)", borderRadius: "6px", color: "var(--text)", textDecoration: "none", fontSize: "12px" }}>
-                        {file.name}
-                      </a>
-                    ))}
+                {/* 부서 설명자료 / 기관 설명자료 탭 */}
+                <div style={{ display: "flex", gap: "4px", borderBottom: "1px solid var(--line)", marginBottom: "12px" }}>
+                  {([
+                    { key: "dept" as const, label: "부서 설명자료" },
+                    { key: "org" as const, label: "기관 설명자료" },
+                  ]).map((tab) => (
+                    <button
+                      key={tab.key}
+                      type="button"
+                      onClick={() => setExplainerTab(tab.key)}
+                      style={{
+                        padding: "8px 16px",
+                        fontSize: "13px",
+                        fontWeight: explainerTab === tab.key ? 600 : 400,
+                        color: explainerTab === tab.key ? "var(--text)" : "var(--text-muted)",
+                        background: "transparent",
+                        border: "none",
+                        borderBottom: explainerTab === tab.key ? "2px solid var(--accent, #769dc2)" : "2px solid transparent",
+                        cursor: "pointer",
+                      }}
+                    >
+                      {tab.label}
+                    </button>
+                  ))}
+                </div>
+
+                {explainerTab === "dept" ? (
+                  /* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "16px",
+                      padding: "8px 0",
+                    }}
+                  >
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
+                        로딩 중...
+                      </div>
+                    ) : material?.sections_json?.images && material.sections_json.images.length > 0 ? (
+                      material.sections_json.images.map((src, i) => (
+                        <div key={i} style={{ position: "relative", maxWidth: "100%" }}>
+                          <img
+                            src={src}
+                            alt={`${selectedPath.split("|").pop()} 설명자료 ${i + 1}페이지`}
+                            style={{
+                              display: "block",
+                              maxWidth: "100%",
+                              border: "1px solid var(--line)",
+                              borderRadius: "4px",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePage("images", i)}
+                            disabled={deletingPageKey === `images-${i}`}
+                            title="이 페이지 삭제 (다음 세부사업 내용이 잘못 포함된 경우)"
+                            style={{
+                              position: "absolute",
+                              top: "8px",
+                              right: "8px",
+                              width: "28px",
+                              height: "28px",
+                              border: "1px solid var(--line)",
+                              borderRadius: "6px",
+                              background: "rgba(0,0,0,0.65)",
+                              color: "#fff",
+                              cursor: deletingPageKey === `images-${i}` ? "default" : "pointer",
+                              opacity: deletingPageKey === `images-${i}` ? 0.5 : 1,
+                            }}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
+                        데이터 없음
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display: "flex",
+                      flexDirection: "column",
+                      alignItems: "center",
+                      gap: "16px",
+                      padding: "8px 0",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "flex-end", width: "100%" }}>
+                      <label className="template-link" style={{ cursor: orgUploading ? "default" : "pointer", opacity: orgUploading ? 0.5 : 1 }}>
+                        {orgUploading ? "업로드 중..." : "+ 기관 설명자료 업로드"}
+                        <input
+                          type="file"
+                          hidden
+                          accept="application/pdf"
+                          disabled={orgUploading}
+                          onChange={handleOrgMaterialUpload}
+                        />
+                      </label>
+                    </div>
+                    {materialLoading ? (
+                      <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
+                        로딩 중...
+                      </div>
+                    ) : material?.sections_json?.orgImages && material.sections_json.orgImages.length > 0 ? (
+                      material.sections_json.orgImages.map((src, i) => (
+                        <div key={i} style={{ position: "relative", maxWidth: "100%" }}>
+                          <img
+                            src={src}
+                            alt={`${selectedPath.split("|").pop()} 기관 설명자료 ${i + 1}페이지`}
+                            style={{
+                              display: "block",
+                              maxWidth: "100%",
+                              border: "1px solid var(--line)",
+                              borderRadius: "4px",
+                              boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+                            }}
+                          />
+                          <button
+                            type="button"
+                            onClick={() => handleDeletePage("orgImages", i)}
+                            disabled={deletingPageKey === `orgImages-${i}`}
+                            title="이 페이지 삭제"
+                            style={{
+                              position: "absolute",
+                              top: "8px",
+                              right: "8px",
+                              width: "28px",
+                              height: "28px",
+                              border: "1px solid var(--line)",
+                              borderRadius: "6px",
+                              background: "rgba(0,0,0,0.65)",
+                              color: "#fff",
+                              cursor: deletingPageKey === `orgImages-${i}` ? "default" : "pointer",
+                              opacity: deletingPageKey === `orgImages-${i}` ? 0.5 : 1,
+                            }}
+                          >
+                            <X size={16} />
+                          </button>
+                        </div>
+                      ))
+                    ) : (
+                      <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
+                        데이터 없음
+                      </div>
+                    )}
                   </div>
                 )}
-
-                {/* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */}
-                <div
-                  style={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: "16px",
-                    padding: "8px 0",
-                  }}
-                >
-                  {materialLoading ? (
-                    <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
-                      로딩 중...
-                    </div>
-                  ) : material?.sections_json?.images && material.sections_json.images.length > 0 ? (
-                    material.sections_json.images.map((src, i) => (
-                      <img
-                        key={i}
-                        src={src}
-                        alt={`${selectedPath.split("|").pop()} 설명자료 ${i + 1}페이지`}
-                        style={{
-                          maxWidth: "100%",
-                          border: "1px solid var(--line)",
-                          borderRadius: "4px",
-                          boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                        }}
-                      />
-                    ))
-                  ) : (
-                    <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
-                      데이터 없음
-                    </div>
-                  )}
-                </div>
               </div>
             ) : (
               <div

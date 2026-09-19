@@ -93,6 +93,18 @@ async function renderPageImage(pdf: pdfjsLib.PDFDocumentProxy, pageNum: number):
   return canvas.toDataURL('image/jpeg', 0.8);
 }
 
+// 세부사업 하나에 개별로 업로드하는 PDF(예: 기관이 별도로 제출한 설명자료) - 블록
+// 탐지 없이 모든 페이지를 순서대로 원본 그대로 이미지로 렌더링한다.
+export async function renderPdfPagesAsImages(file: File): Promise<string[]> {
+  const arrayBuffer = await file.arrayBuffer();
+  const pdf = await pdfjsLib.getDocument({ data: arrayBuffer }).promise;
+  const images: string[] = [];
+  for (let i = 1; i <= pdf.numPages; i++) {
+    images.push(await renderPageImage(pdf, i));
+  }
+  return images;
+}
+
 // 부서 설명자료 PDF 한 개를 세부사업 단위로 분리하고, 각 세부사업이 걸쳐 있는
 // 페이지를 원본 그대로 이미지로 렌더링한다.
 export async function processExplainerPdf(file: File): Promise<ProgramMaterial[]> {
