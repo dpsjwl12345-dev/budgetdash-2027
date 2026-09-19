@@ -11,9 +11,10 @@ type CouncilRequest = {
   memberName: string;
   department: string;
   content: string;
+  budgetItemName: string;
+  requestedAmount: string;
   status: RequestStatus;
   requestedDate: string;
-  note: string;
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
@@ -27,9 +28,10 @@ const emptyForm = () => ({
   memberName: "",
   department: DEPARTMENTS[0] || "",
   content: "",
+  budgetItemName: "",
+  requestedAmount: "",
   status: "검토중" as RequestStatus,
   requestedDate: todayString(),
-  note: "",
 });
 
 export default function CouncilMemberRequests() {
@@ -73,9 +75,10 @@ export default function CouncilMemberRequests() {
       memberName: form.memberName.trim(),
       department: form.department,
       content: form.content.trim(),
+      budgetItemName: form.budgetItemName.trim(),
+      requestedAmount: form.requestedAmount.trim(),
       status: form.status,
       requestedDate: form.requestedDate,
-      note: form.note.trim(),
     };
 
     const updated = [newItem, ...requests];
@@ -190,10 +193,16 @@ export default function CouncilMemberRequests() {
               onChange={(e) => setForm({ ...form, content: e.target.value })}
             />
             <input
-              className="form-input note-input"
-              placeholder="비고 (선택)"
-              value={form.note}
-              onChange={(e) => setForm({ ...form, note: e.target.value })}
+              className="form-input budget-item-input"
+              placeholder="부기명"
+              value={form.budgetItemName}
+              onChange={(e) => setForm({ ...form, budgetItemName: e.target.value })}
+            />
+            <input
+              className="form-input amount-input"
+              placeholder="요구액 (예: 6억)"
+              value={form.requestedAmount}
+              onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
             />
             <button className="add-button" onClick={handleAdd}>추가</button>
           </div>
@@ -208,9 +217,10 @@ export default function CouncilMemberRequests() {
                 <th className="col-member">이름</th>
                 <th className="col-dept">부서</th>
                 <th className="col-content">요구내용</th>
+                <th className="col-budget-item">부기명</th>
+                <th className="col-amount">요구액</th>
                 <th className="col-date">요구일</th>
                 <th className="col-status">반영여부</th>
-                <th className="col-note">비고</th>
                 <th className="col-action">삭제</th>
               </tr>
             </thead>
@@ -225,6 +235,8 @@ export default function CouncilMemberRequests() {
                     <td className="col-member">{item.memberName}</td>
                     <td className="col-dept">{item.department}</td>
                     <td className="col-content">{item.content}</td>
+                    <td className="col-budget-item">{item.budgetItemName}</td>
+                    <td className="col-amount">{item.requestedAmount}</td>
                     <td className="col-date">{item.requestedDate}</td>
                     <td className="col-status">
                       <select
@@ -237,7 +249,6 @@ export default function CouncilMemberRequests() {
                         ))}
                       </select>
                     </td>
-                    <td className="col-note">{item.note}</td>
                     <td className="col-action">
                       <button
                         type="button"
@@ -250,7 +261,7 @@ export default function CouncilMemberRequests() {
                 ))
               ) : (
                 <tr>
-                  <td colSpan={9} className="empty-row">등록된 요구사항이 없습니다</td>
+                  <td colSpan={10} className="empty-row">등록된 요구사항이 없습니다</td>
                 </tr>
               )}
             </tbody>
@@ -337,8 +348,12 @@ export default function CouncilMemberRequests() {
           line-height: 1.5;
         }
 
-        .note-input {
-          flex: 0 0 220px;
+        .budget-item-input {
+          flex: 0 0 160px;
+        }
+
+        .amount-input {
+          flex: 0 0 130px;
         }
 
         .add-button {
@@ -415,6 +430,15 @@ export default function CouncilMemberRequests() {
           word-break: break-word;
         }
 
+        .col-budget-item {
+          width: 130px;
+        }
+
+        .col-amount {
+          width: 100px;
+          white-space: nowrap;
+        }
+
         .col-date {
           width: 110px;
           white-space: nowrap;
@@ -423,11 +447,6 @@ export default function CouncilMemberRequests() {
 
         .col-status {
           width: 100px;
-        }
-
-        .col-note {
-          width: 160px;
-          color: var(--text-muted);
         }
 
         .col-action {
@@ -522,12 +541,13 @@ export default function CouncilMemberRequests() {
           .dept-select,
           .status-select,
           .date-input,
-          .note-input,
           .add-button {
             flex: 1 1 45%;
           }
 
-          .content-textarea {
+          .content-textarea,
+          .budget-item-input,
+          .amount-input {
             flex: 1 1 100%;
           }
         }
