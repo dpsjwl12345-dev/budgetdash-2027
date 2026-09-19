@@ -139,10 +139,38 @@ async function saveInstitution(req: any, res: any) {
   }
 
   // institution_materials는 기관 목록과 파일명·업로드 시각을 들고 있는 등록부다.
+  // 새 항목은 부서 마지막 번호 뒤로 넣는다. 전부 0번이면 순서를 바꿔도
+  // 같은 값끼리 자리바꿈이 돼 화면이 이름순으로 되돌아간다.
+  // 이미 있는 항목이면 순서를 건드리지 않는다(업로드 때마다 밀리면 안 된다).
+  const { data: existingMeta, error: existingMetaError } = await supabase
+    .from("institution_materials")
+    .select("sort_order")
+    .match(key)
+    .maybeSingle();
+  if (existingMetaError) {
+    res.status(500).json({ success: false, error: existingMetaError.message });
+    return;
+  }
+
+  let sortOrder = existingMeta?.sort_order;
+  if (sortOrder === undefined || sortOrder === null) {
+    const { data: lastOrder, error: lastOrderError } = await supabase
+      .from("institution_materials")
+      .select("sort_order")
+      .eq("department", key.department)
+      .order("sort_order", { ascending: false })
+      .limit(1);
+    if (lastOrderError) {
+      res.status(500).json({ success: false, error: lastOrderError.message });
+      return;
+    }
+    sortOrder = lastOrder && lastOrder.length > 0 ? lastOrder[0].sort_order + 1 : 0;
+  }
+
   const { error: metaError } = await supabase
     .from("institution_materials")
     .upsert(
-      { ...key, images: [], file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { ...key, images: [], file_name: fileName || null, sort_order: sortOrder, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
       { onConflict: "department,institution" },
     );
   if (metaError) {
