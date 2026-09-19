@@ -96,32 +96,36 @@ async function saveInstitution(req: any, res: any) {
   // 기관 PDF는 페이지가 많아 이미지를 한 번에 보내면 서버리스 함수의 요청 본문 크기
   // 제한(4.5MB)에 걸린다. 클라이언트가 몇 장씩 나눠 보내고, 첫 묶음은 교체(append=false),
   // 이어지는 묶음은 뒤에 붙인다(append=true).
-  let nextImages = images;
+  //
+  // 이어붙일 때 기존 이미지를 전부 읽어와 다시 쓰면, 페이지가 쌓일수록 묶음마다
+  // 수십 MB를 왕복해 함수 실행 시간 제한(Hobby 10초)을 넘긴다. DB 안에서 jsonb를
+  // 바로 이어붙이는 함수(append_institution_images)를 호출해 왕복을 없앤다.
   if (append) {
-    const { data: current, error: readError } = await supabase
-      .from("institution_materials")
-      .select("images")
-      .match(key)
-      .maybeSingle();
-    if (readError) {
-      res.status(500).json({ success: false, error: readError.message });
+    const { data, error } = await supabase.rpc("append_institution_images", {
+      p_department: key.department,
+      p_institution: key.institution,
+      p_images: images,
+      p_file_name: fileName || null,
+    });
+    if (error) {
+      res.status(500).json({ success: false, error: error.message });
       return;
     }
-    const existing = Array.isArray(current?.images) ? current.images : [];
-    nextImages = [...existing, ...images];
+    res.status(200).json({ success: true, count: typeof data === "number" ? data : images.length });
+    return;
   }
 
   const { error } = await supabase
     .from("institution_materials")
     .upsert(
-      { ...key, images: nextImages, file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { ...key, images, file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
       { onConflict: "department,institution" },
     );
   if (error) {
     res.status(500).json({ success: false, error: error.message });
     return;
   }
-  res.status(200).json({ success: true, count: nextImages.length });
+  res.status(200).json({ success: true, count: images.length });
 }
 
 // 기관 설명자료도 부서 설명자료와 동일하게 페이지 한 장을 지울 수 있게 한다.
