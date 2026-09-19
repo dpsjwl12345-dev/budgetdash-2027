@@ -373,8 +373,8 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-result {
-          background: var(--bg-elevated);
-          border: 1px solid var(--border);
+          background: rgba(118, 157, 194, 0.07);
+          border: 1px solid rgba(118, 157, 194, 0.22);
           border-radius: 8px;
           padding: 24px;
         }
@@ -425,6 +425,12 @@ export default function TempWorkerWageCalculator() {
           padding-top: 14px;
           font-size: 16px;
           font-weight: 700;
+        }
+
+        /* 총 인건비 금액은 눈에 바로 들어오게 색을 달리 한다. */
+        .calc-result-total-top strong {
+          color: #a4c0dd;
+          font-size: 20px;
         }
 
         .calc-reference {
