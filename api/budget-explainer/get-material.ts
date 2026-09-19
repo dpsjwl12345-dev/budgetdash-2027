@@ -23,18 +23,54 @@ export default async function handler(req: any, res: any) {
     const supabase = getSupabaseAdmin();
 
     // institution이 있으면 세부사업 트리와 무관한 기관(재단·공사 등) 단위 설명자료 조회.
+    // 페이지가 많은 문서를 한 번에 다 보내면 함수 시간·메모리 한도에 걸리므로
+    // offset/limit으로 나눠서 내려주고, 클라이언트가 이어서 받아 채운다.
     if (institution) {
-      const { data, error } = await supabase
+      const offset = Number(req.query?.offset ?? 0) || 0;
+      const limit = Math.min(Number(req.query?.limit ?? 10) || 10, 30);
+
+      const { data: meta, error: metaError } = await supabase
         .from("institution_materials")
-        .select("*")
+        .select("file_name, uploaded_at")
         .eq("department", String(department))
         .eq("institution", String(institution))
         .maybeSingle();
-      if (error) {
-        res.status(500).json({ error: error.message });
+      if (metaError) {
+        res.status(500).json({ error: metaError.message });
         return;
       }
-      res.status(200).json({ data: data ?? null });
+
+      const { count, error: countError } = await supabase
+        .from("institution_material_pages")
+        .select("page_no", { count: "exact", head: true })
+        .eq("department", String(department))
+        .eq("institution", String(institution));
+      if (countError) {
+        res.status(500).json({ error: countError.message });
+        return;
+      }
+
+      const { data: pages, error: pagesError } = await supabase
+        .from("institution_material_pages")
+        .select("page_no, image")
+        .eq("department", String(department))
+        .eq("institution", String(institution))
+        .order("page_no")
+        .range(offset, offset + limit - 1);
+      if (pagesError) {
+        res.status(500).json({ error: pagesError.message });
+        return;
+      }
+
+      res.status(200).json({
+        data: {
+          file_name: meta?.file_name ?? null,
+          uploaded_at: meta?.uploaded_at ?? null,
+          images: (pages || []).map((row: any) => row.image),
+          offset,
+          total: count ?? 0,
+        },
+      });
       return;
     }
 

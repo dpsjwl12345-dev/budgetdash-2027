@@ -83,8 +83,14 @@ async function deletePage(req: any, res: any) {
 // 재단·공사 등 기관이 세부사업 트리와 무관하게 통째로 제출한 PDF를 기관 하나 단위로
 // 저장한다. institution 이름은 화면에서 자유 텍스트로 만들어 붙인다(고정 목록 아님).
 // images가 빈 배열이면 "이름만 먼저 만들어두기"에 해당한다.
+// 재단·공사 등 기관이 통째로 제출한 PDF를 기관 하나 단위로 저장한다.
+// institution 이름은 화면에서 자유 텍스트로 만들어 붙인다(고정 목록 아님).
+//
+// 한 행의 jsonb 배열에 이미지를 계속 이어붙이면, 묶음마다 누적된 전체를
+// 다시 써야 해서 페이지가 쌓일수록 느려지고 결국 Postgres statement timeout에
+// 걸렸다. 그래서 페이지를 한 장당 한 행(institution_material_pages)으로 넣는다.
 async function saveInstitution(req: any, res: any) {
-  const { department, institution, fileName, images, append } = req.body ?? {};
+  const { department, institution, fileName, images, append, startIndex } = req.body ?? {};
   if (!department || !institution || !Array.isArray(images)) {
     res.status(400).json({ success: false, error: "부서, 기관명, 이미지 목록이 필요합니다" });
     return;
@@ -93,39 +99,43 @@ async function saveInstitution(req: any, res: any) {
   const supabase = getSupabaseAdmin();
   const key = { department: String(department), institution: String(institution) };
 
-  // 기관 PDF는 페이지가 많아 이미지를 한 번에 보내면 서버리스 함수의 요청 본문 크기
-  // 제한(4.5MB)에 걸린다. 클라이언트가 몇 장씩 나눠 보내고, 첫 묶음은 교체(append=false),
-  // 이어지는 묶음은 뒤에 붙인다(append=true).
-  //
-  // 이어붙일 때 기존 이미지를 전부 읽어와 다시 쓰면, 페이지가 쌓일수록 묶음마다
-  // 수십 MB를 왕복해 함수 실행 시간 제한(Hobby 10초)을 넘긴다. DB 안에서 jsonb를
-  // 바로 이어붙이는 함수(append_institution_images)를 호출해 왕복을 없앤다.
-  if (append) {
-    const { data, error } = await supabase.rpc("append_institution_images", {
-      p_department: key.department,
-      p_institution: key.institution,
-      p_images: images,
-      p_file_name: fileName || null,
-    });
-    if (error) {
-      res.status(500).json({ success: false, error: error.message });
+  // 첫 묶음이면 기존 페이지를 모두 지우고 처음부터 다시 쌓는다.
+  if (!append) {
+    const { error: clearError } = await supabase
+      .from("institution_material_pages")
+      .delete()
+      .match(key);
+    if (clearError) {
+      res.status(500).json({ success: false, error: clearError.message });
       return;
     }
-    res.status(200).json({ success: true, count: typeof data === "number" ? data : images.length });
+  }
+
+  const base = typeof startIndex === "number" && startIndex >= 0 ? startIndex : 0;
+  const rows = images.map((image: string, i: number) => ({ ...key, page_no: base + i, image }));
+  if (rows.length > 0) {
+    const { error: insertError } = await supabase
+      .from("institution_material_pages")
+      .upsert(rows, { onConflict: "department,institution,page_no" });
+    if (insertError) {
+      res.status(500).json({ success: false, error: insertError.message });
+      return;
+    }
+  }
+
+  // institution_materials는 기관 목록과 파일명·업로드 시각을 들고 있는 등록부다.
+  const { error: metaError } = await supabase
+    .from("institution_materials")
+    .upsert(
+      { ...key, images: [], file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { onConflict: "department,institution" },
+    );
+  if (metaError) {
+    res.status(500).json({ success: false, error: metaError.message });
     return;
   }
 
-  const { error } = await supabase
-    .from("institution_materials")
-    .upsert(
-      { ...key, images, file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
-      { onConflict: "department,institution" },
-    );
-  if (error) {
-    res.status(500).json({ success: false, error: error.message });
-    return;
-  }
-  res.status(200).json({ success: true, count: images.length });
+  res.status(200).json({ success: true, count: base + rows.length });
 }
 
 // 기관 설명자료도 부서 설명자료와 동일하게 페이지 한 장을 지울 수 있게 한다.
@@ -137,31 +147,16 @@ async function deleteInstitutionPage(req: any, res: any) {
   }
 
   const supabase = getSupabaseAdmin();
-  const key = { department: String(department), institution: String(institution) };
-  const { data: current, error: readError } = await supabase
-    .from("institution_materials")
-    .select("images")
-    .match(key)
-    .maybeSingle();
-  if (readError) {
-    res.status(500).json({ success: false, error: readError.message });
-    return;
-  }
-  const images = Array.isArray(current?.images) ? [...current.images] : [];
-  if (index >= images.length) {
-    res.status(400).json({ success: false, error: "삭제할 페이지를 찾지 못했습니다" });
-    return;
-  }
-  images.splice(index, 1);
-
-  const { error } = await supabase
-    .from("institution_materials")
-    .upsert({ ...key, images, updated_at: new Date().toISOString() }, { onConflict: "department,institution" });
+  const { data, error } = await supabase.rpc("delete_institution_page", {
+    p_department: String(department),
+    p_institution: String(institution),
+    p_page_no: index,
+  });
   if (error) {
     res.status(500).json({ success: false, error: error.message });
     return;
   }
-  res.status(200).json({ success: true, count: images.length });
+  res.status(200).json({ success: true, count: typeof data === "number" ? data : 0 });
 }
 
 export default async function handler(req: any, res: any) {

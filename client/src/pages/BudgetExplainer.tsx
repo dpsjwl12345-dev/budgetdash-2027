@@ -25,6 +25,7 @@ type InstitutionMaterial = {
   images?: string[];
   file_name?: string | null;
   uploaded_at?: string;
+  total?: number;
 } | null;
 
 // 트리에서 제목이 일치하는 세부사업 노드를 찾아 전체 경로와, 그 노드가 보이도록
@@ -169,22 +170,41 @@ export default function BudgetExplainer() {
       return;
     }
 
+    // 페이지가 수백 장일 수 있어 한 번에 다 받지 않고 묶음으로 이어 받으며
+    // 받는 대로 화면에 뿌린다. 다른 기관을 고르면 진행 중인 요청은 버린다.
+    let cancelled = false;
+    const PAGE_BATCH = 10;
+
     const loadInstitutionMaterial = async () => {
       setInstitutionMaterialLoading(true);
       try {
-        const response = await fetch(
-          `/api/budget-explainer/get-material?department=${encodeURIComponent(department)}&institution=${encodeURIComponent(selectedInstitution)}`
-        );
-        const { data } = await response.json();
-        setInstitutionMaterial(data || null);
+        let offset = 0;
+        let total = 0;
+        let collected: string[] = [];
+        do {
+          const response = await fetch(
+            `/api/budget-explainer/get-material?department=${encodeURIComponent(department)}&institution=${encodeURIComponent(selectedInstitution)}&offset=${offset}&limit=${PAGE_BATCH}`
+          );
+          const { data } = await response.json();
+          if (cancelled) return;
+          if (!data) break;
+          total = data.total || 0;
+          collected = [...collected, ...(data.images || [])];
+          setInstitutionMaterial({ images: collected, file_name: data.file_name, total });
+          setInstitutionMaterialLoading(false);
+          offset += PAGE_BATCH;
+        } while (offset < total);
       } catch (error) {
         console.error("기관 설명자료 로드 실패:", error);
       } finally {
-        setInstitutionMaterialLoading(false);
+        if (!cancelled) setInstitutionMaterialLoading(false);
       }
     };
 
     loadInstitutionMaterial();
+    return () => {
+      cancelled = true;
+    };
   }, [department, selectedInstitution]);
 
   const toggleExpand = (nodeId: string) => {
@@ -326,7 +346,7 @@ export default function BudgetExplainer() {
 
       // 서버리스 함수 요청 본문 제한(4.5MB) 때문에 페이지를 묶음으로 나눠 보낸다.
       // 첫 묶음은 기존 자료를 교체하고, 이후 묶음은 뒤에 이어 붙인다.
-      const CHUNK_BYTE_LIMIT = 3 * 1024 * 1024;
+      const CHUNK_BYTE_LIMIT = 2 * 1024 * 1024;
       const chunks: string[][] = [];
       let currentChunk: string[] = [];
       let currentBytes = 0;
@@ -354,6 +374,7 @@ export default function BudgetExplainer() {
             fileName: file.name,
             images: chunks[i],
             append: i > 0,
+            startIndex: sent,
           }),
         });
         if (!response.ok) {
