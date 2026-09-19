@@ -147,7 +147,11 @@ export default function TempWorkerWageCalculator() {
                     placeholder={`자동: ${result.autoWorkDays}일 (27일 × ${result.monthsNum || 0}개월)`}
                   />
                 </div>
+              </div>
 
+              {/* 위 줄은 단가·인원·기간 같은 "조건" 입력, 이 줄은 그 조건으로 계산되는
+                  "금액" 항목이라 배경색을 달리해 구분한다. */}
+              <div className="calc-inputs calc-inputs-amount">
                 <div className="calc-field">
                   <label>기본급·주휴수당 금액(원) - 자동계산값 수정 가능</label>
                   <input
@@ -177,7 +181,7 @@ export default function TempWorkerWageCalculator() {
               <div className="calc-result">
                 <h3>계산 결과</h3>
                 <div className="calc-result-row">
-                  <span>기본급·주휴수당 (통합)</span>
+                  <span><span className="calc-result-no">①</span>기본급·주휴수당 (통합)</span>
                   <strong>{won(result.basePlusWeeklyPay)}</strong>
                 </div>
                 <div className="calc-result-sub">
@@ -187,7 +191,7 @@ export default function TempWorkerWageCalculator() {
                 </div>
 
                 <div className="calc-result-row">
-                  <span>연차수당</span>
+                  <span><span className="calc-result-no">②</span>연차수당</span>
                   <strong>{won(result.leavePay)}</strong>
                 </div>
                 <div className="calc-result-sub">
@@ -200,12 +204,12 @@ export default function TempWorkerWageCalculator() {
                 </div>
 
                 <div className="calc-result-row">
-                  <span>4대 보험료 (기관 부담금, {insuranceRate}%)</span>
+                  <span><span className="calc-result-no">③</span>4대 보험료 (기관 부담금, {insuranceRate}%)</span>
                   <strong>{won(result.insurance)}</strong>
                 </div>
 
                 <div className="calc-result-row">
-                  <span>공정수당 {result.tier ? `(${result.tier.label} · ${result.tier.rate})` : "(1개월 미만 - 일할계산 필요)"}</span>
+                  <span><span className="calc-result-no">④</span>공정수당 {result.tier ? `(${result.tier.label} · ${result.tier.rate})` : "(1개월 미만 - 일할계산 필요)"}</span>
                   <strong>{won(result.fairPay)}</strong>
                 </div>
                 {result.tier && (
@@ -277,8 +281,23 @@ export default function TempWorkerWageCalculator() {
 
         .calc-inputs {
           display: grid;
-          grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+          grid-template-columns: repeat(5, minmax(0, 1fr));
           gap: 18px 24px;
+        }
+
+        .calc-inputs-amount {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+          background: rgba(118, 157, 194, 0.07);
+          border: 1px solid rgba(118, 157, 194, 0.22);
+          border-radius: 8px;
+          padding: 18px 20px;
+        }
+
+        @media (max-width: 1100px) {
+          .calc-inputs,
+          .calc-inputs-amount {
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+          }
         }
 
         .calc-field {
@@ -359,6 +378,12 @@ export default function TempWorkerWageCalculator() {
           padding: 8px 0;
           font-size: 14px;
           color: var(--text);
+        }
+
+        .calc-result-no {
+          display: inline-block;
+          margin-right: 6px;
+          color: var(--text-muted);
         }
 
         .calc-result-sub {
