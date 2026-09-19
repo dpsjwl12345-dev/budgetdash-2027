@@ -225,10 +225,10 @@ export default function BudgetExplainer() {
     try {
       const images = await renderPdfPagesAsImages(file);
       const [dept, policy, unit, detail] = selectedPath.split("|");
-      const response = await fetch("/api/budget-explainer/save-org-material", {
+      const response = await fetch("/api/budget-explainer/material-edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department: dept, policy, unit, detail, fileName: file.name, images }),
+        body: JSON.stringify({ action: "saveOrg", department: dept, policy, unit, detail, fileName: file.name, images }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "저장 실패");
@@ -257,10 +257,10 @@ export default function BudgetExplainer() {
     setDeletingPageKey(pageKey);
     try {
       const [dept, policy, unit, detail] = selectedPath.split("|");
-      const response = await fetch("/api/budget-explainer/delete-page", {
+      const response = await fetch("/api/budget-explainer/material-edit", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ department: dept, policy, unit, detail, field, index }),
+        body: JSON.stringify({ action: "deletePage", department: dept, policy, unit, detail, field, index }),
       });
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "삭제 실패");
