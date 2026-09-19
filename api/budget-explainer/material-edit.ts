@@ -84,7 +84,7 @@ async function deletePage(req: any, res: any) {
 // 저장한다. institution 이름은 화면에서 자유 텍스트로 만들어 붙인다(고정 목록 아님).
 // images가 빈 배열이면 "이름만 먼저 만들어두기"에 해당한다.
 async function saveInstitution(req: any, res: any) {
-  const { department, institution, fileName, images } = req.body ?? {};
+  const { department, institution, fileName, images, append } = req.body ?? {};
   if (!department || !institution || !Array.isArray(images)) {
     res.status(400).json({ success: false, error: "부서, 기관명, 이미지 목록이 필요합니다" });
     return;
@@ -92,17 +92,36 @@ async function saveInstitution(req: any, res: any) {
 
   const supabase = getSupabaseAdmin();
   const key = { department: String(department), institution: String(institution) };
+
+  // 기관 PDF는 페이지가 많아 이미지를 한 번에 보내면 서버리스 함수의 요청 본문 크기
+  // 제한(4.5MB)에 걸린다. 클라이언트가 몇 장씩 나눠 보내고, 첫 묶음은 교체(append=false),
+  // 이어지는 묶음은 뒤에 붙인다(append=true).
+  let nextImages = images;
+  if (append) {
+    const { data: current, error: readError } = await supabase
+      .from("institution_materials")
+      .select("images")
+      .match(key)
+      .maybeSingle();
+    if (readError) {
+      res.status(500).json({ success: false, error: readError.message });
+      return;
+    }
+    const existing = Array.isArray(current?.images) ? current.images : [];
+    nextImages = [...existing, ...images];
+  }
+
   const { error } = await supabase
     .from("institution_materials")
     .upsert(
-      { ...key, images, file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
+      { ...key, images: nextImages, file_name: fileName || null, uploaded_at: new Date().toISOString(), updated_at: new Date().toISOString() },
       { onConflict: "department,institution" },
     );
   if (error) {
     res.status(500).json({ success: false, error: error.message });
     return;
   }
-  res.status(200).json({ success: true, count: images.length });
+  res.status(200).json({ success: true, count: nextImages.length });
 }
 
 // 기관 설명자료도 부서 설명자료와 동일하게 페이지 한 장을 지울 수 있게 한다.

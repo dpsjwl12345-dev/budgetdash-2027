@@ -33,6 +33,10 @@
     {
       "source": "/council-member-requests",
       "destination": "/index.html"
+    },
+    {
+      "source": "/temp-worker-wage-calculator",
+      "destination": "/index.html"
     }
   ]
 }

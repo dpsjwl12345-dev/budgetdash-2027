@@ -10,7 +10,7 @@ import Layout from "@/components/Layout";
 type JobRate = { key: string; label: string; dailyWage: number; note: string };
 
 const JOB_RATES: JobRate[] = [
-  { key: "admin", label: "생활임금 (행정/도서/농림/환경정비원 등)", dailyWage: 102000, note: "화성시 생활임금 우선 적용 - 기본값" },
+  { key: "admin", label: "생활임금 (행정/도서/농림/환경정비원 등)", dailyWage: 103680, note: "화성시 생활임금 우선 적용 - 기본값" },
   { key: "counsel", label: "사례관리/상담/조사원 등", dailyWage: 103680, note: "해당 업무 전담 임금 적용" },
   { key: "facility", label: "기계실무원, 시설물관리원", dailyWage: 108960, note: "차량운전, 시설 보수 등" },
   { key: "nurse_aide", label: "보건의료보조원 (간호조무사)", dailyWage: 112560, note: "보건소 보조원" },
@@ -89,12 +89,6 @@ export default function TempWorkerWageCalculator() {
 
         <section className="guide-section">
           <div className="guide-content">
-            <p className="intro-text">
-              "세출 통계목별 상세" 101-04(기간제근로자등 보수) 가이드에 등록된 2027년 직종별
-              단가와 공정수당 지급기준표를 그대로 적용해 계산합니다. 실제 예산 요구 전에는
-              반드시 공공노무팀의 채용 적정성 심사(정수 승인)를 먼저 받아야 합니다.
-            </p>
-
             <div className="calc-layout">
               <div className="calc-inputs">
                 <div className="calc-field">
@@ -124,7 +118,7 @@ export default function TempWorkerWageCalculator() {
                     min="0"
                     value={dailyWageInput}
                     onChange={(e) => setDailyWageInput(e.target.value)}
-                    placeholder="예: 102000"
+                    placeholder="예: 103680"
                   />
                   <span className="calc-hint">
                     위 직종 선택은 생활임금 기준 참고값을 채워줄 뿐입니다. 최저임금 등 다른 기준을 적용하는
@@ -294,8 +288,8 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-field label {
-          font-size: 13px;
-          font-weight: 600;
+          font-size: 15px;
+          font-weight: 400;
           color: var(--text);
         }
 

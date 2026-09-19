@@ -79,6 +79,7 @@ export default function BudgetExplainer() {
   const [newInstitutionName, setNewInstitutionName] = useState("");
   const [addingInstitution, setAddingInstitution] = useState(false);
   const [institutionUploading, setInstitutionUploading] = useState(false);
+  const [institutionUploadProgress, setInstitutionUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [deletingInstitutionPageIndex, setDeletingInstitutionPageIndex] = useState<number | null>(null);
 
   useEffect(() => {
@@ -319,15 +320,55 @@ export default function BudgetExplainer() {
     if (!file || !selectedInstitution) return;
 
     setInstitutionUploading(true);
+    setInstitutionUploadProgress(null);
     try {
       const images = await renderPdfPagesAsImages(file);
-      const response = await fetch("/api/budget-explainer/material-edit", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ action: "saveInstitution", department, institution: selectedInstitution, fileName: file.name, images }),
-      });
-      const result = await response.json();
-      if (!response.ok || !result.success) throw new Error(result.error || "저장 실패");
+
+      // 서버리스 함수 요청 본문 제한(4.5MB) 때문에 페이지를 묶음으로 나눠 보낸다.
+      // 첫 묶음은 기존 자료를 교체하고, 이후 묶음은 뒤에 이어 붙인다.
+      const CHUNK_BYTE_LIMIT = 3 * 1024 * 1024;
+      const chunks: string[][] = [];
+      let currentChunk: string[] = [];
+      let currentBytes = 0;
+      for (const image of images) {
+        if (currentChunk.length > 0 && currentBytes + image.length > CHUNK_BYTE_LIMIT) {
+          chunks.push(currentChunk);
+          currentChunk = [];
+          currentBytes = 0;
+        }
+        currentChunk.push(image);
+        currentBytes += image.length;
+      }
+      if (currentChunk.length > 0) chunks.push(currentChunk);
+
+      let sent = 0;
+      for (let i = 0; i < chunks.length; i++) {
+        setInstitutionUploadProgress({ done: sent, total: images.length });
+        const response = await fetch("/api/budget-explainer/material-edit", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            action: "saveInstitution",
+            department,
+            institution: selectedInstitution,
+            fileName: file.name,
+            images: chunks[i],
+            append: i > 0,
+          }),
+        });
+        if (!response.ok) {
+          const text = await response.text();
+          throw new Error(
+            response.status === 413
+              ? "페이지 용량이 너무 커서 저장하지 못했습니다"
+              : `저장 실패 (${response.status}) ${text.slice(0, 200)}`,
+          );
+        }
+        const result = await response.json();
+        if (!result.success) throw new Error(result.error || "저장 실패");
+        sent += chunks[i].length;
+      }
+      setInstitutionUploadProgress({ done: images.length, total: images.length });
 
       setInstitutionMaterial({ images, file_name: file.name });
     } catch (error) {
@@ -335,6 +376,7 @@ export default function BudgetExplainer() {
       alert(error instanceof Error ? error.message : "기관 설명자료 업로드에 실패했습니다");
     } finally {
       setInstitutionUploading(false);
+      setInstitutionUploadProgress(null);
       event.target.value = "";
     }
   };
@@ -889,7 +931,9 @@ export default function BudgetExplainer() {
                     style={{ cursor: institutionUploading ? "default" : "pointer", opacity: institutionUploading ? 0.5 : 1, flexShrink: 0 }}
                   >
                     {institutionUploading
-                      ? "업로드 중..."
+                      ? institutionUploadProgress
+                        ? `업로드 중... (${institutionUploadProgress.done}/${institutionUploadProgress.total}페이지)`
+                        : "PDF 변환 중..."
                       : institutionMaterial?.images && institutionMaterial.images.length > 0
                       ? "PDF 다시 업로드"
                       : "+ PDF 업로드"}
@@ -914,7 +958,11 @@ export default function BudgetExplainer() {
                 >
                   {institutionMaterialLoading || institutionUploading ? (
                     <div style={{ color: "var(--text-muted)", fontSize: "13px", padding: "32px" }}>
-                      {institutionUploading ? "PDF 변환 중..." : "로딩 중..."}
+                      {institutionUploading
+                        ? institutionUploadProgress
+                          ? `저장 중... (${institutionUploadProgress.done}/${institutionUploadProgress.total}페이지)`
+                          : "PDF를 이미지로 변환하는 중..."
+                        : "로딩 중..."}
                     </div>
                   ) : institutionMaterial?.images && institutionMaterial.images.length > 0 ? (
                     institutionMaterial.images.map((src, i) => (
