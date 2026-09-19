@@ -142,7 +142,24 @@ export default async function handler(req: any, res: any) {
       },
     ];
 
-    res.status(200).json({ data: tree });
+    // 재단·공사 등, 세부사업 트리와 무관하게 기관 단위로 통째로 올리는 설명자료의
+    // 기관 이름 목록. 이미지는 무거워서 목록에는 이름만 싣고, 실제 자료는 기관을
+    // 선택했을 때 별도로 불러온다.
+    const { data: institutionRows, error: institutionError } = await fetchAllRows((from, to) =>
+      supabase
+        .from("institution_materials")
+        .select("institution")
+        .eq("department", department)
+        .order("institution")
+        .range(from, to)
+    );
+    if (institutionError) {
+      res.status(500).json({ error: institutionError.message });
+      return;
+    }
+    const institutions = (institutionRows || []).map((row: any) => String(row.institution));
+
+    res.status(200).json({ data: tree, institutions });
   } catch (error) {
     res.status(500).json({ error: String(error) });
   }
