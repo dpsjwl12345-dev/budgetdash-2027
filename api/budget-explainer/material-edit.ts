@@ -111,7 +111,22 @@ async function saveInstitution(req: any, res: any) {
     }
   }
 
-  const base = typeof startIndex === "number" && startIndex >= 0 ? startIndex : 0;
+  // 시작 페이지 번호는 클라이언트가 보내주지만, 예전 화면이 캐시돼 값을 안 보내는
+  // 경우에도 덮어쓰지 않도록 서버에서 현재 마지막 번호 뒤로 이어 붙인다.
+  let base = typeof startIndex === "number" && startIndex >= 0 ? startIndex : 0;
+  if (append && typeof startIndex !== "number") {
+    const { data: last, error: lastError } = await supabase
+      .from("institution_material_pages")
+      .select("page_no")
+      .match(key)
+      .order("page_no", { ascending: false })
+      .limit(1);
+    if (lastError) {
+      res.status(500).json({ success: false, error: lastError.message });
+      return;
+    }
+    base = last && last.length > 0 ? last[0].page_no + 1 : 0;
+  }
   const rows = images.map((image: string, i: number) => ({ ...key, page_no: base + i, image }));
   if (rows.length > 0) {
     const { error: insertError } = await supabase
