@@ -91,11 +91,23 @@ export default async function handler(req: any, res: any) {
       unit: String(row.unit || "단위사업 미지정"),
       detail: String(row.detail || "미입력 사업"),
     }));
+    // 같은 세부사업이 편성시트 계층과 설명자료 PDF에서 서로 다른 단위사업 아래에
+    // 적혀 있는 경우가 많다(예: 편성시트 "관광산업 진흥" vs PDF "관광 홍보 활성화").
+    // PDF 텍스트 추출 과정에서 "도서관정책 과"처럼 공백이 끼기도 한다.
+    // 경로까지 키로 쓰면 같은 세부사업이 트리에 두 번 나오므로, 세부사업
+    // 이름으로 합치고 위치는 편성시트 계층을 우선한다.
     const rowMap = new Map<string, { policy: string; unit: string; detail: string }>();
-    [...budgetTreeRows, ...materialTreeRows].forEach((row) => {
-      rowMap.set(`${row.policy}\u001f${row.unit}\u001f${row.detail}`, row);
+    budgetTreeRows.forEach((row) => {
+      if (!rowMap.has(row.detail)) rowMap.set(row.detail, row);
     });
-    const rows = Array.from(rowMap.values());
+    // 설명자료에만 있는 세부사업은 덧붙이되, 그것끼리는 이름이 겹칠 수 있어
+    // (예: 주민참여예산사업) 경로까지 포함해 구분한다.
+    const materialOnly = new Map<string, { policy: string; unit: string; detail: string }>();
+    materialTreeRows.forEach((row) => {
+      if (rowMap.has(row.detail)) return;
+      materialOnly.set(JSON.stringify([row.policy, row.unit, row.detail]), row);
+    });
+    const rows = [...Array.from(rowMap.values()), ...Array.from(materialOnly.values())];
 
     const policyMap = new Map<string, any>();
     rows.forEach((row: any) => {
