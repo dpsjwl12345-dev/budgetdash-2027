@@ -545,6 +545,7 @@ export default function MayorViceMayorRequests() {
           color: var(--text-muted);
           font-weight: 600;
           font-size: 13px;
+          text-align: center;
         }
 
         .requests-table td {
