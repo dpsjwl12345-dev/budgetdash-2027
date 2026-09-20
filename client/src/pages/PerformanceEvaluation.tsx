@@ -100,18 +100,18 @@ type InvestmentProjectRow = {
   department: string;
   projectName: string;
   budget: string;
-  eval1: Grade;
-  eval2: Grade;
+  selfEval: Grade;
+  deepEval: Grade;
   finalGrade: Grade;
 };
 
 const INVESTMENT_PROJECT_DATA: InvestmentProjectRow[] = [
-  { department: "문화유산과", projectName: "만년제 주변 정비사업", budget: "260,000", eval1: "우수", eval2: "보통", finalGrade: "보통" },
-  { department: "문화예술과", projectName: "수장·연구시설 건립", budget: "1,270,000", eval1: "보통", eval2: "보통", finalGrade: "보통" },
-  { department: "관광진흥과", projectName: "제부지역 관광 인프라 확충", budget: "945,902", eval1: "보통", eval2: "미흡", finalGrade: "미흡" },
-  { department: "도서관정책과", projectName: "(가칭)화성시 독서문화공간 조성", budget: "6,955,000", eval1: "매우 우수", eval2: "보통", finalGrade: "보통" },
-  { department: "체육진흥과", projectName: "화성시 전역 체육시설물 정비", budget: "700,000", eval1: "매우 우수", eval2: "보통", finalGrade: "보통" },
-  { department: "독립기념관", projectName: "화성시독립운동기념관 건립", budget: "1,290,000", eval1: "우수", eval2: "보통", finalGrade: "보통" },
+  { department: "문화유산과", projectName: "만년제 주변 정비사업", budget: "260,000", selfEval: "우수", deepEval: "보통", finalGrade: "보통" },
+  { department: "문화예술과", projectName: "수장·연구시설 건립", budget: "1,270,000", selfEval: "보통", deepEval: "보통", finalGrade: "보통" },
+  { department: "관광진흥과", projectName: "제부지역 관광 인프라 확충", budget: "945,902", selfEval: "보통", deepEval: "미흡", finalGrade: "미흡" },
+  { department: "도서관정책과", projectName: "(가칭)화성시 독서문화공간 조성", budget: "6,955,000", selfEval: "매우 우수", deepEval: "보통", finalGrade: "보통" },
+  { department: "체육진흥과", projectName: "화성시 전역 체육시설물 정비", budget: "700,000", selfEval: "매우 우수", deepEval: "보통", finalGrade: "보통" },
+  { department: "독립기념관", projectName: "화성시독립운동기념관 건립", budget: "1,290,000", selfEval: "우수", deepEval: "보통", finalGrade: "보통" },
 ];
 
 type EventProjectRow = {
@@ -269,10 +269,7 @@ export default function PerformanceEvaluation() {
                   <thead>
                     <tr>
                       <th rowSpan={2}>부서명</th>
-                      <th rowSpan={2}>
-                        사업명
-                        <div className="subsidy-th-sub">(세부사업명/부기명)</div>
-                      </th>
+                      <th rowSpan={2}>사업명 (세부사업명/부기명)</th>
                       <th rowSpan={2}>통계목명</th>
                       <th rowSpan={2}>평가결과</th>
                       <th colSpan={2}>예산현황</th>
@@ -289,8 +286,7 @@ export default function PerformanceEvaluation() {
                       <tr key={i}>
                         <td>{row.department}</td>
                         <td className="subsidy-project-cell">
-                          <div>{row.projectName}</div>
-                          <div className="subsidy-detail-name">({row.detailName})</div>
+                          {row.projectName} <span className="subsidy-detail-name">({row.detailName})</span>
                         </td>
                         <td>{row.statisticsItem}</td>
                         <td style={{ color: evaluationColor(row.evaluation), fontWeight: 600 }}>{row.evaluation}</td>
@@ -336,7 +332,9 @@ export default function PerformanceEvaluation() {
                           <th>부서명</th>
                           <th>평가대상 사업명(세부사업명)</th>
                           <th>2025년 최종 예산액(천원)</th>
-                          <th colSpan={3}>평가결과(평가등급)</th>
+                          <th>자체평가</th>
+                          <th>1차 심층평가</th>
+                          <th>최종평가</th>
                           <th>반영 여부 확인</th>
                         </tr>
                       </thead>
@@ -346,8 +344,8 @@ export default function PerformanceEvaluation() {
                             <td>{row.department}</td>
                             <td className="subsidy-project-cell">{row.projectName}</td>
                             <td className="subsidy-num">{row.budget}</td>
-                            <td style={{ color: gradeColor(row.eval1), fontWeight: 600 }}>{row.eval1}</td>
-                            <td style={{ color: gradeColor(row.eval2), fontWeight: 600 }}>{row.eval2}</td>
+                            <td style={{ color: gradeColor(row.selfEval), fontWeight: 600 }}>{row.selfEval}</td>
+                            <td style={{ color: gradeColor(row.deepEval), fontWeight: 600 }}>{row.deepEval}</td>
                             <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
                             <td>
                               <input
@@ -571,18 +569,12 @@ export default function PerformanceEvaluation() {
         .subsidy-table thead th {
           background: rgba(126, 231, 187, 0.16);
           color: var(--text);
-          font-weight: 700;
+          font-size: 15px;
+          font-weight: 400;
           white-space: nowrap;
         }
 
-        .subsidy-th-sub {
-          font-weight: 400;
-          font-size: 11px;
-          color: var(--text-muted);
-          margin-top: 2px;
-        }
-
-        .subsidy-project-cell {
+        .subsidy-table td.subsidy-project-cell {
           text-align: left;
           min-width: 220px;
         }
@@ -590,10 +582,9 @@ export default function PerformanceEvaluation() {
         .subsidy-detail-name {
           font-size: 12px;
           color: var(--text-muted);
-          margin-top: 2px;
         }
 
-        .subsidy-num {
+        .subsidy-table td.subsidy-num {
           text-align: right;
           white-space: nowrap;
         }
