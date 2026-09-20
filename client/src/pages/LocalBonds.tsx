@@ -43,6 +43,10 @@ export default function LocalBonds() {
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
               <h1>지방채 발행사업 현황관리</h1>
             </div>
+            <div className="bond-summary-box">
+              <div>차입선: 금융기관채 (23개 사업, 1,576억원)</div>
+              <div className="bond-summary-sub">당해예산 재원변경 1,036억원 · 2026년 3회 추경 신규 540억원</div>
+            </div>
           </div>
         </section>
 
@@ -127,6 +131,25 @@ export default function LocalBonds() {
       </div>
 
       <style>{`
+        .bond-summary-box {
+          border: 1px solid rgba(217, 173, 82, 0.35);
+          border-left: 3px solid #d9ad52;
+          border-radius: 6px;
+          background: rgba(217, 173, 82, 0.06);
+          padding: 10px 16px;
+          font-size: 13px;
+          font-weight: 600;
+          color: var(--text);
+          line-height: 1.6;
+        }
+
+        .bond-summary-sub {
+          margin-top: 2px;
+          font-size: 12px;
+          font-weight: 400;
+          color: var(--text-muted);
+        }
+
         .bond-table-wrap {
           overflow-x: auto;
           border: 1px solid var(--border);

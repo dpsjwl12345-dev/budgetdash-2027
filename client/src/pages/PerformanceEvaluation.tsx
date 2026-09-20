@@ -2,6 +2,7 @@ import { useEffect, useState } from "react";
 import Layout from "@/components/Layout";
 
 const SUBSIDY_CONFIRMED_STORAGE_KEY = "subsidyEvaluationConfirmed";
+const SUBSIDY_MEMO_STORAGE_KEY = "subsidyEvaluationMemo";
 const INVESTMENT_CONFIRMED_STORAGE_KEY = "investmentProjectConfirmed";
 const EVENT_CONFIRMED_STORAGE_KEY = "eventProjectConfirmed";
 const EVENT_INSTITUTION_CONFIRMED_STORAGE_KEY = "eventInstitutionProjectConfirmed";
@@ -185,6 +186,34 @@ function useConfirmedRows(storageKey: string) {
   return [confirmed, toggle] as const;
 }
 
+// 행별 메모(자유 텍스트)도 체크 상태와 같은 방식으로 인덱스를 키로 저장한다.
+function useRowMemos(storageKey: string) {
+  const [memos, setMemos] = useState<Record<number, string>>({});
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(storageKey);
+      if (saved) setMemos(JSON.parse(saved));
+    } catch {
+      // 저장된 값이 없거나 읽기 실패하면 빈 메모로 시작한다.
+    }
+  }, [storageKey]);
+
+  const update = (index: number, value: string) => {
+    setMemos((prev) => {
+      const next = { ...prev, [index]: value };
+      try {
+        localStorage.setItem(storageKey, JSON.stringify(next));
+      } catch {
+        // 저장 실패해도 화면 상태는 유지한다.
+      }
+      return next;
+    });
+  };
+
+  return [memos, update] as const;
+}
+
 // 같은 기관명이 연속으로 이어지는 첫 행에서만 몇 줄을 합칠지(rowSpan) 계산한다.
 function groupRowSpans(rows: { institution: string }[]): (number | null)[] {
   const spans: (number | null)[] = new Array(rows.length).fill(null);
@@ -221,6 +250,7 @@ export default function PerformanceEvaluation() {
     FISCAL_PROJECT_SUB_TABS[0].key
   );
   const [confirmedRows, toggleConfirmedRow] = useConfirmedRows(SUBSIDY_CONFIRMED_STORAGE_KEY);
+  const [subsidyMemos, updateSubsidyMemo] = useRowMemos(SUBSIDY_MEMO_STORAGE_KEY);
   const [investmentConfirmedRows, toggleInvestmentConfirmedRow] = useConfirmedRows(INVESTMENT_CONFIRMED_STORAGE_KEY);
   const [eventConfirmedRows, toggleEventConfirmedRow] = useConfirmedRows(EVENT_CONFIRMED_STORAGE_KEY);
   const [eventInstitutionConfirmedRows, toggleEventInstitutionConfirmedRow] = useConfirmedRows(
@@ -233,7 +263,7 @@ export default function PerformanceEvaluation() {
       <div className="page-content">
         <section className="page-heading" style={{ marginBottom: "12px" }}>
           <div className="title-area">
-            <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
+            <div className="title-wrapper" style={{ flexDirection: "row", alignItems: "baseline", gap: "10px" }}>
               <span
                 style={{
                   fontSize: "22px",
@@ -244,7 +274,7 @@ export default function PerformanceEvaluation() {
               >
                 2027 본예산
               </span>
-              <h1 style={{ marginTop: "-4px" }}>성과평가반영</h1>
+              <h1>성과평가반영</h1>
             </div>
           </div>
         </section>
@@ -269,11 +299,12 @@ export default function PerformanceEvaluation() {
                   <thead>
                     <tr>
                       <th rowSpan={2}>부서명</th>
-                      <th rowSpan={2}>사업명 (세부사업명/부기명)</th>
+                      <th rowSpan={2} className="subsidy-project-narrow">사업명 (세부사업명/부기명)</th>
                       <th rowSpan={2}>통계목명</th>
                       <th rowSpan={2}>평가결과</th>
                       <th colSpan={2}>예산현황</th>
-                      <th rowSpan={2}>반영결과</th>
+                      <th rowSpan={2} className="subsidy-reflection-cell">반영결과</th>
+                      <th rowSpan={2}>메모</th>
                       <th rowSpan={2}>반영 여부 확인</th>
                     </tr>
                     <tr>
@@ -285,14 +316,24 @@ export default function PerformanceEvaluation() {
                     {SUBSIDY_EVALUATION_DATA.map((row, i) => (
                       <tr key={i}>
                         <td>{row.department}</td>
-                        <td className="subsidy-project-cell">
+                        <td className="subsidy-project-cell subsidy-project-narrow">
                           {row.projectName} <span className="subsidy-detail-name">({row.detailName})</span>
                         </td>
                         <td>{row.statisticsItem}</td>
                         <td style={{ color: evaluationColor(row.evaluation), fontWeight: 600 }}>{row.evaluation}</td>
                         <td className="subsidy-num">{row.budget25}</td>
                         <td className="subsidy-num">{row.budget26}</td>
-                        <td style={{ color: reflectionColor(row.reflection), fontWeight: 600 }}>{row.reflection}</td>
+                        <td className="subsidy-reflection-cell" style={{ color: reflectionColor(row.reflection), fontWeight: 600 }}>{row.reflection}</td>
+                        <td>
+                          <input
+                            type="text"
+                            className="subsidy-memo-input"
+                            value={subsidyMemos[i] ?? ""}
+                            onChange={(e) => updateSubsidyMemo(i, e.target.value)}
+                            placeholder="메모"
+                            aria-label={`${row.projectName} 메모`}
+                          />
+                        </td>
                         <td>
                           <input
                             type="checkbox"
@@ -344,8 +385,8 @@ export default function PerformanceEvaluation() {
                             <td>{row.department}</td>
                             <td className="subsidy-project-cell">{row.projectName}</td>
                             <td className="subsidy-num">{row.budget}</td>
-                            <td style={{ color: gradeColor(row.selfEval), fontWeight: 600 }}>{row.selfEval}</td>
-                            <td style={{ color: gradeColor(row.deepEval), fontWeight: 600 }}>{row.deepEval}</td>
+                            <td>{row.selfEval}</td>
+                            <td>{row.deepEval}</td>
                             <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
                             <td>
                               <input
@@ -388,8 +429,8 @@ export default function PerformanceEvaluation() {
                             <td className="subsidy-project-cell">{row.eventName}</td>
                             <td className="subsidy-project-cell">{row.detailName}</td>
                             <td className="subsidy-num">{row.budget}</td>
-                            <td style={{ color: gradeColor(row.selfEval), fontWeight: 600 }}>{row.selfEval}</td>
-                            <td style={{ color: gradeColor(row.deepEval), fontWeight: 600 }}>{row.deepEval}</td>
+                            <td>{row.selfEval}</td>
+                            <td>{row.deepEval}</td>
                             <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
                             <td>
                               <input
@@ -432,8 +473,8 @@ export default function PerformanceEvaluation() {
                             )}
                             <td className="subsidy-project-cell">{row.eventName}</td>
                             <td className="subsidy-num">{row.budget}</td>
-                            <td style={{ color: gradeColor(row.selfEval), fontWeight: 600 }}>{row.selfEval}</td>
-                            <td style={{ color: gradeColor(row.deepEval), fontWeight: 600 }}>{row.deepEval}</td>
+                            <td>{row.selfEval}</td>
+                            <td>{row.deepEval}</td>
                             <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
                             <td>
                               <input
@@ -579,9 +620,33 @@ export default function PerformanceEvaluation() {
           min-width: 220px;
         }
 
+        .subsidy-table th.subsidy-project-narrow,
+        .subsidy-table td.subsidy-project-narrow {
+          min-width: 160px;
+          max-width: 200px;
+        }
+
         .subsidy-detail-name {
           font-size: 12px;
           color: var(--text-muted);
+        }
+
+        .subsidy-table th.subsidy-reflection-cell,
+        .subsidy-table td.subsidy-reflection-cell {
+          min-width: 90px;
+          max-width: 110px;
+          white-space: normal;
+        }
+
+        .subsidy-memo-input {
+          width: 100%;
+          min-width: 110px;
+          padding: 4px 6px;
+          font-size: 12px;
+          border: 1px solid var(--border);
+          border-radius: 4px;
+          background: var(--bg-secondary);
+          color: var(--text);
         }
 
         .subsidy-table td.subsidy-num {

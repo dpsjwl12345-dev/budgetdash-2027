@@ -258,10 +258,12 @@ async function loadCouncilRequests(res: any) {
   }
   const requests = (data || []).map((row: any) => ({
     id: row.id,
-    requesterType: row.requester_type ?? '시의원',
+    partyName: row.requester_type ?? '',
     memberName: row.member_name ?? '',
     department: row.department ?? '',
     content: row.content ?? '',
+    budgetItemName: row.budget_item_name ?? '',
+    requestedAmount: row.requested_amount ?? '',
     status: row.status ?? '검토중',
     requestedDate: row.requested_date ?? '',
     note: row.note ?? '',
@@ -283,10 +285,12 @@ async function saveCouncilRequest(req: any, res: any) {
 
   const { error: upsertError } = await supabase.from('council_member_requests').upsert({
     id: String(item.id),
-    requester_type: item.requesterType ?? '시의원',
+    requester_type: item.partyName ?? '',
     member_name: item.memberName ?? '',
     department: item.department ?? '',
     content: item.content ?? '',
+    budget_item_name: item.budgetItemName ?? '',
+    requested_amount: item.requestedAmount ?? '',
     status: item.status ?? '검토중',
     requested_date: item.requestedDate ?? '',
     note: item.note ?? '',
@@ -312,6 +316,87 @@ async function deleteCouncilRequest(req: any, res: any) {
     return;
   }
   const { error } = await supabase.from('council_member_requests').delete().eq('id', String(id));
+  if (error) {
+    res.status(200).json({ success: false, message: "삭제 실패", error: error.message });
+    return;
+  }
+  res.status(200).json({ success: true, message: "삭제 완료" });
+}
+
+async function loadMayorRequests(res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const { data, error } = await supabase
+    .from('mayor_vice_mayor_requests')
+    .select('*')
+    .order('created_at', { ascending: false });
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const requests = (data || []).map((row: any) => ({
+    id: row.id,
+    requesterType: row.requester_type ?? '시장',
+    memberName: row.member_name ?? '',
+    department: row.department ?? '',
+    content: row.content ?? '',
+    budgetItemName: row.budget_item_name ?? '',
+    requestedAmount: row.requested_amount ?? '',
+    status: row.status ?? '검토중',
+    requestedDate: row.requested_date ?? '',
+    note: row.note ?? '',
+  }));
+  res.status(200).json({ data: requests });
+}
+
+async function saveMayorRequest(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+  const item = req.body?.data;
+  if (!item || typeof item !== 'object' || !item.id) {
+    res.status(200).json({ success: false, message: "저장할 요구사항 데이터가 없습니다." });
+    return;
+  }
+
+  const { error: upsertError } = await supabase.from('mayor_vice_mayor_requests').upsert({
+    id: String(item.id),
+    requester_type: item.requesterType ?? '시장',
+    member_name: item.memberName ?? '',
+    department: item.department ?? '',
+    content: item.content ?? '',
+    budget_item_name: item.budgetItemName ?? '',
+    requested_amount: item.requestedAmount ?? '',
+    status: item.status ?? '검토중',
+    requested_date: item.requestedDate ?? '',
+    note: item.note ?? '',
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' });
+
+  if (upsertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    return;
+  }
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
+async function deleteMayorRequest(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "삭제 실패 (환경 변수 누락)" });
+    return;
+  }
+  const id = req.body?.id;
+  if (!id) {
+    res.status(200).json({ success: false, message: "삭제할 항목 id가 필요합니다." });
+    return;
+  }
+  const { error } = await supabase.from('mayor_vice_mayor_requests').delete().eq('id', String(id));
   if (error) {
     res.status(200).json({ success: false, message: "삭제 실패", error: error.message });
     return;
@@ -373,6 +458,7 @@ export default async function handler(req: any, res: any) {
       if (type === 'memos') return await loadMemos(req, res);
       if (type === 'issues') return await loadIssues(res);
       if (type === 'council-requests') return await loadCouncilRequests(res);
+      if (type === 'mayor-requests') return await loadMayorRequests(res);
       return await loadHierarchy(req, res);
     }
 
@@ -383,6 +469,10 @@ export default async function handler(req: any, res: any) {
       if (type === 'council-requests') {
         if (req.body?.action === 'delete') return await deleteCouncilRequest(req, res);
         return await saveCouncilRequest(req, res);
+      }
+      if (type === 'mayor-requests') {
+        if (req.body?.action === 'delete') return await deleteMayorRequest(req, res);
+        return await saveMayorRequest(req, res);
       }
       return await saveHierarchy(req, res);
     }

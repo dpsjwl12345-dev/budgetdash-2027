@@ -3,10 +3,11 @@ import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
+type RequesterType = "시장" | "부시장";
 
-type CouncilRequest = {
+type MayorRequest = {
   id: string;
-  partyName: string;
+  requesterType: RequesterType;
   memberName: string;
   department: string;
   content: string;
@@ -17,12 +18,13 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
+const REQUESTER_TYPE_OPTIONS: RequesterType[] = ["시장", "부시장"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 
 const emptyForm = () => ({
-  partyName: "",
+  requesterType: "시장" as RequesterType,
   memberName: "",
   department: DEPARTMENTS[0] || "",
   content: "",
@@ -32,32 +34,32 @@ const emptyForm = () => ({
   requestedDate: todayString(),
 });
 
-export default function CouncilMemberRequests() {
-  const [requests, setRequests] = useState<CouncilRequest[]>([]);
+export default function MayorViceMayorRequests() {
+  const [requests, setRequests] = useState<MayorRequest[]>([]);
   const [form, setForm] = useState(emptyForm());
 
   // 서버 데이터를 우선 로드하고, 서버를 사용할 수 없는 경우 localStorage를 사용한다.
   useEffect(() => {
     const loadRequests = async () => {
       try {
-        const response = await fetch("/api/cloud-sync?type=council-requests");
+        const response = await fetch("/api/cloud-sync?type=mayor-requests");
         if (!response.ok) throw new Error("서버 로드 실패");
         const { data } = await response.json();
         if (Array.isArray(data)) {
           setRequests(data);
-          localStorage.setItem("councilMemberRequests", JSON.stringify(data));
+          localStorage.setItem("mayorViceMayorRequests", JSON.stringify(data));
           return;
         }
       } catch (error) {
-        console.warn("서버에서 시의원 요구사항 로드 실패:", error);
+        console.warn("서버에서 시장·부시장 요구사항 로드 실패:", error);
       }
 
-      const saved = localStorage.getItem("councilMemberRequests");
+      const saved = localStorage.getItem("mayorViceMayorRequests");
       if (saved) {
         try {
           setRequests(JSON.parse(saved));
         } catch (error) {
-          console.error("시의원 요구사항 로컬 데이터 로드 실패:", error);
+          console.error("시장·부시장 요구사항 로컬 데이터 로드 실패:", error);
         }
       }
     };
@@ -67,9 +69,9 @@ export default function CouncilMemberRequests() {
   const handleAdd = async () => {
     if (!form.memberName.trim() || !form.content.trim()) return;
 
-    const newItem: CouncilRequest = {
+    const newItem: MayorRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
-      partyName: form.partyName.trim(),
+      requesterType: form.requesterType,
       memberName: form.memberName.trim(),
       department: form.department,
       content: form.content.trim(),
@@ -81,18 +83,18 @@ export default function CouncilMemberRequests() {
 
     const updated = [newItem, ...requests];
     setRequests(updated);
-    localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
+    localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
     setForm(emptyForm());
 
     try {
-      const response = await fetch("/api/cloud-sync?type=council-requests", {
+      const response = await fetch("/api/cloud-sync?type=mayor-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: newItem }),
       });
       if (!response.ok) throw new Error("서버 저장 실패");
     } catch (error) {
-      console.warn("시의원 요구사항 서버 저장 실패:", error);
+      console.warn("시장·부시장 요구사항 서버 저장 실패:", error);
     }
   };
 
@@ -102,10 +104,10 @@ export default function CouncilMemberRequests() {
     const updatedItem = { ...target, status };
     const updated = requests.map((item) => (item.id === id ? updatedItem : item));
     setRequests(updated);
-    localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
+    localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
 
     try {
-      const response = await fetch("/api/cloud-sync?type=council-requests", {
+      const response = await fetch("/api/cloud-sync?type=mayor-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ data: updatedItem }),
@@ -119,17 +121,17 @@ export default function CouncilMemberRequests() {
   const handleDelete = async (id: string) => {
     const updated = requests.filter((item) => item.id !== id);
     setRequests(updated);
-    localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
+    localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
 
     try {
-      const response = await fetch("/api/cloud-sync?type=council-requests", {
+      const response = await fetch("/api/cloud-sync?type=mayor-requests", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ action: "delete", id }),
       });
       if (!response.ok) throw new Error("서버 삭제 실패");
     } catch (error) {
-      console.warn("시의원 요구사항 삭제 서버 저장 실패:", error);
+      console.warn("시장·부시장 요구사항 삭제 서버 저장 실패:", error);
     }
   };
 
@@ -137,17 +139,20 @@ export default function CouncilMemberRequests() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>당정협의회 요구</h1>
+          <h1>시장, 부시장 요구사항</h1>
         </section>
 
         <section className="request-form-section">
           <div className="form-row">
-            <input
-              className="form-input party-input"
-              placeholder="소속 정당명"
-              value={form.partyName}
-              onChange={(e) => setForm({ ...form, partyName: e.target.value })}
-            />
+            <select
+              className="form-input type-select"
+              value={form.requesterType}
+              onChange={(e) => setForm({ ...form, requesterType: e.target.value as RequesterType })}
+            >
+              {REQUESTER_TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
             <input
               className="form-input member-input"
               placeholder="이름"
@@ -208,7 +213,7 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th className="col-party">소속 정당명</th>
+                <th className="col-type">구분</th>
                 <th className="col-member">이름</th>
                 <th className="col-dept">소관부서</th>
                 <th className="col-content">요구내용</th>
@@ -224,7 +229,9 @@ export default function CouncilMemberRequests() {
                 requests.map((item, index) => (
                   <tr key={item.id}>
                     <td className="col-num">{requests.length - index}</td>
-                    <td className="col-party">{item.partyName}</td>
+                    <td className="col-type">
+                      <span className={`type-badge type-${item.requesterType}`}>{item.requesterType}</span>
+                    </td>
                     <td className="col-member">{item.memberName}</td>
                     <td className="col-dept">{item.department}</td>
                     <td className="col-content">{item.content}</td>
@@ -314,8 +321,8 @@ export default function CouncilMemberRequests() {
           color: var(--text-muted);
         }
 
-        .party-input {
-          flex: 0 0 130px;
+        .type-select {
+          flex: 0 0 90px;
         }
 
         .member-input {
@@ -408,8 +415,9 @@ export default function CouncilMemberRequests() {
           font-weight: 600;
         }
 
-        .col-party {
-          width: 110px;
+        .col-type {
+          width: 64px;
+          text-align: center;
         }
 
         .col-dept {
@@ -474,6 +482,28 @@ export default function CouncilMemberRequests() {
           background: rgba(217, 173, 82, 0.08);
         }
 
+        .type-badge {
+          display: inline-block;
+          border-radius: 5px;
+          border: 1px solid var(--border);
+          font-size: 12px;
+          font-weight: 600;
+          padding: 3px 8px;
+          white-space: nowrap;
+        }
+
+        .type-badge.type-시장 {
+          color: #b98cf0;
+          border-color: rgba(185, 140, 240, 0.35);
+          background: rgba(185, 140, 240, 0.1);
+        }
+
+        .type-badge.type-부시장 {
+          color: #52c4d9;
+          border-color: rgba(82, 196, 217, 0.35);
+          background: rgba(82, 196, 217, 0.1);
+        }
+
         .delete-button {
           border: 1px solid rgba(255, 107, 125, 0.35);
           border-radius: 5px;
@@ -500,7 +530,7 @@ export default function CouncilMemberRequests() {
             flex-wrap: wrap;
           }
 
-          .party-input,
+          .type-select,
           .member-input,
           .dept-select,
           .status-select,

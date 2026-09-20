@@ -12,6 +12,7 @@ import {
   Landmark,
   Award,
   Banknote,
+  Users,
   Highlighter,
   Eraser,
   Undo2,
@@ -47,6 +48,8 @@ const navItems: NavItem[] = [
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
   { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
+  { label: "당정협의회 요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
+  { label: "시장, 부시장 요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
   { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#d9ad52" },
 ];
 
@@ -62,7 +65,6 @@ const toolItems: ToolItem[] = [
     ],
   },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
-  { label: "시장, 시의원 요구사항", icon: Landmark, path: "/council-member-requests" },
 ];
 
 export default function Layout({
@@ -97,8 +99,6 @@ export default function Layout({
         return "산출식(함수) 전체 목록";
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
-      case "/council-member-requests":
-        return "시장, 시의원 요구사항";
       default:
         return "예산 편성 시트";
     }
