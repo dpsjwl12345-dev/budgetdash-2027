@@ -84,19 +84,6 @@ function reflectionColor(reflection: string): string {
 
 type Grade = "매우 우수" | "우수" | "보통" | "미흡";
 
-function gradeColor(grade: Grade): string {
-  switch (grade) {
-    case "매우 우수":
-      return "#7ee787";
-    case "우수":
-      return "#52c4d9";
-    case "보통":
-      return "#d9ad52";
-    case "미흡":
-      return "#ff6b7d";
-  }
-}
-
 type InvestmentProjectRow = {
   department: string;
   projectName: string;
@@ -266,7 +253,7 @@ export default function PerformanceEvaluation() {
             <div className="title-wrapper" style={{ flexDirection: "row", alignItems: "baseline", gap: "10px" }}>
               <span
                 style={{
-                  fontSize: "22px",
+                  fontSize: "37px",
                   fontWeight: 700,
                   color: "var(--text-faint)",
                   letterSpacing: "0.02em",
@@ -387,7 +374,7 @@ export default function PerformanceEvaluation() {
                             <td className="subsidy-num">{row.budget}</td>
                             <td>{row.selfEval}</td>
                             <td>{row.deepEval}</td>
-                            <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
+                            <td className="perf-final-grade">{row.finalGrade}</td>
                             <td>
                               <input
                                 type="checkbox"
@@ -431,7 +418,7 @@ export default function PerformanceEvaluation() {
                             <td className="subsidy-num">{row.budget}</td>
                             <td>{row.selfEval}</td>
                             <td>{row.deepEval}</td>
-                            <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
+                            <td className="perf-final-grade">{row.finalGrade}</td>
                             <td>
                               <input
                                 type="checkbox"
@@ -475,7 +462,7 @@ export default function PerformanceEvaluation() {
                             <td className="subsidy-num">{row.budget}</td>
                             <td>{row.selfEval}</td>
                             <td>{row.deepEval}</td>
-                            <td className="perf-final-grade" style={{ color: gradeColor(row.finalGrade) }}>{row.finalGrade}</td>
+                            <td className="perf-final-grade">{row.finalGrade}</td>
                             <td>
                               <input
                                 type="checkbox"
@@ -592,7 +579,7 @@ export default function PerformanceEvaluation() {
           width: 100%;
           min-width: 900px;
           border-collapse: collapse;
-          font-size: 13px;
+          font-size: 14px;
         }
 
         .subsidy-table th,
@@ -667,6 +654,7 @@ export default function PerformanceEvaluation() {
 
         .perf-final-grade {
           font-weight: 700;
+          color: #d9ad52;
           background: rgba(217, 173, 82, 0.12);
           border-left: 2px solid #ff6b7d !important;
           border-right: 2px solid #ff6b7d !important;

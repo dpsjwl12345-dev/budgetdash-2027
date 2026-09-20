@@ -251,7 +251,7 @@ async function loadCouncilRequests(res: any) {
   const { data, error } = await supabase
     .from('council_member_requests')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: true });
   if (error) {
     res.status(200).json({ data: null });
     return;
@@ -332,7 +332,7 @@ async function loadMayorRequests(res: any) {
   const { data, error } = await supabase
     .from('mayor_vice_mayor_requests')
     .select('*')
-    .order('created_at', { ascending: false });
+    .order('created_at', { ascending: true });
   if (error) {
     res.status(200).json({ data: null });
     return;

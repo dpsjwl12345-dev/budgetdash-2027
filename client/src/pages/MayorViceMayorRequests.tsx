@@ -108,7 +108,7 @@ export default function MayorViceMayorRequests() {
       requestedDate: form.requestedDate,
     };
 
-    const updated = [newItem, ...requests];
+    const updated = [...requests, newItem];
     setRequests(updated);
     localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
     setForm(emptyForm());
@@ -528,10 +528,16 @@ export default function MayorViceMayorRequests() {
         .requests-table td {
           padding: 10px 12px;
           border-bottom: 1px solid var(--border);
+          border-right: 1px solid var(--border);
           text-align: left;
           vertical-align: top;
           word-break: break-word;
           overflow-wrap: break-word;
+        }
+
+        .requests-table th:last-child,
+        .requests-table td:last-child {
+          border-right: none;
         }
 
         .requests-table th {
