@@ -3,7 +3,7 @@ import { useLocation, useSearchParams } from "wouter";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 import { processExplainerPdf, renderPdfPagesAsImages } from "@/lib/pdfExplainer";
-import { ArrowLeft, ArrowUp, ChevronDown, ChevronUp, X, Upload } from "lucide-react";
+import { ArrowLeft, ArrowUp, ChevronDown, ChevronUp, X, Upload, Pencil, Check } from "lucide-react";
 
 type TreeNode = {
   title: string;
@@ -79,6 +79,9 @@ export default function BudgetExplainer() {
   const [institutionMaterialLoading, setInstitutionMaterialLoading] = useState(false);
   const [newInstitutionName, setNewInstitutionName] = useState("");
   const [addingInstitution, setAddingInstitution] = useState(false);
+  const [editingInstitution, setEditingInstitution] = useState<string | null>(null);
+  const [editingInstitutionName, setEditingInstitutionName] = useState("");
+  const [renamingInstitution, setRenamingInstitution] = useState(false);
   const [institutionUploading, setInstitutionUploading] = useState(false);
   const [institutionUploadProgress, setInstitutionUploadProgress] = useState<{ done: number; total: number } | null>(null);
   const [deletingInstitutionPageIndex, setDeletingInstitutionPageIndex] = useState<number | null>(null);
@@ -389,7 +392,10 @@ export default function BudgetExplainer() {
       const result = await response.json();
       if (!response.ok || !result.success) throw new Error(result.error || "추가 실패");
 
-      setInstitutions((prev) => [...prev, name].sort());
+      // 서버는 새 항목을 목록 맨 끝에 붙인다(saveInstitution의 sortOrder 계산). 여기서
+      // 이름순으로 다시 정렬해버리면 화면과 실제 저장된 순서가 어긋나고, 그 상태에서
+      // 위/아래로 순서를 바꾸면 어긋난 순서 그대로 저장돼 기존에 맞춰둔 순서가 뒤섞인다.
+      setInstitutions((prev) => [...prev, name]);
       setNewInstitutionName("");
       setSelectedPath("");
       setSelectedInstitution(name);
@@ -398,6 +404,54 @@ export default function BudgetExplainer() {
       alert(error instanceof Error ? error.message : "기관 추가에 실패했습니다");
     } finally {
       setAddingInstitution(false);
+    }
+  };
+
+  const startEditingInstitution = (name: string) => {
+    setEditingInstitution(name);
+    setEditingInstitutionName(name);
+  };
+
+  const cancelEditingInstitution = () => {
+    setEditingInstitution(null);
+    setEditingInstitutionName("");
+  };
+
+  const handleRenameInstitution = async () => {
+    const oldName = editingInstitution;
+    const newName = editingInstitutionName.trim();
+    if (!oldName) return;
+    if (!newName) {
+      alert("이름을 입력해주세요");
+      return;
+    }
+    if (newName === oldName) {
+      cancelEditingInstitution();
+      return;
+    }
+    if (institutions.includes(newName)) {
+      alert("이미 같은 이름의 항목이 있습니다");
+      return;
+    }
+
+    setRenamingInstitution(true);
+    try {
+      const response = await fetch("/api/budget-explainer/material-edit", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ action: "renameInstitution", department, institution: oldName, newInstitution: newName }),
+      });
+      const result = await response.json();
+      if (!response.ok || !result.success) throw new Error(result.error || "이름 변경 실패");
+
+      setInstitutions((prev) => prev.map((item) => (item === oldName ? newName : item)));
+      if (selectedInstitution === oldName) setSelectedInstitution(newName);
+      cancelEditingInstitution();
+    } catch (error) {
+      console.error("기관 이름 변경 실패:", error);
+      alert(error instanceof Error ? error.message : "이름 변경에 실패했습니다");
+    } finally {
+      setRenamingInstitution(false);
     }
   };
 
@@ -782,6 +836,7 @@ export default function BudgetExplainer() {
                     <div>
                       {institutions.map((name, index) => {
                         const isSelected = selectedInstitution === name;
+                        const isEditing = editingInstitution === name;
                         const iconButtonStyle = {
                           display: "flex",
                           alignItems: "center",
@@ -812,57 +867,115 @@ export default function BudgetExplainer() {
                               margin: "4px 0",
                             }}
                           >
-                            <button
-                              onClick={() => {
-                                setSelectedPath("");
-                                setSelectedInstitution(name);
-                              }}
-                              style={{
-                                flex: 1,
-                                minWidth: 0,
-                                height: "100%",
-                                display: "flex",
-                                alignItems: "center",
-                                fontSize: "13px",
-                                color: isSelected ? "var(--text)" : "var(--text-muted)",
-                                background: "transparent",
-                                border: "none",
-                                cursor: "pointer",
-                                textAlign: "left",
-                                padding: 0,
-                              }}
-                            >
-                              <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveInstitution(name, -1)}
-                              disabled={index === 0}
-                              title="위로"
-                              aria-label={`${name} 위로 이동`}
-                              style={{ ...iconButtonStyle, opacity: index === 0 ? 0.25 : 1 }}
-                            >
-                              <ChevronUp size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleMoveInstitution(name, 1)}
-                              disabled={index === institutions.length - 1}
-                              title="아래로"
-                              aria-label={`${name} 아래로 이동`}
-                              style={{ ...iconButtonStyle, opacity: index === institutions.length - 1 ? 0.25 : 1 }}
-                            >
-                              <ChevronDown size={14} />
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => handleDeleteInstitution(name)}
-                              title="이 항목 삭제"
-                              aria-label={`${name} 삭제`}
-                              style={iconButtonStyle}
-                            >
-                              <X size={14} />
-                            </button>
+                            {isEditing ? (
+                              <>
+                                <input
+                                  type="text"
+                                  value={editingInstitutionName}
+                                  onChange={(e) => setEditingInstitutionName(e.target.value)}
+                                  onKeyDown={(e) => {
+                                    if (e.key === "Enter") handleRenameInstitution();
+                                    if (e.key === "Escape") cancelEditingInstitution();
+                                  }}
+                                  autoFocus
+                                  disabled={renamingInstitution}
+                                  style={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    height: "26px",
+                                    padding: "0 6px",
+                                    fontSize: "13px",
+                                    border: "1px solid var(--line)",
+                                    borderRadius: "4px",
+                                    background: "var(--bg-secondary)",
+                                    color: "var(--text)",
+                                  }}
+                                />
+                                <button
+                                  type="button"
+                                  onClick={handleRenameInstitution}
+                                  disabled={renamingInstitution}
+                                  title="이름 저장"
+                                  aria-label={`${name} 이름 저장`}
+                                  style={iconButtonStyle}
+                                >
+                                  <Check size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={cancelEditingInstitution}
+                                  disabled={renamingInstitution}
+                                  title="취소"
+                                  aria-label={`${name} 이름 변경 취소`}
+                                  style={iconButtonStyle}
+                                >
+                                  <X size={14} />
+                                </button>
+                              </>
+                            ) : (
+                              <>
+                                <button
+                                  onClick={() => {
+                                    setSelectedPath("");
+                                    setSelectedInstitution(name);
+                                  }}
+                                  style={{
+                                    flex: 1,
+                                    minWidth: 0,
+                                    height: "100%",
+                                    display: "flex",
+                                    alignItems: "center",
+                                    fontSize: "13px",
+                                    color: isSelected ? "var(--text)" : "var(--text-muted)",
+                                    background: "transparent",
+                                    border: "none",
+                                    cursor: "pointer",
+                                    textAlign: "left",
+                                    padding: 0,
+                                  }}
+                                >
+                                  <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>{name}</span>
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveInstitution(name, -1)}
+                                  disabled={index === 0}
+                                  title="위로"
+                                  aria-label={`${name} 위로 이동`}
+                                  style={{ ...iconButtonStyle, opacity: index === 0 ? 0.25 : 1 }}
+                                >
+                                  <ChevronUp size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleMoveInstitution(name, 1)}
+                                  disabled={index === institutions.length - 1}
+                                  title="아래로"
+                                  aria-label={`${name} 아래로 이동`}
+                                  style={{ ...iconButtonStyle, opacity: index === institutions.length - 1 ? 0.25 : 1 }}
+                                >
+                                  <ChevronDown size={14} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => startEditingInstitution(name)}
+                                  title="이름 수정"
+                                  aria-label={`${name} 이름 수정`}
+                                  style={iconButtonStyle}
+                                >
+                                  <Pencil size={13} />
+                                </button>
+                                <button
+                                  type="button"
+                                  onClick={() => handleDeleteInstitution(name)}
+                                  title="이 항목 삭제"
+                                  aria-label={`${name} 삭제`}
+                                  style={iconButtonStyle}
+                                >
+                                  <X size={14} />
+                                </button>
+                              </>
+                            )}
                           </div>
                         );
                       })}

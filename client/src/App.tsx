@@ -7,6 +7,8 @@ import { ThemeProvider } from "./contexts/ThemeContext";
 import Home from "./pages/Home";
 import BudgetExecution2026 from "./pages/BudgetExecution2026";
 import BudgetExplainer from "./pages/BudgetExplainer";
+import LocalBonds from "./pages/LocalBonds";
+import PerformanceEvaluation from "./pages/PerformanceEvaluation";
 import BudgetEstablishmentGuide from "./pages/BudgetEstablishmentGuide";
 import StatisticsCodeDetail from "./pages/StatisticsCodeDetail";
 import FormulaOverview from "./pages/FormulaOverview";
@@ -21,6 +23,8 @@ function Router() {
       <Route path={"/"} component={Home} />
       <Route path={"/budget-execution-2026"} component={BudgetExecution2026} />
       <Route path={"/budget-explainer"} component={BudgetExplainer} />
+      <Route path={"/local-bonds"} component={LocalBonds} />
+      <Route path={"/performance-evaluation"} component={PerformanceEvaluation} />
       <Route path={"/budget-establishment-guide"} component={BudgetEstablishmentGuide} />
       <Route path={"/statistics-code-detail"} component={StatisticsCodeDetail} />
       <Route path={"/formula-overview"} component={FormulaOverview} />

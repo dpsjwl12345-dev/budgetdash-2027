@@ -10,6 +10,8 @@ import {
   ChevronDown,
   AlertCircle,
   Landmark,
+  Award,
+  Banknote,
   Highlighter,
   Eraser,
   Undo2,
@@ -44,6 +46,8 @@ const navItems: NavItem[] = [
   { label: "예산 편성 시트", icon: ClipboardCheck, path: "/", count: "01" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
+  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
+  { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#d9ad52" },
 ];
 
 const toolItems: ToolItem[] = [

@@ -226,6 +226,65 @@ async function deleteInstitution(req: any, res: any) {
   res.status(200).json({ success: true });
 }
 
+// 기관 이름을 바꾼다. institution은 두 테이블의 키 일부라 페이지 행까지 함께 옮긴다.
+async function renameInstitution(req: any, res: any) {
+  const { department, institution, newInstitution } = req.body ?? {};
+  if (!department || !institution || !newInstitution) {
+    res.status(400).json({ success: false, error: "부서, 기존 이름, 새 이름이 필요합니다" });
+    return;
+  }
+  const dept = String(department);
+  const oldName = String(institution);
+  const newName = String(newInstitution).trim();
+  if (!newName) {
+    res.status(400).json({ success: false, error: "새 이름을 입력해주세요" });
+    return;
+  }
+  if (newName === oldName) {
+    res.status(200).json({ success: true });
+    return;
+  }
+
+  const supabase = getSupabaseAdmin();
+
+  const { data: existing, error: existingError } = await supabase
+    .from("institution_materials")
+    .select("institution")
+    .eq("department", dept)
+    .eq("institution", newName)
+    .maybeSingle();
+  if (existingError) {
+    res.status(500).json({ success: false, error: existingError.message });
+    return;
+  }
+  if (existing) {
+    res.status(409).json({ success: false, error: "이미 같은 이름의 항목이 있습니다" });
+    return;
+  }
+
+  const { error: pagesError } = await supabase
+    .from("institution_material_pages")
+    .update({ institution: newName })
+    .eq("department", dept)
+    .eq("institution", oldName);
+  if (pagesError) {
+    res.status(500).json({ success: false, error: pagesError.message });
+    return;
+  }
+
+  const { error } = await supabase
+    .from("institution_materials")
+    .update({ institution: newName, updated_at: new Date().toISOString() })
+    .eq("department", dept)
+    .eq("institution", oldName);
+  if (error) {
+    res.status(500).json({ success: false, error: error.message });
+    return;
+  }
+
+  res.status(200).json({ success: true });
+}
+
 // 부서의 기관 목록 순서를 통째로 저장한다.
 // 자리바꿈을 한 번씩 보내면 버튼을 연달아 누를 때 요청이 엇갈려 화면과 DB가
 // 달라지므로, 화면에 보이는 전체 순서를 그대로 받아 덮어쓴다.
@@ -264,6 +323,8 @@ export default async function handler(req: any, res: any) {
       await deleteInstitutionPage(req, res);
     } else if (action === "deleteInstitution") {
       await deleteInstitution(req, res);
+    } else if (action === "renameInstitution") {
+      await renameInstitution(req, res);
     } else if (action === "setInstitutionOrder") {
       await setInstitutionOrder(req, res);
     } else {
