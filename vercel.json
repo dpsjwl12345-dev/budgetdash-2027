@@ -37,6 +37,18 @@
     {
       "source": "/temp-worker-wage-calculator",
       "destination": "/index.html"
+    },
+    {
+      "source": "/mayor-vice-mayor-requests",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/local-bonds",
+      "destination": "/index.html"
+    },
+    {
+      "source": "/performance-evaluation",
+      "destination": "/index.html"
     }
   ]
 }
