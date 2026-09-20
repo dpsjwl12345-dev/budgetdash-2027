@@ -3,9 +3,12 @@ import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
+// 요구가 들어온 경로. 탭을 가르는 기준이며, 소속 정당명과는 별개다.
+type RequestType = "당정협의회" | "시의원";
 
 type CouncilRequest = {
   id: string;
+  requestType: RequestType;
   partyName: string;
   memberName: string;
   department: string;
@@ -17,11 +20,13 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
+const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "시의원"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
 
-const emptyForm = () => ({
+const emptyForm = (requestType: RequestType = "당정협의회") => ({
+  requestType,
   partyName: "",
   memberName: "",
   department: DEPARTMENTS[0] || "",
@@ -35,6 +40,7 @@ const emptyForm = () => ({
 type EditDraft = Omit<CouncilRequest, "id" | "status">;
 
 const draftFromItem = (item: CouncilRequest): EditDraft => ({
+  requestType: item.requestType,
   partyName: item.partyName,
   memberName: item.memberName,
   department: item.department,
@@ -46,6 +52,7 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
 
 export default function CouncilMemberRequests() {
   const [requests, setRequests] = useState<CouncilRequest[]>([]);
+  const [activeTab, setActiveTab] = useState<RequestType>("당정협의회");
   const [form, setForm] = useState(emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
@@ -96,6 +103,7 @@ export default function CouncilMemberRequests() {
 
     const newItem: CouncilRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+      requestType: form.requestType,
       partyName: form.partyName.trim(),
       memberName: form.memberName.trim(),
       department: form.department,
@@ -109,7 +117,8 @@ export default function CouncilMemberRequests() {
     const updated = [...requests, newItem];
     setRequests(updated);
     localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
-    setForm(emptyForm());
+    setActiveTab(newItem.requestType);
+    setForm(emptyForm(newItem.requestType));
     await persist(newItem);
   };
 
@@ -178,13 +187,15 @@ export default function CouncilMemberRequests() {
     await persist(updatedItem);
   };
 
-  // 당정협의회 요구(소속 정당명이 적힌 건)와 개별 시의원 요구를 별도 표로 나눠 보여준다.
-  const isPartyRequest = (item: CouncilRequest) => {
-    const v = (item.partyName || "").replace(/\s/g, "");
-    return v !== "" && v !== "시의원";
-  };
-  const partyRequests = requests.filter(isPartyRequest);
-  const memberRequests = requests.filter((item) => !isPartyRequest(item));
+  // 예전에 저장된 건(requestType 없음)은 소속 정당명 칸에 "시의원"으로 적혀 있었다.
+  const typeOf = (item: CouncilRequest): RequestType =>
+    item.requestType
+      ? item.requestType
+      : (item.partyName || "").replace(/\s/g, "") === "시의원"
+        ? "시의원"
+        : "당정협의회";
+  const visibleRequests = requests.filter((item) => typeOf(item) === activeTab);
+  const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
 
   const renderTable = (rows: CouncilRequest[], emptyText: string) => (
           <table className="requests-table">
@@ -343,6 +354,15 @@ export default function CouncilMemberRequests() {
 
         <section className="request-form-section">
           <div className="form-row">
+            <select
+              className="form-input type-select"
+              value={form.requestType}
+              onChange={(e) => setForm({ ...form, requestType: e.target.value as RequestType })}
+            >
+              {REQUEST_TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
             <input
               className="form-input party-input"
               placeholder="소속 정당명"
@@ -404,14 +424,21 @@ export default function CouncilMemberRequests() {
           </div>
         </section>
 
-        <section className="table-section">
-          <h2 className="table-title">당정협의회 요구</h2>
-          {renderTable(partyRequests, "등록된 당정협의회 요구가 없습니다")}
+        <section className="tab-bar">
+          {REQUEST_TYPE_OPTIONS.map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`tab-button${activeTab === type ? " active" : ""}`}
+              onClick={() => setActiveTab(type)}
+            >
+              {type} 요구 <span className="tab-count">{countOf(type)}</span>
+            </button>
+          ))}
         </section>
 
         <section className="table-section">
-          <h2 className="table-title">시의원 요구</h2>
-          {renderTable(memberRequests, "등록된 시의원 요구가 없습니다")}
+          {renderTable(visibleRequests, `등록된 ${activeTab} 요구가 없습니다`)}
         </section>
       </div>
 
@@ -515,6 +542,43 @@ export default function CouncilMemberRequests() {
 
         .add-button:hover {
           background: rgba(91, 155, 240, 0.25);
+        }
+
+        .tab-bar {
+          display: flex;
+          gap: 8px;
+          margin-bottom: 14px;
+        }
+
+        .tab-button {
+          padding: 9px 18px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: transparent;
+          color: var(--text-muted);
+          font-size: 14px;
+          font-weight: 600;
+          cursor: pointer;
+        }
+
+        .tab-button:hover {
+          color: var(--text);
+        }
+
+        .tab-button.active {
+          color: #5b9bf0;
+          border-color: rgba(91, 155, 240, 0.45);
+          background: rgba(91, 155, 240, 0.12);
+        }
+
+        .tab-count {
+          margin-left: 6px;
+          font-size: 12px;
+          opacity: 0.75;
+        }
+
+        .type-select {
+          min-width: 130px;
         }
 
         .table-section {
