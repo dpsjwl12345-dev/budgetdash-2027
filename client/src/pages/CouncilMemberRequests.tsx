@@ -178,77 +178,15 @@ export default function CouncilMemberRequests() {
     await persist(updatedItem);
   };
 
-  return (
-    <Layout>
-      <div className="page-content">
-        <section className="page-heading">
-          <h1>당정협의회 요구</h1>
-        </section>
+  // 당정협의회 요구(소속 정당명이 적힌 건)와 개별 시의원 요구를 별도 표로 나눠 보여준다.
+  const isPartyRequest = (item: CouncilRequest) => {
+    const v = (item.partyName || "").replace(/\s/g, "");
+    return v !== "" && v !== "시의원";
+  };
+  const partyRequests = requests.filter(isPartyRequest);
+  const memberRequests = requests.filter((item) => !isPartyRequest(item));
 
-        <section className="request-form-section">
-          <div className="form-row">
-            <input
-              className="form-input party-input"
-              placeholder="소속 정당명"
-              value={form.partyName}
-              onChange={(e) => setForm({ ...form, partyName: e.target.value })}
-            />
-            <input
-              className="form-input member-input"
-              placeholder="이름"
-              value={form.memberName}
-              onChange={(e) => setForm({ ...form, memberName: e.target.value })}
-            />
-            <select
-              className="form-input dept-select"
-              value={form.department}
-              onChange={(e) => setForm({ ...form, department: e.target.value })}
-            >
-              {DEPARTMENTS.map((dept) => (
-                <option key={dept} value={dept}>{dept}</option>
-              ))}
-            </select>
-            <select
-              className="form-input status-select"
-              value={form.status}
-              onChange={(e) => setForm({ ...form, status: e.target.value as RequestStatus })}
-            >
-              {STATUS_OPTIONS.map((status) => (
-                <option key={status} value={status}>{status}</option>
-              ))}
-            </select>
-            <input
-              className="form-input date-input"
-              type="text"
-              placeholder="요구일 (예: 2026. 09. 17.)"
-              value={form.requestedDate}
-              onChange={(e) => setForm({ ...form, requestedDate: e.target.value })}
-            />
-          </div>
-          <div className="form-row">
-            <textarea
-              className="form-input content-textarea"
-              placeholder="요구내용을 입력하세요..."
-              value={form.content}
-              onChange={(e) => setForm({ ...form, content: e.target.value })}
-            />
-            <input
-              className="form-input budget-item-input"
-              placeholder="사업명 (세부사업+부기명)"
-              value={form.budgetItemName}
-              onChange={(e) => setForm({ ...form, budgetItemName: e.target.value })}
-            />
-            <input
-              className="form-input amount-input"
-              placeholder="요구액 (예: 6억)"
-              value={form.requestedAmount}
-              onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
-            />
-            <button className="add-button" onClick={handleAdd}>추가</button>
-          </div>
-        </section>
-
-        <section className="table-section">
+  const renderTable = (rows: CouncilRequest[], emptyText: string) => (
           <table className="requests-table">
             <colgroup>
               <col className="col-num" />
@@ -277,8 +215,8 @@ export default function CouncilMemberRequests() {
               </tr>
             </thead>
             <tbody>
-              {requests.length > 0 ? (
-                requests.map((item, index) => {
+              {rows.length > 0 ? (
+                rows.map((item, index) => {
                   const isEditing = editingId === item.id && editDraft;
                   return (
                     <tr key={item.id}>
@@ -389,11 +327,91 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={10} className="empty-row">등록된 요구사항이 없습니다</td>
+                  <td colSpan={10} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
           </table>
+  );
+
+  return (
+    <Layout>
+      <div className="page-content">
+        <section className="page-heading">
+          <h1>당정협의회 요구</h1>
+        </section>
+
+        <section className="request-form-section">
+          <div className="form-row">
+            <input
+              className="form-input party-input"
+              placeholder="소속 정당명"
+              value={form.partyName}
+              onChange={(e) => setForm({ ...form, partyName: e.target.value })}
+            />
+            <input
+              className="form-input member-input"
+              placeholder="이름"
+              value={form.memberName}
+              onChange={(e) => setForm({ ...form, memberName: e.target.value })}
+            />
+            <select
+              className="form-input dept-select"
+              value={form.department}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+            >
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+            <select
+              className="form-input status-select"
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value as RequestStatus })}
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+            <input
+              className="form-input date-input"
+              type="text"
+              placeholder="요구일 (예: 2026. 09. 17.)"
+              value={form.requestedDate}
+              onChange={(e) => setForm({ ...form, requestedDate: e.target.value })}
+            />
+          </div>
+          <div className="form-row">
+            <textarea
+              className="form-input content-textarea"
+              placeholder="요구내용을 입력하세요..."
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+            />
+            <input
+              className="form-input budget-item-input"
+              placeholder="사업명 (세부사업+부기명)"
+              value={form.budgetItemName}
+              onChange={(e) => setForm({ ...form, budgetItemName: e.target.value })}
+            />
+            <input
+              className="form-input amount-input"
+              placeholder="요구액 (예: 6억)"
+              value={form.requestedAmount}
+              onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
+            />
+            <button className="add-button" onClick={handleAdd}>추가</button>
+          </div>
+        </section>
+
+        <section className="table-section">
+          <h2 className="table-title">당정협의회 요구</h2>
+          {renderTable(partyRequests, "등록된 당정협의회 요구가 없습니다")}
+        </section>
+
+        <section className="table-section">
+          <h2 className="table-title">시의원 요구</h2>
+          {renderTable(memberRequests, "등록된 시의원 요구가 없습니다")}
         </section>
       </div>
 
@@ -504,6 +522,18 @@ export default function CouncilMemberRequests() {
           border: 1px solid var(--border);
           border-radius: 8px;
           overflow: auto;
+        }
+
+        .table-section + .table-section {
+          margin-top: 28px;
+        }
+
+        .table-title {
+          margin: 0;
+          padding: 14px 16px;
+          font-size: 15px;
+          font-weight: 700;
+          border-bottom: 1px solid var(--border);
         }
 
         .requests-table {
