@@ -34,9 +34,23 @@ const emptyForm = () => ({
   requestedDate: todayString(),
 });
 
+type EditDraft = Omit<MayorRequest, "id" | "status">;
+
+const draftFromItem = (item: MayorRequest): EditDraft => ({
+  requesterType: item.requesterType,
+  memberName: item.memberName,
+  department: item.department,
+  content: item.content,
+  budgetItemName: item.budgetItemName,
+  requestedAmount: item.requestedAmount,
+  requestedDate: item.requestedDate,
+});
+
 export default function MayorViceMayorRequests() {
   const [requests, setRequests] = useState<MayorRequest[]>([]);
   const [form, setForm] = useState(emptyForm());
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
 
   // 서버 데이터를 우선 로드하고, 서버를 사용할 수 없는 경우 localStorage를 사용한다.
   useEffect(() => {
@@ -66,6 +80,19 @@ export default function MayorViceMayorRequests() {
     loadRequests();
   }, []);
 
+  const persist = async (updatedItem: MayorRequest) => {
+    try {
+      const response = await fetch("/api/cloud-sync?type=mayor-requests", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: updatedItem }),
+      });
+      if (!response.ok) throw new Error("서버 저장 실패");
+    } catch (error) {
+      console.warn("시장·부시장 요구사항 서버 저장 실패:", error);
+    }
+  };
+
   const handleAdd = async () => {
     if (!form.memberName.trim() || !form.content.trim()) return;
 
@@ -85,17 +112,7 @@ export default function MayorViceMayorRequests() {
     setRequests(updated);
     localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
     setForm(emptyForm());
-
-    try {
-      const response = await fetch("/api/cloud-sync?type=mayor-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: newItem }),
-      });
-      if (!response.ok) throw new Error("서버 저장 실패");
-    } catch (error) {
-      console.warn("시장·부시장 요구사항 서버 저장 실패:", error);
-    }
+    await persist(newItem);
   };
 
   const handleStatusChange = async (id: string, status: RequestStatus) => {
@@ -105,23 +122,17 @@ export default function MayorViceMayorRequests() {
     const updated = requests.map((item) => (item.id === id ? updatedItem : item));
     setRequests(updated);
     localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
-
-    try {
-      const response = await fetch("/api/cloud-sync?type=mayor-requests", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ data: updatedItem }),
-      });
-      if (!response.ok) throw new Error("서버 저장 실패");
-    } catch (error) {
-      console.warn("반영여부 서버 저장 실패:", error);
-    }
+    await persist(updatedItem);
   };
 
   const handleDelete = async (id: string) => {
     const updated = requests.filter((item) => item.id !== id);
     setRequests(updated);
     localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
+    if (editingId === id) {
+      setEditingId(null);
+      setEditDraft(null);
+    }
 
     try {
       const response = await fetch("/api/cloud-sync?type=mayor-requests", {
@@ -133,6 +144,40 @@ export default function MayorViceMayorRequests() {
     } catch (error) {
       console.warn("시장·부시장 요구사항 삭제 서버 저장 실패:", error);
     }
+  };
+
+  const startEdit = (item: MayorRequest) => {
+    setEditingId(item.id);
+    setEditDraft(draftFromItem(item));
+  };
+
+  const cancelEdit = () => {
+    setEditingId(null);
+    setEditDraft(null);
+  };
+
+  const saveEdit = async (id: string) => {
+    if (!editDraft) return;
+    const target = requests.find((item) => item.id === id);
+    if (!target) return;
+    if (!editDraft.memberName.trim() || !editDraft.content.trim()) return;
+
+    const updatedItem: MayorRequest = {
+      ...target,
+      requesterType: editDraft.requesterType,
+      memberName: editDraft.memberName.trim(),
+      department: editDraft.department,
+      content: editDraft.content.trim(),
+      budgetItemName: editDraft.budgetItemName.trim(),
+      requestedAmount: editDraft.requestedAmount.trim(),
+      requestedDate: editDraft.requestedDate,
+    };
+    const updated = requests.map((item) => (item.id === id ? updatedItem : item));
+    setRequests(updated);
+    localStorage.setItem("mayorViceMayorRequests", JSON.stringify(updated));
+    setEditingId(null);
+    setEditDraft(null);
+    await persist(updatedItem);
   };
 
   return (
@@ -210,55 +255,149 @@ export default function MayorViceMayorRequests() {
 
         <section className="table-section">
           <table className="requests-table">
+            <colgroup>
+              <col className="col-num" />
+              <col className="col-type" />
+              <col className="col-member" />
+              <col className="col-dept" />
+              <col className="col-content" />
+              <col className="col-budget-item" />
+              <col className="col-amount" />
+              <col className="col-date" />
+              <col className="col-status" />
+              <col className="col-action" />
+            </colgroup>
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th className="col-type">구분</th>
-                <th className="col-member">이름</th>
-                <th className="col-dept">소관부서</th>
-                <th className="col-content">요구내용</th>
-                <th className="col-budget-item">사업명 (세부사업+부기명)</th>
-                <th className="col-amount">요구액</th>
-                <th className="col-date">요구일</th>
-                <th className="col-status">반영여부</th>
-                <th className="col-action">삭제</th>
+                <th>구분</th>
+                <th>이름</th>
+                <th>소관부서</th>
+                <th>요구내용</th>
+                <th>사업명 (세부사업+부기명)</th>
+                <th>요구액</th>
+                <th>요구일</th>
+                <th>반영여부</th>
+                <th className="col-action">관리</th>
               </tr>
             </thead>
             <tbody>
               {requests.length > 0 ? (
-                requests.map((item, index) => (
-                  <tr key={item.id}>
-                    <td className="col-num">{requests.length - index}</td>
-                    <td className="col-type">
-                      <span className={`type-badge type-${item.requesterType}`}>{item.requesterType}</span>
-                    </td>
-                    <td className="col-member">{item.memberName}</td>
-                    <td className="col-dept">{item.department}</td>
-                    <td className="col-content">{item.content}</td>
-                    <td className="col-budget-item">{item.budgetItemName}</td>
-                    <td className="col-amount">{item.requestedAmount}</td>
-                    <td className="col-date">{item.requestedDate}</td>
-                    <td className="col-status">
-                      <select
-                        className={`status-badge status-${item.status}`}
-                        value={item.status}
-                        onChange={(e) => handleStatusChange(item.id, e.target.value as RequestStatus)}
-                      >
-                        {STATUS_OPTIONS.map((status) => (
-                          <option key={status} value={status}>{status}</option>
-                        ))}
-                      </select>
-                    </td>
-                    <td className="col-action">
-                      <button
-                        type="button"
-                        className="delete-button"
-                        onClick={() => handleDelete(item.id)}
-                        aria-label="요구사항 삭제"
-                      >삭제</button>
-                    </td>
-                  </tr>
-                ))
+                requests.map((item, index) => {
+                  const isEditing = editingId === item.id && editDraft;
+                  return (
+                    <tr key={item.id}>
+                      <td className="col-num">{index + 1}</td>
+                      {isEditing ? (
+                        <>
+                          <td>
+                            <select
+                              className="cell-input"
+                              value={editDraft.requesterType}
+                              onChange={(e) => setEditDraft({ ...editDraft, requesterType: e.target.value as RequesterType })}
+                            >
+                              {REQUESTER_TYPE_OPTIONS.map((type) => (
+                                <option key={type} value={type}>{type}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <input
+                              className="cell-input"
+                              value={editDraft.memberName}
+                              onChange={(e) => setEditDraft({ ...editDraft, memberName: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <select
+                              className="cell-input"
+                              value={editDraft.department}
+                              onChange={(e) => setEditDraft({ ...editDraft, department: e.target.value })}
+                            >
+                              {DEPARTMENTS.map((dept) => (
+                                <option key={dept} value={dept}>{dept}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <textarea
+                              className="cell-input cell-textarea"
+                              value={editDraft.content}
+                              onChange={(e) => setEditDraft({ ...editDraft, content: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className="cell-input"
+                              value={editDraft.budgetItemName}
+                              onChange={(e) => setEditDraft({ ...editDraft, budgetItemName: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className="cell-input"
+                              value={editDraft.requestedAmount}
+                              onChange={(e) => setEditDraft({ ...editDraft, requestedAmount: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className="cell-input"
+                              value={editDraft.requestedDate}
+                              onChange={(e) => setEditDraft({ ...editDraft, requestedDate: e.target.value })}
+                            />
+                          </td>
+                        </>
+                      ) : (
+                        <>
+                          <td>
+                            <span className={`type-badge type-${item.requesterType}`}>{item.requesterType}</span>
+                          </td>
+                          <td className="col-member">{item.memberName}</td>
+                          <td>{item.department}</td>
+                          <td className="col-content">{item.content}</td>
+                          <td>{item.budgetItemName}</td>
+                          <td className="col-amount">{item.requestedAmount}</td>
+                          <td className="col-date">{item.requestedDate}</td>
+                        </>
+                      )}
+                      <td>
+                        <select
+                          className={`status-badge status-${item.status}`}
+                          value={item.status}
+                          onChange={(e) => handleStatusChange(item.id, e.target.value as RequestStatus)}
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="col-action">
+                        {isEditing ? (
+                          <div className="action-buttons">
+                            <button type="button" className="save-button" onClick={() => saveEdit(item.id)}>저장</button>
+                            <button type="button" className="cancel-button" onClick={cancelEdit}>취소</button>
+                          </div>
+                        ) : (
+                          <div className="action-buttons">
+                            <button
+                              type="button"
+                              className="edit-button"
+                              onClick={() => startEdit(item)}
+                              aria-label="요구사항 편집"
+                            >편집</button>
+                            <button
+                              type="button"
+                              className="delete-button"
+                              onClick={() => handleDelete(item.id)}
+                              aria-label="요구사항 삭제"
+                            >삭제</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
               ) : (
                 <tr>
                   <td colSpan={10} className="empty-row">등록된 요구사항이 없습니다</td>
@@ -380,6 +519,7 @@ export default function MayorViceMayorRequests() {
 
         .requests-table {
           width: 100%;
+          table-layout: fixed;
           border-collapse: collapse;
           font-size: 14px;
         }
@@ -390,6 +530,8 @@ export default function MayorViceMayorRequests() {
           border-bottom: 1px solid var(--border);
           text-align: left;
           vertical-align: top;
+          word-break: break-word;
+          overflow-wrap: break-word;
         }
 
         .requests-table th {
@@ -397,64 +539,74 @@ export default function MayorViceMayorRequests() {
           color: var(--text-muted);
           font-weight: 600;
           font-size: 13px;
-          white-space: nowrap;
         }
 
         .requests-table td {
           color: var(--text);
         }
 
+        col.col-num { width: 4%; }
+        col.col-type { width: 8%; }
+        col.col-member { width: 7%; }
+        col.col-dept { width: 8%; }
+        col.col-content { width: 23%; }
+        col.col-budget-item { width: 14%; }
+        col.col-amount { width: 8%; }
+        col.col-date { width: 9%; }
+        col.col-status { width: 8%; }
+        col.col-action { width: 11%; }
+
         .col-num {
-          width: 48px;
           text-align: center;
           color: var(--text-muted);
         }
 
         .col-member {
-          width: 100px;
           font-weight: 600;
         }
 
-        .col-type {
-          width: 64px;
-          text-align: center;
-        }
-
-        .col-dept {
-          width: 120px;
-        }
-
         .col-content {
-          min-width: 260px;
           white-space: pre-wrap;
-          word-break: break-word;
-        }
-
-        .col-budget-item {
-          width: 130px;
         }
 
         .col-amount {
-          width: 100px;
           white-space: nowrap;
         }
 
         .col-date {
-          width: 110px;
           white-space: nowrap;
           color: var(--text-muted);
         }
 
-        .col-status {
-          width: 100px;
-        }
-
         .col-action {
-          width: 60px;
           text-align: center;
         }
 
+        .cell-input {
+          width: 100%;
+          background: var(--bg-surface);
+          border: 1px solid #5b9bf0;
+          border-radius: 4px;
+          color: var(--text);
+          font-family: inherit;
+          font-size: 13px;
+          padding: 4px 6px;
+        }
+
+        .cell-textarea {
+          resize: vertical;
+          min-height: 40px;
+        }
+
+        .action-buttons {
+          display: flex;
+          flex-direction: column;
+          gap: 4px;
+          align-items: stretch;
+        }
+
         .status-badge {
+          width: 100%;
           border-radius: 5px;
           border: 1px solid var(--border);
           background: var(--bg-surface);
@@ -504,14 +656,50 @@ export default function MayorViceMayorRequests() {
           background: rgba(82, 196, 217, 0.1);
         }
 
-        .delete-button {
-          border: 1px solid rgba(255, 107, 125, 0.35);
+        .edit-button,
+        .delete-button,
+        .save-button,
+        .cancel-button {
           border-radius: 5px;
           padding: 3px 8px;
-          background: rgba(255, 107, 125, 0.08);
-          color: #ff9aa7;
           font-size: 12px;
           cursor: pointer;
+        }
+
+        .edit-button {
+          border: 1px solid rgba(91, 155, 240, 0.35);
+          background: rgba(91, 155, 240, 0.08);
+          color: #5b9bf0;
+        }
+
+        .edit-button:hover {
+          background: rgba(91, 155, 240, 0.18);
+        }
+
+        .save-button {
+          border: 1px solid rgba(126, 231, 135, 0.35);
+          background: rgba(126, 231, 135, 0.08);
+          color: #7ee787;
+        }
+
+        .save-button:hover {
+          background: rgba(126, 231, 135, 0.18);
+        }
+
+        .cancel-button {
+          border: 1px solid var(--border);
+          background: var(--bg-surface);
+          color: var(--text-muted);
+        }
+
+        .cancel-button:hover {
+          color: var(--text);
+        }
+
+        .delete-button {
+          border: 1px solid rgba(255, 107, 125, 0.35);
+          background: rgba(255, 107, 125, 0.08);
+          color: #ff9aa7;
         }
 
         .delete-button:hover {
