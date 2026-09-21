@@ -54,8 +54,16 @@ import {
   Database,
   Landmark,
   Calculator,
+  Network,
 } from "lucide-react";
 import { CHEJEON_ESTIMATES, CHEJEON_CONF_LABEL } from "@/lib/chejeonEstimates";
+import {
+  CHEJEON_ORG,
+  CHEJEON_ORG_COUNTS,
+  CHEJEON_COMMITTEE,
+  CHEJEON_SITUATION_ROOM,
+  CHEJEON_CITIZEN_GROUP,
+} from "@/lib/chejeonOrg";
 
 type Status = "정상" | "오류" | "주의" | "사전";
 
@@ -841,6 +849,9 @@ export default function Home() {
   // 전국체전 소요 검토 패널. 세출예산내역서 옆 버튼으로 연다.
   const [showChejeon, setShowChejeon] = useState(false);
   const [chejeonConf, setChejeonConf] = useState<"" | "A" | "B" | "C">("");
+  // 전국체전 본부 조직도 패널.
+  const [showChejeonOrg, setShowChejeonOrg] = useState(false);
+  const [chejeonOrgOpen, setChejeonOrgOpen] = useState<number | null>(null);
   // 다중 선택 가능(배열). 예산설명자료 화면에서 "돌아가기"로 넘어올 때는 항상 세부사업 하나만
   // 지정해서 돌아오므로 그 하나를 담은 배열로 시작한다.
   const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState<string[]>(() => {
@@ -2258,7 +2269,22 @@ export default function Home() {
                     }}
                   >
                     <Calculator size={14} />
-                    전국체전 소요 검토
+                    전국체전 소요 예산 검토(시전체)
+                  </button>
+                  <button
+                    type="button"
+                    className="no-print"
+                    onClick={() => setShowChejeonOrg(true)}
+                    title="2027 전국체전 대회준비 추진체계(1실 18부 84팀)"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '5px 11px', fontSize: '13px', fontWeight: 600,
+                      color: '#1e3a5f', background: '#e3e9f1',
+                      border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer',
+                    }}
+                  >
+                    <Network size={14} />
+                    본부 조직도
                   </button>
                 </div>
                 <div className="no-print" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
@@ -2774,6 +2800,155 @@ export default function Home() {
                   <p style={{ margin: '0 0 5px' }}><strong>확실도</strong> 실단가 = 경기도 편성요청 목록의 실제 단가(방역 358천원/개소·일, 구급차 1,200천원/대·일, 청소 130천원/인·일) · 유사단가 = 시중노임단가·기존 용역 단가 환산 · 규모추정 = 대회 규모(경기장 25개소·3만명·7일)로 추정</p>
                   <p style={{ margin: '0 0 5px' }}><strong>이미 편성된 것과의 관계</strong> 전국체전추진단 183.5억, 체육진흥과 축구경기장 18.0억, 관광진흥과 지질공원 홍보관 0.7억은 별도입니다. 추진단에 잡힌 항목(성화봉송 200,000·문화예술행사 90,000·자원봉사 284,000)은 해당 부서 검토액에서 차감했습니다. 추진단 &ldquo;대회 운영 지원 2,960,000&rdquo;은 내역이 없어 중복 여부가 확인되지 않았습니다.</p>
                   <p style={{ margin: 0 }}><strong>출처</strong> 2027년 전국(장애인)체육대회 기본계획(안) Ⅲ 집행부별 세부추진계획 · 2027년 전국체전 화성시 자체사업 편성 요청 목록(안)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
+      {showChejeonOrg && (() => {
+        const totalTeams = CHEJEON_ORG.reduce((s, u) => s + u.teams.length, 0);
+        const box = (title: string, body: React.ReactNode, accent: string) => (
+          <div style={{
+            flex: '1 1 260px', minWidth: 0, background: '#ffffff',
+            border: '1px solid #dfe4ea', borderLeft: `4px solid ${accent}`,
+            borderRadius: '6px', padding: '12px 14px',
+          }}>
+            <div style={{ fontSize: '12px', fontWeight: 800, color: accent, marginBottom: '6px' }}>{title}</div>
+            <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.7 }}>{body}</div>
+          </div>
+        );
+        return (
+          <div className="modal-backdrop" onMouseDown={() => setShowChejeonOrg(false)}>
+            <div
+              className="modal-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chejeon-org-title"
+              onMouseDown={(event) => event.stopPropagation()}
+              style={{
+                width: 'min(1280px, 96vw)', maxWidth: 'none', maxHeight: '92vh',
+                display: 'flex', flexDirection: 'column',
+                background: '#f7f8f6', border: '1px solid #b7c2cf',
+                color: '#1a2129', padding: '20px 0 0',
+              }}
+            >
+              <div className="modal-head" style={{ padding: '0 24px' }}>
+                <div>
+                  <span style={{ color: '#4a6b8a' }}>2027 전국(장애인)체육대회</span>
+                  <h2 id="chejeon-org-title" style={{ color: '#16283c' }}>대회준비 추진체계 · 본부 조직도</h2>
+                </div>
+                <button
+                  className="close-button"
+                  onClick={() => setShowChejeonOrg(false)}
+                  aria-label="닫기"
+                  style={{ color: '#46525e', background: 'transparent', border: '1px solid #c3ccd6' }}
+                ><X size={19} /></button>
+              </div>
+
+              <div style={{ overflow: 'auto', padding: '14px 24px 20px', flex: 1, background: '#f7f8f6' }}>
+                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
+                  {box('운영위원회 (심의·의결)', (
+                    <>
+                      위원장 {CHEJEON_COMMITTEE.chair}<br />
+                      부위원장 {CHEJEON_COMMITTEE.viceChairs}<br />
+                      고문 {CHEJEON_COMMITTEE.advisors}<br />
+                      위원 {CHEJEON_COMMITTEE.members}
+                      <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#6b7280' }}>{CHEJEON_COMMITTEE.note}</div>
+                    </>
+                  ), '#1e3a5f')}
+                  {box('종합상황실 (집행 총괄)', (
+                    <>
+                      {CHEJEON_SITUATION_ROOM.head}<br />
+                      {CHEJEON_SITUATION_ROOM.deputy}
+                      <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#9b2a21', fontWeight: 600 }}>{CHEJEON_SITUATION_ROOM.note}</div>
+                    </>
+                  ), '#9b2a21')}
+                  {box('시민추진단', (
+                    <>
+                      {CHEJEON_CITIZEN_GROUP.scale}<br />
+                      {CHEJEON_CITIZEN_GROUP.role}
+                    </>
+                  ), '#166534')}
+                </div>
+
+                <div style={{ marginBottom: '16px' }}>
+                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#16283c', marginBottom: '6px' }}>구성 규모 — 1실 18부 84팀</div>
+                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', background: '#ffffff', color: '#1a2129' }}>
+                    <thead>
+                      <tr style={{ background: '#1e3a5f', color: '#fff' }}>
+                        <th style={{ padding: '8px 10px', textAlign: 'left', width: '90px' }}>구분</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>계</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>시</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>읍·면·동</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>교육지원청</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>경찰서</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>소방서</th>
+                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>체육회</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {CHEJEON_ORG_COUNTS.map((r, i) => (
+                        <tr key={r.row} style={{ borderTop: '1px solid #dfe4ea', background: i % 2 ? '#fafbfa' : '#ffffff' }}>
+                          <td style={{ padding: '8px 10px', fontWeight: 700, color: '#16283c' }}>{r.row}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#16283c' }}>{r.total}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.city || '–'}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.town || '–'}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.edu || '–'}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.police || '–'}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.fire || '–'}</td>
+                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.sports || '–'}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div style={{ fontSize: '13px', fontWeight: 700, color: '#16283c', marginBottom: '6px' }}>
+                  집행부 {CHEJEON_ORG.length}개 · 팀 {totalTeams}개 <span style={{ fontWeight: 500, color: '#6b7280', fontSize: '11.5px' }}>(행을 누르면 담당업무가 펼쳐집니다)</span>
+                </div>
+                <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse', fontSize: '12.5px', background: '#ffffff', color: '#1a2129' }}>
+                  <thead>
+                    <tr style={{ background: '#1e3a5f', color: '#fff', position: 'sticky', top: 0, zIndex: 1 }}>
+                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '44px' }}>연번</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '150px' }}>집행부</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '260px' }}>소관 실·국·기관</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left' }}>소속 팀</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '56px' }}>팀수</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {CHEJEON_ORG.map((u, i) => (
+                      <Fragment key={u.no}>
+                        <tr
+                          onClick={() => setChejeonOrgOpen(chejeonOrgOpen === u.no ? null : u.no)}
+                          style={{
+                            borderTop: '1px solid #dfe4ea', cursor: 'pointer',
+                            background: chejeonOrgOpen === u.no ? '#eef3f9' : (i % 2 ? '#fafbfa' : '#ffffff'),
+                          }}
+                        >
+                          <td style={{ padding: '9px 10px', textAlign: 'center', color: '#6b7280', verticalAlign: 'top' }}>{u.no}</td>
+                          <td style={{ padding: '9px 10px', fontWeight: 700, color: '#16283c', verticalAlign: 'top' }}>{u.name}</td>
+                          <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'top' }}>{u.owner}</td>
+                          <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'top' }}>{u.teams.join(' · ')}</td>
+                          <td style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 700, color: '#16283c', verticalAlign: 'top' }}>{u.teams.length}</td>
+                        </tr>
+                        {chejeonOrgOpen === u.no && (
+                          <tr style={{ background: '#f4f8fc' }}>
+                            <td />
+                            <td colSpan={4} style={{ padding: '4px 10px 12px', color: '#374151', fontSize: '12px', lineHeight: 1.8 }}>
+                              <strong style={{ color: '#1e3a5f' }}>담당업무</strong> {u.duties.join(' · ')}
+                            </td>
+                          </tr>
+                        )}
+                      </Fragment>
+                    ))}
+                  </tbody>
+                </table>
+
+                <div style={{ marginTop: '16px', fontSize: '11.5px', color: '#5b6672', lineHeight: 1.7 }}>
+                  <p style={{ margin: '0 0 5px' }}><strong>운영</strong> 평시에는 전국체전추진단이 준비를 총괄하고, 대회 6개월 전부터 교육체육국장을 실장으로 하는 「종합상황실」 체제로 전환해 18개 집행부를 지휘합니다.</p>
+                  <p style={{ margin: 0 }}><strong>출처</strong> 2027년 전국(장애인)체육대회 기본계획(안) Ⅰ-6 대회준비 추진체계 구축 · Ⅲ 집행부별 세부추진계획</p>
                 </div>
               </div>
             </div>
