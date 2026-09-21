@@ -309,6 +309,35 @@ const districtAreaByGroup = DISTRICT_MEMBERS.reduce<Record<string, string>>((acc
   return acc;
 }, {});
 
+// 이름만 넣으면 원구성 현황 명부에서 선거구·소속정당·위원회를 끌어다 채운다.
+const MEMBER_BY_NAME = DISTRICT_MEMBERS.reduce<Record<string, DistrictMember>>((acc, row) => {
+  if (!(row.name in acc)) acc[row.name] = row;
+  return acc;
+}, {});
+
+const MEMBER_NAMES = Object.keys(MEMBER_BY_NAME);
+const MEMBER_NAME_DATALIST_ID = "council-member-names";
+
+type RosterFields = {
+  memberName: string;
+  electoralDistrict: string;
+  partyName: string;
+  committee: string;
+};
+
+// 명부에 없는 이름(당직자 등)은 이름만 바꾸고 나머지 칸은 손대지 않는다.
+const fillFromRoster = <T extends RosterFields>(base: T, name: string): T => {
+  const hit = MEMBER_BY_NAME[name.trim()];
+  if (!hit) return { ...base, memberName: name };
+  return {
+    ...base,
+    memberName: name,
+    electoralDistrict: hit.district,
+    partyName: hit.party,
+    committee: hit.committee,
+  };
+};
+
 export default function CouncilMemberRequests() {
   const [requests, setRequests] = useState<CouncilRequest[]>([]);
   const [activeTab, setActiveTab] = useState<MainTabKey>("당정협의회");
@@ -519,8 +548,9 @@ export default function CouncilMemberRequests() {
                           <td>
                             <input
                               className="cell-input"
+                              list={MEMBER_NAME_DATALIST_ID}
                               value={editDraft.memberName}
-                              onChange={(e) => setEditDraft({ ...editDraft, memberName: e.target.value })}
+                              onChange={(e) => setEditDraft(fillFromRoster(editDraft, e.target.value))}
                             />
                           </td>
                           <td>
@@ -679,9 +709,17 @@ export default function CouncilMemberRequests() {
             <input
               className="form-input member-input"
               placeholder="이름"
+              list={MEMBER_NAME_DATALIST_ID}
               value={form.memberName}
-              onChange={(e) => setForm({ ...form, memberName: e.target.value })}
+              onChange={(e) => setForm(fillFromRoster(form, e.target.value))}
             />
+            <datalist id={MEMBER_NAME_DATALIST_ID}>
+              {MEMBER_NAMES.map((name) => (
+                <option key={name} value={name}>
+                  {`${MEMBER_BY_NAME[name].district} · ${MEMBER_BY_NAME[name].party} · ${MEMBER_BY_NAME[name].committee}`}
+                </option>
+              ))}
+            </datalist>
             <input
               className="form-input committee-input"
               placeholder="위원회"
