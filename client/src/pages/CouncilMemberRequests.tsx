@@ -73,7 +73,7 @@ const COMPOSITION_TABS: { key: CompositionTabKey; label: string }[] = [
   { key: "지역구별 의원 현황", label: "지역구별 의원 현황" },
 ];
 
-type CommitteeMember = { name: string; phone: string };
+type CommitteeMember = { name: string };
 
 type CommitteeKey = "의회운영" | "기획행정" | "경제환경" | "문화체육" | "도시건설" | "보건복지" | "윤리특별";
 
@@ -83,73 +83,73 @@ type CommitteeRoster = { chair: CommitteeMember; viceChair: CommitteeMember; mem
 
 const COMMITTEE_ROSTERS: Record<CommitteeKey, CommitteeRoster> = {
   의회운영: {
-    chair: { name: "정순영", phone: "010-4135-3573" },
-    viceChair: { name: "장동희", phone: "010-6725-9007" },
+    chair: { name: "정순영" },
+    viceChair: { name: "장동희" },
     members: [
-      { name: "고병태", phone: "010-9223-9934" },
-      { name: "김기현", phone: "010-2558-0005" },
-      { name: "오문섭", phone: "010-5231-3544" },
-      { name: "유상희", phone: "010-9516-1028" },
-      { name: "이민희", phone: "010-9005-7849" },
+      { name: "고병태" },
+      { name: "김기현" },
+      { name: "오문섭" },
+      { name: "유상희" },
+      { name: "이민희" },
     ],
   },
   기획행정: {
-    chair: { name: "배현경", phone: "010-2346-1826" },
-    viceChair: { name: "정명희", phone: "010-5246-9310" },
+    chair: { name: "배현경" },
+    viceChair: { name: "정명희" },
     members: [
-      { name: "박진섭", phone: "010-8705-0933" },
-      { name: "박진희", phone: "010-5539-3119" },
-      { name: "유상희", phone: "010-9516-1028" },
-      { name: "조정옥", phone: "010-5246-8258" },
+      { name: "박진섭" },
+      { name: "박진희" },
+      { name: "유상희" },
+      { name: "조정옥" },
     ],
   },
   경제환경: {
-    chair: { name: "김상수", phone: "010-2363-8198" },
-    viceChair: { name: "이은진", phone: "010-7315-7455" },
+    chair: { name: "김상수" },
+    viceChair: { name: "이은진" },
     members: [
-      { name: "고병태", phone: "010-9223-9934" },
-      { name: "김정주", phone: "010-9580-4884" },
-      { name: "김창겸", phone: "010-8860-5703" },
-      { name: "이민희", phone: "010-9005-7849" },
+      { name: "고병태" },
+      { name: "김정주" },
+      { name: "김창겸" },
+      { name: "이민희" },
     ],
   },
   문화체육: {
-    chair: { name: "김미영", phone: "010-9119-7664" },
-    viceChair: { name: "장철규", phone: "010-8978-4888" },
+    chair: { name: "김미영" },
+    viceChair: { name: "장철규" },
     members: [
-      { name: "신동희", phone: "010-4811-6515" },
-      { name: "유지혜", phone: "010-8020-8082" },
-      { name: "이남근", phone: "010-5356-1990" },
-      { name: "장동희", phone: "010-6725-9007" },
+      { name: "신동희" },
+      { name: "유지혜" },
+      { name: "이남근" },
+      { name: "장동희" },
     ],
   },
   도시건설: {
-    chair: { name: "김상균", phone: "010-2376-3670" },
-    viceChair: { name: "최청환", phone: "010-4703-9066" },
+    chair: { name: "김상균" },
+    viceChair: { name: "최청환" },
     members: [
-      { name: "송현미", phone: "010-9443-0904" },
-      { name: "오문섭", phone: "010-5231-3544" },
-      { name: "정순영", phone: "010-4135-3573" },
-      { name: "최태양", phone: "010-4813-9830" },
+      { name: "송현미" },
+      { name: "오문섭" },
+      { name: "정순영" },
+      { name: "최태양" },
     ],
   },
   보건복지: {
-    chair: { name: "최은희", phone: "010-7370-0051" },
-    viceChair: { name: "권영학", phone: "010-5345-1196" },
+    chair: { name: "최은희" },
+    viceChair: { name: "권영학" },
     members: [
-      { name: "김기현", phone: "010-2558-0005" },
-      { name: "신미정", phone: "010-4661-3319" },
-      { name: "위영란", phone: "010-7200-3049" },
-      { name: "임채덕", phone: "010-5616-1542" },
+      { name: "김기현" },
+      { name: "신미정" },
+      { name: "위영란" },
+      { name: "임채덕" },
     ],
   },
   윤리특별: {
-    chair: { name: "신동희", phone: "010-4811-6515" },
-    viceChair: { name: "박진희", phone: "010-5539-3119" },
+    chair: { name: "신동희" },
+    viceChair: { name: "박진희" },
     members: [
-      { name: "박진섭", phone: "010-8705-0933" },
-      { name: "송현미", phone: "010-9443-0904" },
-      { name: "최태양", phone: "010-4813-9830" },
+      { name: "박진섭" },
+      { name: "송현미" },
+      { name: "최태양" },
     ],
   },
 };
@@ -785,7 +785,7 @@ export default function CouncilMemberRequests() {
         {activeTab === "원구성 현황" && (
         <>
           <section className="cc-summary-box">
-            <div>제10대 화성시의회 전반기 원구성 현황 &nbsp;·&nbsp; 의장: 이계철 (010-3361-8282) &nbsp;/&nbsp; 부의장: 임채덕 (010-5616-1542)</div>
+            <div>제10대 화성시의회 전반기 원구성 현황 &nbsp;·&nbsp; 의장: 이계철 &nbsp;/&nbsp; 부의장: 임채덕</div>
             <div className="cc-summary-sub">26. 7. 3. 기준</div>
           </section>
 
@@ -822,7 +822,6 @@ export default function CouncilMemberRequests() {
                         return (
                           <td key={key} className="cc-member-cell">
                             <div className="cc-member-name">{m.name}</div>
-                            <div className="cc-member-phone">{m.phone}</div>
                           </td>
                         );
                       })}
@@ -834,7 +833,6 @@ export default function CouncilMemberRequests() {
                         return (
                           <td key={key} className="cc-member-cell">
                             <div className="cc-member-name">{m.name}</div>
-                            <div className="cc-member-phone">{m.phone}</div>
                           </td>
                         );
                       })}
@@ -850,12 +848,7 @@ export default function CouncilMemberRequests() {
                           const m = COMMITTEE_ROSTERS[key].members[rowIndex];
                           return (
                             <td key={key} className="cc-member-cell">
-                              {m && (
-                                <>
-                                  <div className="cc-member-name">{m.name}</div>
-                                  <div className="cc-member-phone">{m.phone}</div>
-                                </>
-                              )}
+                              {m && <div className="cc-member-name">{m.name}</div>}
                             </td>
                           );
                         })}
@@ -1363,13 +1356,6 @@ export default function CouncilMemberRequests() {
           font-weight: 600;
         }
 
-        .cc-member-phone {
-          margin-top: 2px;
-          font-size: 11px;
-          color: var(--text-muted);
-          white-space: nowrap;
-        }
-
         .cc-table tbody tr:nth-child(even) {
           background: rgba(118, 157, 194, 0.04);
         }
@@ -1432,12 +1418,13 @@ export default function CouncilMemberRequests() {
         }
 
         .cc-district-name {
+          font-size: 17px;
           font-weight: 700;
         }
 
         .cc-district-area {
           margin-top: 2px;
-          font-size: 11px;
+          font-size: 14px;
           color: var(--text-muted);
           white-space: normal;
         }
