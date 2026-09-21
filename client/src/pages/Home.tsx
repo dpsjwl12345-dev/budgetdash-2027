@@ -57,13 +57,7 @@ import {
   Network,
 } from "lucide-react";
 import { CHEJEON_ESTIMATES, CHEJEON_CONF_LABEL } from "@/lib/chejeonEstimates";
-import {
-  CHEJEON_ORG,
-  CHEJEON_ORG_COUNTS,
-  CHEJEON_COMMITTEE,
-  CHEJEON_SITUATION_ROOM,
-  CHEJEON_CITIZEN_GROUP,
-} from "@/lib/chejeonOrg";
+import { CHEJEON_ORG } from "@/lib/chejeonOrg";
 
 type Status = "정상" | "오류" | "주의" | "사전";
 
@@ -2808,16 +2802,6 @@ export default function Home() {
       })()}
       {showChejeonOrg && (() => {
         const totalTeams = CHEJEON_ORG.reduce((s, u) => s + u.teams.length, 0);
-        const box = (title: string, body: React.ReactNode, accent: string) => (
-          <div style={{
-            flex: '1 1 260px', minWidth: 0, background: '#ffffff',
-            border: '1px solid #dfe4ea', borderLeft: `4px solid ${accent}`,
-            borderRadius: '6px', padding: '12px 14px',
-          }}>
-            <div style={{ fontSize: '12px', fontWeight: 800, color: accent, marginBottom: '6px' }}>{title}</div>
-            <div style={{ fontSize: '12px', color: '#374151', lineHeight: 1.7 }}>{body}</div>
-          </div>
-        );
         return (
           <div className="modal-backdrop" onMouseDown={() => setShowChejeonOrg(false)}>
             <div
@@ -2847,74 +2831,17 @@ export default function Home() {
               </div>
 
               <div style={{ overflow: 'auto', padding: '14px 24px 20px', flex: 1, background: '#f7f8f6' }}>
-                <div style={{ display: 'flex', gap: '10px', flexWrap: 'wrap', marginBottom: '14px' }}>
-                  {box('운영위원회 (심의·의결)', (
-                    <>
-                      위원장 {CHEJEON_COMMITTEE.chair}<br />
-                      부위원장 {CHEJEON_COMMITTEE.viceChairs}<br />
-                      고문 {CHEJEON_COMMITTEE.advisors}<br />
-                      위원 {CHEJEON_COMMITTEE.members}
-                      <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#6b7280' }}>{CHEJEON_COMMITTEE.note}</div>
-                    </>
-                  ), '#1e3a5f')}
-                  {box('종합상황실 (집행 총괄)', (
-                    <>
-                      {CHEJEON_SITUATION_ROOM.head}<br />
-                      {CHEJEON_SITUATION_ROOM.deputy}
-                      <div style={{ marginTop: '6px', fontSize: '11.5px', color: '#9b2a21', fontWeight: 600 }}>{CHEJEON_SITUATION_ROOM.note}</div>
-                    </>
-                  ), '#9b2a21')}
-                  {box('시민추진단', (
-                    <>
-                      {CHEJEON_CITIZEN_GROUP.scale}<br />
-                      {CHEJEON_CITIZEN_GROUP.role}
-                    </>
-                  ), '#166534')}
-                </div>
-
-                <div style={{ marginBottom: '16px' }}>
-                  <div style={{ fontSize: '13px', fontWeight: 700, color: '#16283c', marginBottom: '6px' }}>구성 규모 — 1실 18부 84팀</div>
-                  <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '12.5px', background: '#ffffff', color: '#1a2129' }}>
-                    <thead>
-                      <tr style={{ background: '#1e3a5f', color: '#fff' }}>
-                        <th style={{ padding: '8px 10px', textAlign: 'left', width: '90px' }}>구분</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>계</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>시</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>읍·면·동</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>교육지원청</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>경찰서</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>소방서</th>
-                        <th style={{ padding: '8px 10px', textAlign: 'right' }}>체육회</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {CHEJEON_ORG_COUNTS.map((r, i) => (
-                        <tr key={r.row} style={{ borderTop: '1px solid #dfe4ea', background: i % 2 ? '#fafbfa' : '#ffffff' }}>
-                          <td style={{ padding: '8px 10px', fontWeight: 700, color: '#16283c' }}>{r.row}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', fontWeight: 700, color: '#16283c' }}>{r.total}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.city || '–'}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.town || '–'}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.edu || '–'}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.police || '–'}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.fire || '–'}</td>
-                          <td style={{ padding: '8px 10px', textAlign: 'right', color: '#374151' }}>{r.sports || '–'}</td>
-                        </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
                 <div style={{ fontSize: '13px', fontWeight: 700, color: '#16283c', marginBottom: '6px' }}>
                   집행부 {CHEJEON_ORG.length}개 · 팀 {totalTeams}개 <span style={{ fontWeight: 500, color: '#6b7280', fontSize: '11.5px' }}>(행을 누르면 담당업무가 펼쳐집니다)</span>
                 </div>
                 <table style={{ width: '100%', minWidth: '900px', borderCollapse: 'collapse', fontSize: '12.5px', background: '#ffffff', color: '#1a2129' }}>
                   <thead>
                     <tr style={{ background: '#1e3a5f', color: '#fff', position: 'sticky', top: 0, zIndex: 1 }}>
-                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '44px' }}>연번</th>
-                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '150px' }}>집행부</th>
-                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '260px' }}>소관 실·국·기관</th>
-                      <th style={{ padding: '9px 10px', textAlign: 'left' }}>소속 팀</th>
-                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '56px' }}>팀수</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '56px', whiteSpace: 'nowrap' }}>연번</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', whiteSpace: 'nowrap' }}>집행부</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', whiteSpace: 'nowrap' }}>소관 실·국·기관</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '100%' }}>소속 팀</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '56px', whiteSpace: 'nowrap' }}>팀수</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -2927,11 +2854,11 @@ export default function Home() {
                             background: chejeonOrgOpen === u.no ? '#eef3f9' : (i % 2 ? '#fafbfa' : '#ffffff'),
                           }}
                         >
-                          <td style={{ padding: '9px 10px', textAlign: 'center', color: '#6b7280', verticalAlign: 'top' }}>{u.no}</td>
-                          <td style={{ padding: '9px 10px', fontWeight: 700, color: '#16283c', verticalAlign: 'top' }}>{u.name}</td>
-                          <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'top' }}>{u.owner}</td>
-                          <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'top' }}>{u.teams.join(' · ')}</td>
-                          <td style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 700, color: '#16283c', verticalAlign: 'top' }}>{u.teams.length}</td>
+                          <td style={{ padding: '9px 10px', textAlign: 'center', color: '#6b7280', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{u.no}</td>
+                          <td style={{ padding: '9px 10px', fontWeight: 700, color: '#16283c', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{u.name}</td>
+                          <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{u.owner}</td>
+                          <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'middle' }}>{u.teams.join(' · ')}</td>
+                          <td style={{ padding: '9px 10px', textAlign: 'center', fontWeight: 700, color: '#16283c', verticalAlign: 'middle', whiteSpace: 'nowrap' }}>{u.teams.length}</td>
                         </tr>
                         {chejeonOrgOpen === u.no && (
                           <tr style={{ background: '#f4f8fc' }}>
