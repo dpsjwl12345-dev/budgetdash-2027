@@ -9,8 +9,10 @@ type RequestType = "당정협의회" | "시의원";
 type CouncilRequest = {
   id: string;
   requestType: RequestType;
+  electoralDistrict: string;
   partyName: string;
   memberName: string;
+  committee: string;
   department: string;
   content: string;
   budgetItemName: string;
@@ -27,8 +29,10 @@ const todayString = () =>
 
 const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestType,
+  electoralDistrict: "",
   partyName: "",
   memberName: "",
+  committee: "",
   department: DEPARTMENTS[0] || "",
   content: "",
   budgetItemName: "",
@@ -41,8 +45,10 @@ type EditDraft = Omit<CouncilRequest, "id" | "status">;
 
 const draftFromItem = (item: CouncilRequest): EditDraft => ({
   requestType: item.requestType,
+  electoralDistrict: item.electoralDistrict ?? "",
   partyName: item.partyName,
   memberName: item.memberName,
+  committee: item.committee ?? "",
   department: item.department,
   content: item.content,
   budgetItemName: item.budgetItemName,
@@ -104,8 +110,10 @@ export default function CouncilMemberRequests() {
     const newItem: CouncilRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       requestType: form.requestType,
+      electoralDistrict: form.electoralDistrict.trim(),
       partyName: form.partyName.trim(),
       memberName: form.memberName.trim(),
+      committee: form.committee.trim(),
       department: form.department,
       content: form.content.trim(),
       budgetItemName: form.budgetItemName.trim(),
@@ -171,8 +179,10 @@ export default function CouncilMemberRequests() {
 
     const updatedItem: CouncilRequest = {
       ...target,
+      electoralDistrict: editDraft.electoralDistrict.trim(),
       partyName: editDraft.partyName.trim(),
       memberName: editDraft.memberName.trim(),
+      committee: editDraft.committee.trim(),
       department: editDraft.department,
       content: editDraft.content.trim(),
       budgetItemName: editDraft.budgetItemName.trim(),
@@ -201,8 +211,10 @@ export default function CouncilMemberRequests() {
           <table className="requests-table">
             <colgroup>
               <col className="col-num" />
+              <col className="col-district" />
               <col className="col-party" />
               <col className="col-member" />
+              <col className="col-committee" />
               <col className="col-dept" />
               <col className="col-content" />
               <col className="col-budget-item" />
@@ -214,8 +226,10 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
+                <th>선거구</th>
                 <th>소속 정당명</th>
                 <th>이름</th>
+                <th>위원회</th>
                 <th>소관부서</th>
                 <th>요구내용</th>
                 <th>사업명 (세부사업+부기명)</th>
@@ -237,6 +251,13 @@ export default function CouncilMemberRequests() {
                           <td>
                             <input
                               className="cell-input"
+                              value={editDraft.electoralDistrict}
+                              onChange={(e) => setEditDraft({ ...editDraft, electoralDistrict: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className="cell-input"
                               value={editDraft.partyName}
                               onChange={(e) => setEditDraft({ ...editDraft, partyName: e.target.value })}
                             />
@@ -246,6 +267,13 @@ export default function CouncilMemberRequests() {
                               className="cell-input"
                               value={editDraft.memberName}
                               onChange={(e) => setEditDraft({ ...editDraft, memberName: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <input
+                              className="cell-input"
+                              value={editDraft.committee}
+                              onChange={(e) => setEditDraft({ ...editDraft, committee: e.target.value })}
                             />
                           </td>
                           <td>
@@ -290,8 +318,10 @@ export default function CouncilMemberRequests() {
                         </>
                       ) : (
                         <>
+                          <td>{item.electoralDistrict}</td>
                           <td>{item.partyName}</td>
                           <td className="col-member">{item.memberName}</td>
+                          <td>{item.committee}</td>
                           <td>{item.department}</td>
                           <td className="col-content">{item.content}</td>
                           <td>{item.budgetItemName}</td>
@@ -338,7 +368,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={10} className="empty-row">{emptyText}</td>
+                  <td colSpan={12} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -364,6 +394,12 @@ export default function CouncilMemberRequests() {
               ))}
             </select>
             <input
+              className="form-input district-input"
+              placeholder="선거구"
+              value={form.electoralDistrict}
+              onChange={(e) => setForm({ ...form, electoralDistrict: e.target.value })}
+            />
+            <input
               className="form-input party-input"
               placeholder="소속 정당명"
               value={form.partyName}
@@ -374,6 +410,12 @@ export default function CouncilMemberRequests() {
               placeholder="이름"
               value={form.memberName}
               onChange={(e) => setForm({ ...form, memberName: e.target.value })}
+            />
+            <input
+              className="form-input committee-input"
+              placeholder="위원회"
+              value={form.committee}
+              onChange={(e) => setForm({ ...form, committee: e.target.value })}
             />
             <select
               className="form-input dept-select"
@@ -636,15 +678,17 @@ export default function CouncilMemberRequests() {
         }
 
         col.col-num { width: 4%; }
-        col.col-party { width: 9%; }
-        col.col-member { width: 7%; }
-        col.col-dept { width: 8%; }
-        col.col-content { width: 23%; }
-        col.col-budget-item { width: 14%; }
-        col.col-amount { width: 8%; }
-        col.col-date { width: 9%; }
-        col.col-status { width: 8%; }
-        col.col-action { width: 10%; }
+        col.col-district { width: 8%; }
+        col.col-party { width: 8%; }
+        col.col-member { width: 6%; }
+        col.col-committee { width: 9%; }
+        col.col-dept { width: 7%; }
+        col.col-content { width: 16%; }
+        col.col-budget-item { width: 12%; }
+        col.col-amount { width: 7%; }
+        col.col-date { width: 8%; }
+        col.col-status { width: 7%; }
+        col.col-action { width: 8%; }
 
         .col-num {
           text-align: center;

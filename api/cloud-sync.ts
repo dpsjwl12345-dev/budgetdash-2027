@@ -259,8 +259,10 @@ async function loadCouncilRequests(res: any) {
   const requests = (data || []).map((row: any) => ({
     id: row.id,
     requestType: row.request_type ?? '당정협의회',
+    electoralDistrict: row.electoral_district ?? '',
     partyName: row.requester_type ?? '',
     memberName: row.member_name ?? '',
+    committee: row.committee ?? '',
     department: row.department ?? '',
     content: row.content ?? '',
     budgetItemName: row.budget_item_name ?? '',
@@ -287,8 +289,10 @@ async function saveCouncilRequest(req: any, res: any) {
   const { error: upsertError } = await supabase.from('council_member_requests').upsert({
     id: String(item.id),
     request_type: item.requestType ?? '당정협의회',
+    electoral_district: item.electoralDistrict ?? '',
     requester_type: item.partyName ?? '',
     member_name: item.memberName ?? '',
+    committee: item.committee ?? '',
     department: item.department ?? '',
     content: item.content ?? '',
     budget_item_name: item.budgetItemName ?? '',
