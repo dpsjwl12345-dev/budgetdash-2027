@@ -4,7 +4,7 @@ import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
 // 요구가 들어온 경로. 탭을 가르는 기준이며, 소속 정당명과는 별개다.
-type RequestType = "당정협의회" | "시의원";
+type RequestType = "당정협의회" | "정책간담회" | "시의원";
 
 type CouncilRequest = {
   id: string;
@@ -22,7 +22,7 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
-const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "시의원"];
+const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
@@ -59,9 +59,10 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
 // ── 원구성 현황 (제10대 화성시의회 전반기, 26. 7. 3. 기준) ──────────────────
 type MainTabKey = RequestType | "원구성 현황";
 
-const MAIN_TABS: { key: MainTabKey; label: string }[] = [
-  { key: "당정협의회", label: "당정협의회 요구" },
-  { key: "시의원", label: "시의원 요구" },
+const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?: string }[] = [
+  { key: "당정협의회", label: "당정협의회 요구", subtitle: "정당 요구사업 · 정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다" },
+  { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업 · 소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다" },
+  { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
   { key: "원구성 현황", label: "원구성 현황" },
 ];
 
@@ -674,10 +675,13 @@ export default function CouncilMemberRequests() {
               className={`tab-button${activeTab === tab.key ? " active" : ""}`}
               onClick={() => setActiveTab(tab.key)}
             >
-              {tab.label}
-              {tab.key !== "원구성 현황" && (
-                <span className="tab-count">{countOf(tab.key as RequestType)}</span>
-              )}
+              <span className="tab-label-row">
+                {tab.label}
+                {tab.key !== "원구성 현황" && (
+                  <span className="tab-count">{countOf(tab.key as RequestType)}</span>
+                )}
+              </span>
+              {tab.subtitle && <span className="tab-subtitle">{tab.subtitle}</span>}
             </button>
           ))}
         </section>
@@ -778,7 +782,7 @@ export default function CouncilMemberRequests() {
 
         {activeTab !== "원구성 현황" && (
         <section className="table-section">
-          {renderTable(visibleRequests, `등록된 ${activeTab} 요구가 없습니다`)}
+          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다")}
         </section>
         )}
 
@@ -1025,7 +1029,11 @@ export default function CouncilMemberRequests() {
         }
 
         .tab-button {
-          padding: 9px 18px;
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          padding: 8px 18px;
           border: 1px solid var(--border);
           border-radius: 8px;
           background: transparent;
@@ -1045,10 +1053,23 @@ export default function CouncilMemberRequests() {
           background: rgba(91, 155, 240, 0.12);
         }
 
+        .tab-label-row {
+          display: flex;
+          align-items: center;
+        }
+
         .tab-count {
           margin-left: 6px;
           font-size: 12px;
           opacity: 0.75;
+        }
+
+        .tab-subtitle {
+          font-size: 11px;
+          font-weight: 400;
+          color: var(--text-muted);
+          opacity: 0.85;
+          white-space: nowrap;
         }
 
         .type-select {
