@@ -13,6 +13,7 @@ import {
   Award,
   Banknote,
   Users,
+  Building2,
   Highlighter,
   Eraser,
   Undo2,
@@ -50,6 +51,7 @@ const navItems: NavItem[] = [
   { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
   { label: "당정협의회 요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
   { label: "시장, 부시장 요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
+  { label: "원구성 현황", icon: Building2, path: "/council-composition", iconColor: "#d9ad52" },
   { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#d9ad52" },
 ];
 
