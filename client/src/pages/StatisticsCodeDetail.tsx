@@ -114,7 +114,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
                 </li>
                 <li style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px", color: "var(--text-muted)" }}>월 평균 기준일수(주휴일 포함): <strong>월 27일</strong> 적용</li>
                 <li style={{ marginLeft: "20px", fontSize: "13px", color: "var(--text-muted)" }}>(예시) 6개월 고용 시 근무일수: 27일 × 6개월 = 162일 적용</li>
-                <li style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px", color: "var(--text-muted)" }}>(예시) 생활임금 적용 직종 기본급: <strong>일급 103,680원</strong> × 1명 × 162일 = 16,796,160원</li>
+                <li style={{ marginLeft: "20px", marginTop: "4px", fontSize: "13px", color: "var(--text-muted)" }}>(예시) 생활임금 적용 직종 기본급: <strong>일급 102,000원</strong> × 1명 × 162일 = 16,524,000원</li>
               </ul>
             </div>
             <div style={{ marginTop: "16px" }}>
@@ -172,7 +172,7 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
                   </tbody>
                 </table>
                 <ul style={{ marginLeft: "20px", marginTop: "8px" }}>
-                  <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>공정수당 산식: 2027년 화성시 생활임금(12,960원) × 보상지급률 × 구간별 근무기간 평균 고려</li>
+                  <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>공정수당 산식: 2027년 화성시 생활임금(12,750원) × 보상지급률 × 구간별 근무기간 평균 고려</li>
                   <li style={{ fontSize: "13px", color: "var(--text-muted)" }}>1개월 미만: 근무기간 고려하여 일할계산</li>
                 </ul>
               </div>
@@ -206,13 +206,13 @@ const ACCORDION_DATA: Record<TabKey, AccordionItem[]> = {
               <tbody>
                 <tr style={{ borderBottom: "1px solid rgba(118, 157, 194, 0.1)" }}>
                   <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>행정/도서/농림/환경정비원 등</td>
-                  <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>일급 103,680<br/>(시급 12,960)</td>
+                  <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>일급 102,000<br/>(시급 12,750)</td>
                   <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>일급 93,170</td>
                   <td style={{ padding: "8px" }}>화성시 생활임금 우선 적용</td>
                 </tr>
                 <tr style={{ borderBottom: "1px solid rgba(118, 157, 194, 0.1)" }}>
                   <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>사례관리/상담/조사원 등</td>
-                  <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>일급 103,680<br/>(시급 12,960)</td>
+                  <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>일급 102,000<br/>(시급 12,750)</td>
                   <td style={{ padding: "8px", borderRight: "1px solid rgba(118, 157, 194, 0.1)" }}>일급 100,000</td>
                   <td style={{ padding: "8px" }}>해당 업무 전담 임금 적용</td>
                 </tr>
