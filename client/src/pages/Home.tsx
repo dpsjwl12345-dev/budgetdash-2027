@@ -53,7 +53,9 @@ import {
   X,
   Database,
   Landmark,
+  Calculator,
 } from "lucide-react";
+import { CHEJEON_ESTIMATES, CHEJEON_CONF_LABEL } from "@/lib/chejeonEstimates";
 
 type Status = "정상" | "오류" | "주의" | "사전";
 
@@ -836,6 +838,9 @@ export default function Home() {
   // 인쇄가 시작되면 잠깐 페이지네이션을 끄고 전체 행을 렌더링한 뒤 인쇄 대화상자를 띄운다.
   const [isPrintMode, setIsPrintMode] = useState(false);
   const [hierarchySearch, setHierarchySearch] = useState("");
+  // 전국체전 소요 개산 패널. 세출예산내역서 옆 버튼으로 연다.
+  const [showChejeon, setShowChejeon] = useState(false);
+  const [chejeonConf, setChejeonConf] = useState<"" | "A" | "B" | "C">("");
   // 다중 선택 가능(배열). 예산설명자료 화면에서 "돌아가기"로 넘어올 때는 항상 세부사업 하나만
   // 지정해서 돌아오므로 그 하나를 담은 배열로 시작한다.
   const [hierarchyProgramFilter, setHierarchyProgramFilter] = useState<string[]>(() => {
@@ -2238,7 +2243,24 @@ export default function Home() {
           <section className="table-panel ledger-paper" style={{ background: '#ece7db' }}>
             <div className="table-heading" style={{ minHeight: 0, padding: '8px 19px 8px 30px' }}>
               <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
-                <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                  <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
+                  <button
+                    type="button"
+                    className="no-print"
+                    onClick={() => setShowChejeon(true)}
+                    title="2027 전국체전 본예산 필수 소요 개산"
+                    style={{
+                      display: 'inline-flex', alignItems: 'center', gap: '6px',
+                      padding: '5px 11px', fontSize: '13px', fontWeight: 600,
+                      color: '#1e3a5f', background: '#e3e9f1',
+                      border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer',
+                    }}
+                  >
+                    <Calculator size={14} />
+                    전국체전 소요 개산
+                  </button>
+                </div>
                 <div className="no-print" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', color: '#6b7280', pointerEvents: 'none' }} />
                   <input
@@ -2654,6 +2676,100 @@ export default function Home() {
 
       {editingHierarchyRow && <div className="modal-backdrop" onMouseDown={() => setEditingHierarchyRow(null)}><div className="modal-card edit-row-modal" ref={hierarchyEditModalRef} role="dialog" aria-modal="true" aria-labelledby="hierarchy-edit-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, hierarchyEditModalRef.current)}><div className="modal-head"><div><span>BUDGET LINE ITEM / EDIT</span><h2 id="hierarchy-edit-modal-title">편성목 편집</h2></div><button className="close-button" onClick={() => setEditingHierarchyRow(null)} aria-label="닫기"><X size={19} /></button></div><div className="edit-grid"><label>통계목<input value={editingHierarchyRow.statisticsCode ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, statisticsCode: event.target.value })} /></label><label>예산액(천원)<input value={editingHierarchyRow.budget ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, budget: parseNumber(event.target.value) })} inputMode="numeric" /></label><label>전년도(천원)<input value={editingHierarchyRow.previous ?? 0} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, previous: parseNumber(event.target.value) })} inputMode="numeric" /></label><label className="edit-wide">산출근거<input value={editingHierarchyRow.description ?? ""} onChange={(event) => setEditingHierarchyRow({ ...editingHierarchyRow, description: event.target.value })} /></label></div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setEditingHierarchyRow(null)}>취소</AppButton><AppButton variant="primary" onClick={saveHierarchyItemEdit}>저장</AppButton></div></div></div>}
       {confirmingBadge && <div className="modal-backdrop" onMouseDown={() => setConfirmingBadge(null)}><div className="modal-card" ref={badgeConfirmModalRef} role="dialog" aria-modal="true" aria-labelledby="badge-confirm-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, badgeConfirmModalRef.current)}><div className="modal-head"><div><span>REVIEW · {confirmingBadge.type === 'procedure' ? '사전절차' : '산출식'}</span><h2 id="badge-confirm-modal-title">확인하셨습니까?</h2></div><button className="close-button" onClick={() => setConfirmingBadge(null)} aria-label="닫기"><X size={19} /></button></div>{confirmingBadge.detail && <p style={{ padding: '0 24px', fontSize: '13px', color: 'var(--text-muted)' }}>{confirmingBadge.detail}</p>}<div className="modal-actions"><AppButton variant="ghost" onClick={() => setConfirmingBadge(null)}>취소</AppButton><AppButton variant="primary" onClick={() => confirmBadge(confirmingBadge.rowId, confirmingBadge.type)}>확인</AppButton></div></div></div>}
+      {showChejeon && (() => {
+        const rows = CHEJEON_ESTIMATES.filter((e) => !chejeonConf || e.conf === chejeonConf);
+        const total = rows.reduce((sum, e) => sum + e.amount, 0);
+        const byConf = (c: "A" | "B" | "C") =>
+          CHEJEON_ESTIMATES.filter((e) => e.conf === c).reduce((s, e) => s + e.amount, 0);
+        const confColor: Record<string, string> = { A: '#166534', B: '#92400e', C: '#6b7280' };
+        return (
+          <div className="modal-backdrop" onMouseDown={() => setShowChejeon(false)}>
+            <div
+              className="modal-card"
+              role="dialog"
+              aria-modal="true"
+              aria-labelledby="chejeon-modal-title"
+              onMouseDown={(event) => event.stopPropagation()}
+              style={{ width: 'min(1280px, 96vw)', maxWidth: 'none', maxHeight: '92vh', display: 'flex', flexDirection: 'column' }}
+            >
+              <div className="modal-head">
+                <div>
+                  <span>2027 전국(장애인)체육대회</span>
+                  <h2 id="chejeon-modal-title">본예산 필수 소요 개산</h2>
+                </div>
+                <button className="close-button" onClick={() => setShowChejeon(false)} aria-label="닫기"><X size={19} /></button>
+              </div>
+
+              <div style={{ padding: '0 24px 12px', fontSize: '13px', color: 'var(--text-muted)', lineHeight: 1.6 }}>
+                기본계획 Ⅲ 집행부별 세부추진계획의 사업 중 착수 시기와 계약 리드타임을 고려해 2027년 본예산에 반드시 편성되어야 하는 것만 골랐습니다.
+                <strong style={{ color: '#9b2a21' }}> 부서가 제출한 산출내역이 아니라 계획서에 근거한 추정치입니다.</strong> 부서 회신으로 교체되어야 합니다. 단위: 천원
+              </div>
+
+              <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', padding: '0 24px 12px', alignItems: 'center' }}>
+                {([['', '전체'], ['A', '실단가'], ['B', '유사단가'], ['C', '규모추정']] as const).map(([key, label]) => (
+                  <button
+                    key={key || 'all'}
+                    type="button"
+                    onClick={() => setChejeonConf(key as "" | "A" | "B" | "C")}
+                    style={{
+                      padding: '5px 12px', fontSize: '12.5px', fontWeight: 600, cursor: 'pointer',
+                      borderRadius: '6px', border: '1px solid #b7c2cf',
+                      background: chejeonConf === key ? '#1e3a5f' : 'transparent',
+                      color: chejeonConf === key ? '#fff' : '#1e3a5f',
+                    }}
+                  >
+                    {label}
+                    {key ? ` ${formatMillion(byConf(key as "A" | "B" | "C"))}백만` : ` ${CHEJEON_ESTIMATES.length}건`}
+                  </button>
+                ))}
+                <span style={{ marginLeft: 'auto', fontSize: '15px', fontWeight: 700, color: '#1e3a5f' }}>
+                  {rows.length}건 · {total.toLocaleString()}천원
+                </span>
+              </div>
+
+              <div style={{ overflow: 'auto', padding: '0 24px 20px', flex: 1 }}>
+                <table style={{ width: '100%', minWidth: '1060px', borderCollapse: 'collapse', fontSize: '12.5px' }}>
+                  <thead>
+                    <tr style={{ background: '#1e3a5f', color: '#fff', position: 'sticky', top: 0, zIndex: 1 }}>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '140px' }}>주관부서</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '170px' }}>사업명</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left' }}>사업계획 (실행 단위)</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'left', width: '300px' }}>산출 근거</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'right', width: '95px' }}>개산액</th>
+                      <th style={{ padding: '9px 10px', textAlign: 'center', width: '76px' }}>확실도</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {rows.map((e, i) => (
+                      <tr key={`${e.dept}-${e.name}-${i}`} style={{ borderTop: '1px solid #dfe4ea' }}>
+                        <td style={{ padding: '9px 10px', fontWeight: 600, verticalAlign: 'top' }}>{e.dept}</td>
+                        <td style={{ padding: '9px 10px', fontWeight: 600, verticalAlign: 'top' }}>{e.name}</td>
+                        <td style={{ padding: '9px 10px', color: '#374151', verticalAlign: 'top' }}>{e.plan}</td>
+                        <td style={{ padding: '9px 10px', color: '#6b7280', fontSize: '11.5px', verticalAlign: 'top' }}>{e.basis}</td>
+                        <td style={{ padding: '9px 10px', textAlign: 'right', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'top' }}>{e.amount.toLocaleString()}</td>
+                        <td style={{ padding: '9px 10px', textAlign: 'center', fontSize: '11px', color: confColor[e.conf], fontWeight: 600, verticalAlign: 'top' }}>{CHEJEON_CONF_LABEL[e.conf]}</td>
+                      </tr>
+                    ))}
+                  </tbody>
+                  <tfoot>
+                    <tr style={{ borderTop: '2px solid #1e3a5f', background: '#eef1f5' }}>
+                      <td colSpan={4} style={{ padding: '10px', fontWeight: 800 }}>계</td>
+                      <td style={{ padding: '10px', textAlign: 'right', fontWeight: 800, whiteSpace: 'nowrap' }}>{total.toLocaleString()}</td>
+                      <td />
+                    </tr>
+                  </tfoot>
+                </table>
+
+                <div style={{ marginTop: '16px', fontSize: '11.5px', color: '#6b7280', lineHeight: 1.7 }}>
+                  <p style={{ margin: '0 0 5px' }}><strong>확실도</strong> 실단가 = 경기도 편성요청 목록의 실제 단가(방역 358천원/개소·일, 구급차 1,200천원/대·일, 청소 130천원/인·일) · 유사단가 = 시중노임단가·기존 용역 단가 환산 · 규모추정 = 대회 규모(경기장 25개소·3만명·7일)로 추정</p>
+                  <p style={{ margin: '0 0 5px' }}><strong>이미 편성된 것과의 관계</strong> 전국체전추진단 183.5억, 체육진흥과 축구경기장 18.0억, 관광진흥과 지질공원 홍보관 0.7억은 별도입니다. 추진단에 잡힌 항목(성화봉송 200,000·문화예술행사 90,000·자원봉사 284,000)은 해당 부서 개산에서 차감했습니다. 추진단 &ldquo;대회 운영 지원 2,960,000&rdquo;은 내역이 없어 중복 여부가 확인되지 않았습니다.</p>
+                  <p style={{ margin: 0 }}><strong>출처</strong> 2027년 전국(장애인)체육대회 기본계획(안) Ⅲ 집행부별 세부추진계획 · 2027년 전국체전 화성시 자체사업 편성 요청 목록(안)</p>
+                </div>
+              </div>
+            </div>
+          </div>
+        );
+      })()}
       {toast && <div className="toast"><Check size={16} />{toast}</div>}
     </Layout>
   );
