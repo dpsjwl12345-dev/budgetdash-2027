@@ -791,7 +791,7 @@ export default function BudgetExplainer() {
                 position: "relative",
               }}
             >
-              {selectedPath && (
+              {(selectedPath || selectedInstitution) && (
                 <button
                   onClick={() => setShowTree(false)}
                   style={{
@@ -1160,6 +1160,41 @@ export default function BudgetExplainer() {
 
           {/* 우측: 설명자료 */}
           <div style={{ flex: 1, position: "relative", display: "flex", flexDirection: "column" }}>
+            {/* 기관 설명자료를 보는 중에는 selectedPath가 비어 있어 아래 분기가 렌더되지 않는다.
+                네비게이션을 다시 여는 버튼은 그 경우에도 필요하므로 여기서 따로 내보낸다. */}
+            {!showTree && !selectedPath && (
+              <button
+                onClick={() => setShowTree(true)}
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  width: "28px",
+                  height: "28px",
+                  padding: 0,
+                  margin: "16px 8px 0",
+                  border: "1px solid var(--line)",
+                  borderRadius: "4px",
+                  backgroundColor: "var(--bg-secondary)",
+                  color: "var(--text-muted)",
+                  cursor: "pointer",
+                  transition: "all 0.15s",
+                  flexShrink: 0,
+                  alignSelf: "flex-start",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.backgroundColor = "rgba(118, 157, 194, 0.1)";
+                  e.currentTarget.style.color = "var(--text)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.backgroundColor = "var(--bg-secondary)";
+                  e.currentTarget.style.color = "var(--text-muted)";
+                }}
+                title="네비게이션 열기"
+              >
+                ☰
+              </button>
+            )}
             {selectedPath ? (
               <div style={{ padding: "16px 8px", display: "flex", flexDirection: "column", overflow: "auto" }}>
                 <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-start", gap: "12px", marginBottom: "16px", flexShrink: 0 }}>
