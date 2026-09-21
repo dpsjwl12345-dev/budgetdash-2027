@@ -88,6 +88,47 @@ export default function BudgetExplainer() {
   // 순서 저장 요청이 서로 앞지르지 않도록 누른 차례대로 이어 보낸다.
   const orderSaveRef = useRef<Promise<void>>(Promise.resolve());
 
+  // "공공기관 예산 설명자료" 섹션 제목. 부서와 무관한 문구라 localStorage에만 저장한다.
+  const INSTITUTION_SECTION_LABEL_STORAGE_KEY = "budgetExplainerInstitutionSectionLabel";
+  const [institutionSectionLabel, setInstitutionSectionLabel] = useState("공공기관 예산 설명자료");
+  const [editingSectionLabel, setEditingSectionLabel] = useState(false);
+  const [sectionLabelDraft, setSectionLabelDraft] = useState("");
+
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem(INSTITUTION_SECTION_LABEL_STORAGE_KEY);
+      if (saved) setInstitutionSectionLabel(saved);
+    } catch {
+      // 저장된 값이 없거나 읽기 실패하면 기본 문구를 사용한다.
+    }
+  }, []);
+
+  const startEditingSectionLabel = () => {
+    setSectionLabelDraft(institutionSectionLabel);
+    setEditingSectionLabel(true);
+  };
+
+  const cancelEditingSectionLabel = () => {
+    setEditingSectionLabel(false);
+    setSectionLabelDraft("");
+  };
+
+  const saveSectionLabel = () => {
+    const trimmed = sectionLabelDraft.trim();
+    if (!trimmed) {
+      cancelEditingSectionLabel();
+      return;
+    }
+    setInstitutionSectionLabel(trimmed);
+    try {
+      localStorage.setItem(INSTITUTION_SECTION_LABEL_STORAGE_KEY, trimmed);
+    } catch {
+      // 저장 실패해도 화면 상태는 유지한다.
+    }
+    setEditingSectionLabel(false);
+    setSectionLabelDraft("");
+  };
+
   useEffect(() => {
     const handleScroll = () => setShowBackToTop(window.scrollY > 400);
     handleScroll();
@@ -802,36 +843,127 @@ export default function BudgetExplainer() {
                   부서 맨 아래에 별도 항목으로 둔다. 기관 이름은 화면에서 자유롭게 추가한다. */}
               {!loading && treeData.length > 0 && (
                 <div style={{ marginTop: "8px" }}>
-                  <button
-                    onClick={() => setInstitutionSectionExpanded((prev) => !prev)}
+                  <div
                     style={{
                       paddingLeft: "12px",
-                      paddingRight: "12px",
+                      paddingRight: "6px",
                       height: "40px",
                       display: "flex",
                       alignItems: "center",
-                      gap: "8px",
+                      gap: "6px",
                       fontSize: "14px",
                       fontWeight: 600,
                       color: "var(--text)",
                       backgroundColor: "rgba(118, 157, 194, 0.08)",
                       border: "1px solid var(--line)",
                       borderRadius: "6px",
-                      cursor: "pointer",
-                      textAlign: "left",
                       margin: "4px 0",
                       width: "100%",
                     }}
                   >
-                    <ChevronDown
-                      size={14}
+                    <button
+                      type="button"
+                      onClick={() => setInstitutionSectionExpanded((prev) => !prev)}
+                      title={institutionSectionExpanded ? "접기" : "펼치기"}
+                      aria-label={institutionSectionExpanded ? "섹션 접기" : "섹션 펼치기"}
                       style={{
-                        transform: institutionSectionExpanded ? "rotate(0deg)" : "rotate(-90deg)",
-                        transition: "transform 0.15s",
+                        display: "flex",
+                        alignItems: "center",
+                        background: "transparent",
+                        border: "none",
+                        padding: 0,
+                        cursor: "pointer",
+                        color: "inherit",
+                        flexShrink: 0,
                       }}
-                    />
-                    <span style={{ flex: 1 }}>공공기관 예산 설명자료</span>
-                  </button>
+                    >
+                      <ChevronDown
+                        size={14}
+                        style={{
+                          transform: institutionSectionExpanded ? "rotate(0deg)" : "rotate(-90deg)",
+                          transition: "transform 0.15s",
+                        }}
+                      />
+                    </button>
+                    {editingSectionLabel ? (
+                      <>
+                        <input
+                          type="text"
+                          value={sectionLabelDraft}
+                          onChange={(e) => setSectionLabelDraft(e.target.value)}
+                          onKeyDown={(e) => {
+                            if (e.key === "Enter") saveSectionLabel();
+                            if (e.key === "Escape") cancelEditingSectionLabel();
+                          }}
+                          autoFocus
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            height: "26px",
+                            padding: "0 6px",
+                            fontSize: "13px",
+                            fontWeight: 400,
+                            border: "1px solid var(--line)",
+                            borderRadius: "4px",
+                            background: "var(--bg-secondary)",
+                            color: "var(--text)",
+                          }}
+                        />
+                        <button
+                          type="button"
+                          onClick={saveSectionLabel}
+                          title="문구 저장"
+                          aria-label="섹션 제목 저장"
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", padding: 0, border: "none", borderRadius: "4px", background: "transparent", color: "var(--text-muted)", cursor: "pointer", flexShrink: 0 }}
+                        >
+                          <Check size={14} />
+                        </button>
+                        <button
+                          type="button"
+                          onClick={cancelEditingSectionLabel}
+                          title="취소"
+                          aria-label="섹션 제목 수정 취소"
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", padding: 0, border: "none", borderRadius: "4px", background: "transparent", color: "var(--text-muted)", cursor: "pointer", flexShrink: 0 }}
+                        >
+                          <X size={14} />
+                        </button>
+                      </>
+                    ) : (
+                      <>
+                        <button
+                          type="button"
+                          onClick={() => setInstitutionSectionExpanded((prev) => !prev)}
+                          style={{
+                            flex: 1,
+                            minWidth: 0,
+                            height: "100%",
+                            display: "flex",
+                            alignItems: "center",
+                            background: "transparent",
+                            border: "none",
+                            padding: 0,
+                            cursor: "pointer",
+                            textAlign: "left",
+                            font: "inherit",
+                            color: "inherit",
+                          }}
+                        >
+                          <span style={{ overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                            {institutionSectionLabel}
+                          </span>
+                        </button>
+                        <button
+                          type="button"
+                          onClick={startEditingSectionLabel}
+                          title="문구 수정"
+                          aria-label="섹션 제목 수정"
+                          style={{ display: "flex", alignItems: "center", justifyContent: "center", width: "24px", height: "24px", padding: 0, border: "none", borderRadius: "4px", background: "transparent", color: "var(--text-muted)", cursor: "pointer", flexShrink: 0 }}
+                        >
+                          <Pencil size={13} />
+                        </button>
+                      </>
+                    )}
+                  </div>
                   {institutionSectionExpanded && (
                     <div>
                       {institutions.map((name, index) => {

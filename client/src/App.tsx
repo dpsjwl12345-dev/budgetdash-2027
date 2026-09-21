@@ -16,7 +16,6 @@ import DepartmentKeyIssues from "./pages/DepartmentKeyIssues";
 import TempWorkerWageCalculator from "./pages/TempWorkerWageCalculator";
 import CouncilMemberRequests from "./pages/CouncilMemberRequests";
 import MayorViceMayorRequests from "./pages/MayorViceMayorRequests";
-import CouncilComposition from "./pages/CouncilComposition";
 
 
 function Router() {
@@ -34,7 +33,6 @@ function Router() {
       <Route path={"/department-key-issues"} component={DepartmentKeyIssues} />
       <Route path={"/council-member-requests"} component={CouncilMemberRequests} />
       <Route path={"/mayor-vice-mayor-requests"} component={MayorViceMayorRequests} />
-      <Route path={"/council-composition"} component={CouncilComposition} />
       <Route path={"/404"} component={NotFound} />
       {/* Final fallback route: keep the single-file HTML usable from a local file path. */}
       <Route component={Home} />
