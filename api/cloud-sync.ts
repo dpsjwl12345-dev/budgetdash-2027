@@ -455,6 +455,73 @@ async function saveStaff(req: any, res: any) {
   res.status(200).json({ success: true, message: "저장 완료" });
 }
 
+// 부기명 강조 표시. 키는 "부서::세부사업::통계목::부기명"이라 엑셀을 다시 올려 행 id가
+// 새로 발급돼도 표시가 그대로 따라붙는다(행 id로 잡으면 재업로드 때마다 전부 끊긴다).
+async function loadRowMarks(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+
+  const department = req.query?.department;
+  let query = supabase.from('budget_row_marks').select('*');
+  if (department) query = query.eq('department', department);
+
+  const { data, error } = await query;
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+
+  const rowMarks: Record<string, string> = {};
+  (data || []).forEach((row: any) => {
+    if (row.color) rowMarks[row.id] = row.color;
+  });
+
+  res.status(200).json({ data: { rowMarks } });
+}
+
+async function saveRowMarks(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+
+  const key = typeof req.body?.key === 'string' ? req.body.key : '';
+  const color = typeof req.body?.color === 'string' ? req.body.color : '';
+  if (!key) {
+    res.status(200).json({ success: false, message: "저장 실패 (키 없음)" });
+    return;
+  }
+
+  // 색을 지운 경우(빈 문자열)는 행 자체를 없앤다.
+  if (!color) {
+    const { error } = await supabase.from('budget_row_marks').delete().eq('id', key);
+    if (error) {
+      res.status(200).json({ success: false, message: "삭제 실패", error: error.message });
+      return;
+    }
+    res.status(200).json({ success: true, message: "표시 해제" });
+    return;
+  }
+
+  const { error } = await supabase.from('budget_row_marks').upsert({
+    id: key,
+    department: key.split('::')[0] || '미분류',
+    color,
+    updated_at: new Date().toISOString(),
+  }, { onConflict: 'id' });
+
+  if (error) {
+    res.status(200).json({ success: false, message: "저장 실패", error: error.message });
+    return;
+  }
+
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
 export default async function handler(req: any, res: any) {
   try {
     const type = req.query?.type;
@@ -462,6 +529,7 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
       if (type === 'memos') return await loadMemos(req, res);
+      if (type === 'marks') return await loadRowMarks(req, res);
       if (type === 'issues') return await loadIssues(res);
       if (type === 'council-requests') return await loadCouncilRequests(res);
       if (type === 'mayor-requests') return await loadMayorRequests(res);
@@ -471,6 +539,7 @@ export default async function handler(req: any, res: any) {
     if (req.method === 'POST') {
       if (type === 'staff') return await saveStaff(req, res);
       if (type === 'memos') return await saveMemos(req, res);
+      if (type === 'marks') return await saveRowMarks(req, res);
       if (type === 'issues') return await saveIssues(req, res);
       if (type === 'council-requests') {
         if (req.body?.action === 'delete') return await deleteCouncilRequest(req, res);

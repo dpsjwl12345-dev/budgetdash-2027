@@ -97,6 +97,13 @@ type BudgetHierarchyRow = {
 };
 
 
+// 부기명 강조 색. 색만 칠하면 나중에 왜 칠했는지 잊으므로 뜻을 붙여 둔다.
+const ROW_MARK_COLORS = [
+  { color: '#ffe45c', label: '확인 필요' },
+  { color: '#ffb3c1', label: '감액 검토' },
+  { color: '#a8e6a3', label: '확인 완료' },
+] as const;
+
 const PROCEDURE_NAMES: Record<number, string> = {
   1: "재정합의",
   2: "투자심사",
@@ -792,6 +799,9 @@ export default function Home() {
   });
   const [editingMemoId, setEditingMemoId] = useState<string | null>(null);
   const [memoDraft, setMemoDraft] = useState("");
+  // 부기명 강조 표시. 키는 "부서::세부사업::통계목::부기명".
+  const [rowMarks, setRowMarks] = useState<Record<string, string>>({});
+  const [markPickerKey, setMarkPickerKey] = useState<string | null>(null);
   // X(숨기기)를 누른 직후 "정말 숨길까요?"를 묻는 동안의 대상. 연필(수정) 버튼과 22px 간격이라
   // 잘못 눌리기 쉬운데, 예전엔 그 한 번으로 메모 줄이 모든 기기에서 영구히 사라졌다.
   const [pendingHideId, setPendingHideId] = useState<string | null>(null);
@@ -932,9 +942,10 @@ export default function Home() {
     loadStaffDataFromServer();
   }, []);
 
-  // 부서가 실제로 영향을 주는 건 메모뿐이다.
+  // 부서가 실제로 영향을 주는 건 메모와 부기명 강조 표시뿐이다.
   useEffect(() => {
     loadProgramMemosFromServer(department);
+    loadRowMarksFromServer(department);
   }, [department]);
 
   const loadStaffDataFromServer = async () => {
@@ -966,6 +977,51 @@ export default function Home() {
       }
     } catch (error) {
       console.log('메모 클라우드 로드 실패:', error);
+    }
+  };
+
+  const loadRowMarksFromServer = async (dept: string) => {
+    try {
+      const url = dept ? `/api/cloud-sync?type=marks&department=${encodeURIComponent(dept)}` : '/api/cloud-sync?type=marks';
+      const response = await fetch(url);
+      if (!response.ok) return;
+      const { data } = await response.json();
+      if (data?.rowMarks && typeof data.rowMarks === 'object') {
+        setRowMarks((prev) => ({ ...prev, ...data.rowMarks }));
+      }
+    } catch (error) {
+      console.log('부기명 강조 표시 로드 실패:', error);
+    }
+  };
+
+  // 형광펜과 달리 서버에 바로 올리고, 실패하면 화면을 원래대로 돌리고 알린다.
+  // 저장됐다고 믿고 검토를 계속하다 전부 잃는 일이 없어야 한다.
+  const setRowMark = async (key: string, color: string) => {
+    const previous = rowMarks[key] ?? '';
+    setRowMarks((prev) => {
+      const next = { ...prev };
+      if (color) next[key] = color;
+      else delete next[key];
+      return next;
+    });
+    setMarkPickerKey(null);
+    try {
+      const response = await fetch('/api/cloud-sync?type=marks', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ key, color }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
+    } catch (error) {
+      console.warn('부기명 강조 표시 저장 실패:', error);
+      setRowMarks((prev) => {
+        const next = { ...prev };
+        if (previous) next[key] = previous;
+        else delete next[key];
+        return next;
+      });
+      showToast('강조 표시를 저장하지 못했습니다. 잠시 후 다시 눌러주세요.');
     }
   };
 
@@ -2159,7 +2215,7 @@ export default function Home() {
       // 형광펜은 화면 좌표에 고정된 그림이라, URL은 안 바뀌어도 표에 보이는 내용이
       // 바뀌는 모든 경우(부서 전환뿐 아니라 페이지네이션·검색·필터)를 다 scope에 넣어야
       // "다음 페이지로 넘기면 다른 행 위에 그대로 겹쳐 보이는" 문제가 안 생긴다.
-      highlightScope={[department, hierarchyPage, hierarchySearch, hierarchyProgramFilter, hierarchyItemFilter].join('::')}
+
     >
       <div className="page-content">
           <section className="page-heading">
@@ -2390,8 +2446,21 @@ export default function Home() {
                       }
                     };
 
+                    // 부기명(note) 행만 강조 표시 대상이다. 키를 행 id가 아니라 내용 경로로
+                    // 잡아야 엑셀을 다시 올려도 표시가 그대로 따라붙는다.
+                    const markAncestors = hierarchyAncestors.get(row.id);
+                    const markKey = row.level === 'note'
+                      ? [
+                          department,
+                          markAncestors?.programRow?.label ?? '',
+                          markAncestors?.itemRow?.statisticsCode ?? '',
+                          row.statisticsCode ?? '',
+                        ].join('::')
+                      : null;
+                    const markColor = markKey ? rowMarks[markKey] : undefined;
+
                     const getBackground = () => {
-                      return 'transparent';
+                      return markColor || 'transparent';
                     };
 
                     const getFontSize = () => {
@@ -2602,8 +2671,47 @@ export default function Home() {
                           <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {formatNumber(row.difference)}
                           </td>
-                          <td style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: 1 }}>
+                          <td
+                            onClick={markKey ? () => setMarkPickerKey(markPickerKey === markKey ? null : markKey) : undefined}
+                            title={markKey ? '클릭하여 강조 표시' : undefined}
+                            style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: markPickerKey && markPickerKey === markKey ? 3 : 1, cursor: markKey ? 'pointer' : 'default' }}
+                          >
                             {row.statisticsCode || ''}
+                            {markKey && markPickerKey === markKey && (
+                              <span
+                                onClick={(event) => event.stopPropagation()}
+                                style={{
+                                  position: 'absolute', top: '100%', left: '16px', marginTop: '2px', zIndex: 4,
+                                  display: 'flex', alignItems: 'center', gap: '5px', padding: '5px 7px',
+                                  background: '#ffffff', border: '1px solid #c3ccd6', borderRadius: '7px',
+                                  boxShadow: '0 6px 18px rgba(0,0,0,0.18)',
+                                }}
+                              >
+                                {ROW_MARK_COLORS.map((mark) => (
+                                  <button
+                                    key={mark.color}
+                                    type="button"
+                                    title={mark.label}
+                                    aria-label={mark.label}
+                                    onClick={() => setRowMark(markKey, mark.color)}
+                                    style={{
+                                      width: '20px', height: '20px', padding: 0, borderRadius: '50%',
+                                      background: mark.color, cursor: 'pointer',
+                                      border: markColor === mark.color ? '2px solid #16283c' : '1px solid #c3ccd6',
+                                    }}
+                                  />
+                                ))}
+                                <button
+                                  type="button"
+                                  title="표시 지우기"
+                                  aria-label="표시 지우기"
+                                  onClick={() => setRowMark(markKey, '')}
+                                  style={{ padding: '2px 7px', borderRadius: '5px', border: '1px solid #c3ccd6', background: '#f7f8f6', color: '#46525e', fontSize: '11px', fontWeight: 600, cursor: 'pointer' }}
+                                >
+                                  지우기
+                                </button>
+                              </span>
+                            )}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {isNewItemNote && (

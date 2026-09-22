@@ -246,7 +246,7 @@ export default function PerformanceEvaluation() {
   const institutionRowSpans = groupRowSpans(EVENT_INSTITUTION_DATA);
 
   return (
-    <Layout highlightScope={activeTab}>
+    <Layout>
       <div className="page-content">
         <section className="page-heading" style={{ marginBottom: "12px" }}>
           <div className="title-area">

@@ -1255,7 +1255,7 @@ export default function StatisticsCodeDetail() {
   const selectedItemData = selectedItemId ? currentItems.find((item) => item.id === selectedItemId) : null;
 
   return (
-    <Layout highlightScope={[activeTab, selectedItemId].join('::')}>
+    <Layout>
       <div className="page-content">
         <section className="page-heading">
           <h1>세출 통계목별 상세</h1>

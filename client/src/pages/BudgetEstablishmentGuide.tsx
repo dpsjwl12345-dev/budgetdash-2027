@@ -362,7 +362,7 @@ export default function BudgetEstablishmentGuide() {
   };
 
   return (
-    <Layout highlightScope={activeTab}>
+    <Layout>
       <div className="page-content">
         <section className="page-heading">
           <h1>사전절차</h1>
