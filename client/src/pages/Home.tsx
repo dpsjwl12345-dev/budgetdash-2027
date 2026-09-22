@@ -802,6 +802,10 @@ export default function Home() {
   // 부기명 강조 표시. 키는 "부서::세부사업::통계목::부기명".
   const [rowMarks, setRowMarks] = useState<Record<string, string>>({});
   const [markPickerKey, setMarkPickerKey] = useState<string | null>(null);
+  // 부기명 줄에 다는 한두 단어짜리 메모. 저장 위치는 강조 표시와 같은 행이다.
+  const [rowNotes, setRowNotes] = useState<Record<string, string>>({});
+  const [editingRowNoteKey, setEditingRowNoteKey] = useState<string | null>(null);
+  const [rowNoteDraft, setRowNoteDraft] = useState("");
   // X(숨기기)를 누른 직후 "정말 숨길까요?"를 묻는 동안의 대상. 연필(수정) 버튼과 22px 간격이라
   // 잘못 눌리기 쉬운데, 예전엔 그 한 번으로 메모 줄이 모든 기기에서 영구히 사라졌다.
   const [pendingHideId, setPendingHideId] = useState<string | null>(null);
@@ -989,6 +993,9 @@ export default function Home() {
       if (data?.rowMarks && typeof data.rowMarks === 'object') {
         setRowMarks((prev) => ({ ...prev, ...data.rowMarks }));
       }
+      if (data?.rowNotes && typeof data.rowNotes === 'object') {
+        setRowNotes((prev) => ({ ...prev, ...data.rowNotes }));
+      }
     } catch (error) {
       console.log('부기명 강조 표시 로드 실패:', error);
     }
@@ -996,33 +1003,44 @@ export default function Home() {
 
   // 형광펜과 달리 서버에 바로 올리고, 실패하면 화면을 원래대로 돌리고 알린다.
   // 저장됐다고 믿고 검토를 계속하다 전부 잃는 일이 없어야 한다.
-  const setRowMark = async (key: string, color: string) => {
-    const previous = rowMarks[key] ?? '';
-    setRowMarks((prev) => {
-      const next = { ...prev };
-      if (color) next[key] = color;
+  // 색과 단어 메모는 같은 행에 저장되므로 언제나 두 값을 함께 보낸다.
+  const saveRowAnnotation = async (key: string, color: string, memo: string) => {
+    const prevColor = rowMarks[key] ?? '';
+    const prevMemo = rowNotes[key] ?? '';
+    const put = (target: Record<string, string>, value: string) => {
+      const next = { ...target };
+      if (value) next[key] = value;
       else delete next[key];
       return next;
-    });
-    setMarkPickerKey(null);
+    };
+    setRowMarks((prev) => put(prev, color));
+    setRowNotes((prev) => put(prev, memo));
     try {
       const response = await fetch('/api/cloud-sync?type=marks', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ key, color }),
+        body: JSON.stringify({ key, color, memo }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== true) throw new Error(result.message || '서버 저장 실패');
     } catch (error) {
-      console.warn('부기명 강조 표시 저장 실패:', error);
-      setRowMarks((prev) => {
-        const next = { ...prev };
-        if (previous) next[key] = previous;
-        else delete next[key];
-        return next;
-      });
-      showToast('강조 표시를 저장하지 못했습니다. 잠시 후 다시 눌러주세요.');
+      console.warn('부기명 표시 저장 실패:', error);
+      setRowMarks((prev) => put(prev, prevColor));
+      setRowNotes((prev) => put(prev, prevMemo));
+      showToast('저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
     }
+  };
+
+  const setRowMark = (key: string, color: string) => {
+    setMarkPickerKey(null);
+    return saveRowAnnotation(key, color, rowNotes[key] ?? '');
+  };
+
+  const setRowNote = (key: string, memo: string) => {
+    setEditingRowNoteKey(null);
+    setRowNoteDraft("");
+    if ((rowNotes[key] ?? '') === memo.trim()) return;
+    return saveRowAnnotation(key, rowMarks[key] ?? '', memo.trim());
   };
 
   const loadCsvData = async () => {
@@ -2743,6 +2761,35 @@ export default function Home() {
                                   산출식
                                 </button>
                               )}
+                              {/* 부기명 줄에만 한두 단어짜리 메모를 단다. 통계목 줄의 사전/산출식
+                                  배너와 같은 칸을 쓰되, 이쪽은 직접 적는 글자다. */}
+                              {markKey && (editingRowNoteKey === markKey ? (
+                                <input
+                                  autoFocus
+                                  value={rowNoteDraft}
+                                  onChange={(event) => setRowNoteDraft(event.target.value)}
+                                  onBlur={() => setRowNote(markKey, rowNoteDraft)}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter') setRowNote(markKey, rowNoteDraft);
+                                    if (event.key === 'Escape') { setEditingRowNoteKey(null); setRowNoteDraft(""); }
+                                  }}
+                                  placeholder="예: 증빙 확인"
+                                  style={{ width: '92px', padding: '1px 4px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: '12px', fontWeight: 700, color: '#1d4ed8', textAlign: 'center' }}
+                                />
+                              ) : (
+                                <button
+                                  type="button"
+                                  title={rowNotes[markKey] ? '클릭하여 수정' : '클릭하여 메모 입력'}
+                                  onClick={() => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteKey(markKey); }}
+                                  style={{
+                                    padding: '1px 4px', border: 'none', background: 'transparent', cursor: 'pointer',
+                                    fontSize: '12px', fontWeight: 700,
+                                    color: rowNotes[markKey] ? '#1d4ed8' : '#c3ccd6',
+                                  }}
+                                >
+                                  {rowNotes[markKey] || '＋'}
+                                </button>
+                              ))}
                             </div>
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), textAlign: 'center', color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing }}>

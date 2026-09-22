@@ -475,11 +475,13 @@ async function loadRowMarks(req: any, res: any) {
   }
 
   const rowMarks: Record<string, string> = {};
+  const rowNotes: Record<string, string> = {};
   (data || []).forEach((row: any) => {
     if (row.color) rowMarks[row.id] = row.color;
+    if (row.memo) rowNotes[row.id] = row.memo;
   });
 
-  res.status(200).json({ data: { rowMarks } });
+  res.status(200).json({ data: { rowMarks, rowNotes } });
 }
 
 async function saveRowMarks(req: any, res: any) {
@@ -491,13 +493,15 @@ async function saveRowMarks(req: any, res: any) {
 
   const key = typeof req.body?.key === 'string' ? req.body.key : '';
   const color = typeof req.body?.color === 'string' ? req.body.color : '';
+  const memo = typeof req.body?.memo === 'string' ? req.body.memo.trim() : '';
   if (!key) {
     res.status(200).json({ success: false, message: "저장 실패 (키 없음)" });
     return;
   }
 
-  // 색을 지운 경우(빈 문자열)는 행 자체를 없앤다.
-  if (!color) {
+  // 색과 단어 메모가 둘 다 비면 행 자체를 없앤다. 클라이언트는 항상 두 값을 함께
+  // 보내므로(부분 전송이 없으므로) 여기서 기존 값을 다시 읽을 필요가 없다.
+  if (!color && !memo) {
     const { error } = await supabase.from('budget_row_marks').delete().eq('id', key);
     if (error) {
       res.status(200).json({ success: false, message: "삭제 실패", error: error.message });
@@ -510,7 +514,8 @@ async function saveRowMarks(req: any, res: any) {
   const { error } = await supabase.from('budget_row_marks').upsert({
     id: key,
     department: key.split('::')[0] || '미분류',
-    color,
+    color: color || null,
+    memo: memo || null,
     updated_at: new Date().toISOString(),
   }, { onConflict: 'id' });
 
