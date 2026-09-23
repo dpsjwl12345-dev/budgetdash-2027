@@ -4,7 +4,7 @@ import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
 // 요구가 들어온 경로. 탭을 가르는 기준이며, 소속 정당명과는 별개다.
-type RequestType = "당정협의회" | "정책간담회" | "시의원";
+type RequestType = "당정협의회" | "정책간담회" | "시의원" | "특별조정교부금";
 
 type CouncilRequest = {
   id: string;
@@ -22,7 +22,7 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
-const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원"];
+const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원", "특별조정교부금"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
@@ -59,12 +59,24 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
 // ── 원구성 현황 (제10대 화성시의회 전반기, 26. 7. 3. 기준) ──────────────────
 type MainTabKey = RequestType | "원구성 현황";
 
-const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?: string }[] = [
-  { key: "당정협의회", label: "당정협의회 요구", subtitle: "정당 요구사업 · 정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다" },
-  { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업 · 소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다" },
+const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?: string; color?: string }[] = [
+  { key: "당정협의회", label: "당정협의회 요구", subtitle: "정당 요구사업 · 정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
+  { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업 · 소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
   { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
+  { key: "특별조정교부금", label: "특별조정교부금", subtitle: "경기도 관할 시의 지역개발사업 등 시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
   { key: "원구성 현황", label: "원구성 현황" },
 ];
+
+// hex(#rrggbb 또는 #rgb) 문자열을 rgba()로 변환한다. 탭 테두리/배경에 투명도를 줄 때 사용.
+function hexToRgba(hex: string, alpha: number): string {
+  const normalized = hex.replace("#", "");
+  const full = normalized.length === 3 ? normalized.split("").map((c) => c + c).join("") : normalized;
+  const value = parseInt(full, 16);
+  const r = (value >> 16) & 255;
+  const g = (value >> 8) & 255;
+  const b = value & 255;
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
+}
 
 type CompositionTabKey = "위원회별 의원 현황" | "상임위원회별 소관부서 현황" | "지역구별 의원 현황";
 
@@ -668,22 +680,33 @@ export default function CouncilMemberRequests() {
         </section>
 
         <section className="tab-bar">
-          {MAIN_TABS.map((tab) => (
-            <button
-              key={tab.key}
-              type="button"
-              className={`tab-button${activeTab === tab.key ? " active" : ""}`}
-              onClick={() => setActiveTab(tab.key)}
-            >
-              <span className="tab-label-row">
-                {tab.label}
-                {tab.key !== "원구성 현황" && (
-                  <span className="tab-count">{countOf(tab.key as RequestType)}</span>
-                )}
-              </span>
-              {tab.subtitle && <span className="tab-subtitle">{tab.subtitle}</span>}
-            </button>
-          ))}
+          {MAIN_TABS.map((tab) => {
+            const isActive = activeTab === tab.key;
+            const tabStyle = tab.color
+              ? {
+                  borderColor: isActive ? tab.color : hexToRgba(tab.color, 0.4),
+                  color: isActive ? tab.color : undefined,
+                  background: isActive ? hexToRgba(tab.color, 0.12) : "transparent",
+                }
+              : undefined;
+            return (
+              <button
+                key={tab.key}
+                type="button"
+                className={`tab-button${isActive ? " active" : ""}`}
+                style={tabStyle}
+                onClick={() => setActiveTab(tab.key)}
+              >
+                <span className="tab-label-row">
+                  {tab.label}
+                  {tab.key !== "원구성 현황" && (
+                    <span className="tab-count">{countOf(tab.key as RequestType)}</span>
+                  )}
+                </span>
+                {tab.subtitle && <span className="tab-subtitle">{tab.subtitle}</span>}
+              </button>
+            );
+          })}
         </section>
 
         {activeTab !== "원구성 현황" && (
