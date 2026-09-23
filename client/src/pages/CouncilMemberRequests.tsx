@@ -78,12 +78,47 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type CompositionTabKey = "위원회별 의원 현황" | "상임위원회별 소관부서 현황" | "지역구별 의원 현황";
+type CompositionTabKey = "위원회별 의원 현황" | "상임위원회별 소관부서 현황" | "지역구별 의원 현황" | "국회의원 현황";
 
 const COMPOSITION_TABS: { key: CompositionTabKey; label: string }[] = [
   { key: "위원회별 의원 현황", label: "위원회별 의원 현황" },
   { key: "상임위원회별 소관부서 현황", label: "상임위원회별 소관부서 현황" },
   { key: "지역구별 의원 현황", label: "지역구별 의원 현황" },
+  { key: "국회의원 현황", label: "국회의원 현황" },
+];
+
+type NationalAssemblyDistrict = {
+  district: string;
+  areaLabel: string;
+  jurisdiction: string;
+  memberName: string;
+};
+
+const NATIONAL_ASSEMBLY_DISTRICTS: NationalAssemblyDistrict[] = [
+  {
+    district: "화성시 갑",
+    areaLabel: "서·남부권 (원도심 및 도농복합)",
+    jurisdiction: "우정읍, 향남읍, 남양읍, 매송면, 비봉면, 마도면, 송산면, 서신면, 팔탄면, 장안면, 양감면, 정남면, 새솔동",
+    memberName: "송옥주",
+  },
+  {
+    district: "화성시 을",
+    areaLabel: "동탄2신도시 (중·남부)",
+    jurisdiction: "동탄4동, 동탄6동, 동탄7동, 동탄8동, 동탄9동",
+    memberName: "이준석",
+  },
+  {
+    district: "화성시 병",
+    areaLabel: "중부권 (봉담·병점 일대)",
+    jurisdiction: "봉담읍, 진안동, 병점1동, 병점2동, 기배동, 화산동",
+    memberName: "권칠승",
+  },
+  {
+    district: "화성시 정",
+    areaLabel: "반월동 및 동탄1·2신도시(북부)",
+    jurisdiction: "반월동, 동탄1동, 동탄2동, 동탄3동, 동탄5동",
+    memberName: "전용기",
+  },
 ];
 
 type CommitteeMember = { name: string };
@@ -296,6 +331,31 @@ const DISTRICT_MEMBERS: DistrictMember[] = [
   { district: "비례대표", area: "", name: "유상희", committee: "운영위·기획행정", party: "더불어민주당" },
   { district: "비례대표", area: "", name: "정명희", committee: "기획행정", party: "국민의힘" },
 ];
+
+// 시의원 선거구 표기(가선거구 등)에 병기할 숫자 선거구 번호.
+const DISTRICT_ORDINAL_TO_NUMBER: Record<string, number> = {
+  가: 1, 나: 2, 다: 3, 라: 4, 마: 5, 바: 6, 사: 7, 아: 8, 자: 9,
+};
+
+function districtDisplayLabel(district: string): string {
+  const ordinal = district.replace("선거구", "");
+  const number = DISTRICT_ORDINAL_TO_NUMBER[ordinal];
+  return number === undefined ? district : `${district} / ${number}선거구`;
+}
+
+// 시의원 선거구별 관할 도의원. 마지막(비례대표)은 공란.
+const PROVINCIAL_MEMBER_BY_DISTRICT: Record<string, string> = {
+  가선거구: "이홍근",
+  나선거구: "오현정",
+  다선거구: "김영훈",
+  라선거구: "신미숙",
+  마선거구: "김태형",
+  바선거구: "김회철",
+  사선거구: "이진형",
+  아선거구: "김영수",
+  자선거구: "오진택",
+  비례대표: "",
+};
 
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
@@ -909,7 +969,8 @@ export default function CouncilMemberRequests() {
                   <thead>
                     <tr>
                       <th>선거구</th>
-                      <th>성명</th>
+                      <th>시의원</th>
+                      <th>도의원</th>
                       <th>위원회</th>
                       <th>정당명</th>
                     </tr>
@@ -919,18 +980,52 @@ export default function CouncilMemberRequests() {
                       <tr key={i}>
                         {districtRowSpans[i] && (
                           <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
-                            <div className="cc-district-name">{row.district}</div>
+                            <div className="cc-district-name">{districtDisplayLabel(row.district)}</div>
                             {districtAreaByGroup[row.district] && (
                               <div className="cc-district-area">{districtAreaByGroup[row.district]}</div>
                             )}
                           </td>
                         )}
                         <td>{row.name}</td>
+                        {districtRowSpans[i] && (
+                          <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
+                            {PROVINCIAL_MEMBER_BY_DISTRICT[row.district] ?? ""}
+                          </td>
+                        )}
                         <td>{row.committee}</td>
                         <td>
                           <span className="cc-party-badge" style={{ color: partyColor(row.party) }}>
                             {row.party}
                           </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {compositionTab === "국회의원 현황" && (
+              <div className="cc-table-wrap">
+                <table className="cc-table cc-national-table">
+                  <thead>
+                    <tr>
+                      <th>선거구</th>
+                      <th>주요 생활 권역</th>
+                      <th>관할 읍·면·동 (구역)</th>
+                      <th>국회의원</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {NATIONAL_ASSEMBLY_DISTRICTS.map((row) => (
+                      <tr key={row.district}>
+                        <td className="cc-district-cell">
+                          <div className="cc-district-name">{row.district}</div>
+                        </td>
+                        <td>{row.areaLabel}</td>
+                        <td className="cc-national-jurisdiction">{row.jurisdiction}</td>
+                        <td>
+                          <div className="cc-member-name">{row.memberName}</div>
                         </td>
                       </tr>
                     ))}
@@ -1475,6 +1570,12 @@ export default function CouncilMemberRequests() {
 
         .cc-party-badge {
           font-weight: 700;
+        }
+
+        .cc-national-jurisdiction {
+          text-align: left;
+          white-space: normal;
+          line-height: 1.6;
         }
 
         @media (max-width: 900px) {
