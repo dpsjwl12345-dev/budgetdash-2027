@@ -497,7 +497,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-hero-value { color: #edf5fe; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
 .cw-hero-unit { color: #8fa1b3; font-size: 16px; font-weight: 500; margin-left: 5px; }
 .cw-hero-split-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
-.cw-hero-split { display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 999px; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 13px; font-weight: 700; white-space: nowrap; }
+.cw-hero-split { display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 999px; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 13px; font-weight: 400; white-space: nowrap; }
 .cw-structure-note { color: #6f8195; font-size: 14px; text-align: right; }
 
 @media (max-width: 960px) {
