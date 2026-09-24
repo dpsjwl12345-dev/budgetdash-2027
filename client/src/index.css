@@ -486,13 +486,13 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* 세입-세출 박스 옆 빈 공간에 놓는 개별 박스(세출요구액/기금조성/조정액). 서로 합쳐진
    하나의 카드가 아니라 각각 독립된 박스라 hero-box와 같은 자체 테두리를 갖는다. */
 .cw-hero-equals { display: flex; align-items: center; color: #6f8195; font-size: 26px; font-weight: 700; flex: none; }
-.cw-flow-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 14px 22px; }
+.cw-flow-box { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
 .cw-flow-box .cw-hero-value { font-size: 30px; }
 /* 기준일/회계 구성 문구는 박스를 둘러싼 별도 카드가 아니라, 박스 자체의 우측 상단에
    절대 위치로 얹는다 - 겹박스(이중 테두리)를 만들지 않기 위해서다. */
 .cw-hero-card__head { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .cw-hero-asof { color: #6f8195; font-size: 12px; font-weight: 500; }
-.cw-hero-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 14px 22px; }
+.cw-hero-box { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
 .cw-hero-label { color: #a8bcce; font-size: 22px; font-weight: 600; }
 .cw-hero-value { color: #edf5fe; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
 .cw-hero-unit { color: #8fa1b3; font-size: 16px; font-weight: 500; margin-left: 5px; }
