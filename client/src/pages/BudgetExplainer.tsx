@@ -599,7 +599,7 @@ export default function BudgetExplainer() {
     const detail = selectedPath.split("|").pop() || requestedItem;
     if (department) localStorage.setItem('selectedDepartment', department);
     if (detail) localStorage.setItem('returnToHierarchyProgram', detail);
-    setLocation('/');
+    setLocation('/department-budget-request');
   };
 
   const TreeNodeRenderer = ({

@@ -484,21 +484,67 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .citywide-overview__diff { margin-top: 8px; color: #8fa1b3; font-size: 12px; line-height: 1.5; }
 .citywide-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
 .citywide-panel { border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 18px 20px; }
-.citywide-panel h2 { margin: 0 0 14px; color: #edf5fe; font-size: 16px; font-weight: 700; }
+.citywide-panel h2 { margin: 0 0 14px; color: #edf5fe; font-size: 18px; font-weight: 700; }
 .citywide-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.citywide-table th, .citywide-table td { padding: 7px 6px; border-bottom: 1px solid rgba(164, 192, 221, 0.12); font-size: 13px; color: #cbd8e6; text-align: right; }
-.citywide-table th { color: #8fa1b3; font-weight: 600; font-size: 11px; }
-.citywide-table th:first-child, .citywide-table td:first-child { text-align: left; color: #edf5fe; font-weight: 600; }
-.citywide-table .cw-note { display: block; color: #6f8195; font-size: 11px; font-weight: 400; margin-top: 2px; }
-.citywide-table .group-row td { padding-top: 14px; color: #d9ad52; font-weight: 700; font-size: 11px; border-bottom: none; }
+.citywide-table th, .citywide-table td { padding: 10px 8px; border-bottom: 1px solid rgba(164, 192, 221, 0.12); font-size: 16px; color: #cbd8e6; text-align: right; }
+.citywide-table th { color: #8fa1b3; font-weight: 600; font-size: 13px; white-space: nowrap; }
+.citywide-table th:first-child, .citywide-table td:first-child { text-align: left; color: #edf5fe; font-weight: 600; white-space: nowrap; }
+.citywide-table .cw-note { display: block; color: #6f8195; font-size: 13px; font-weight: 400; margin-top: 3px; white-space: normal; }
+.citywide-table .group-row td { padding-top: 16px; color: #d9ad52; font-weight: 700; font-size: 14px; border-bottom: none; }
 .citywide-table .subtotal-row td { color: #a8bcce; font-weight: 700; border-bottom: 1px dashed rgba(164, 192, 221, 0.25); }
 .citywide-table tfoot td { font-weight: 700; color: #edf5fe; border-top: 1px solid rgba(164, 192, 221, 0.3); border-bottom: none; }
 .citywide-outlook { margin-top: 20px; }
 .citywide-outlook ul { margin: 0; padding-left: 18px; }
 .citywide-outlook li { color: #b8cade; font-size: 13px; line-height: 1.7; }
+
+/* 구성비 스택 막대 + 연도 비교 막대 차트 */
+.cw-charts-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.cw-chart-card { border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 18px 20px; position: relative; }
+.cw-chart-card h3 { margin: 0 0 16px; color: #edf5fe; font-size: 14px; font-weight: 700; }
+
+.cw-stack-bar { position: relative; display: flex; height: 28px; background: rgba(255, 255, 255, 0.04); border-radius: 4px; }
+.cw-stack-seg { display: flex; align-items: center; justify-content: center; min-width: 2px; margin-right: 2px; cursor: pointer; outline: none; transition: filter 0.15s; }
+.cw-stack-seg:last-child { margin-right: 0; }
+.cw-stack-seg:hover, .cw-stack-seg:focus-visible { filter: brightness(1.12); }
+.cw-stack-seg-label { font-size: 11px; font-weight: 700; color: #fff; padding: 0 8px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+
+.cw-legend { list-style: none; margin: 14px 0 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.cw-legend li { display: flex; align-items: center; gap: 8px; font-size: 12px; color: #cbd8e6; }
+.cw-legend-label { flex: 1; }
+.cw-legend-value { color: #edf5fe; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cw-legend-unit { color: #8fa1b3; font-weight: 400; margin-left: 2px; }
+.cw-legend-swatch { width: 10px; height: 10px; border-radius: 2px; flex: none; }
+.cw-legend--inline { flex-direction: row; gap: 18px; margin: 0 0 16px; }
+.cw-legend--inline span { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cbd8e6; }
+
+.cw-tooltip { position: absolute; z-index: 5; transform: translate(-50%, -100%); background: #14202e; border: 1px solid var(--line-strong); border-radius: 8px; padding: 8px 10px; pointer-events: none; box-shadow: 0 8px 20px rgba(0, 0, 0, 0.35); white-space: nowrap; }
+.cw-tooltip-title { color: #8fa1b3; font-size: 11px; font-weight: 600; margin-bottom: 4px; }
+.cw-tooltip-row { display: flex; align-items: center; gap: 6px; font-size: 12px; color: #cbd8e6; }
+.cw-tooltip-key { width: 10px; height: 2px; border-radius: 1px; flex: none; }
+.cw-tooltip-label { color: #8fa1b3; }
+.cw-tooltip-value { color: #edf5fe; margin-left: auto; font-variant-numeric: tabular-nums; }
+
+.cw-comparison-card { margin-top: 16px; }
+.cw-bars { position: relative; height: 220px; padding-bottom: 22px; }
+.cw-bars-scale { position: absolute; inset: 0 0 22px 56px; }
+.cw-bars-gridline { position: absolute; left: 0; right: 0; height: 1px; background: rgba(164, 192, 221, 0.12); }
+.cw-bars-tick-label { position: absolute; left: -52px; width: 44px; top: -6px; text-align: right; font-size: 11px; color: #8fa1b3; font-variant-numeric: tabular-nums; }
+.cw-bars-plot { position: absolute; inset: 0 0 22px 56px; display: flex; align-items: flex-end; gap: 48px; padding-left: 12px; }
+.cw-bar-group { position: relative; flex: 1; max-width: 160px; display: flex; align-items: flex-end; gap: 8px; height: 100%; }
+.cw-bar-track { flex: 1; height: 100%; display: flex; align-items: flex-end; max-width: 24px; }
+.cw-bar { width: 100%; border-radius: 4px 4px 0 0; position: relative; cursor: pointer; outline: none; transition: filter 0.15s; min-height: 2px; }
+.cw-bar:hover, .cw-bar:focus-visible { filter: brightness(1.12); }
+.cw-bar-cap-label { position: absolute; top: -20px; left: 50%; transform: translateX(-50%); font-size: 11px; color: #cbd8e6; font-variant-numeric: tabular-nums; white-space: nowrap; }
+.cw-bar-group-label { position: absolute; bottom: -22px; left: 0; right: 0; text-align: center; font-size: 13px; font-weight: 700; color: #edf5fe; }
+
+.cw-detail-toggle { margin-top: 20px; padding: 9px 16px; border-radius: 7px; border: 1px solid var(--line); background: rgba(140, 155, 170, 0.12); color: #cbd8e6; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.cw-detail-toggle:hover { background: rgba(140, 155, 170, 0.2); }
+
 @media (max-width: 960px) {
   .citywide-overview__cards { grid-template-columns: 1fr; }
   .citywide-panels { grid-template-columns: 1fr; }
+  .cw-charts-grid { grid-template-columns: 1fr; }
+  .cw-bars-plot { gap: 24px; }
 }
 .table-heading { min-height: 78px; padding: 16px 19px 16px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
