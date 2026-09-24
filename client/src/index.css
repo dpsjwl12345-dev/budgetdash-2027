@@ -492,33 +492,15 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
    절대 위치로 얹는다 - 겹박스(이중 테두리)를 만들지 않기 위해서다. */
 .cw-hero-card__head { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
 .cw-hero-asof { color: #6f8195; font-size: 12px; font-weight: 500; }
-.cw-hero-box { flex: none; max-width: 860px; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 14px 22px; }
+.cw-hero-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 14px 22px; }
 .cw-hero-label { color: #a8bcce; font-size: 22px; font-weight: 600; }
 .cw-hero-value { color: #edf5fe; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
 .cw-hero-unit { color: #8fa1b3; font-size: 16px; font-weight: 500; margin-left: 5px; }
-.cw-hero-split { display: inline-flex; align-items: center; margin-top: 2px; padding: 4px 12px; border-radius: 999px; background: rgba(57, 135, 229, 0.14); color: #8fc4ff; font-size: 12px; font-weight: 600; white-space: nowrap; }
+.cw-hero-split-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
+.cw-hero-split { display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 999px; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 13px; font-weight: 700; white-space: nowrap; }
 .cw-structure-note { color: #6f8195; font-size: 14px; text-align: right; }
 
-.citywide-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
-.citywide-panel { border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 18px 20px; }
-.citywide-panel h2 { margin: 0 0 14px; color: #edf5fe; font-size: 18px; font-weight: 700; }
-.citywide-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
-.citywide-table th, .citywide-table td { padding: 10px 8px; border-bottom: 1px solid rgba(164, 192, 221, 0.12); font-size: 16px; color: #cbd8e6; text-align: right; }
-.citywide-table th { color: #8fa1b3; font-weight: 600; font-size: 13px; white-space: nowrap; }
-.citywide-table th:first-child, .citywide-table td:first-child { text-align: left; color: #edf5fe; font-weight: 600; white-space: nowrap; }
-.citywide-table .cw-note { display: block; color: #6f8195; font-size: 13px; font-weight: 400; margin-top: 3px; white-space: normal; }
-.citywide-table .group-row td { padding-top: 16px; color: #d9ad52; font-weight: 700; font-size: 14px; border-bottom: none; }
-.citywide-table .subtotal-row td { color: #a8bcce; font-weight: 700; border-bottom: 1px dashed rgba(164, 192, 221, 0.25); }
-.citywide-table tfoot td { font-weight: 700; color: #edf5fe; border-top: 1px solid rgba(164, 192, 221, 0.3); border-bottom: none; }
-.citywide-outlook { margin-top: 20px; }
-.citywide-outlook ul { margin: 0; padding-left: 18px; }
-.citywide-outlook li { color: #b8cade; font-size: 13px; line-height: 1.7; }
-
-.cw-detail-toggle { margin-top: 32px; padding: 9px 16px; border-radius: 7px; border: 1px solid var(--line); background: rgba(140, 155, 170, 0.12); color: #cbd8e6; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
-.cw-detail-toggle:hover { background: rgba(140, 155, 170, 0.2); }
-
 @media (max-width: 960px) {
-  .citywide-panels { grid-template-columns: 1fr; }
   .cw-hero-section { flex-direction: column; }
   .cw-hero-box { max-width: none; }
   .cw-flow-box { flex: none; width: 100%; }
