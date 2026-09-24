@@ -53,11 +53,17 @@ export default function CitywideBudgetOverview() {
               <div className="cw-flow-box">
                 <span className="cw-hero-label">기금조성</span>
                 <strong className="cw-hero-value">9,500<span className="cw-hero-unit">억원</span></strong>
+                <div className="cw-hero-split-row" aria-hidden="true" style={{ visibility: "hidden" }}>
+                  <span className="cw-hero-split">-</span>
+                </div>
               </div>
               <span className="cw-hero-equals">→</span>
               <div className="cw-flow-box">
                 <span className="cw-hero-label">조정액</span>
                 <strong className="cw-hero-value">4,500<span className="cw-hero-unit">억원 +α</span></strong>
+                <div className="cw-hero-split-row" aria-hidden="true" style={{ visibility: "hidden" }}>
+                  <span className="cw-hero-split">-</span>
+                </div>
               </div>
             </div>
           </>
