@@ -1,4 +1,5 @@
 import { Fragment, useState } from "react";
+import { ArrowRight } from "lucide-react";
 import { CITYWIDE_OVERVIEW_2027, type CitywideAmountGroup } from "../data/citywideBudgetOverview2027";
 
 // 부서를 아직 고르지 않은 "부서예산요구" 초기 화면에 보여주는 시 전체 세입세출 요구 현황 대시보드.
@@ -353,25 +354,43 @@ export default function CitywideBudgetOverview() {
         const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
         return (
           <>
-            <div className="cw-hero-card">
-              <div className="cw-hero-card__head">
-                <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+            <div className="cw-hero-section">
+              <div className="cw-hero-card">
+                <div className="cw-hero-card__head">
+                  <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+                </div>
+                <div className="cw-hero-row">
+                  <div className="cw-hero-box">
+                    <span className="cw-hero-label">세입요구(예산규모)</span>
+                    <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
+                  </div>
+                  <div className="cw-hero-box">
+                    <span className="cw-hero-label">세출요구(예산규모)</span>
+                    <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
+                  </div>
+                  <div className="cw-hero-box">
+                    <span className="cw-hero-label">세입-세출</span>
+                    <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
+                  </div>
+                </div>
+                <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</p>
               </div>
-              <div className="cw-hero-row">
-                <div className="cw-hero-box">
-                  <span className="cw-hero-label">세입요구(예산규모)</span>
-                  <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
+              <div className="cw-hero-flow">
+                <div className="cw-flow-box">
+                  <span className="cw-hero-label">세출편성</span>
+                  <strong className="cw-hero-value">42,520<span className="cw-hero-unit">억원</span></strong>
                 </div>
-                <div className="cw-hero-box">
-                  <span className="cw-hero-label">세출요구(예산규모)</span>
-                  <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
+                <ArrowRight className="cw-flow-arrow" size={20} />
+                <div className="cw-flow-box">
+                  <span className="cw-hero-label">기금조성</span>
+                  <strong className="cw-hero-value">9,500<span className="cw-hero-unit">억원</span></strong>
                 </div>
-                <div className="cw-hero-box">
-                  <span className="cw-hero-label">세입-세출</span>
-                  <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
+                <ArrowRight className="cw-flow-arrow" size={20} />
+                <div className="cw-flow-box cw-flow-box--end">
+                  <span className="cw-hero-label">감액조정</span>
+                  <strong className="cw-hero-value">4,500<span className="cw-hero-unit">억원 +α</span></strong>
                 </div>
               </div>
-              <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</p>
             </div>
             <div className="cw-breakdown-card">
               <HeroBreakdownBar
