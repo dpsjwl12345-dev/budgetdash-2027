@@ -73,10 +73,15 @@ export default function CitywideBudgetOverview() {
 
       <div className="cw-income-card">
         <div className="cw-income-head">
-          <span className="cw-income-title">세입요구 총계</span>
-          <span className="cw-income-scope">일반회계</span>
+          <div className="cw-income-head-label">
+            <span className="cw-income-scope">일반회계</span>
+            <span className="cw-income-title">세입요구 총계</span>
+          </div>
+          <strong className="cw-income-total">
+            {fmtEok(data.revenueTotal.y2027)}<span className="cw-hero-unit">억원</span>
+            <span className="cw-income-total-diff">({fmtEokDiff(data.revenueTotal.y2026, data.revenueTotal.y2027)}억원)</span>
+          </strong>
         </div>
-        <strong className="cw-income-total">{fmtEok(data.revenueTotal.y2027)}<span className="cw-hero-unit">억원</span></strong>
         <div className="cw-income-list">
           {data.revenueGroups.map((g) =>
             g.items.map((item) => {

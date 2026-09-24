@@ -492,10 +492,12 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* 세입요구 현황 - 증권 앱의 "보유 종목" 리스트 스타일을 참고한 카드. 큰 총계 숫자 위에
    항목별 금액·전년대비 증감을 나열해 한눈에 스캔되게 한다. */
 .cw-income-card { max-width: 860px; margin-top: 20px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 20px 22px; }
-.cw-income-head { display: flex; align-items: center; gap: 10px; }
-.cw-income-title { color: #8fa1b3; font-size: 14px; font-weight: 600; }
+.cw-income-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.cw-income-head-label { display: flex; align-items: center; gap: 10px; }
+.cw-income-title { color: #a8bcce; font-size: 18px; font-weight: 600; }
 .cw-income-scope { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(217, 173, 82, 0.16); color: #e8c47e; font-size: 12px; font-weight: 700; }
-.cw-income-total { display: block; margin-top: 6px; color: #edf5fe; font-size: 38px; font-weight: 700; letter-spacing: -0.02em; }
+.cw-income-total { color: #edf5fe; font-size: 48px; font-weight: 700; letter-spacing: -0.02em; }
+.cw-income-total-diff { margin-left: 10px; color: #4ade80; font-size: 18px; font-weight: 600; }
 .cw-income-list { margin-top: 18px; padding-top: 4px; border-top: 1px solid rgba(164, 192, 221, 0.14); }
 .cw-income-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
 .cw-income-row:last-child { border-bottom: none; }
