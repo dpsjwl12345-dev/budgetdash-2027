@@ -51,16 +51,22 @@ function ChartTooltip({ tooltip }: { tooltip: TooltipState }) {
   );
 }
 
+type CompositionSegment = { label: string; value: number; prevValue?: number };
+
+function groupsToSegments(groups: readonly CitywideAmountGroup[], year: "y2026" | "y2027" = "y2027"): CompositionSegment[] {
+  return groups.map((g) => ({ label: groupLabel(g), value: groupTotal(g, year), prevValue: groupTotal(g, "y2026") }));
+}
+
 // 부분-전체(part-to-whole) 구성비 차트. 여러 색을 쓰는 파이/도넛 대신 가로 스택 막대를 쓴다 -
-// 항목이 3개뿐이라도 막대 하나로 "합쳐서 100%"라는 관계가 파이보다 눈에 더 잘 들어온다.
-function CompositionChart({ title, groups, year = "y2027" }: { title: string; groups: readonly CitywideAmountGroup[]; year?: "y2026" | "y2027" }) {
+// 항목이 몇 개뿐이라도 막대 하나로 "합쳐서 100%"라는 관계가 파이보다 눈에 더 잘 들어온다.
+function CompositionChart({ title, segments, compact = false }: { title: string; segments: CompositionSegment[]; compact?: boolean }) {
   const [tooltip, setTooltip] = useState<TooltipState>(null);
-  const totals = groups.map((g) => ({ label: groupLabel(g), value: groupTotal(g, year), prevValue: groupTotal(g, "y2026") }));
+  const totals = segments;
   const grandTotal = totals.reduce((sum, t) => sum + t.value, 0) || 1;
 
   return (
-    <div className="cw-chart-card">
-      <h3>{title}</h3>
+    <div className={compact ? "" : "cw-chart-card"}>
+      {title && <h3>{title}</h3>}
       <div
         className="cw-stack-bar"
         onMouseLeave={() => setTooltip(null)}
@@ -89,7 +95,7 @@ function CompositionChart({ title, groups, year = "y2027" }: { title: string; gr
                   title: t.label,
                   lines: [
                     { label: "2027년 요구", value: `${fmt(t.value)} 백만원 (${pct.toFixed(1)}%)`, color: CAT_COLORS[i % CAT_COLORS.length] },
-                    { label: "전년 대비", value: fmtDiff(t.prevValue, t.value) },
+                    ...(t.prevValue !== undefined ? [{ label: "전년 대비", value: fmtDiff(t.prevValue, t.value) }] : []),
                   ],
                 });
               }}
@@ -274,28 +280,52 @@ export default function CitywideBudgetOverview() {
         <h1>2027년 화성시 세입세출 요구 현황</h1>
       </div>
 
-      <div className="citywide-overview__cards">
-        {data.totalsByAccount.map((row) => (
-          <article className="metric-card" style={{ "--tint": row.name === "합계" ? "#5b9bf0" : "#e8b84b" } as React.CSSProperties} key={row.name}>
-            <div className="metric-header">
-              <div className="metric-top"><span>{row.name}</span></div>
+      {(() => {
+        const total = data.totalsByAccount.find((r) => r.name === "합계")!;
+        const general = data.totalsByAccount.find((r) => r.name === "일반회계")!;
+        const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
+        return (
+          <div className="cw-structure-card">
+            <div className="cw-hero-row">
+              <div className="cw-hero-stat">
+                <span className="cw-hero-label">2027년 요구 세입 총계</span>
+                <strong className="cw-hero-value">{fmt(total.revenue)}<span className="cw-hero-unit">백만원</span></strong>
+              </div>
+              <div className="cw-hero-stat">
+                <span className="cw-hero-label">2027년 요구 세출 총계</span>
+                <strong className="cw-hero-value">{fmt(total.expenditure)}<span className="cw-hero-unit">백만원</span></strong>
+              </div>
+              <div className="cw-hero-stat cw-hero-stat--diff">
+                <span className="cw-hero-label">세입-세출</span>
+                <strong className="cw-hero-value">{fmt(total.diff)}<span className="cw-hero-unit">백만원</span></strong>
+              </div>
             </div>
-            <strong style={{ fontSize: "calc(1rem + 2px)" }}>
-              세입 {fmt(row.revenue)}<span className="metric-unit">백만원</span>
-            </strong>
-            <strong style={{ fontSize: "calc(1rem + 2px)", marginTop: "2px" }}>
-              세출 {fmt(row.expenditure)}<span className="metric-unit">백만원</span>
-            </strong>
-            <div className="citywide-overview__diff">
-              세입-세출 {fmt(row.diff)}백만원{row.note ? ` · ${row.note}` : ""}
+            <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)로 구성</p>
+            <div className="cw-structure-charts">
+              <CompositionChart
+                title="세입 회계별 구성"
+                segments={[
+                  { label: "일반회계", value: general.revenue },
+                  { label: "특별회계", value: special.revenue },
+                ]}
+                compact
+              />
+              <CompositionChart
+                title="세출 회계별 구성"
+                segments={[
+                  { label: "일반회계", value: general.expenditure },
+                  { label: "특별회계", value: special.expenditure },
+                ]}
+                compact
+              />
             </div>
-          </article>
-        ))}
-      </div>
+          </div>
+        );
+      })()}
 
       <div className="cw-charts-grid">
-        <CompositionChart title="세입 구성 (2027년 요구 기준, 일반회계)" groups={data.revenueGroups} />
-        <CompositionChart title="세출 구성 (2027년 요구 기준, 일반회계)" groups={data.expenditureGroups} />
+        <CompositionChart title="세입 구성 (2027년 요구 기준, 일반회계)" segments={groupsToSegments(data.revenueGroups)} />
+        <CompositionChart title="세출 구성 (2027년 요구 기준, 일반회계)" segments={groupsToSegments(data.expenditureGroups)} />
       </div>
 
       <ComparisonChart
