@@ -272,7 +272,6 @@ export default function CitywideBudgetOverview() {
     <div className="citywide-overview">
       <div className="citywide-overview__head">
         <h1>2027년 화성시 세입세출 요구 현황</h1>
-        <p>{data.asOf} · {data.reportedAt}</p>
       </div>
 
       <div className="citywide-overview__cards">
