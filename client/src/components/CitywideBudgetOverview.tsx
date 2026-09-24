@@ -22,6 +22,61 @@ function fmtEokDiff(y2026: number, y2027: number) {
   return diffEok > 0 ? `+${fmt(diffEok)}` : `△${fmt(Math.abs(diffEok))}`;
 }
 
+type BudgetGroup = {
+  group: string;
+  items: readonly { name: string; y2026: number; y2027: number; note?: string }[];
+};
+
+// 세입요구/세출요구 총계 카드 - 증권 앱의 "보유 종목" 리스트 스타일. 세입·세출 둘 다
+// 구조가 같아(총계 헤더 + 그룹별 항목 리스트) 하나의 컴포넌트로 재사용한다.
+function BudgetListCard({
+  scope,
+  title,
+  total,
+  groups,
+}: {
+  scope: string;
+  title: string;
+  total: { y2026: number; y2027: number };
+  groups: readonly BudgetGroup[];
+}) {
+  return (
+    <div className="cw-income-card">
+      <div className="cw-income-head">
+        <span className="cw-income-scope">{scope}</span>
+        <span className="cw-income-title">{title}</span>
+        <strong className="cw-income-total">
+          {fmtEok(total.y2027)}<span className="cw-hero-unit">억원</span>
+          <span className="cw-income-total-diff">({fmtEokDiff(total.y2026, total.y2027)}억원)</span>
+        </strong>
+      </div>
+      <div className="cw-income-list">
+        {groups.map((g) =>
+          g.items.map((item, i) => {
+            const diffEok = Math.round((item.y2027 - item.y2026) / 100);
+            const diffDir = diffEok > 0 ? "up" : diffEok < 0 ? "down" : "flat";
+            const isLastInGroup = i === g.items.length - 1;
+            const badgeLabel = (g.group || g.items[0]?.name || "").slice(0, 2);
+            return (
+              <div className={`cw-income-row ${isLastInGroup ? "cw-income-row--group-end" : ""}`} key={item.name}>
+                <span className="cw-income-badge">{badgeLabel}</span>
+                <span className="cw-income-name-text">
+                  {item.name}
+                  {item.note && <span className="cw-income-note">{item.note}</span>}
+                </span>
+                <span className="cw-income-figures">
+                  <span className="cw-income-amount">{fmtEok(item.y2027)}<span className="cw-hero-unit">억원</span></span>
+                  <span className={`cw-income-diff cw-income-diff--${diffDir}`}>({fmtEokDiff(item.y2026, item.y2027)})</span>
+                </span>
+              </div>
+            );
+          })
+        )}
+      </div>
+    </div>
+  );
+}
+
 export default function CitywideBudgetOverview() {
   const data = CITYWIDE_OVERVIEW_2027;
 
@@ -71,37 +126,9 @@ export default function CitywideBudgetOverview() {
         );
       })()}
 
-      <div className="cw-income-card">
-        <div className="cw-income-head">
-          <span className="cw-income-scope">일반회계</span>
-          <span className="cw-income-title">세입요구 총계</span>
-          <strong className="cw-income-total">
-            {fmtEok(data.revenueTotal.y2027)}<span className="cw-hero-unit">억원</span>
-            <span className="cw-income-total-diff">({fmtEokDiff(data.revenueTotal.y2026, data.revenueTotal.y2027)}억원)</span>
-          </strong>
-        </div>
-        <div className="cw-income-list">
-          {data.revenueGroups.map((g) =>
-            g.items.map((item, i) => {
-              const diffEok = Math.round((item.y2027 - item.y2026) / 100);
-              const diffDir = diffEok > 0 ? "up" : diffEok < 0 ? "down" : "flat";
-              const isLastInGroup = i === g.items.length - 1;
-              return (
-                <div className={`cw-income-row ${isLastInGroup ? "cw-income-row--group-end" : ""}`} key={item.name}>
-                  <span className="cw-income-badge">{g.group.slice(0, 2)}</span>
-                  <span className="cw-income-name-text">
-                    {item.name}
-                    <span className="cw-income-note">{item.note}</span>
-                  </span>
-                  <span className="cw-income-figures">
-                    <span className="cw-income-amount">{fmtEok(item.y2027)}<span className="cw-hero-unit">억원</span></span>
-                    <span className={`cw-income-diff cw-income-diff--${diffDir}`}>({fmtEokDiff(item.y2026, item.y2027)})</span>
-                  </span>
-                </div>
-              );
-            })
-          )}
-        </div>
+      <div className="cw-income-section">
+        <BudgetListCard scope="일반회계" title="세입요구 총계" total={data.revenueTotal} groups={data.revenueGroups} />
+        <BudgetListCard scope="일반회계" title="세출요구 총계" total={data.expenditureTotal} groups={data.expenditureGroups} />
       </div>
     </div>
   );
