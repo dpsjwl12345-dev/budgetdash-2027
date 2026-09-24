@@ -475,6 +475,31 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 .table-panel { margin-top: 26px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); overflow: visible; transition: all 200ms ease-out; }
 .table-panel:hover { background: rgba(140, 155, 170, 0.18); border-color: rgba(226, 232, 240, 0.25); }
+
+/* "부서예산요구" 초기 화면(부서 미선택)에 뜨는 시 전체 세입세출 요구 현황 대시보드 */
+.citywide-overview { margin-top: 22px; }
+.citywide-overview__head h1 { margin: 0; color: #edf5fe; font-size: 22px; font-weight: 700; }
+.citywide-overview__head p { margin: 4px 0 0; color: #8fa1b3; font-size: 13px; }
+.citywide-overview__cards { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 12px; margin-top: 18px; }
+.citywide-overview__diff { margin-top: 8px; color: #8fa1b3; font-size: 12px; line-height: 1.5; }
+.citywide-panels { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin-top: 20px; }
+.citywide-panel { border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 18px 20px; }
+.citywide-panel h2 { margin: 0 0 14px; color: #edf5fe; font-size: 16px; font-weight: 700; }
+.citywide-table { width: 100%; border-collapse: collapse; font-variant-numeric: tabular-nums; }
+.citywide-table th, .citywide-table td { padding: 7px 6px; border-bottom: 1px solid rgba(164, 192, 221, 0.12); font-size: 13px; color: #cbd8e6; text-align: right; }
+.citywide-table th { color: #8fa1b3; font-weight: 600; font-size: 11px; }
+.citywide-table th:first-child, .citywide-table td:first-child { text-align: left; color: #edf5fe; font-weight: 600; }
+.citywide-table .cw-note { display: block; color: #6f8195; font-size: 11px; font-weight: 400; margin-top: 2px; }
+.citywide-table .group-row td { padding-top: 14px; color: #d9ad52; font-weight: 700; font-size: 11px; border-bottom: none; }
+.citywide-table .subtotal-row td { color: #a8bcce; font-weight: 700; border-bottom: 1px dashed rgba(164, 192, 221, 0.25); }
+.citywide-table tfoot td { font-weight: 700; color: #edf5fe; border-top: 1px solid rgba(164, 192, 221, 0.3); border-bottom: none; }
+.citywide-outlook { margin-top: 20px; }
+.citywide-outlook ul { margin: 0; padding-left: 18px; }
+.citywide-outlook li { color: #b8cade; font-size: 13px; line-height: 1.7; }
+@media (max-width: 960px) {
+  .citywide-overview__cards { grid-template-columns: 1fr; }
+  .citywide-panels { grid-template-columns: 1fr; }
+}
 .table-heading { min-height: 78px; padding: 16px 19px 16px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
 .dept-pill { display: inline-flex; align-items: center; height: 32px; padding: 0 16px; border-radius: 999px; background: rgba(203, 213, 225, 0.12); border: 1px solid rgba(203, 213, 225, 0.25); color: #dbe8f5; font-size: 17px; font-weight: 700; white-space: nowrap; }

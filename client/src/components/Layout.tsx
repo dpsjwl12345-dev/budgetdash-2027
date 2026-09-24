@@ -34,12 +34,12 @@ type ToolItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: "예산 편성 시트", icon: ClipboardCheck, path: "/", count: "01" },
-  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
+  { label: "부서예산요구", icon: ClipboardCheck, path: "/", count: "01" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
+  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
   { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
-  { label: "당정협의회 요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
-  { label: "시장, 부시장 요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
+  { label: "당정협의회요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
+  { label: "시장요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
 ];
 
 const toolItems: ToolItem[] = [
@@ -84,7 +84,7 @@ export default function Layout({
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
       default:
-        return "예산 편성 시트";
+        return "부서예산요구";
     }
   };
 
@@ -108,13 +108,13 @@ export default function Layout({
           type="button"
           className="brand-lockup"
           onClick={() => {
-            setActiveNav("예산 편성 시트");
+            setActiveNav("부서예산요구");
             setLocation("/");
           }}
           aria-label="초기 화면으로 이동"
         >
           <div className="sidebar-title">
-            <span>지방자치단체</span>
+            <span>2027 화성시</span>
             <span>예산편성검토</span>
           </div>
         </button>
