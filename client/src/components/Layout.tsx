@@ -69,8 +69,9 @@ export default function Layout({
   const [location, setLocation] = useLocation();
   const [searchParams] = useSearchParams();
   const isBudgetExplainerPage = location === "/budget-explainer";
+  const isCityOverviewPage = location === "/";
   const currentDept = isBudgetExplainerPage ? searchParams.get("dept") : null;
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(isBudgetExplainerPage);
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(isBudgetExplainerPage || isCityOverviewPage);
 
   const getActiveNavLabel = () => {
     const navItem = navItems.find((item) => item.path === location);
@@ -95,7 +96,7 @@ export default function Layout({
   const [expandedGuide, setExpandedGuide] = useState(false);
 
   useEffect(() => {
-    setSidebarCollapsed(isBudgetExplainerPage);
+    setSidebarCollapsed(isBudgetExplainerPage || isCityOverviewPage);
     setActiveNav(getActiveNavLabel());
   }, [location]);
 
