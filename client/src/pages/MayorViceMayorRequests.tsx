@@ -184,7 +184,7 @@ export default function MayorViceMayorRequests() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>시장, 부시장 요구사항</h1>
+          <h1>시장님 요구사항</h1>
         </section>
 
         <section className="request-form-section">

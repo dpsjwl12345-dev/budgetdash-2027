@@ -41,7 +41,7 @@ const navItems: NavItem[] = [
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
   { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
   { label: "당정협의회요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
-  { label: "시장요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
+  { label: "시장님 요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
 ];
 
 const toolItems: ToolItem[] = [

@@ -2,6 +2,9 @@ import { useState, useEffect } from "react";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
+// 쟁점사항은 편성 부서 외에 예산재정과도 함께 관리한다.
+const ISSUE_DEPARTMENTS = ["예산재정과", ...DEPARTMENTS];
+
 type MemoItem = {
   id?: string;
   text: string;
@@ -121,7 +124,7 @@ export default function DepartmentKeyIssues() {
             {/* 부서 목록 */}
             <aside className="departments-list">
               <div className="dept-buttons">
-                {DEPARTMENTS.map((dept) => (
+                {ISSUE_DEPARTMENTS.map((dept) => (
                   <button
                     key={dept}
                     className={`dept-button ${selectedDept === dept ? "active" : ""}`}

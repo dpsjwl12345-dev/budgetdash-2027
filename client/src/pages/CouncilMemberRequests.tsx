@@ -60,7 +60,7 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
 type MainTabKey = RequestType | "원구성 현황";
 
 const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?: string; color?: string }[] = [
-  { key: "당정협의회", label: "당정협의회 요구", subtitle: "정당 요구사업 · 정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
+  { key: "당정협의회", label: "당정협의회", subtitle: "정당 요구사업 · 정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
   { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업 · 소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
   { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
   { key: "특별조정교부금", label: "특별조정교부금", subtitle: "경기도 관할 시의 지역개발사업 등 시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
@@ -575,7 +575,6 @@ export default function CouncilMemberRequests() {
               <col className="col-content" />
               <col className="col-budget-item" />
               <col className="col-amount" />
-              <col className="col-date" />
               <col className="col-status" />
               <col className="col-action" />
             </colgroup>
@@ -590,7 +589,6 @@ export default function CouncilMemberRequests() {
                 <th>요구내용</th>
                 <th>사업명 (세부사업+부기명)</th>
                 <th>요구액</th>
-                <th>요구일</th>
                 <th>반영여부</th>
                 <th className="col-action">관리</th>
               </tr>
@@ -665,13 +663,6 @@ export default function CouncilMemberRequests() {
                               onChange={(e) => setEditDraft({ ...editDraft, requestedAmount: e.target.value })}
                             />
                           </td>
-                          <td>
-                            <input
-                              className="cell-input"
-                              value={editDraft.requestedDate}
-                              onChange={(e) => setEditDraft({ ...editDraft, requestedDate: e.target.value })}
-                            />
-                          </td>
                         </>
                       ) : (
                         <>
@@ -683,7 +674,6 @@ export default function CouncilMemberRequests() {
                           <td className="col-content">{item.content}</td>
                           <td>{item.budgetItemName}</td>
                           <td className="col-amount">{item.requestedAmount}</td>
-                          <td className="col-date">{item.requestedDate}</td>
                         </>
                       )}
                       <td>
@@ -725,7 +715,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={12} className="empty-row">{emptyText}</td>
+                  <td colSpan={11} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -969,8 +959,8 @@ export default function CouncilMemberRequests() {
                   <thead>
                     <tr>
                       <th>선거구</th>
-                      <th>시의원</th>
                       <th>도의원</th>
+                      <th>시의원</th>
                       <th>위원회</th>
                       <th>정당명</th>
                     </tr>
@@ -986,13 +976,13 @@ export default function CouncilMemberRequests() {
                             )}
                           </td>
                         )}
-                        <td>{row.name}</td>
                         {districtRowSpans[i] && (
                           <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
                             {PROVINCIAL_MEMBER_BY_DISTRICT[row.district] ?? ""}
                           </td>
                         )}
-                        <td>{row.committee}</td>
+                        <td className={districtRowSpans[i] ? "cc-bold" : undefined}>{row.name}</td>
+                        <td className={districtRowSpans[i] ? undefined : "cc-bold"}>{row.committee}</td>
                         <td>
                           <span className="cc-party-badge" style={{ color: partyColor(row.party) }}>
                             {row.party}
@@ -1011,9 +1001,8 @@ export default function CouncilMemberRequests() {
                   <thead>
                     <tr>
                       <th>선거구</th>
-                      <th>주요 생활 권역</th>
-                      <th>관할 읍·면·동 (구역)</th>
                       <th>국회의원</th>
+                      <th>관할 읍·면·동 (구역)</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -1022,11 +1011,10 @@ export default function CouncilMemberRequests() {
                         <td className="cc-district-cell">
                           <div className="cc-district-name">{row.district}</div>
                         </td>
-                        <td>{row.areaLabel}</td>
-                        <td className="cc-national-jurisdiction">{row.jurisdiction}</td>
                         <td>
                           <div className="cc-member-name">{row.memberName}</div>
                         </td>
+                        <td className="cc-national-jurisdiction">{row.jurisdiction}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -1174,6 +1162,7 @@ export default function CouncilMemberRequests() {
         .tab-label-row {
           display: flex;
           align-items: center;
+          font-size: 16px;
         }
 
         .tab-count {
@@ -1254,10 +1243,9 @@ export default function CouncilMemberRequests() {
         col.col-member { width: 6%; }
         col.col-committee { width: 9%; }
         col.col-dept { width: 7%; }
-        col.col-content { width: 16%; }
+        col.col-content { width: 24%; }
         col.col-budget-item { width: 12%; }
         col.col-amount { width: 7%; }
-        col.col-date { width: 8%; }
         col.col-status { width: 7%; }
         col.col-action { width: 8%; }
 
@@ -1548,7 +1536,7 @@ export default function CouncilMemberRequests() {
           color: var(--text-muted);
         }
 
-        .cc-district-table td:nth-child(2) {
+        .cc-district-table td.cc-bold {
           font-weight: 600;
         }
 
@@ -1572,7 +1560,7 @@ export default function CouncilMemberRequests() {
           font-weight: 700;
         }
 
-        .cc-national-jurisdiction {
+        .cc-table td.cc-national-jurisdiction {
           text-align: left;
           white-space: normal;
           line-height: 1.6;
