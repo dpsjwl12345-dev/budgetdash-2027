@@ -132,8 +132,6 @@ export default function CitywideBudgetOverview() {
         <BudgetListCard scope="일반회계" title="세입요구 총계" total={data.revenueTotal} groups={data.revenueGroups} />
         <BudgetListCard scope="일반회계" title="세출요구 총계" total={data.expenditureTotal} groups={data.expenditureGroups} />
       </div>
-
-      <div className="cw-footnote-bar">2027년 추경 시 기금조성 9,500억원 반영 예정</div>
     </div>
   );
 }
