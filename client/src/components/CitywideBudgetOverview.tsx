@@ -369,7 +369,7 @@ export default function CitywideBudgetOverview() {
               <span className="cw-hero-equals">=</span>
               <div className="cw-flow-box">
                 <span className="cw-hero-label">세출요구액</span>
-                <strong className="cw-hero-value">42,520<span className="cw-hero-unit">억원</span></strong>
+                <strong className="cw-hero-value">56,510<span className="cw-hero-unit">억원</span></strong>
               </div>
               <div className="cw-flow-box">
                 <span className="cw-hero-label">기금조성</span>
