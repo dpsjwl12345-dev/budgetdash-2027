@@ -478,8 +478,6 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 /* "부서예산요구" 초기 화면(부서 미선택)에 뜨는 시 전체 세입세출 요구 현황 대시보드 */
 .citywide-overview { margin-top: 22px; }
-.citywide-overview__head h1 { margin: 0; color: #edf5fe; font-size: 22px; font-weight: 700; }
-.citywide-overview__head p { margin: 4px 0 0; color: #8fa1b3; font-size: 13px; }
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
    서로 무관해 보이는 박스 3개 대신 총계를 히어로 숫자로 세우고 그 총계가 어떤 회계로
    구성되는지 스택 막대로 곧바로 이어 보여준다. */
