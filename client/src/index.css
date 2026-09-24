@@ -486,11 +486,11 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 /* 세입-세출 총계 옆 빈 공간에, 세출편성 -> 기금조성 -> 감액조정으로 이어지는 조정 흐름을
    화살표로 연결해 보여준다(재정전략 가이드 "향후 계획" 서술의 핵심 수치를 시각화). */
-.cw-hero-flow { flex: 1; display: flex; align-items: center; justify-content: center; gap: 14px; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
-.cw-flow-box { display: flex; flex-direction: column; align-items: center; gap: 6px; text-align: center; }
-.cw-flow-box .cw-hero-value { font-size: 26px; }
-.cw-flow-box--end .cw-hero-value { color: #e8b84b; }
-.cw-flow-arrow { color: #6f8195; flex: none; }
+/* 세입-세출 박스 옆 빈 공간에 놓는 개별 박스(세출요구액/기금). 서로 합쳐진 하나의 카드가
+   아니라 각각 독립된 박스라 hero-box와 같은 자체 테두리를 갖는다. */
+.cw-hero-equals { display: flex; align-items: center; color: #6f8195; font-size: 26px; font-weight: 700; flex: none; }
+.cw-flow-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
+.cw-flow-box .cw-hero-value { font-size: 30px; }
 .cw-hero-card__head { display: flex; justify-content: flex-end; }
 .cw-hero-asof { color: #6f8195; font-size: 12px; font-weight: 500; }
 .cw-hero-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 4px; }
@@ -578,7 +578,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
   .cw-breakdown-card { grid-template-columns: 1fr; }
   .cw-hero-section { flex-direction: column; }
   .cw-hero-card { max-width: none; }
-  .cw-hero-flow { flex-wrap: wrap; }
+  .cw-flow-box { flex: none; width: 100%; }
 }
 .table-heading { min-height: 78px; padding: 16px 19px 16px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
