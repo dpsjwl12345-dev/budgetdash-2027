@@ -513,7 +513,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .citywide-outlook ul { margin: 0; padding-left: 18px; }
 .citywide-outlook li { color: #b8cade; font-size: 13px; line-height: 1.7; }
 
-.cw-detail-toggle { margin-top: 20px; padding: 9px 16px; border-radius: 7px; border: 1px solid var(--line); background: rgba(140, 155, 170, 0.12); color: #cbd8e6; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
+.cw-detail-toggle { margin-top: 32px; padding: 9px 16px; border-radius: 7px; border: 1px solid var(--line); background: rgba(140, 155, 170, 0.12); color: #cbd8e6; font-size: 13px; font-weight: 600; cursor: pointer; transition: background 0.15s; }
 .cw-detail-toggle:hover { background: rgba(140, 155, 170, 0.2); }
 
 @media (max-width: 960px) {
