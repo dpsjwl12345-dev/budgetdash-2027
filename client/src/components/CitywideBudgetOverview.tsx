@@ -353,18 +353,14 @@ export default function CitywideBudgetOverview() {
         const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
         return (
           <>
+            <div className="cw-hero-card__head">
+              <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+              <span className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
+            </div>
             <div className="cw-hero-section">
-              <div className="cw-hero-card">
-                <div className="cw-hero-card__head">
-                  <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
-                  <span className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
-                </div>
-                <div className="cw-hero-row">
-                  <div className="cw-hero-box">
-                    <span className="cw-hero-label">세입요구(예산규모)</span>
-                    <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
-                  </div>
-                </div>
+              <div className="cw-hero-box">
+                <span className="cw-hero-label">세입요구(예산규모)</span>
+                <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
               </div>
               <span className="cw-hero-equals">=</span>
               <div className="cw-flow-box">
