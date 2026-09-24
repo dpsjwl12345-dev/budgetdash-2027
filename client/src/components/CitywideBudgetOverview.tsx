@@ -132,6 +132,10 @@ export default function CitywideBudgetOverview() {
         <BudgetListCard scope="일반회계" title="세입요구 총계" total={data.revenueTotal} groups={data.revenueGroups} />
         <BudgetListCard scope="일반회계" title="세출요구 총계" total={data.expenditureTotal} groups={data.expenditureGroups} />
       </div>
+
+      <div className="cw-footnote-bar">
+        지방채 상환(1,626억원), 기금 융자금 상환(2,086억원), 통합재정안정화기금(철도870억원·도로보상1,621억원·청사건립9,500억원) 조성금 마련을 위해 자체사업 세출감액 조정(약 4,500억원±α) 추진
+      </div>
     </div>
   );
 }
