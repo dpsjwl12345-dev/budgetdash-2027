@@ -493,7 +493,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-flow-box .cw-hero-value { font-size: 30px; }
 .cw-hero-card__head { display: flex; justify-content: flex-end; }
 .cw-hero-asof { color: #6f8195; font-size: 12px; font-weight: 500; }
-.cw-hero-row { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 4px; }
+.cw-hero-row { display: flex; margin-top: 4px; }
 .cw-hero-box { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(13, 33, 54, 0.4); padding: 14px 16px; }
 .cw-hero-label { color: #a8bcce; font-size: 22px; font-weight: 600; }
 .cw-hero-value { color: #edf5fe; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
@@ -574,7 +574,6 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
   .citywide-panels { grid-template-columns: 1fr; }
   .cw-charts-grid { grid-template-columns: 1fr; }
   .cw-bars-plot { gap: 24px; }
-  .cw-hero-row { grid-template-columns: 1fr; }
   .cw-breakdown-card { grid-template-columns: 1fr; }
   .cw-hero-section { flex-direction: column; }
   .cw-hero-card { max-width: none; }

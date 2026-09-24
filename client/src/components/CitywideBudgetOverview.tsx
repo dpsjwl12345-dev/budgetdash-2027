@@ -363,14 +363,6 @@ export default function CitywideBudgetOverview() {
                     <span className="cw-hero-label">세입요구(예산규모)</span>
                     <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
                   </div>
-                  <div className="cw-hero-box">
-                    <span className="cw-hero-label">세출요구총계</span>
-                    <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
-                  </div>
-                  <div className="cw-hero-box">
-                    <span className="cw-hero-label">세입-세출</span>
-                    <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
-                  </div>
                 </div>
                 <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</p>
               </div>
@@ -380,8 +372,13 @@ export default function CitywideBudgetOverview() {
                 <strong className="cw-hero-value">42,520<span className="cw-hero-unit">억원</span></strong>
               </div>
               <div className="cw-flow-box">
-                <span className="cw-hero-label">기금</span>
+                <span className="cw-hero-label">기금조성</span>
                 <strong className="cw-hero-value">9,500<span className="cw-hero-unit">억원</span></strong>
+              </div>
+              <span className="cw-hero-equals">→</span>
+              <div className="cw-flow-box">
+                <span className="cw-hero-label">조정액</span>
+                <strong className="cw-hero-value">4,500<span className="cw-hero-unit">억원 +α</span></strong>
               </div>
             </div>
             <div className="cw-breakdown-card">
