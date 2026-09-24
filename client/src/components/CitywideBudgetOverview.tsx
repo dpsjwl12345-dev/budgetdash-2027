@@ -89,11 +89,13 @@ export default function CitywideBudgetOverview() {
               return (
                 <div className={`cw-income-row ${isLastInGroup ? "cw-income-row--group-end" : ""}`} key={item.name}>
                   <span className="cw-income-badge">{g.group.slice(0, 2)}</span>
-                  <span className="cw-income-name-text">{item.name}</span>
-                  <span className="cw-income-note">{item.note}</span>
+                  <span className="cw-income-name-text">
+                    {item.name}
+                    <span className="cw-income-note">{item.note}</span>
+                  </span>
                   <span className="cw-income-figures">
                     <span className="cw-income-amount">{fmtEok(item.y2027)}<span className="cw-hero-unit">억원</span></span>
-                    <span className={`cw-income-diff cw-income-diff--${diffDir}`}>{fmtEokDiff(item.y2026, item.y2027)}</span>
+                    <span className={`cw-income-diff cw-income-diff--${diffDir}`}>({fmtEokDiff(item.y2026, item.y2027)})</span>
                   </span>
                 </div>
               );
