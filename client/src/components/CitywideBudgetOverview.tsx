@@ -88,6 +88,8 @@ export default function CitywideBudgetOverview() {
 
       {(() => {
         const total = data.totalsByAccount.find((r) => r.name === "합계")!;
+        const general = data.totalsByAccount.find((r) => r.name === "일반회계")!;
+        const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
         return (
           <>
             <div className="cw-hero-card__head">
@@ -99,8 +101,8 @@ export default function CitywideBudgetOverview() {
                 <span className="cw-hero-label">세입요구(예산규모)</span>
                 <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
                 <div className="cw-hero-split-row">
-                  <span className="cw-hero-split cw-hero-split--general">일반 56,520억원</span>
-                  <span className="cw-hero-split">특별 5,330억원</span>
+                  <span className="cw-hero-split cw-hero-split--general">일반 {fmtEok(general.revenue)}억원</span>
+                  <span className="cw-hero-split">특별 {fmtEok(special.revenue)}억원</span>
                 </div>
               </div>
               <span className="cw-hero-equals">=</span>
@@ -108,8 +110,8 @@ export default function CitywideBudgetOverview() {
                 <span className="cw-hero-label">세출요구액</span>
                 <strong className="cw-hero-value">56,510<span className="cw-hero-unit">억원</span></strong>
                 <div className="cw-hero-split-row">
-                  <span className="cw-hero-split cw-hero-split--general">일반 51,180억원</span>
-                  <span className="cw-hero-split">특별 5,330억원</span>
+                  <span className="cw-hero-split cw-hero-split--general">일반 {fmtEok(general.expenditure)}억원</span>
+                  <span className="cw-hero-split">특별 {fmtEok(special.expenditure)}억원</span>
                 </div>
               </div>
               <div className="cw-flow-box cw-flow-box--center">
