@@ -6,7 +6,7 @@ import CitywideBudgetOverview from "@/components/CitywideBudgetOverview";
 export default function CityOverview() {
   return (
     <Layout>
-      <div className="page-content">
+      <div className="page-content" style={{ paddingTop: "18px", paddingBottom: "24px" }}>
         <CitywideBudgetOverview />
       </div>
     </Layout>
