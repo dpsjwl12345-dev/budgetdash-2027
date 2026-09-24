@@ -358,15 +358,15 @@ export default function CitywideBudgetOverview() {
                 <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
               </div>
               <div className="cw-hero-row">
-                <div className="cw-hero-stat">
-                  <span className="cw-hero-label">세입요구총계</span>
+                <div className="cw-hero-box">
+                  <span className="cw-hero-label">세입요구(예산규모)</span>
                   <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
                 </div>
-                <div className="cw-hero-stat">
-                  <span className="cw-hero-label">세출요구총계</span>
+                <div className="cw-hero-box">
+                  <span className="cw-hero-label">세출요구(예산규모)</span>
                   <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
                 </div>
-                <div className="cw-hero-stat cw-hero-stat--diff">
+                <div className="cw-hero-box">
                   <span className="cw-hero-label">세입-세출</span>
                   <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
                 </div>
