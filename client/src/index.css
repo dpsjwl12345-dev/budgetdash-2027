@@ -491,14 +491,14 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-hero-equals { display: flex; align-items: center; color: #6f8195; font-size: 26px; font-weight: 700; flex: none; }
 .cw-flow-box { flex: 1; display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
 .cw-flow-box .cw-hero-value { font-size: 30px; }
-.cw-hero-card__head { display: flex; justify-content: flex-end; }
+.cw-hero-card__head { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; }
 .cw-hero-asof { color: #6f8195; font-size: 12px; font-weight: 500; }
 .cw-hero-row { display: flex; margin-top: 4px; }
-.cw-hero-box { display: flex; flex-direction: column; gap: 8px; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(13, 33, 54, 0.4); padding: 14px 16px; }
+.cw-hero-box { display: flex; flex-direction: column; justify-content: center; align-items: center; gap: 8px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
 .cw-hero-label { color: #a8bcce; font-size: 22px; font-weight: 600; }
 .cw-hero-value { color: #edf5fe; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
 .cw-hero-unit { color: #8fa1b3; font-size: 16px; font-weight: 500; margin-left: 5px; }
-.cw-structure-note { margin: 10px 0 0; color: #6f8195; font-size: 14px; text-align: right; }
+.cw-structure-note { color: #6f8195; font-size: 14px; text-align: right; }
 
 /* 히어로 카드 안의 회계별 구성 막대 - 아래 "세입/세출 구성" 카드(cw-chart-card)와는
    별개의 더 단순한 레이아웃(카드 껍데기 없이 제목 + 막대 + 범례만). */

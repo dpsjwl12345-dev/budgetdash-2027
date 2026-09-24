@@ -357,6 +357,7 @@ export default function CitywideBudgetOverview() {
               <div className="cw-hero-card">
                 <div className="cw-hero-card__head">
                   <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+                  <span className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
                 </div>
                 <div className="cw-hero-row">
                   <div className="cw-hero-box">
@@ -364,7 +365,6 @@ export default function CitywideBudgetOverview() {
                     <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
                   </div>
                 </div>
-                <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</p>
               </div>
               <span className="cw-hero-equals">=</span>
               <div className="cw-flow-box">
