@@ -15,6 +15,13 @@ function fmtEok(millionWon: number) {
   return fmt(Math.round(millionWon / 100));
 }
 
+// 전년 대비 증감액(억원 단위). 원본 표기 그대로 부호를 살린다: 감소는 "△", 증감 없음은 "-".
+function fmtEokDiff(y2026: number, y2027: number) {
+  const diffEok = Math.round((y2027 - y2026) / 100);
+  if (diffEok === 0) return "-";
+  return diffEok > 0 ? `+${fmt(diffEok)}` : `△${fmt(Math.abs(diffEok))}`;
+}
+
 export default function CitywideBudgetOverview() {
   const data = CITYWIDE_OVERVIEW_2027;
 
@@ -63,6 +70,32 @@ export default function CitywideBudgetOverview() {
           </>
         );
       })()}
+
+      <div className="cw-income-card">
+        <div className="cw-income-head">
+          <span className="cw-income-title">세입요구 총계</span>
+          <span className="cw-income-scope">일반회계</span>
+        </div>
+        <strong className="cw-income-total">{fmtEok(data.revenueTotal.y2027)}<span className="cw-hero-unit">억원</span></strong>
+        <div className="cw-income-list">
+          {data.revenueGroups.map((g) =>
+            g.items.map((item) => {
+              const diffEok = Math.round((item.y2027 - item.y2026) / 100);
+              const diffDir = diffEok > 0 ? "up" : diffEok < 0 ? "down" : "flat";
+              return (
+                <div className="cw-income-row" key={item.name}>
+                  <span className={`cw-income-badge cw-income-badge--${g.group.slice(0, 2)}`}>{g.group.slice(0, 2)}</span>
+                  <span className="cw-income-name">{item.name}</span>
+                  <span className="cw-income-figures">
+                    <span className="cw-income-amount">{fmtEok(item.y2027)}<span className="cw-hero-unit">억원</span></span>
+                    <span className={`cw-income-diff cw-income-diff--${diffDir}`}>{fmtEokDiff(item.y2026, item.y2027)}</span>
+                  </span>
+                </div>
+              );
+            })
+          )}
+        </div>
+      </div>
     </div>
   );
 }
