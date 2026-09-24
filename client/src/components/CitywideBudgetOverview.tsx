@@ -84,6 +84,7 @@ export default function CitywideBudgetOverview() {
     <div className="citywide-overview">
       <div className="citywide-overview__head">
         <h1>2027년 화성시<br />세입세출 요구현황</h1>
+        <img className="citywide-overview__slogan" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
       </div>
 
       {(() => {
