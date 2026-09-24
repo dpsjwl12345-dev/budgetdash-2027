@@ -17,6 +17,11 @@ function fmt(n: number) {
   return new Intl.NumberFormat("ko-KR").format(n);
 }
 
+// 원본 데이터는 백만원 단위. 억원 단위로 바꿔 보여줄 때 쓴다(1억원 = 100백만원).
+function fmtEok(millionWon: number) {
+  return fmt(Math.round(millionWon / 100));
+}
+
 // 원본 보고서 표기 그대로 부호를 살린다: 감소는 "△", 증감 없음은 "-", 증가는 그대로 숫자.
 function fmtDiff(y2026: number, y2027: number) {
   const diff = y2027 - y2026;
@@ -125,6 +130,68 @@ function CompositionChart({ title, segments, compact = false }: { title: string;
           </li>
         ))}
       </ul>
+    </div>
+  );
+}
+
+// 히어로 카드 전용 회계별 구성 막대. 아래쪽 "세입/세출 구성" 카드(CompositionChart)와는
+// 레이아웃을 따로 가져간다 - 이 막대는 2단(막대+범례)뿐인 훨씬 작은 구성 요소라
+// 카드 껍데기·제목 크기 등을 공유하면 오히려 히어로 카드 안에서 어색해진다.
+function HeroBreakdownBar({ label, segments }: { label: string; segments: { label: string; value: number }[] }) {
+  const [tooltip, setTooltip] = useState<TooltipState>(null);
+  const grandTotal = segments.reduce((sum, s) => sum + s.value, 0) || 1;
+
+  return (
+    <div className="cw-hero-bar-block">
+      <h4 className="cw-hero-bar-title">{label}</h4>
+      <div className="cw-hero-bar" onMouseLeave={() => setTooltip(null)}>
+        {segments.map((s, i) => {
+          const pct = (s.value / grandTotal) * 100;
+          return (
+            <div
+              key={s.label}
+              className="cw-hero-bar-seg"
+              style={{
+                flexBasis: `${pct}%`,
+                background: CAT_COLORS[i % CAT_COLORS.length],
+                borderTopLeftRadius: i === 0 ? 4 : 0,
+                borderBottomLeftRadius: i === 0 ? 4 : 0,
+                borderTopRightRadius: i === segments.length - 1 ? 4 : 0,
+                borderBottomRightRadius: i === segments.length - 1 ? 4 : 0,
+              }}
+              tabIndex={0}
+              onMouseMove={(e) => {
+                const rect = (e.currentTarget.closest(".cw-hero-bar") as HTMLElement).getBoundingClientRect();
+                setTooltip({
+                  x: e.clientX - rect.left,
+                  y: -8,
+                  title: s.label,
+                  lines: [{ label: "2027년 요구", value: `${fmtEok(s.value)} 억원 (${pct.toFixed(1)}%)`, color: CAT_COLORS[i % CAT_COLORS.length] }],
+                });
+              }}
+              onFocus={() =>
+                setTooltip({
+                  x: 0,
+                  y: -8,
+                  title: s.label,
+                  lines: [{ label: "2027년 요구", value: `${fmtEok(s.value)} 억원 (${pct.toFixed(1)}%)`, color: CAT_COLORS[i % CAT_COLORS.length] }],
+                })
+              }
+              onBlur={() => setTooltip(null)}
+              aria-label={`${s.label} ${fmtEok(s.value)}억원, ${pct.toFixed(1)}퍼센트`}
+            />
+          );
+        })}
+        <ChartTooltip tooltip={tooltip} />
+      </div>
+      <div className="cw-hero-bar-legend">
+        {segments.map((s, i) => (
+          <span key={s.label}>
+            <i className="cw-hero-bar-swatch" style={{ background: CAT_COLORS[i % CAT_COLORS.length] }} />
+            {s.label} <b>{fmtEok(s.value)}</b>억원
+          </span>
+        ))}
+      </div>
     </div>
   );
 }
@@ -277,7 +344,7 @@ export default function CitywideBudgetOverview() {
   return (
     <div className="citywide-overview">
       <div className="citywide-overview__head">
-        <h1>2027년 화성시 세입세출 요구 현황</h1>
+        <h1>2027년 화성시<br />세입세출 요구현황</h1>
       </div>
 
       {(() => {
@@ -285,38 +352,39 @@ export default function CitywideBudgetOverview() {
         const general = data.totalsByAccount.find((r) => r.name === "일반회계")!;
         const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
         return (
-          <div className="cw-structure-card">
+          <div className="cw-hero-card">
+            <div className="cw-hero-card__head">
+              <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+            </div>
             <div className="cw-hero-row">
               <div className="cw-hero-stat">
-                <span className="cw-hero-label">2027년 요구 세입 총계</span>
-                <strong className="cw-hero-value">{fmt(total.revenue)}<span className="cw-hero-unit">백만원</span></strong>
+                <span className="cw-hero-label">세입요구총계</span>
+                <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
               </div>
               <div className="cw-hero-stat">
-                <span className="cw-hero-label">2027년 요구 세출 총계</span>
-                <strong className="cw-hero-value">{fmt(total.expenditure)}<span className="cw-hero-unit">백만원</span></strong>
+                <span className="cw-hero-label">세출요구총계</span>
+                <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
               </div>
               <div className="cw-hero-stat cw-hero-stat--diff">
                 <span className="cw-hero-label">세입-세출</span>
-                <strong className="cw-hero-value">{fmt(total.diff)}<span className="cw-hero-unit">백만원</span></strong>
+                <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
               </div>
             </div>
             <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)로 구성</p>
-            <div className="cw-structure-charts">
-              <CompositionChart
-                title="세입 회계별 구성"
+            <div className="cw-hero-breakdown">
+              <HeroBreakdownBar
+                label="세입 회계별 구성"
                 segments={[
                   { label: "일반회계", value: general.revenue },
                   { label: "특별회계", value: special.revenue },
                 ]}
-                compact
               />
-              <CompositionChart
-                title="세출 회계별 구성"
+              <HeroBreakdownBar
+                label="세출 회계별 구성"
                 segments={[
                   { label: "일반회계", value: general.expenditure },
                   { label: "특별회계", value: special.expenditure },
                 ]}
-                compact
               />
             </div>
           </div>
