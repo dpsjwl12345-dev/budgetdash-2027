@@ -371,7 +371,7 @@ export default function CitywideBudgetOverview() {
                   <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
                 </div>
               </div>
-              <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)로 구성</p>
+              <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</p>
             </div>
             <div className="cw-breakdown-card">
               <HeroBreakdownBar
