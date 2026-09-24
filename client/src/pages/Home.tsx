@@ -6,7 +6,6 @@ import { Fragment, useMemo, useRef, useState, useEffect } from "react";
 import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
-import CitywideBudgetOverview from "@/components/CitywideBudgetOverview";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type BudgetExecution = {
@@ -2287,10 +2286,6 @@ export default function Home() {
             </div>
           </section>
 
-          {!department ? (
-            <CitywideBudgetOverview />
-          ) : (
-            <>
           <section className="metric-grid no-print" aria-label="예산 요약">
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
@@ -2849,8 +2844,6 @@ export default function Home() {
               })()}
             </div>
           </section>
-            </>
-          )}
         </div>
 
       {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card staff-modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" />명</label><label>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}

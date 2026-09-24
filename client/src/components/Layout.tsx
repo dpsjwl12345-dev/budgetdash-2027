@@ -14,6 +14,7 @@ import {
   Users,
   PanelLeftOpen,
   PanelLeftClose,
+  LayoutDashboard,
 } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -34,7 +35,8 @@ type ToolItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: "부서예산요구", icon: ClipboardCheck, path: "/", count: "01" },
+  { label: "시 전체 현황", icon: LayoutDashboard, path: "/" },
+  { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", count: "01" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
   { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
@@ -84,7 +86,7 @@ export default function Layout({
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
       default:
-        return "부서예산요구";
+        return "시 전체 현황";
     }
   };
 
@@ -108,7 +110,7 @@ export default function Layout({
           type="button"
           className="brand-lockup"
           onClick={() => {
-            setActiveNav("부서예산요구");
+            setActiveNav("시 전체 현황");
             setLocation("/");
           }}
           aria-label="초기 화면으로 이동"

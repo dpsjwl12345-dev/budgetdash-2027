@@ -23,9 +23,9 @@ export const CITYWIDE_OVERVIEW_2027 = {
 
   // 회계명별 세입-세출 (요구 기준)
   totalsByAccount: [
-    { name: "합계", revenue: 6185102, expenditure: 5651096, diff: 534006, note: "" },
     { name: "일반회계", revenue: 5652052, expenditure: 5118046, diff: 534006, note: "" },
     { name: "특별회계", revenue: 533050, expenditure: 533050, diff: 0, note: "공기업 2 + 특별회계 11" },
+    { name: "합계", revenue: 6185102, expenditure: 5651096, diff: 534006, note: "" },
   ],
 
   // 일반회계 세입요구 현황 (2026년 본예산 대비 2027년 본예산)
