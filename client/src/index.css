@@ -505,11 +505,12 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-income-badge--자체 { background: #3987e5; }
 .cw-income-badge--이전 { background: #d95926; }
 .cw-income-badge--내부 { background: #199e70; }
-.cw-income-name { flex: 1; color: #edf5fe; font-size: 15px; font-weight: 600; }
-.cw-income-note { margin-left: 8px; color: #6f8195; font-size: 12px; font-weight: 400; }
+.cw-income-name { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
+.cw-income-name-text { color: #edf5fe; font-size: 16px; font-weight: 600; }
+.cw-income-note { color: #6f8195; font-size: 12px; font-weight: 400; }
 .cw-income-figures { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
 .cw-income-amount { color: #edf5fe; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.cw-income-diff { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cw-income-diff { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cw-income-diff--up { color: #4ade80; }
 .cw-income-diff--down { color: #f87171; }
 .cw-income-diff--flat { color: #8fa1b3; }

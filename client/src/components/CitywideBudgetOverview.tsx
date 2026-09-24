@@ -91,7 +91,7 @@ export default function CitywideBudgetOverview() {
                 <div className="cw-income-row" key={item.name}>
                   <span className={`cw-income-badge cw-income-badge--${g.group.slice(0, 2)}`}>{g.group.slice(0, 2)}</span>
                   <span className="cw-income-name">
-                    {item.name}
+                    <span className="cw-income-name-text">{item.name}</span>
                     {item.note && <span className="cw-income-note">{item.note}</span>}
                   </span>
                   <span className="cw-income-figures">
