@@ -109,11 +109,13 @@ export default function CitywideBudgetOverview() {
               <div className="cw-hero-box">
                 <span className="cw-hero-label">세입요구(예산규모)</span>
                 <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
+                <span className="cw-hero-split">일반 56,520억원 · 특별 5,330억원</span>
               </div>
               <span className="cw-hero-equals">=</span>
               <div className="cw-flow-box">
                 <span className="cw-hero-label">세출요구액</span>
                 <strong className="cw-hero-value">56,510<span className="cw-hero-unit">억원</span></strong>
+                <span className="cw-hero-split">일반 51,180억원 · 특별 5,330억원</span>
               </div>
               <div className="cw-flow-box">
                 <span className="cw-hero-label">기금조성</span>
