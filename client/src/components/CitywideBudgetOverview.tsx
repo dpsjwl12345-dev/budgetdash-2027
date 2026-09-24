@@ -82,11 +82,12 @@ export default function CitywideBudgetOverview() {
         </div>
         <div className="cw-income-list">
           {data.revenueGroups.map((g) =>
-            g.items.map((item) => {
+            g.items.map((item, i) => {
               const diffEok = Math.round((item.y2027 - item.y2026) / 100);
               const diffDir = diffEok > 0 ? "up" : diffEok < 0 ? "down" : "flat";
+              const isLastInGroup = i === g.items.length - 1;
               return (
-                <div className="cw-income-row" key={item.name}>
+                <div className={`cw-income-row ${isLastInGroup ? "cw-income-row--group-end" : ""}`} key={item.name}>
                   <span className="cw-income-badge">{g.group.slice(0, 2)}</span>
                   <span className="cw-income-name-text">{item.name}</span>
                   <span className="cw-income-note">{item.note}</span>

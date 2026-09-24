@@ -499,8 +499,9 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-income-total { color: #edf5fe; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
 .cw-income-total-diff { margin-left: 4px; color: #4ade80; font-size: 13px; font-weight: 600; }
 .cw-income-list { margin-top: 16px; padding-top: 4px; border-top: 1px solid rgba(164, 192, 221, 0.14); }
-.cw-income-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
-.cw-income-row:last-child { border-bottom: none; }
+.cw-income-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; }
+.cw-income-row--group-end { border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
+.cw-income-row--group-end:last-child { border-bottom: none; }
 .cw-income-badge { flex: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 12px; font-weight: 400; }
 .cw-income-name-text { flex: none; width: 108px; color: #edf5fe; font-size: 15px; font-weight: 600; }
 .cw-income-note { flex: 1; color: #6f8195; font-size: 12px; font-weight: 400; }
