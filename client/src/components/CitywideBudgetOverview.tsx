@@ -352,26 +352,28 @@ export default function CitywideBudgetOverview() {
         const general = data.totalsByAccount.find((r) => r.name === "일반회계")!;
         const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
         return (
-          <div className="cw-hero-card">
-            <div className="cw-hero-card__head">
-              <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+          <>
+            <div className="cw-hero-card">
+              <div className="cw-hero-card__head">
+                <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+              </div>
+              <div className="cw-hero-row">
+                <div className="cw-hero-stat">
+                  <span className="cw-hero-label">세입요구총계</span>
+                  <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
+                </div>
+                <div className="cw-hero-stat">
+                  <span className="cw-hero-label">세출요구총계</span>
+                  <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
+                </div>
+                <div className="cw-hero-stat cw-hero-stat--diff">
+                  <span className="cw-hero-label">세입-세출</span>
+                  <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
+                </div>
+              </div>
+              <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)로 구성</p>
             </div>
-            <div className="cw-hero-row">
-              <div className="cw-hero-stat">
-                <span className="cw-hero-label">세입요구총계</span>
-                <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
-              </div>
-              <div className="cw-hero-stat">
-                <span className="cw-hero-label">세출요구총계</span>
-                <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
-              </div>
-              <div className="cw-hero-stat cw-hero-stat--diff">
-                <span className="cw-hero-label">세입-세출</span>
-                <strong className="cw-hero-value">{fmtEok(total.diff)}<span className="cw-hero-unit">억원</span></strong>
-              </div>
-            </div>
-            <p className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)로 구성</p>
-            <div className="cw-hero-breakdown">
+            <div className="cw-breakdown-card">
               <HeroBreakdownBar
                 label="세입 회계별 구성"
                 segments={[
@@ -387,7 +389,7 @@ export default function CitywideBudgetOverview() {
                 ]}
               />
             </div>
-          </div>
+          </>
         );
       })()}
 
