@@ -489,28 +489,24 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-flow-box { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 20px 22px; }
 .cw-flow-box--center { justify-content: center; }
 
-/* 세입요구 현황 - 증권 앱의 "보유 종목" 리스트 스타일을 참고한 카드. 큰 총계 숫자 위에
-   항목별 금액·전년대비 증감을 나열해 한눈에 스캔되게 한다. */
+/* 세입요구 현황 - 증권 앱의 "보유 종목" 리스트 스타일을 참고한 카드. 배지·태그는 모두 같은
+   톤(옅은 블루 틴트)으로 통일해 색이 제각각 튀지 않게 하고, 글자 크기도 제목/값 15~16px,
+   보조정보(비고·증감·배지) 12~13px 두 단계로만 고정한다. */
 .cw-income-card { max-width: 860px; margin-top: 20px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 20px 22px; }
-.cw-income-head { display: flex; align-items: center; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
-.cw-income-head-label { display: flex; align-items: center; gap: 10px; }
-.cw-income-title { color: #a8bcce; font-size: 18px; font-weight: 600; }
-.cw-income-scope { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(217, 173, 82, 0.16); color: #e8c47e; font-size: 12px; font-weight: 700; }
-.cw-income-total { color: #edf5fe; font-size: 48px; font-weight: 700; letter-spacing: -0.02em; }
-.cw-income-total-diff { margin-left: 10px; color: #4ade80; font-size: 18px; font-weight: 600; }
-.cw-income-list { margin-top: 18px; padding-top: 4px; border-top: 1px solid rgba(164, 192, 221, 0.14); }
-.cw-income-row { display: flex; align-items: center; gap: 14px; padding: 12px 0; border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
+.cw-income-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
+.cw-income-title { color: #a8bcce; font-size: 15px; font-weight: 600; }
+.cw-income-scope { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 12px; font-weight: 700; }
+.cw-income-total { color: #edf5fe; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
+.cw-income-total-diff { margin-left: 4px; color: #4ade80; font-size: 13px; font-weight: 600; }
+.cw-income-list { margin-top: 16px; padding-top: 4px; border-top: 1px solid rgba(164, 192, 221, 0.14); }
+.cw-income-row { display: flex; align-items: center; gap: 12px; padding: 12px 0; border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
 .cw-income-row:last-child { border-bottom: none; }
-.cw-income-badge { flex: none; width: 36px; height: 36px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: 12px; font-weight: 700; color: #fff; }
-.cw-income-badge--자체 { background: #3987e5; }
-.cw-income-badge--이전 { background: #d95926; }
-.cw-income-badge--내부 { background: #199e70; }
-.cw-income-name { flex: 1; display: flex; flex-direction: column; align-items: flex-start; gap: 2px; }
-.cw-income-name-text { color: #edf5fe; font-size: 16px; font-weight: 600; }
-.cw-income-note { color: #6f8195; font-size: 12px; font-weight: 400; }
-.cw-income-figures { display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
-.cw-income-amount { color: #edf5fe; font-size: 16px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.cw-income-diff { font-size: 13px; font-weight: 600; font-variant-numeric: tabular-nums; }
+.cw-income-badge { flex: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 12px; font-weight: 400; }
+.cw-income-name-text { flex: none; width: 108px; color: #edf5fe; font-size: 15px; font-weight: 600; }
+.cw-income-note { flex: 1; color: #6f8195; font-size: 12px; font-weight: 400; }
+.cw-income-figures { flex: none; display: flex; flex-direction: column; align-items: flex-end; gap: 3px; }
+.cw-income-amount { color: #edf5fe; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cw-income-diff { font-size: 12px; font-weight: 600; font-variant-numeric: tabular-nums; }
 .cw-income-diff--up { color: #4ade80; }
 .cw-income-diff--down { color: #f87171; }
 .cw-income-diff--flat { color: #8fa1b3; }

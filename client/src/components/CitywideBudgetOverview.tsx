@@ -73,10 +73,8 @@ export default function CitywideBudgetOverview() {
 
       <div className="cw-income-card">
         <div className="cw-income-head">
-          <div className="cw-income-head-label">
-            <span className="cw-income-scope">일반회계</span>
-            <span className="cw-income-title">세입요구 총계</span>
-          </div>
+          <span className="cw-income-scope">일반회계</span>
+          <span className="cw-income-title">세입요구 총계</span>
           <strong className="cw-income-total">
             {fmtEok(data.revenueTotal.y2027)}<span className="cw-hero-unit">억원</span>
             <span className="cw-income-total-diff">({fmtEokDiff(data.revenueTotal.y2026, data.revenueTotal.y2027)}억원)</span>
@@ -89,11 +87,9 @@ export default function CitywideBudgetOverview() {
               const diffDir = diffEok > 0 ? "up" : diffEok < 0 ? "down" : "flat";
               return (
                 <div className="cw-income-row" key={item.name}>
-                  <span className={`cw-income-badge cw-income-badge--${g.group.slice(0, 2)}`}>{g.group.slice(0, 2)}</span>
-                  <span className="cw-income-name">
-                    <span className="cw-income-name-text">{item.name}</span>
-                    {item.note && <span className="cw-income-note">{item.note}</span>}
-                  </span>
+                  <span className="cw-income-badge">{g.group.slice(0, 2)}</span>
+                  <span className="cw-income-name-text">{item.name}</span>
+                  <span className="cw-income-note">{item.note}</span>
                   <span className="cw-income-figures">
                     <span className="cw-income-amount">{fmtEok(item.y2027)}<span className="cw-hero-unit">억원</span></span>
                     <span className={`cw-income-diff cw-income-diff--${diffDir}`}>{fmtEokDiff(item.y2026, item.y2027)}</span>
