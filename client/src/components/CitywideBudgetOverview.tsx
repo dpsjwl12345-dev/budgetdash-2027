@@ -365,7 +365,7 @@ export default function CitywideBudgetOverview() {
                     <strong className="cw-hero-value">{fmtEok(total.revenue)}<span className="cw-hero-unit">억원</span></strong>
                   </div>
                   <div className="cw-hero-box">
-                    <span className="cw-hero-label">세출요구(예산규모)</span>
+                    <span className="cw-hero-label">세출요구총계</span>
                     <strong className="cw-hero-value">{fmtEok(total.expenditure)}<span className="cw-hero-unit">억원</span></strong>
                   </div>
                   <div className="cw-hero-box">
