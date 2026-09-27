@@ -29,6 +29,22 @@ type BudgetExecution = {
   executionRate: number;
 };
 
+// 부서별로 엑셀 파일 하나씩 올리는 지출결의 단위의 집행내역. 위 BudgetExecution(정책사업
+// 단위 집행률 요약)과는 별개 표라 데이터도 서버 테이블(budget_execution_details)도 따로 둔다.
+type ExecutionDetail = {
+  id: number;
+  department: string;
+  division: string;
+  policyProgram: string;
+  unitProgram: string;
+  detailProgram: string;
+  statisticsAccount: string;
+  note: string;
+  resolutionAmount: number;
+  resolutionDate: string;
+  vendorName: string;
+};
+
 function formatAmount(value: number) {
   const thousands = Math.round(value / 1000);
   return new Intl.NumberFormat("ko-KR").format(thousands);
@@ -176,9 +192,102 @@ export default function BudgetExecution2026() {
   const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // "예산 집행내역" 탭(지출결의 단위) - 위 요약표와 별개 데이터.
+  const [execView, setExecView] = useState<"summary" | "details">("summary");
+  const [executionDetails, setExecutionDetails] = useState<ExecutionDetail[]>([]);
+  const [detailSearch, setDetailSearch] = useState("");
+  const [detailDepartment, setDetailDepartment] = useState("");
+  const [detailPage, setDetailPage] = useState(1);
+  const detailRowsPerPage = 20;
+
   useEffect(() => {
     loadDataFromServer();
   }, [selectedYear]);
+
+  const loadExecutionDetailsFromServer = async () => {
+    try {
+      const response = await fetch('/api/cloud-sync?type=execution-details');
+      if (!response.ok) throw new Error('로드 실패');
+      const { data } = await response.json();
+      if (Array.isArray(data)) setExecutionDetails(data);
+    } catch (error) {
+      console.warn('예산 집행내역 로드 실패:', error);
+    }
+  };
+
+  useEffect(() => {
+    loadExecutionDetailsFromServer();
+  }, []);
+
+  const handleExecutionDetailUpload = async (file?: File) => {
+    if (!file) return;
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+
+      const parseText = (value: unknown): string => (value == null ? "" : String(value).trim());
+      const parseAmount = (value: unknown): number => {
+        if (typeof value === "number") return value;
+        const parsed = parseInt(String(value || "0").replace(/[^0-9-]/g, ""), 10);
+        return isNaN(parsed) ? 0 : parsed;
+      };
+
+      const nextRows: ExecutionDetail[] = imported
+        .map((record, index) => ({
+          id: Date.now() + index,
+          department: parseText(record["부서명"]) || "미분류",
+          division: parseText(record["구분"]),
+          policyProgram: parseText(record["정책사업"]),
+          unitProgram: parseText(record["단위사업"]),
+          detailProgram: parseText(record["세부사업"]),
+          statisticsAccount: parseText(record["통계목"]),
+          note: parseText(record["적요"]),
+          resolutionAmount: parseAmount(record["결의금액"]),
+          resolutionDate: parseText(record["결의요청일"]),
+          vendorName: parseText(record["거래처명"]),
+        }))
+        .filter((row) => row.department !== "미분류" || row.note || row.resolutionAmount);
+
+      if (!nextRows.length) throw new Error("empty");
+
+      const uploadedDepartments = new Set(nextRows.map((row) => row.department));
+      setExecutionDetails((previous) => [
+        ...previous.filter((row) => !uploadedDepartments.has(row.department)),
+        ...nextRows,
+      ]);
+      setDetailPage(1);
+
+      // 부서 블록별로 나눠 보내야 서버가 그 부서 몫만 지우고 다시 채운다(다른 부서 데이터 보존).
+      const byDepartment = new Map<string, ExecutionDetail[]>();
+      for (const row of nextRows) {
+        const list = byDepartment.get(row.department) ?? [];
+        list.push(row);
+        byDepartment.set(row.department, list);
+      }
+
+      const results = await Promise.all(
+        Array.from(byDepartment.entries()).map(async ([department, rows]) => {
+          const response = await fetch('/api/cloud-sync?type=execution-details', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ department, data: rows }),
+          });
+          const result = await response.json().catch(() => ({}));
+          return response.ok && result.success === true;
+        })
+      );
+
+      showToast(results.every(Boolean)
+        ? `${nextRows.length}개 집행내역을 서버에 저장했습니다.`
+        : '저장에 일부 실패했습니다 (로컬에만 반영됨)');
+    } catch (error) {
+      showToast('엑셀 파일을 읽지 못했습니다');
+      console.error(error);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
 
   // columnWidths 저장
   useEffect(() => {
@@ -362,6 +471,34 @@ export default function BudgetExecution2026() {
     window.setTimeout(() => setToast(""), 2200);
   };
 
+  const detailDepartments = useMemo(
+    () => Array.from(new Set(executionDetails.map((row) => row.department))).sort(),
+    [executionDetails]
+  );
+
+  const filteredDetails = useMemo(() => {
+    const keyword = detailSearch.toLowerCase();
+    return executionDetails.filter((row) => {
+      const matchesDepartment = detailDepartment === "" || row.department === detailDepartment;
+      const matchesSearch = keyword === "" ||
+        row.detailProgram.toLowerCase().includes(keyword) ||
+        row.note.toLowerCase().includes(keyword) ||
+        row.vendorName.toLowerCase().includes(keyword);
+      return matchesDepartment && matchesSearch;
+    });
+  }, [executionDetails, detailDepartment, detailSearch]);
+
+  const detailTotalPages = Math.max(1, Math.ceil(filteredDetails.length / detailRowsPerPage));
+  const paginatedDetails = useMemo(() => {
+    const start = (detailPage - 1) * detailRowsPerPage;
+    return filteredDetails.slice(start, start + detailRowsPerPage);
+  }, [filteredDetails, detailPage]);
+
+  const detailTotalAmount = useMemo(
+    () => filteredDetails.reduce((sum, row) => sum + row.resolutionAmount, 0),
+    [filteredDetails]
+  );
+
   const filteredData = useMemo(() => {
     let filtered = data.filter((row) => {
       const matchesYear = String(row.year ?? selectedYear) === selectedYear;
@@ -428,23 +565,25 @@ export default function BudgetExecution2026() {
         <section className="page-heading">
             <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
-              <h1 style={{ marginTop: "0" }}>부서별 예산집행현황</h1>
+              <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
+                {([["summary", "부서별 예산집행현황"], ["details", "예산 집행내역"]] as const).map(([view, label]) => (
+                  <button
+                    key={view}
+                    type="button"
+                    onClick={() => setExecView(view)}
+                    style={{
+                      fontSize: '26px', fontWeight: 700, padding: '2px 10px', borderRadius: '6px',
+                      border: 'none', cursor: 'pointer',
+                      background: execView === view ? '#5b9bf0' : 'transparent',
+                      color: execView === view ? '#fff' : 'var(--text)',
+                    }}
+                  >
+                    {label}
+                  </button>
+                ))}
+              </div>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: "24px" }}>
-              <div style={{ display: "flex", gap: "12px" }} aria-label="2026 예산 요약">
-                <article className="metric-card" style={{ "--tint": "#5b9bf0", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
-                  <div className="metric-header">
-                    <div className="metric-top"><span>총예산액</span></div>
-                  </div>
-                  <strong style={{ textAlign: "right" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(filteredTotals.budget / 1000000))}<span className="metric-unit">백만원</span></strong>
-                </article>
-                <article className="metric-card" style={{ "--tint": "#4fc3a1", width: "200px", minHeight: "64px", padding: "10px 16px" } as React.CSSProperties}>
-                  <div className="metric-header">
-                    <div className="metric-top"><span>총집행액</span></div>
-                  </div>
-                  <strong style={{ textAlign: "right" }}>{new Intl.NumberFormat("ko-KR").format(Math.round(filteredTotals.executed / 1000000))}<span className="metric-unit">백만원</span></strong>
-                </article>
-              </div>
               <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
                 <div className="icon-stack-front"><Upload size={20} /></div>
                 <input
@@ -452,13 +591,14 @@ export default function BudgetExecution2026() {
                   className="upload-input"
                   type="file"
                   accept=".xlsx,.xls,.csv"
-                  onChange={(event) => handleExcelUpload(event.target.files?.[0])}
+                  onChange={(event) => execView === "details" ? handleExecutionDetailUpload(event.target.files?.[0]) : handleExcelUpload(event.target.files?.[0])}
                 />
               </label>
             </div>
           </div>
         </section>
 
+        {execView === "summary" && (
         <section className="table-panel" style={{ marginTop: "8px" }}>
           <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
             <div className="table-title">
@@ -523,15 +663,15 @@ export default function BudgetExecution2026() {
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>단위사업명{renderResizeHandle("programName", 85)}</th>
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>편성액{renderResizeHandle("formedAmount", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>본예산{renderResizeHandle("original", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>편성액{renderResizeHandle("formedAmount", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>본예산{renderResizeHandle("original", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예비비{renderResizeHandle("reserve", 78)}</th>
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>이월액계{renderResizeHandle("carryover", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>집행액{renderResizeHandle("executed", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>집행률{renderResizeHandle("executionRate", 74)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#4fc3a1', fontSize: '15px' }}>집행액{renderResizeHandle("executed", 82)}</th>
+                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#4fc3a1', fontSize: '15px' }}>집행률{renderResizeHandle("executionRate", 74)}</th>
                 </tr>
               </thead>
               <tbody>
@@ -582,6 +722,109 @@ export default function BudgetExecution2026() {
             </div>
           </div>
         </section>
+        )}
+
+        {execView === "details" && (
+        <section className="table-panel" style={{ marginTop: "8px" }}>
+          <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
+            <div className="table-title">
+              <div className="execution-filter-bar">
+                <ExecutionFilterDropdown
+                  label="부서명"
+                  value={detailDepartment}
+                  options={detailDepartments.map((dept) => ({ value: dept, label: dept }))}
+                  onChange={(value) => { setDetailDepartment(value); setDetailPage(1); }}
+                  placeholder="부서명 선택"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="search-box">
+                <Search size={17} />
+                <input
+                  value={detailSearch}
+                  onChange={(event) => { setDetailSearch(event.target.value); setDetailPage(1); }}
+                  placeholder="세부사업·적요·거래처명 검색"
+                  aria-label="검색"
+                />
+                {detailSearch && (
+                  <button aria-label="검색어 지우기" onClick={() => setDetailSearch("")}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <span className="unit-note">(단위: 원)</span>
+            </div>
+          </div>
+
+          <div className="table-scroll">
+            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1173px' }}>
+              <colgroup>
+                <col style={{ width: '110px' }} />
+                <col style={{ width: '70px' }} />
+                <col style={{ width: '130px' }} />
+                <col style={{ width: '130px' }} />
+                <col style={{ width: '160px' }} />
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '220px' }} />
+                <col style={{ width: '120px' }} />
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '140px' }} />
+              </colgroup>
+              <thead>
+                <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>부서명</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>구분</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>정책사업</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>단위사업</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>적요</th>
+                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>결의금액</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>결의요청일</th>
+                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>거래처명</th>
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedDetails.length > 0 && (
+                  <tr key="detail-total" style={{ fontWeight: '700', background: 'rgba(91, 155, 240, 0.08)', borderTop: '1.5px solid rgba(91, 155, 240, 0.3)' }}>
+                    <td colSpan={6} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}>합계 ({filteredDetails.length}건)</td>
+                    <td style={{ padding: '12px 8px' }}></td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
+                    <td colSpan={2} style={{ padding: '12px 8px' }}></td>
+                  </tr>
+                )}
+                {paginatedDetails.length === 0 ? (
+                  <tr><td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>등록된 집행내역이 없습니다.</td></tr>
+                ) : paginatedDetails.map((row) => (
+                  <tr key={row.id} className="budget-row">
+                    <td style={{ padding: '12px 8px', fontSize: '13px' }}>{row.department}</td>
+                    <td style={{ padding: '12px 8px', fontSize: '13px' }}>{row.division}</td>
+                    <td title={row.policyProgram} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyProgram}</td>
+                    <td title={row.unitProgram} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitProgram}</td>
+                    <td title={row.detailProgram} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.detailProgram}</td>
+                    <td style={{ padding: '12px 8px', fontSize: '13px' }}>{row.statisticsAccount}</td>
+                    <td title={row.note} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.note}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
+                    <td style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap' }}>{row.resolutionDate}</td>
+                    <td title={row.vendorName} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.vendorName}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="table-footer" style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
+              <Pagination page={detailPage} totalPages={detailTotalPages} onChange={setDetailPage} />
+            </div>
+            <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
+              {filteredDetails.length === 0 ? '0' : (detailPage - 1) * detailRowsPerPage + 1}–{Math.min(detailPage * detailRowsPerPage, filteredDetails.length)} of {filteredDetails.length}
+            </div>
+          </div>
+        </section>
+        )}
 
         {toast && (
           <div className="toast">

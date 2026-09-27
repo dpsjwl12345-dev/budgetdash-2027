@@ -527,6 +527,97 @@ async function saveRowMarks(req: any, res: any) {
   res.status(200).json({ success: true, message: "저장 완료" });
 }
 
+async function loadExecutionDetails(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+
+  const department = req.query?.department;
+  let query = supabase
+    .from('budget_execution_details')
+    .select('*')
+    .order('department', { ascending: true })
+    .order('sort_order', { ascending: true });
+  if (department) query = query.eq('department', department);
+
+  const { data, error } = await query;
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+
+  const rows = (data || []).map((row: any) => ({
+    id: row.id,
+    department: row.department,
+    division: row.division ?? '',
+    policyProgram: row.policy_program ?? '',
+    unitProgram: row.unit_program ?? '',
+    detailProgram: row.detail_program ?? '',
+    statisticsAccount: row.statistics_account ?? '',
+    note: row.note ?? '',
+    resolutionAmount: row.resolution_amount ?? 0,
+    resolutionDate: row.resolution_date ?? '',
+    vendorName: row.vendor_name ?? '',
+  }));
+
+  res.status(200).json({ data: rows });
+}
+
+async function saveExecutionDetails(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+
+  const department = req.body?.department;
+  if (!department) {
+    res.status(200).json({ success: false, message: "부서 정보가 필요합니다" });
+    return;
+  }
+
+  // 이번 업로드로 해당 부서의 기존 집행내역을 통째로 교체한다(다른 부서는 그대로 둔다).
+  const { error: deleteError } = await supabase
+    .from('budget_execution_details')
+    .delete()
+    .eq('department', department);
+  if (deleteError) {
+    res.status(200).json({ success: false, message: "기존 데이터 삭제 실패", error: deleteError.message });
+    return;
+  }
+
+  const rows = Array.isArray(req.body?.data) ? req.body.data : [];
+  if (rows.length === 0) {
+    res.status(200).json({ success: true, message: "저장 완료 (빈 데이터)" });
+    return;
+  }
+
+  const dbRows = rows.map((row: any, index: number) => ({
+    department,
+    division: row.division || null,
+    policy_program: row.policyProgram || null,
+    unit_program: row.unitProgram || null,
+    detail_program: row.detailProgram || null,
+    statistics_account: row.statisticsAccount || null,
+    note: row.note || null,
+    resolution_amount: row.resolutionAmount ?? null,
+    resolution_date: row.resolutionDate || null,
+    vendor_name: row.vendorName || null,
+    sort_order: index,
+    updated_at: new Date().toISOString(),
+  }));
+
+  const { error: insertError } = await supabase.from('budget_execution_details').insert(dbRows);
+  if (insertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: insertError.message });
+    return;
+  }
+
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
 export default async function handler(req: any, res: any) {
   try {
     const type = req.query?.type;
@@ -538,6 +629,7 @@ export default async function handler(req: any, res: any) {
       if (type === 'issues') return await loadIssues(res);
       if (type === 'council-requests') return await loadCouncilRequests(res);
       if (type === 'mayor-requests') return await loadMayorRequests(res);
+      if (type === 'execution-details') return await loadExecutionDetails(req, res);
       return await loadHierarchy(req, res);
     }
 
@@ -554,6 +646,7 @@ export default async function handler(req: any, res: any) {
         if (req.body?.action === 'delete') return await deleteMayorRequest(req, res);
         return await saveMayorRequest(req, res);
       }
+      if (type === 'execution-details') return await saveExecutionDetails(req, res);
       return await saveHierarchy(req, res);
     }
 
