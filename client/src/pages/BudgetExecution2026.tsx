@@ -782,8 +782,8 @@ export default function BudgetExecution2026() {
                 <col style={{ width: '80px' }} />
                 <col style={{ width: '260px' }} />
                 <col style={{ width: '100px' }} />
-                <col style={{ width: '110px' }} />
-                <col style={{ width: '120px' }} />
+                <col style={{ width: '100px' }} />
+                <col style={{ width: '95px' }} />
                 <col style={{ width: '95px' }} />
                 <col style={{ width: '135px' }} />
               </colgroup>
@@ -806,7 +806,7 @@ export default function BudgetExecution2026() {
                   <tr key="detail-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
                     <td colSpan={6} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredDetails.length}건)</td>
                     <td style={{ padding: '12px 8px' }}></td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '15px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 4px', fontSize: '12px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
                     <td colSpan={2} style={{ padding: '12px 8px' }}></td>
                   </tr>
                 )}
