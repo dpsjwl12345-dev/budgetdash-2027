@@ -797,10 +797,16 @@ export default function BudgetExecution2026() {
               <tbody>
                 {paginatedDetails.length > 0 && (
                   <tr key="detail-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
-                    <td colSpan={6} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredDetails.length}건)</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredDetails.length}건)</td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
                     <td style={{ padding: '12px 10px' }}></td>
                     <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
-                    <td colSpan={2} style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
                   </tr>
                 )}
                 {paginatedDetails.length === 0 ? (
