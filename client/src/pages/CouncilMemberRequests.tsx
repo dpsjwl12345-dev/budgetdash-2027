@@ -4,7 +4,11 @@ import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
 // 요구가 들어온 경로. 탭을 가르는 기준이며, 소속 정당명과는 별개다.
-type RequestType = "당정협의회" | "정책간담회" | "시의원" | "특별조정교부금";
+// "시장"·"부시장"은 원래 별도 메뉴(요구사항 반영)였는데, 같은 화면으로 합쳐졌다.
+type RequestType = "당정협의회" | "정책간담회" | "시의원" | "특별조정교부금" | "시장" | "부시장";
+
+// 시장·부시장 탭은 선거구/소속정당명/위원회 칸이 없다(시의원이 아니므로).
+const isMayorType = (type: RequestType) => type === "시장" || type === "부시장";
 
 type CouncilRequest = {
   id: string;
@@ -22,7 +26,7 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
-const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원", "특별조정교부금"];
+const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원", "특별조정교부금", "시장", "부시장"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
@@ -64,6 +68,8 @@ const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?
   { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업 · 소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
   { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
   { key: "특별조정교부금", label: "특별조정교부금", subtitle: "경기도 관할 시의 지역개발사업 등 시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
+  { key: "시장", label: "시장님 요구사항", emptyText: "등록된 시장님 요구사항이 없습니다", color: "#b98cf0" },
+  { key: "부시장", label: "부시장님 요구사항", emptyText: "등록된 부시장님 요구사항이 없습니다", color: "#52c4d9" },
   { key: "원구성 현황", label: "원구성 현황" },
 ];
 
@@ -411,6 +417,58 @@ const fillFromRoster = <T extends RosterFields>(base: T, name: string): T => {
   };
 };
 
+// 예전에 "요구사항 반영"이라는 별도 메뉴로 저장되던 시장·부시장 요구사항 데이터.
+// 이 화면에 탭으로 합쳐졌으니, 처음 한 번만 여기 데이터 형태로 옮겨온다.
+type LegacyMayorRequest = {
+  id: string;
+  requesterType: "시장" | "부시장";
+  memberName: string;
+  department: string;
+  content: string;
+  budgetItemName: string;
+  requestedAmount: string;
+  status: RequestStatus;
+  requestedDate: string;
+};
+
+const MAYOR_MIGRATION_FLAG = "mayorRequestsMergedIntoCouncil";
+
+const legacyMayorToCouncil = (item: LegacyMayorRequest): CouncilRequest => ({
+  id: item.id,
+  requestType: item.requesterType,
+  electoralDistrict: "",
+  partyName: "",
+  memberName: item.memberName,
+  committee: "",
+  department: item.department,
+  content: item.content,
+  budgetItemName: item.budgetItemName,
+  requestedAmount: item.requestedAmount,
+  status: item.status,
+  requestedDate: item.requestedDate,
+});
+
+async function loadLegacyMayorRequests(): Promise<LegacyMayorRequest[]> {
+  try {
+    const response = await fetch("/api/cloud-sync?type=mayor-requests");
+    if (response.ok) {
+      const { data } = await response.json();
+      if (Array.isArray(data)) return data;
+    }
+  } catch (error) {
+    console.warn("이전 시장·부시장 요구사항 서버 로드 실패:", error);
+  }
+  const saved = localStorage.getItem("mayorViceMayorRequests");
+  if (saved) {
+    try {
+      return JSON.parse(saved);
+    } catch (error) {
+      console.error("이전 시장·부시장 요구사항 로컬 데이터 로드 실패:", error);
+    }
+  }
+  return [];
+}
+
 export default function CouncilMemberRequests() {
   const [requests, setRequests] = useState<CouncilRequest[]>([]);
   const [activeTab, setActiveTab] = useState<MainTabKey>("당정협의회");
@@ -422,27 +480,39 @@ export default function CouncilMemberRequests() {
   // 서버 데이터를 우선 로드하고, 서버를 사용할 수 없는 경우 localStorage를 사용한다.
   useEffect(() => {
     const loadRequests = async () => {
+      let loaded: CouncilRequest[] = [];
       try {
         const response = await fetch("/api/cloud-sync?type=council-requests");
         if (!response.ok) throw new Error("서버 로드 실패");
         const { data } = await response.json();
-        if (Array.isArray(data)) {
-          setRequests(data);
-          localStorage.setItem("councilMemberRequests", JSON.stringify(data));
-          return;
-        }
+        if (Array.isArray(data)) loaded = data;
       } catch (error) {
         console.warn("서버에서 시의원 요구사항 로드 실패:", error);
-      }
-
-      const saved = localStorage.getItem("councilMemberRequests");
-      if (saved) {
-        try {
-          setRequests(JSON.parse(saved));
-        } catch (error) {
-          console.error("시의원 요구사항 로컬 데이터 로드 실패:", error);
+        const saved = localStorage.getItem("councilMemberRequests");
+        if (saved) {
+          try {
+            loaded = JSON.parse(saved);
+          } catch (parseError) {
+            console.error("시의원 요구사항 로컬 데이터 로드 실패:", parseError);
+          }
         }
       }
+
+      // 예전 "요구사항 반영" 메뉴(시장·부시장)의 데이터를 이 화면으로 한 번만 옮겨온다.
+      if (!localStorage.getItem(MAYOR_MIGRATION_FLAG)) {
+        const legacy = await loadLegacyMayorRequests();
+        if (legacy.length > 0) {
+          const migrated = legacy.map(legacyMayorToCouncil);
+          const existingIds = new Set(loaded.map((item) => item.id));
+          const toAdd = migrated.filter((item) => !existingIds.has(item.id));
+          loaded = [...loaded, ...toAdd];
+          await Promise.all(toAdd.map((item) => persist(item)));
+        }
+        localStorage.setItem(MAYOR_MIGRATION_FLAG, "1");
+      }
+
+      setRequests(loaded);
+      localStorage.setItem("councilMemberRequests", JSON.stringify(loaded));
     };
     loadRequests();
   }, []);
@@ -563,14 +633,14 @@ export default function CouncilMemberRequests() {
   const visibleRequests = requests.filter((item) => typeOf(item) === activeTab);
   const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
 
-  const renderTable = (rows: CouncilRequest[], emptyText: string) => (
+  const renderTable = (rows: CouncilRequest[], emptyText: string, showCouncilFields: boolean) => (
           <table className="requests-table">
             <colgroup>
               <col className="col-num" />
-              <col className="col-district" />
-              <col className="col-party" />
+              {showCouncilFields && <col className="col-district" />}
+              {showCouncilFields && <col className="col-party" />}
               <col className="col-member" />
-              <col className="col-committee" />
+              {showCouncilFields && <col className="col-committee" />}
               <col className="col-dept" />
               <col className="col-content" />
               <col className="col-budget-item" />
@@ -581,10 +651,10 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th>선거구</th>
-                <th>소속 정당명</th>
+                {showCouncilFields && <th>선거구</th>}
+                {showCouncilFields && <th>소속 정당명</th>}
                 <th>이름</th>
-                <th>위원회</th>
+                {showCouncilFields && <th>위원회</th>}
                 <th>소관부서</th>
                 <th>요구내용</th>
                 <th>사업명 (세부사업+부기명)</th>
@@ -602,6 +672,7 @@ export default function CouncilMemberRequests() {
                       <td className="col-num">{index + 1}</td>
                       {isEditing ? (
                         <>
+                          {showCouncilFields && (
                           <td>
                             <input
                               className="cell-input"
@@ -609,6 +680,8 @@ export default function CouncilMemberRequests() {
                               onChange={(e) => setEditDraft({ ...editDraft, electoralDistrict: e.target.value })}
                             />
                           </td>
+                          )}
+                          {showCouncilFields && (
                           <td>
                             <input
                               className="cell-input"
@@ -616,6 +689,7 @@ export default function CouncilMemberRequests() {
                               onChange={(e) => setEditDraft({ ...editDraft, partyName: e.target.value })}
                             />
                           </td>
+                          )}
                           <td>
                             <input
                               className="cell-input"
@@ -624,6 +698,7 @@ export default function CouncilMemberRequests() {
                               onChange={(e) => setEditDraft(fillFromRoster(editDraft, e.target.value))}
                             />
                           </td>
+                          {showCouncilFields && (
                           <td>
                             <input
                               className="cell-input"
@@ -631,6 +706,7 @@ export default function CouncilMemberRequests() {
                               onChange={(e) => setEditDraft({ ...editDraft, committee: e.target.value })}
                             />
                           </td>
+                          )}
                           <td>
                             <select
                               className="cell-input"
@@ -666,10 +742,10 @@ export default function CouncilMemberRequests() {
                         </>
                       ) : (
                         <>
-                          <td>{item.electoralDistrict}</td>
-                          <td>{item.partyName}</td>
+                          {showCouncilFields && <td>{item.electoralDistrict}</td>}
+                          {showCouncilFields && <td>{item.partyName}</td>}
                           <td className="col-member">{item.memberName}</td>
-                          <td>{item.committee}</td>
+                          {showCouncilFields && <td>{item.committee}</td>}
                           <td>{item.department}</td>
                           <td className="col-content">{item.content}</td>
                           <td>{item.budgetItemName}</td>
@@ -715,7 +791,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={11} className="empty-row">{emptyText}</td>
+                  <td colSpan={showCouncilFields ? 11 : 8} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -726,7 +802,7 @@ export default function CouncilMemberRequests() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>당정협의회 요구</h1>
+          <h1>요구사항 반영</h1>
         </section>
 
         <section className="tab-bar">
@@ -771,18 +847,22 @@ export default function CouncilMemberRequests() {
                 <option key={type} value={type}>{type}</option>
               ))}
             </select>
+            {!isMayorType(form.requestType) && (
             <input
               className="form-input district-input"
               placeholder="선거구"
               value={form.electoralDistrict}
               onChange={(e) => setForm({ ...form, electoralDistrict: e.target.value })}
             />
+            )}
+            {!isMayorType(form.requestType) && (
             <input
               className="form-input party-input"
               placeholder="소속 정당명"
               value={form.partyName}
               onChange={(e) => setForm({ ...form, partyName: e.target.value })}
             />
+            )}
             <input
               className="form-input member-input"
               placeholder="이름"
@@ -797,12 +877,14 @@ export default function CouncilMemberRequests() {
                 </option>
               ))}
             </datalist>
+            {!isMayorType(form.requestType) && (
             <input
               className="form-input committee-input"
               placeholder="위원회"
               value={form.committee}
               onChange={(e) => setForm({ ...form, committee: e.target.value })}
             />
+            )}
             <select
               className="form-input dept-select"
               value={form.department}
@@ -855,7 +937,7 @@ export default function CouncilMemberRequests() {
 
         {activeTab !== "원구성 현황" && (
         <section className="table-section">
-          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다")}
+          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType))}
         </section>
         )}
 
@@ -1130,6 +1212,7 @@ export default function CouncilMemberRequests() {
 
         .tab-bar {
           display: flex;
+          flex-wrap: wrap;
           gap: 10px;
           margin-bottom: 18px;
           padding: 10px;

@@ -11,7 +11,6 @@ import {
   Landmark,
   Award,
   Banknote,
-  Users,
   PanelLeftOpen,
   PanelLeftClose,
   LayoutDashboard,
@@ -39,7 +38,6 @@ const navItems: NavItem[] = [
   { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", count: "01" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
-  { label: "당정협의회요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
 ];
 
 const toolItems: ToolItem[] = [
@@ -54,7 +52,7 @@ const toolItems: ToolItem[] = [
     ],
   },
   { label: "지방채사업", icon: Banknote, path: "/local-bonds" },
-  { label: "요구사항 반영", icon: Users, path: "/mayor-vice-mayor-requests" },
+  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests" },
   { label: "성과평가반영", icon: Award, path: "/performance-evaluation" },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
 ];
@@ -88,7 +86,7 @@ export default function Layout({
         return "부서별 주요 쟁점사항";
       case "/local-bonds":
         return "지방채사업";
-      case "/mayor-vice-mayor-requests":
+      case "/council-member-requests":
         return "요구사항 반영";
       default:
         return "시 전체 현황";
