@@ -30,7 +30,9 @@ const FAIR_PAY_TIERS: FairPayTier[] = [
 ];
 
 function getFairPayTier(months: number): FairPayTier | null {
-  if (!months || months < 1) return null;
+  // 공정수당은 근무기간이 12개월 미만인 경우에만 지급된다 - 표의 마지막 구간이
+  // "11~12개월 미만"이라도 12개월 이상은 이 구간에 걸리면 안 된다.
+  if (!months || months < 1 || months >= 12) return null;
   let matched: FairPayTier | null = null;
   for (const tier of FAIR_PAY_TIERS) {
     if (months >= tier.minMonths) matched = tier;
@@ -214,7 +216,7 @@ export default function TempWorkerWageCalculator() {
                 </div>
 
                 <div className="calc-result-row">
-                  <span><span className="calc-result-no">④</span>공정수당 {result.tier ? `(${result.tier.label} · ${result.tier.rate})` : "(1개월 미만 - 일할계산 필요)"}</span>
+                  <span><span className="calc-result-no">④</span>공정수당 {result.tier ? `(${result.tier.label} · ${result.tier.rate})` : result.monthsNum >= 12 ? "(12개월 이상 - 미지급)" : "(1개월 미만 - 일할계산 필요)"}</span>
                   <strong>{won(result.fairPay)}</strong>
                 </div>
                 {result.tier && (
