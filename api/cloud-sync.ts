@@ -535,20 +535,31 @@ async function loadExecutionDetails(req: any, res: any) {
   }
 
   const department = req.query?.department;
-  let query = supabase
-    .from('budget_execution_details')
-    .select('*')
-    .order('department', { ascending: true })
-    .order('sort_order', { ascending: true });
-  if (department) query = query.eq('department', department);
 
-  const { data, error } = await query;
-  if (error) {
-    res.status(200).json({ data: null });
-    return;
+  // Supabase/PostgREST는 한 요청당 기본 1000행까지만 돌려준다. 전체 부서 합쳐 1000행을
+  // 넘는 순간, department asc 정렬상 뒤쪽에 있는 부서는 응답에서 통째로 잘려나가 화면에서
+  // "사라진" 것처럼 보였다(실제 DB에는 남아있음). 다 받을 때까지 range()로 나눠 반복 조회한다.
+  const pageSize = 1000;
+  const allRows: any[] = [];
+  for (let from = 0; ; from += pageSize) {
+    let query = supabase
+      .from('budget_execution_details')
+      .select('*')
+      .order('department', { ascending: true })
+      .order('sort_order', { ascending: true })
+      .range(from, from + pageSize - 1);
+    if (department) query = query.eq('department', department);
+
+    const { data, error } = await query;
+    if (error) {
+      res.status(200).json({ data: null });
+      return;
+    }
+    allRows.push(...(data || []));
+    if (!data || data.length < pageSize) break;
   }
 
-  const rows = (data || []).map((row: any) => ({
+  const rows = allRows.map((row: any) => ({
     id: row.id,
     department: row.department,
     division: row.division ?? '',
