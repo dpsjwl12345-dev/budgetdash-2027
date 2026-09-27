@@ -349,18 +349,20 @@ function districtDisplayLabel(district: string): string {
   return number === undefined ? district : `${district} / ${number}선거구`;
 }
 
-// 시의원 선거구별 관할 도의원. 마지막(비례대표)은 공란.
-const PROVINCIAL_MEMBER_BY_DISTRICT: Record<string, string> = {
-  가선거구: "이홍근",
-  나선거구: "오현정",
-  다선거구: "김영훈",
-  라선거구: "신미숙",
-  마선거구: "김태형",
-  바선거구: "김회철",
-  사선거구: "이진형",
-  아선거구: "김영수",
-  자선거구: "오진택",
-  비례대표: "",
+// 시의원 선거구별 관할 도의원과 소속 정당(경기도의회 홈페이지 현역의원 명단 기준,
+// 2026.9. 확인 - 화성시 도의원 9명 전원 더불어민주당). 마지막(비례대표)은 도의원 선거구가
+// 따로 없어 공란.
+const PROVINCIAL_MEMBER_BY_DISTRICT: Record<string, { name: string; party: Party } | null> = {
+  가선거구: { name: "이홍근", party: "더불어민주당" },
+  나선거구: { name: "오현정", party: "더불어민주당" },
+  다선거구: { name: "김영훈", party: "더불어민주당" },
+  라선거구: { name: "신미숙", party: "더불어민주당" },
+  마선거구: { name: "김태형", party: "더불어민주당" },
+  바선거구: { name: "김회철", party: "더불어민주당" },
+  사선거구: { name: "이진형", party: "더불어민주당" },
+  아선거구: { name: "김영수", party: "더불어민주당" },
+  자선거구: { name: "오진택", party: "더불어민주당" },
+  비례대표: null,
 };
 
 function partyColor(party: Party): string {
@@ -1079,20 +1081,31 @@ export default function CouncilMemberRequests() {
                       <tr>
                         <th>선거구</th>
                         <th>도의원</th>
+                        <th>정당명</th>
                       </tr>
                     </thead>
                     <tbody>
-                      {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => (
-                        <tr key={district}>
-                          <td className="cc-district-cell">
-                            <div className="cc-district-name">{districtDisplayLabel(district)}</div>
-                            {districtAreaByGroup[district] && (
-                              <div className="cc-district-area">{districtAreaByGroup[district]}</div>
-                            )}
-                          </td>
-                          <td className="cc-bold">{PROVINCIAL_MEMBER_BY_DISTRICT[district] || "-"}</td>
-                        </tr>
-                      ))}
+                      {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => {
+                        const provincial = PROVINCIAL_MEMBER_BY_DISTRICT[district];
+                        return (
+                          <tr key={district}>
+                            <td className="cc-district-cell">
+                              <div className="cc-district-name">{districtDisplayLabel(district)}</div>
+                              {districtAreaByGroup[district] && (
+                                <div className="cc-district-area">{districtAreaByGroup[district]}</div>
+                              )}
+                            </td>
+                            <td className="cc-bold">{provincial?.name || "-"}</td>
+                            <td>
+                              {provincial && (
+                                <span className="cc-party-badge" style={{ color: partyColor(provincial.party) }}>
+                                  {provincial.party}
+                                </span>
+                              )}
+                            </td>
+                          </tr>
+                        );
+                      })}
                     </tbody>
                   </table>
                 </div>
