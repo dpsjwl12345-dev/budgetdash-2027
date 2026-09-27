@@ -1036,45 +1036,67 @@ export default function CouncilMemberRequests() {
             )}
 
             {compositionTab === "지역구별 의원 현황" && (
-              <div className="cc-table-wrap">
-                <table className="cc-table cc-district-table">
-                  <thead>
-                    <tr>
-                      <th>선거구</th>
-                      <th>도의원</th>
-                      <th>시의원</th>
-                      <th>위원회</th>
-                      <th>정당명</th>
-                    </tr>
-                  </thead>
-                  <tbody>
-                    {DISTRICT_MEMBERS.map((row, i) => (
-                      <tr key={i}>
-                        {districtRowSpans[i] && (
-                          <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
-                            <div className="cc-district-name">{districtDisplayLabel(row.district)}</div>
-                            {districtAreaByGroup[row.district] && (
-                              <div className="cc-district-area">{districtAreaByGroup[row.district]}</div>
+              <>
+                <div className="cc-subsection-title">시의원 현황</div>
+                <div className="cc-table-wrap">
+                  <table className="cc-table cc-district-table">
+                    <thead>
+                      <tr>
+                        <th>선거구</th>
+                        <th>시의원</th>
+                        <th>위원회</th>
+                        <th>정당명</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {DISTRICT_MEMBERS.map((row, i) => (
+                        <tr key={i}>
+                          {districtRowSpans[i] && (
+                            <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
+                              <div className="cc-district-name">{districtDisplayLabel(row.district)}</div>
+                              {districtAreaByGroup[row.district] && (
+                                <div className="cc-district-area">{districtAreaByGroup[row.district]}</div>
+                              )}
+                            </td>
+                          )}
+                          <td className={districtRowSpans[i] ? "cc-bold" : undefined}>{row.name}</td>
+                          <td className={districtRowSpans[i] ? undefined : "cc-bold"}>{row.committee}</td>
+                          <td>
+                            <span className="cc-party-badge" style={{ color: partyColor(row.party) }}>
+                              {row.party}
+                            </span>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+
+                <div className="cc-subsection-title cc-subsection-title-spaced">도의원 현황</div>
+                <div className="cc-table-wrap">
+                  <table className="cc-table cc-district-table">
+                    <thead>
+                      <tr>
+                        <th>선거구</th>
+                        <th>도의원</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => (
+                        <tr key={district}>
+                          <td className="cc-district-cell">
+                            <div className="cc-district-name">{districtDisplayLabel(district)}</div>
+                            {districtAreaByGroup[district] && (
+                              <div className="cc-district-area">{districtAreaByGroup[district]}</div>
                             )}
                           </td>
-                        )}
-                        {districtRowSpans[i] && (
-                          <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
-                            {PROVINCIAL_MEMBER_BY_DISTRICT[row.district] ?? ""}
-                          </td>
-                        )}
-                        <td className={districtRowSpans[i] ? "cc-bold" : undefined}>{row.name}</td>
-                        <td className={districtRowSpans[i] ? undefined : "cc-bold"}>{row.committee}</td>
-                        <td>
-                          <span className="cc-party-badge" style={{ color: partyColor(row.party) }}>
-                            {row.party}
-                          </span>
-                        </td>
-                      </tr>
-                    ))}
-                  </tbody>
-                </table>
-              </div>
+                          <td className="cc-bold">{PROVINCIAL_MEMBER_BY_DISTRICT[district] || "-"}</td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              </>
             )}
 
             {compositionTab === "국회의원 현황" && (
@@ -1532,6 +1554,17 @@ export default function CouncilMemberRequests() {
 
         .cc-section {
           padding: 24px;
+        }
+
+        .cc-subsection-title {
+          font-size: 15px;
+          font-weight: 700;
+          color: var(--text);
+          margin-bottom: 10px;
+        }
+
+        .cc-subsection-title-spaced {
+          margin-top: 28px;
         }
 
         .cc-table-wrap {
