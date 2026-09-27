@@ -235,20 +235,29 @@ export default function BudgetExecution2026() {
         return isNaN(parsed) ? 0 : parsed;
       };
 
+      // 부서명 칸이 병합 셀로 돼있으면 그 부서의 첫 줄에만 값이 들어있고 나머지 줄은 빈 값으로
+      // 읽힌다. 빈 값을 그대로 "미분류"로 떨어뜨리면 그 부서의 나머지 내역이 전부 미분류로
+      // 뒤섞이고, 서버 저장은 부서 단위 삭제 후 재삽입이라 그 부서의 기존 데이터까지 지워진다.
+      // 빈 값이면 바로 위 줄의 부서명을 그대로 이어받게 해서 병합 셀을 펼쳐준다.
+      let lastDepartment = "";
       const nextRows: ExecutionDetail[] = imported
-        .map((record, index) => ({
-          id: Date.now() + index,
-          department: parseText(record["부서명"]) || "미분류",
-          division: parseText(record["구분"]),
-          policyProgram: parseText(record["정책사업"]),
-          unitProgram: parseText(record["단위사업"]),
-          detailProgram: parseText(record["세부사업"]),
-          statisticsAccount: parseText(record["통계목"]),
-          note: parseText(record["적요"]),
-          resolutionAmount: parseAmount(record["결의금액"]),
-          resolutionDate: parseText(record["결의요청일"]),
-          vendorName: parseText(record["거래처명"]),
-        }))
+        .map((record, index) => {
+          const parsedDepartment = parseText(record["부서명"]);
+          if (parsedDepartment) lastDepartment = parsedDepartment;
+          return {
+            id: Date.now() + index,
+            department: parsedDepartment || lastDepartment || "미분류",
+            division: parseText(record["구분"]),
+            policyProgram: parseText(record["정책사업"]),
+            unitProgram: parseText(record["단위사업"]),
+            detailProgram: parseText(record["세부사업"]),
+            statisticsAccount: parseText(record["통계목"]),
+            note: parseText(record["적요"]),
+            resolutionAmount: parseAmount(record["결의금액"]),
+            resolutionDate: parseText(record["결의요청일"]),
+            vendorName: parseText(record["거래처명"]),
+          };
+        })
         .filter((row) => row.department !== "미분류" || row.note || row.resolutionAmount);
 
       if (!nextRows.length) throw new Error("empty");
