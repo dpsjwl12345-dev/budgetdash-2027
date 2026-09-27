@@ -780,10 +780,10 @@ export default function BudgetExecution2026() {
                 <col style={{ width: '60px' }} />
                 <col style={{ width: '150px' }} />
                 <col style={{ width: '80px' }} />
-                <col style={{ width: '230px' }} />
+                <col style={{ width: '260px' }} />
                 <col style={{ width: '100px' }} />
-                <col style={{ width: '160px' }} />
-                <col style={{ width: '115px' }} />
+                <col style={{ width: '110px' }} />
+                <col style={{ width: '120px' }} />
                 <col style={{ width: '95px' }} />
                 <col style={{ width: '135px' }} />
               </colgroup>
