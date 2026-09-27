@@ -198,6 +198,7 @@ export default function BudgetExecution2026() {
   const [detailSearch, setDetailSearch] = useState("");
   const [detailDepartment, setDetailDepartment] = useState("");
   const [detailProgramFilter, setDetailProgramFilter] = useState("");
+  const [detailStatisticsFilter, setDetailStatisticsFilter] = useState("");
   const [detailPage, setDetailPage] = useState(1);
   const detailRowsPerPage = 20;
 
@@ -483,18 +484,28 @@ export default function BudgetExecution2026() {
     return Array.from(new Set(scoped.map((row) => row.detailProgram).filter(Boolean))).sort();
   }, [executionDetails, detailDepartment]);
 
+  // 부서·세부사업 선택에 맞춰 통계목 목록도 같이 좁힌다.
+  const detailStatisticsCodes = useMemo(() => {
+    const scoped = executionDetails.filter((row) =>
+      (detailDepartment === "" || row.department === detailDepartment) &&
+      (detailProgramFilter === "" || row.detailProgram === detailProgramFilter)
+    );
+    return Array.from(new Set(scoped.map((row) => row.statisticsAccount).filter(Boolean))).sort();
+  }, [executionDetails, detailDepartment, detailProgramFilter]);
+
   const filteredDetails = useMemo(() => {
     const keyword = detailSearch.toLowerCase();
     return executionDetails.filter((row) => {
       const matchesDepartment = detailDepartment === "" || row.department === detailDepartment;
       const matchesProgram = detailProgramFilter === "" || row.detailProgram === detailProgramFilter;
+      const matchesStatistics = detailStatisticsFilter === "" || row.statisticsAccount === detailStatisticsFilter;
       const matchesSearch = keyword === "" ||
         row.detailProgram.toLowerCase().includes(keyword) ||
         row.note.toLowerCase().includes(keyword) ||
         row.vendorName.toLowerCase().includes(keyword);
-      return matchesDepartment && matchesProgram && matchesSearch;
+      return matchesDepartment && matchesProgram && matchesStatistics && matchesSearch;
     });
-  }, [executionDetails, detailDepartment, detailProgramFilter, detailSearch]);
+  }, [executionDetails, detailDepartment, detailProgramFilter, detailStatisticsFilter, detailSearch]);
 
   const detailTotalPages = Math.max(1, Math.ceil(filteredDetails.length / detailRowsPerPage));
   const paginatedDetails = useMemo(() => {
@@ -741,15 +752,22 @@ export default function BudgetExecution2026() {
                   label="부서명"
                   value={detailDepartment}
                   options={detailDepartments.map((dept) => ({ value: dept, label: dept }))}
-                  onChange={(value) => { setDetailDepartment(value); setDetailProgramFilter(""); setDetailPage(1); }}
+                  onChange={(value) => { setDetailDepartment(value); setDetailProgramFilter(""); setDetailStatisticsFilter(""); setDetailPage(1); }}
                   placeholder="부서명 선택"
                 />
                 <ExecutionFilterDropdown
                   label="세부사업"
                   value={detailProgramFilter}
                   options={detailPrograms.map((prog) => ({ value: prog, label: prog }))}
-                  onChange={(value) => { setDetailProgramFilter(value); setDetailPage(1); }}
+                  onChange={(value) => { setDetailProgramFilter(value); setDetailStatisticsFilter(""); setDetailPage(1); }}
                   placeholder="세부사업 선택"
+                />
+                <ExecutionFilterDropdown
+                  label="통계목"
+                  value={detailStatisticsFilter}
+                  options={detailStatisticsCodes.map((code) => ({ value: code, label: code }))}
+                  onChange={(value) => { setDetailStatisticsFilter(value); setDetailPage(1); }}
+                  placeholder="통계목 선택"
                 />
               </div>
             </div>
