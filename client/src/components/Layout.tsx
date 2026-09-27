@@ -347,9 +347,11 @@ export default function Layout({
             <ChevronRight size={14} />
             <b>{activeNav}</b>
           </div>
-          <div className="topbar-actions">
-            <img className="topbar-logo" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
-          </div>
+          {!isCityOverviewPage && (
+            <div className="topbar-actions">
+              <img className="topbar-logo" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
+            </div>
+          )}
         </header>
 
         {children}

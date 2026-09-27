@@ -2548,7 +2548,7 @@ export default function Home() {
                               </>
                             ) : (
                               <>
-                                <span style={{ flex: 1, fontSize: '13px', color: programMemos[memoProgramId] ? '#111827' : '#6b7280', padding: '4px 8px' }}>
+                                <span style={{ flex: 1, fontSize: '13px', color: programMemos[memoProgramId] ? '#2563eb' : '#6b7280', padding: '4px 8px' }}>
                                   {programMemos[memoProgramId] || '메모'}
                                 </span>
                                 <button
