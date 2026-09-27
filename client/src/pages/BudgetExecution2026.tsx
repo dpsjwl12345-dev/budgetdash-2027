@@ -776,16 +776,16 @@ export default function BudgetExecution2026() {
           <div className="table-scroll">
             <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1173px' }}>
               <colgroup>
-                <col style={{ width: '110px' }} />
-                <col style={{ width: '70px' }} />
-                <col style={{ width: '130px' }} />
-                <col style={{ width: '85px' }} />
-                <col style={{ width: '205px' }} />
+                <col style={{ width: '105px' }} />
+                <col style={{ width: '60px' }} />
+                <col style={{ width: '150px' }} />
+                <col style={{ width: '80px' }} />
+                <col style={{ width: '230px' }} />
                 <col style={{ width: '100px' }} />
-                <col style={{ width: '220px' }} />
-                <col style={{ width: '120px' }} />
-                <col style={{ width: '100px' }} />
-                <col style={{ width: '140px' }} />
+                <col style={{ width: '160px' }} />
+                <col style={{ width: '115px' }} />
+                <col style={{ width: '95px' }} />
+                <col style={{ width: '135px' }} />
               </colgroup>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
