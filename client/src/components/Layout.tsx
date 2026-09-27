@@ -39,9 +39,7 @@ const navItems: NavItem[] = [
   { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", count: "01" },
   { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
   { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
-  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#d9ad52" },
   { label: "당정협의회요구", icon: Landmark, path: "/council-member-requests", iconColor: "#d9ad52" },
-  { label: "시장님 요구사항", icon: Users, path: "/mayor-vice-mayor-requests", iconColor: "#d9ad52" },
 ];
 
 const toolItems: ToolItem[] = [
@@ -55,6 +53,8 @@ const toolItems: ToolItem[] = [
       { label: "산출식(함수) 전체 목록" },
     ],
   },
+  { label: "지방채사업", icon: Banknote, path: "/local-bonds" },
+  { label: "요구사항 반영", icon: Users, path: "/mayor-vice-mayor-requests" },
   { label: "성과평가반영", icon: Award, path: "/performance-evaluation" },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
 ];
@@ -86,6 +86,10 @@ export default function Layout({
         return "산출식(함수) 전체 목록";
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
+      case "/local-bonds":
+        return "지방채사업";
+      case "/mayor-vice-mayor-requests":
+        return "요구사항 반영";
       default:
         return "시 전체 현황";
     }
@@ -342,6 +346,9 @@ export default function Layout({
             <span>DASHBOARDS</span>
             <ChevronRight size={14} />
             <b>{activeNav}</b>
+          </div>
+          <div className="topbar-actions">
+            <img className="topbar-logo" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
           </div>
         </header>
 

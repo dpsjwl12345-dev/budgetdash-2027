@@ -223,14 +223,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   font-family: "Gmarket Sans", "Pretendard", system-ui, sans-serif;
 }
 .sidebar-title span:first-child {
-  font-size: 19px;
+  font-size: 22px;
   color: #8a9bb0;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.2;
 }
 .sidebar-title span:last-child {
-  font-size: 19px;
+  font-size: 22px;
   color: #ffffff;
   font-weight: 750;
   letter-spacing: -0.03em;
@@ -275,6 +275,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .breadcrumbs { display: flex; align-items: center; gap: 9px; color: #7890a8; font-size: 14px; letter-spacing: 0.05em; }
 .breadcrumbs b { color: #aebfd0; font-weight: 650; white-space: nowrap; }
 .topbar-actions { display: flex; align-items: center; gap: 13px; }
+.topbar-logo { height: 34px; width: auto; }
 .preview-pill { display: flex; align-items: center; gap: 8px; color: #97acc2; font-size: 12.5px; }
 .icon-button, .close-button { width: 36px; height: 36px; display: inline-flex; align-items: center; justify-content: center; border: 0.5px solid transparent; border-radius: var(--radius-md); background: transparent; color: #8fa6bd; transition: all 200ms ease-out; cursor: pointer; }
 .icon-button:hover, .close-button:hover { color: #edf5fd; background: rgba(118, 157, 194, 0.08); border-color: var(--line); }

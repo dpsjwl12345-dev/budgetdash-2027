@@ -48,6 +48,7 @@ const draftFromItem = (item: MayorRequest): EditDraft => ({
 
 export default function MayorViceMayorRequests() {
   const [requests, setRequests] = useState<MayorRequest[]>([]);
+  const [activeTab, setActiveTab] = useState<RequesterType>("시장");
   const [form, setForm] = useState(emptyForm());
   const [editingId, setEditingId] = useState<string | null>(null);
   const [editDraft, setEditDraft] = useState<EditDraft | null>(null);
@@ -180,11 +181,30 @@ export default function MayorViceMayorRequests() {
     await persist(updatedItem);
   };
 
+  const visibleRequests = requests.filter((item) => item.requesterType === activeTab);
+  const countOf = (type: RequesterType) => requests.filter((item) => item.requesterType === type).length;
+
   return (
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>시장님 요구사항</h1>
+          <h1>요구사항 반영</h1>
+        </section>
+
+        <section className="tab-bar">
+          {REQUESTER_TYPE_OPTIONS.map((type) => (
+            <button
+              key={type}
+              type="button"
+              className={`tab-button${activeTab === type ? " active" : ""}`}
+              onClick={() => { setActiveTab(type); setForm((f) => ({ ...f, requesterType: type })); }}
+            >
+              <span className="tab-label-row">
+                {type === "시장" ? "시장님 요구사항" : "부시장님 요구사항"}
+                <span className="tab-count">{countOf(type)}</span>
+              </span>
+            </button>
+          ))}
         </section>
 
         <section className="request-form-section">
@@ -282,8 +302,8 @@ export default function MayorViceMayorRequests() {
               </tr>
             </thead>
             <tbody>
-              {requests.length > 0 ? (
-                requests.map((item, index) => {
+              {visibleRequests.length > 0 ? (
+                visibleRequests.map((item, index) => {
                   const isEditing = editingId === item.id && editDraft;
                   return (
                     <tr key={item.id}>
@@ -422,6 +442,66 @@ export default function MayorViceMayorRequests() {
           font-weight: 700;
           color: var(--text);
           margin: 0;
+        }
+
+        .tab-bar {
+          display: flex;
+          gap: 10px;
+          margin-bottom: 18px;
+          padding: 10px;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.03);
+        }
+
+        .tab-button {
+          display: flex;
+          flex-direction: column;
+          align-items: center;
+          gap: 2px;
+          padding: 12px 22px;
+          border: 1px solid var(--border);
+          border-radius: 8px;
+          background: transparent;
+          color: var(--text);
+          font-size: 15px;
+          font-weight: 700;
+          cursor: pointer;
+        }
+
+        .tab-button:hover {
+          color: #b98cf0;
+          border-color: rgba(185, 140, 240, 0.35);
+        }
+
+        .tab-button:nth-child(2):hover {
+          color: #52c4d9;
+          border-color: rgba(82, 196, 217, 0.35);
+        }
+
+        .tab-button.active:nth-child(1) {
+          color: #b98cf0;
+          border-color: rgba(185, 140, 240, 0.6);
+          background: rgba(185, 140, 240, 0.16);
+        }
+
+        .tab-button.active:nth-child(2) {
+          color: #52c4d9;
+          border-color: rgba(82, 196, 217, 0.6);
+          background: rgba(82, 196, 217, 0.16);
+        }
+
+        .tab-label-row {
+          display: flex;
+          align-items: center;
+          font-size: 18px;
+          font-weight: 800;
+        }
+
+        .tab-count {
+          margin-left: 6px;
+          font-size: 12.5px;
+          opacity: 0.85;
         }
 
         .request-form-section {

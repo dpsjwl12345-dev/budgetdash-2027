@@ -54,55 +54,19 @@ export default function LocalBonds() {
           <table className="bond-table">
             <thead>
               <tr>
-                <th rowSpan={2}>연번</th>
-                <th rowSpan={2}>부서명</th>
-                <th rowSpan={2}>세부사업명</th>
-                <th rowSpan={2}>통계목명</th>
-                <th rowSpan={2}>발행액</th>
-                <th rowSpan={2}>총사업비</th>
-                <th colSpan={2}>예산 집행액(지방채 편성액 기준)</th>
-                <th rowSpan={2}>
-                  공사 단계
-                  <div className="bond-th-sub">(26. 9. 기준)</div>
-                </th>
-                <th rowSpan={2}>
-                  전체 공정률
-                  <div className="bond-th-sub">(현단계 공정률)</div>
-                </th>
-                <th rowSpan={2}>지출 관련 계획</th>
-                <th colSpan={2}>과목경정</th>
-                <th rowSpan={2}>
-                  본예산
-                  <div className="bond-th-sub">편성여부</div>
-                </th>
-                <th colSpan={2}>편성액</th>
-                <th rowSpan={2}>상환시기</th>
-              </tr>
-              <tr>
-                <th>원인행위액</th>
-                <th>지출액</th>
-                <th>대상금액</th>
-                <th>완료 여부</th>
-                <th>원금</th>
-                <th>이자</th>
+                <th>연번</th>
+                <th>부서명</th>
+                <th>세부사업명</th>
+                <th>통계목명</th>
+                <th>발행액</th>
+                <th>과목경정 대상금액</th>
               </tr>
             </thead>
             <tbody>
               <tr className="bond-total-row">
                 <td colSpan={4}>합계</td>
                 <td className="bond-num">154,762,073</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
                 <td className="bond-num">106,865,533</td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
-                <td></td>
               </tr>
               {LOCAL_BOND_DATA.map((row, i) => (
                 <tr key={i}>
@@ -111,18 +75,7 @@ export default function LocalBonds() {
                   <td className="bond-project-cell">{row.projectName}</td>
                   <td>{row.statisticsItem}</td>
                   <td className="bond-num">{row.issueAmount}</td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
                   <td className="bond-num">{row.subjectRevisionTarget}</td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
-                  <td></td>
                 </tr>
               ))}
             </tbody>
@@ -159,7 +112,7 @@ export default function LocalBonds() {
 
         .bond-table {
           width: 100%;
-          min-width: 1400px;
+          min-width: 760px;
           border-collapse: collapse;
           font-size: 13px;
         }
@@ -177,14 +130,6 @@ export default function LocalBonds() {
           color: var(--text);
           font-size: 15px;
           font-weight: 400;
-          white-space: nowrap;
-        }
-
-        .bond-th-sub {
-          font-weight: 400;
-          font-size: 11px;
-          color: var(--text-muted);
-          margin-top: 2px;
           white-space: nowrap;
         }
 

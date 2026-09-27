@@ -743,7 +743,7 @@ export default function CouncilMemberRequests() {
               <button
                 key={tab.key}
                 type="button"
-                className={`tab-button${isActive ? " active" : ""}`}
+                className={`tab-button${isActive ? " active" : ""}${tab.key === "원구성 현황" ? " tab-button-detached" : ""}`}
                 style={tabStyle}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -1130,8 +1130,12 @@ export default function CouncilMemberRequests() {
 
         .tab-bar {
           display: flex;
-          gap: 8px;
-          margin-bottom: 14px;
+          gap: 10px;
+          margin-bottom: 18px;
+          padding: 10px;
+          border: 1px solid var(--border);
+          border-radius: 12px;
+          background: rgba(255, 255, 255, 0.03);
         }
 
         .tab-button {
@@ -1139,36 +1143,43 @@ export default function CouncilMemberRequests() {
           flex-direction: column;
           align-items: center;
           gap: 2px;
-          padding: 8px 18px;
+          padding: 12px 22px;
           border: 1px solid var(--border);
           border-radius: 8px;
           background: transparent;
-          color: var(--text-muted);
-          font-size: 14px;
-          font-weight: 600;
+          color: var(--text);
+          font-size: 15px;
+          font-weight: 700;
           cursor: pointer;
         }
 
         .tab-button:hover {
-          color: var(--text);
+          color: #5b9bf0;
+          border-color: rgba(91, 155, 240, 0.35);
         }
 
         .tab-button.active {
           color: #5b9bf0;
-          border-color: rgba(91, 155, 240, 0.45);
-          background: rgba(91, 155, 240, 0.12);
+          border-color: rgba(91, 155, 240, 0.6);
+          background: rgba(91, 155, 240, 0.16);
+          box-shadow: 0 0 0 1px rgba(91, 155, 240, 0.25) inset;
+        }
+
+        .tab-button-detached {
+          margin-left: auto;
         }
 
         .tab-label-row {
           display: flex;
           align-items: center;
-          font-size: 16px;
+          font-size: 18px;
+          font-weight: 800;
         }
 
         .tab-count {
           margin-left: 6px;
-          font-size: 12px;
-          opacity: 0.75;
+          font-size: 12.5px;
+          opacity: 0.85;
         }
 
         .tab-subtitle {

@@ -2324,36 +2324,40 @@ export default function Home() {
               <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
-                  <button
-                    type="button"
-                    className="no-print"
-                    onClick={() => setShowChejeon(true)}
-                    title="2027 전국체전 본예산 필수 소요 검토"
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px',
-                      padding: '5px 11px', fontSize: '13px', fontWeight: 600,
-                      color: '#1e3a5f', background: '#e3e9f1',
-                      border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer',
-                    }}
-                  >
-                    <Calculator size={14} />
-                    전국체전 소요 예산 검토(시전체)
-                  </button>
-                  <button
-                    type="button"
-                    className="no-print"
-                    onClick={() => setShowChejeonOrg(true)}
-                    title="2027 전국체전 대회준비 추진체계(1실 18부 84팀)"
-                    style={{
-                      display: 'inline-flex', alignItems: 'center', gap: '6px',
-                      padding: '5px 11px', fontSize: '13px', fontWeight: 600,
-                      color: '#1e3a5f', background: '#e3e9f1',
-                      border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer',
-                    }}
-                  >
-                    <Network size={14} />
-                    본부 조직도
-                  </button>
+                  {department === "전국체전추진단" && (
+                    <>
+                      <button
+                        type="button"
+                        className="no-print"
+                        onClick={() => setShowChejeon(true)}
+                        title="2027 전국체전 본예산 필수 소요 검토"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                          padding: '5px 11px', fontSize: '13px', fontWeight: 600,
+                          color: '#1e3a5f', background: '#e3e9f1',
+                          border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer',
+                        }}
+                      >
+                        <Calculator size={14} />
+                        전국체전 소요 예산 검토(시전체)
+                      </button>
+                      <button
+                        type="button"
+                        className="no-print"
+                        onClick={() => setShowChejeonOrg(true)}
+                        title="2027 전국체전 대회준비 추진체계(1실 18부 84팀)"
+                        style={{
+                          display: 'inline-flex', alignItems: 'center', gap: '6px',
+                          padding: '5px 11px', fontSize: '13px', fontWeight: 600,
+                          color: '#1e3a5f', background: '#e3e9f1',
+                          border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer',
+                        }}
+                      >
+                        <Network size={14} />
+                        본부 조직도
+                      </button>
+                    </>
+                  )}
                 </div>
                 <div className="no-print" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', color: '#6b7280', pointerEvents: 'none' }} />
@@ -2530,7 +2534,7 @@ export default function Home() {
                                   onChange={(event) => setMemoDraft(event.target.value)}
                                   placeholder="메모"
                                   autoFocus
-                                  style={{ flex: 1, background: 'transparent', border: '1px dashed #d7dbe0', borderRadius: '4px', padding: '4px 8px', color: '#111827', fontSize: '12px' }}
+                                  style={{ flex: 1, background: 'transparent', border: '1px dashed #d7dbe0', borderRadius: '4px', padding: '4px 8px', color: '#111827', fontSize: '13px' }}
                                 />
                                 <button
                                   type="button"
@@ -2544,7 +2548,7 @@ export default function Home() {
                               </>
                             ) : (
                               <>
-                                <span style={{ flex: 1, fontSize: '12px', color: programMemos[memoProgramId] ? '#111827' : '#6b7280', padding: '4px 8px' }}>
+                                <span style={{ flex: 1, fontSize: '13px', color: programMemos[memoProgramId] ? '#111827' : '#6b7280', padding: '4px 8px' }}>
                                   {programMemos[memoProgramId] || '메모'}
                                 </span>
                                 <button
