@@ -197,6 +197,7 @@ export default function BudgetExecution2026() {
   const [executionDetails, setExecutionDetails] = useState<ExecutionDetail[]>([]);
   const [detailSearch, setDetailSearch] = useState("");
   const [detailDepartment, setDetailDepartment] = useState("");
+  const [detailProgramFilter, setDetailProgramFilter] = useState("");
   const [detailPage, setDetailPage] = useState(1);
   const detailRowsPerPage = 20;
 
@@ -476,17 +477,24 @@ export default function BudgetExecution2026() {
     [executionDetails]
   );
 
+  // 부서를 고르면 그 부서 안의 세부사업만 보이도록 좁힌다(다른 표의 세부사업명 드롭다운과 동일한 방식).
+  const detailPrograms = useMemo(() => {
+    const scoped = detailDepartment === "" ? executionDetails : executionDetails.filter((row) => row.department === detailDepartment);
+    return Array.from(new Set(scoped.map((row) => row.detailProgram).filter(Boolean))).sort();
+  }, [executionDetails, detailDepartment]);
+
   const filteredDetails = useMemo(() => {
     const keyword = detailSearch.toLowerCase();
     return executionDetails.filter((row) => {
       const matchesDepartment = detailDepartment === "" || row.department === detailDepartment;
+      const matchesProgram = detailProgramFilter === "" || row.detailProgram === detailProgramFilter;
       const matchesSearch = keyword === "" ||
         row.detailProgram.toLowerCase().includes(keyword) ||
         row.note.toLowerCase().includes(keyword) ||
         row.vendorName.toLowerCase().includes(keyword);
-      return matchesDepartment && matchesSearch;
+      return matchesDepartment && matchesProgram && matchesSearch;
     });
-  }, [executionDetails, detailDepartment, detailSearch]);
+  }, [executionDetails, detailDepartment, detailProgramFilter, detailSearch]);
 
   const detailTotalPages = Math.max(1, Math.ceil(filteredDetails.length / detailRowsPerPage));
   const paginatedDetails = useMemo(() => {
@@ -676,7 +684,7 @@ export default function BudgetExecution2026() {
               </thead>
               <tbody>
                 {paginatedData.length > 0 && (
-                  <tr key="total" style={{ fontWeight: '700', background: 'rgba(91, 155, 240, 0.08)', borderTop: '1.5px solid rgba(91, 155, 240, 0.3)' }}>
+                  <tr key="total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
                     <td style={{ padding: '12px 8px', fontSize: '13px', color: '#5b9bf0' }}></td>
                     <td style={{ padding: '12px 8px', fontSize: '13px', color: '#5b9bf0' }}></td>
                     <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}>합계</td>
@@ -733,8 +741,15 @@ export default function BudgetExecution2026() {
                   label="부서명"
                   value={detailDepartment}
                   options={detailDepartments.map((dept) => ({ value: dept, label: dept }))}
-                  onChange={(value) => { setDetailDepartment(value); setDetailPage(1); }}
+                  onChange={(value) => { setDetailDepartment(value); setDetailProgramFilter(""); setDetailPage(1); }}
                   placeholder="부서명 선택"
+                />
+                <ExecutionFilterDropdown
+                  label="세부사업"
+                  value={detailProgramFilter}
+                  options={detailPrograms.map((prog) => ({ value: prog, label: prog }))}
+                  onChange={(value) => { setDetailProgramFilter(value); setDetailPage(1); }}
+                  placeholder="세부사업 선택"
                 />
               </div>
             </div>
@@ -754,7 +769,7 @@ export default function BudgetExecution2026() {
                   </button>
                 )}
               </div>
-              <span className="unit-note">(단위: 원)</span>
+              <span className="unit-note">(단위: 천원)</span>
             </div>
           </div>
 
@@ -788,10 +803,10 @@ export default function BudgetExecution2026() {
               </thead>
               <tbody>
                 {paginatedDetails.length > 0 && (
-                  <tr key="detail-total" style={{ fontWeight: '700', background: 'rgba(91, 155, 240, 0.08)', borderTop: '1.5px solid rgba(91, 155, 240, 0.3)' }}>
-                    <td colSpan={6} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}>합계 ({filteredDetails.length}건)</td>
+                  <tr key="detail-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
+                    <td colSpan={6} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredDetails.length}건)</td>
                     <td style={{ padding: '12px 8px' }}></td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '15px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(detailTotalAmount)}</td>
                     <td colSpan={2} style={{ padding: '12px 8px' }}></td>
                   </tr>
                 )}
@@ -799,16 +814,16 @@ export default function BudgetExecution2026() {
                   <tr><td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>등록된 집행내역이 없습니다.</td></tr>
                 ) : paginatedDetails.map((row) => (
                   <tr key={row.id} className="budget-row">
-                    <td style={{ padding: '12px 8px', fontSize: '13px' }}>{row.department}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '13px' }}>{row.division}</td>
-                    <td title={row.policyProgram} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyProgram}</td>
-                    <td title={row.unitProgram} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitProgram}</td>
-                    <td title={row.detailProgram} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.detailProgram}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '13px' }}>{row.statisticsAccount}</td>
-                    <td title={row.note} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.note}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
-                    <td style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap' }}>{row.resolutionDate}</td>
-                    <td title={row.vendorName} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.vendorName}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px' }}>{row.department}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px' }}>{row.division}</td>
+                    <td title={row.policyProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyProgram}</td>
+                    <td title={row.unitProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitProgram}</td>
+                    <td title={row.detailProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.detailProgram}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px' }}>{row.statisticsAccount}</td>
+                    <td title={row.note} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.note}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.resolutionAmount)}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.resolutionDate}</td>
+                    <td title={row.vendorName} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.vendorName}</td>
                   </tr>
                 ))}
               </tbody>
