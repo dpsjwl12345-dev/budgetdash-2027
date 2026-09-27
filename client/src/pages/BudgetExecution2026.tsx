@@ -779,8 +779,8 @@ export default function BudgetExecution2026() {
                 <col style={{ width: '110px' }} />
                 <col style={{ width: '70px' }} />
                 <col style={{ width: '130px' }} />
-                <col style={{ width: '130px' }} />
-                <col style={{ width: '160px' }} />
+                <col style={{ width: '85px' }} />
+                <col style={{ width: '205px' }} />
                 <col style={{ width: '100px' }} />
                 <col style={{ width: '220px' }} />
                 <col style={{ width: '120px' }} />
@@ -806,7 +806,7 @@ export default function BudgetExecution2026() {
                   <tr key="detail-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
                     <td colSpan={6} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredDetails.length}건)</td>
                     <td style={{ padding: '12px 8px' }}></td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '15px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(detailTotalAmount)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '15px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
                     <td colSpan={2} style={{ padding: '12px 8px' }}></td>
                   </tr>
                 )}
@@ -814,14 +814,14 @@ export default function BudgetExecution2026() {
                   <tr><td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>등록된 집행내역이 없습니다.</td></tr>
                 ) : paginatedDetails.map((row) => (
                   <tr key={row.id} className="budget-row">
-                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px' }}>{row.department}</td>
-                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px' }}>{row.division}</td>
+                    <td title={row.department} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.department}</td>
+                    <td title={row.division} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.division}</td>
                     <td title={row.policyProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyProgram}</td>
                     <td title={row.unitProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitProgram}</td>
                     <td title={row.detailProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.detailProgram}</td>
-                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px' }}>{row.statisticsAccount}</td>
+                    <td title={row.statisticsAccount} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.statisticsAccount}</td>
                     <td title={row.note} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.note}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.resolutionAmount)}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
                     <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.resolutionDate}</td>
                     <td title={row.vendorName} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.vendorName}</td>
                   </tr>
