@@ -774,56 +774,49 @@ export default function BudgetExecution2026() {
           </div>
 
           <div className="table-scroll">
-            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1173px' }}>
-              <colgroup>
-                <col style={{ width: '105px' }} />
-                <col style={{ width: '60px' }} />
-                <col style={{ width: '150px' }} />
-                <col style={{ width: '80px' }} />
-                <col style={{ width: '260px' }} />
-                <col style={{ width: '100px' }} />
-                <col style={{ width: '100px' }} />
-                <col style={{ width: '95px' }} />
-                <col style={{ width: '95px' }} />
-                <col style={{ width: '135px' }} />
-              </colgroup>
+            {/* 이 표는 칸마다 내용 길이가 하도 달라서(코드성 짧은 값 vs 긴 사업명·적요) 고정폭을
+                아무리 손봐도 어떤 칸은 늘 남고 어떤 칸은 늘 모자랐다. table-layout을 auto로 바꿔
+                각 칸이 실제 내용 길이에 맞춰 스스로 넓이를 잡게 하고, 원래 길어질 수 있는 자유
+                서술형 칸(정책사업·세부사업·적요·거래처명)에만 최대폭+말줄임을 둬서 표 전체가
+                한없이 넓어지는 것만 막는다. */}
+            <table className="budget-table" style={{ tableLayout: 'auto', width: 'auto', minWidth: '100%' }}>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>부서명</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>구분</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>정책사업</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>단위사업</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>적요</th>
-                  <th style={{ textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>결의금액</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>결의요청일</th>
-                  <th style={{ textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>거래처명</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>부서명</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>구분</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>정책사업</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>단위사업</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>세부사업</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>통계목</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>적요</th>
+                  <th style={{ textAlign: 'right', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>결의금액</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>결의요청일</th>
+                  <th style={{ textAlign: 'left', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>거래처명</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedDetails.length > 0 && (
                   <tr key="detail-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
-                    <td colSpan={6} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredDetails.length}건)</td>
-                    <td style={{ padding: '12px 8px' }}></td>
-                    <td style={{ textAlign: 'right', padding: '12px 4px', fontSize: '12px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
-                    <td colSpan={2} style={{ padding: '12px 8px' }}></td>
+                    <td colSpan={6} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredDetails.length}건)</td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(detailTotalAmount)}</td>
+                    <td colSpan={2} style={{ padding: '12px 10px' }}></td>
                   </tr>
                 )}
                 {paginatedDetails.length === 0 ? (
                   <tr><td colSpan={10} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>등록된 집행내역이 없습니다.</td></tr>
                 ) : paginatedDetails.map((row) => (
                   <tr key={row.id} className="budget-row">
-                    <td title={row.department} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.department}</td>
-                    <td title={row.division} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.division}</td>
-                    <td title={row.policyProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyProgram}</td>
-                    <td title={row.unitProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitProgram}</td>
-                    <td title={row.detailProgram} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.detailProgram}</td>
-                    <td title={row.statisticsAccount} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.statisticsAccount}</td>
-                    <td title={row.note} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.note}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', fontVariantNumeric: 'tabular-nums' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
-                    <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.resolutionDate}</td>
-                    <td title={row.vendorName} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.vendorName}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.department}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.division}</td>
+                    <td title={row.policyProgram} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '220px' }}>{row.policyProgram}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.unitProgram}</td>
+                    <td title={row.detailProgram} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px' }}>{row.detailProgram}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.statisticsAccount}</td>
+                    <td title={row.note} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '280px' }}>{row.note}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.resolutionDate}</td>
+                    <td title={row.vendorName} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '160px' }}>{row.vendorName}</td>
                   </tr>
                 ))}
               </tbody>
