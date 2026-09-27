@@ -88,6 +88,11 @@ export default function BudgetExplainer() {
   // 순서 저장 요청이 서로 앞지르지 않도록 누른 차례대로 이어 보낸다.
   const orderSaveRef = useRef<Promise<void>>(Promise.resolve());
 
+  // 2026년 예산서(세입/세출) - 부서마다 따로 올린다. 기관 설명자료와 완전히 같은
+  // department+institution 저장 방식을 그대로 쓰되, 이 두 이름은 자유 텍스트 목록이
+  // 아니라 항상 고정으로 떠 있는 바로가기다.
+  const BUDGET_BOOK_ITEMS = ["세입예산서", "세출예산서"] as const;
+
   // "공공기관 예산 설명자료" 섹션 제목. 부서와 무관한 문구라 localStorage에만 저장한다.
   const INSTITUTION_SECTION_LABEL_STORAGE_KEY = "budgetExplainerInstitutionSectionLabel";
   const [institutionSectionLabel, setInstitutionSectionLabel] = useState("공공기관 예산 설명자료");
@@ -154,7 +159,8 @@ export default function BudgetExplainer() {
       );
       const { data, institutions: institutionList } = await response.json();
       setTreeData(data || []);
-      setInstitutions(institutionList || []);
+      // 세입/세출예산서는 이 목록이 아니라 위쪽 고정 바로가기로 따로 보여준다.
+      setInstitutions((institutionList || []).filter((name: string) => !(BUDGET_BOOK_ITEMS as readonly string[]).includes(name)));
       if (data && data.length > 0) {
         const rootId = `0-${data[0].title}`;
         const match = requestedItem
@@ -380,7 +386,7 @@ export default function BudgetExplainer() {
       try {
         const response = await fetch(`/api/budget-explainer/data?department=${encodeURIComponent(department)}`);
         const { institutions: latest } = await response.json();
-        if (Array.isArray(latest)) setInstitutions(latest);
+        if (Array.isArray(latest)) setInstitutions(latest.filter((name: string) => !(BUDGET_BOOK_ITEMS as readonly string[]).includes(name)));
       } catch {
         // 되돌리기까지 실패하면 다음 새로고침 때 맞춰진다.
       }
@@ -825,6 +831,45 @@ export default function BudgetExplainer() {
                   <X size={16} />
                 </button>
               )}
+              <div
+                style={{
+                  padding: "0 12px 8px",
+                  fontSize: "13px",
+                  fontWeight: 700,
+                  color: "var(--text-muted)",
+                  letterSpacing: "0.02em",
+                }}
+              >
+                2026년 예산서
+              </div>
+              <div style={{ display: "flex", flexDirection: "column", gap: "4px", marginBottom: "8px" }}>
+                {BUDGET_BOOK_ITEMS.map((item) => (
+                  <button
+                    key={item}
+                    type="button"
+                    onClick={() => {
+                      setSelectedPath("");
+                      setSelectedInstitution(item);
+                    }}
+                    style={{
+                      textAlign: "left",
+                      padding: "8px 12px",
+                      height: "36px",
+                      display: "flex",
+                      alignItems: "center",
+                      fontSize: "14px",
+                      fontWeight: selectedInstitution === item ? 700 : 500,
+                      color: selectedInstitution === item ? "#fff" : "var(--text)",
+                      backgroundColor: selectedInstitution === item ? "rgba(91, 155, 240, 0.25)" : "transparent",
+                      border: "1px solid var(--line)",
+                      borderRadius: "6px",
+                      cursor: "pointer",
+                    }}
+                  >
+                    {item}
+                  </button>
+                ))}
+              </div>
               {loading ? (
                 <div style={{ padding: "16px", color: "var(--text-muted)" }}>
                   로딩 중...
