@@ -792,7 +792,18 @@ export default function Home() {
     const saved = localStorage.getItem('budgetRows');
     return saved ? JSON.parse(saved) : [];
   });
-  const [budgetHierarchyRows, setBudgetHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
+  // 세출예산내역서 / 세입예산내역서 - 같은 화면·같은 업로드·편집 구조를 그대로 쓰되
+  // 데이터만 갈라 보관한다. 서버에는 새 테이블을 만들지 않고, 세입 쪽 부서 블록의
+  // dept 행 label 앞에 "세입::" 접두어를 붙여 같은 budget_hierarchy_rows 테이블에
+  // 같이 저장한다(요청사항 반영 화면의 "부서::세부사업" 키 관행과 동일한 방식).
+  const REVENUE_DEPT_PREFIX = "세입::";
+  const [statementView, setStatementView] = useState<"expenditure" | "revenue">("expenditure");
+  const [expenditureHierarchyRows, setExpenditureHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
+  const [revenueHierarchyRows, setRevenueHierarchyRows] = useState<BudgetHierarchyRow[]>([]);
+  // 아래부터는 전부 이 이름으로 읽고 쓴다 - statementView가 바뀌면 가리키는 실제
+  // 저장소만 바뀌고, 필터링·검색·업로드·편집 로직은 손대지 않아도 그대로 동작한다.
+  const budgetHierarchyRows = statementView === "expenditure" ? expenditureHierarchyRows : revenueHierarchyRows;
+  const setBudgetHierarchyRows = statementView === "expenditure" ? setExpenditureHierarchyRows : setRevenueHierarchyRows;
   const [programMemos, setProgramMemos] = useState<Record<string, string>>(() => {
     const saved = localStorage.getItem('budgetProgramMemos');
     return saved ? JSON.parse(saved) : {};
@@ -1049,7 +1060,21 @@ export default function Home() {
       if (response.ok) {
         const { data } = await response.json();
         if (data && Array.isArray(data) && data.length > 0) {
-          setBudgetHierarchyRows(data);
+          // 부서 블록(level:'dept' 행으로 시작) 단위로 세입/세출을 가른다 - "세입::" 접두어가
+          // 붙은 블록은 세입, 나머지는 전부 세출이다.
+          const expenditure: BudgetHierarchyRow[] = [];
+          const revenue: BudgetHierarchyRow[] = [];
+          let isRevenueBlock = false;
+          for (const row of data as BudgetHierarchyRow[]) {
+            if (row.level === 'dept') isRevenueBlock = row.label.startsWith(REVENUE_DEPT_PREFIX);
+            if (isRevenueBlock) {
+              revenue.push(row.level === 'dept' ? { ...row, label: row.label.slice(REVENUE_DEPT_PREFIX.length) } : row);
+            } else {
+              expenditure.push(row);
+            }
+          }
+          setExpenditureHierarchyRows(expenditure);
+          setRevenueHierarchyRows(revenue);
         }
       }
     } catch (error) {
@@ -1617,6 +1642,15 @@ export default function Home() {
     const secondRowLabel = (cellRows[1]?.[0] || "").replace(/\s/g, "");
     const startIdx = secondRowLabel === "총계" ? 2 : 1;
 
+    // "비교증감" 열 위치로 뒤따르는 통계목코드/산출식 열을 찾는다. 세출예산내역서는 이 열이
+    // 7번인데, 세입예산내역서는 그 앞에 빈 칸이 하나 더 있어 8번에 온다 - 위치를 고정하는
+    // 대신 헤더 텍스트에서 찾아 두 서식 모두 대응한다(못 찾으면 세출 기준인 7번으로 둔다).
+    const headerRow = (cellRows[0] || []).map((cell) => (cell ?? "").trim());
+    const diffColIdx = headerRow.findIndex((cell) => cell.includes("증감"));
+    const DIFF_COL = diffColIdx !== -1 ? diffColIdx : 7;
+    const CODE_COL = DIFF_COL + 1;
+    const FORMULA_COL = DIFF_COL + 2;
+
     for (let idx = startIdx; idx < cellRows.length; idx++) {
       const cleanCells = (cellRows[idx] || []).map((cell) => (cell ?? "").replace(/^"+|"+$/g, "").trim());
       if (!cleanCells.some((cell) => cell)) continue;
@@ -1624,9 +1658,9 @@ export default function Home() {
       const hierIndent = [0, 1, 2, 3, 4].findIndex((i) => cleanCells[i]);
       const budget = parseNumber(cleanCells[5]);
       const previous = parseNumber(cleanCells[6]);
-      const difference = parseNumber(cleanCells[7]);
-      const col8 = cleanCells[8] || "";
-      const col9 = cleanCells[9] || "";
+      const difference = parseNumber(cleanCells[DIFF_COL]);
+      const col8 = cleanCells[CODE_COL] || "";
+      const col9 = cleanCells[FORMULA_COL] || "";
       const col12 = cleanCells[12] || "";
 
       let level: HierarchyLevel;
@@ -1761,8 +1795,12 @@ export default function Home() {
   };
 
   const saveHierarchyToServer = async (rows: BudgetHierarchyRow[]) => {
-    localStorage.setItem('budgetHierarchyRows', JSON.stringify(rows));
-    const blocks = groupRowsByDepartment(rows);
+    localStorage.setItem(statementView === 'revenue' ? 'revenueBudgetHierarchyRows' : 'budgetHierarchyRows', JSON.stringify(rows));
+    // 세입일 때만, 저장 나갈 때 dept 행 label 앞에 접두어를 붙인다(화면에 보이는 rows/state는 그대로 둔다).
+    const rowsForSave = statementView === 'revenue'
+      ? rows.map((row) => (row.level === 'dept' ? { ...row, label: REVENUE_DEPT_PREFIX + row.label } : row))
+      : rows;
+    const blocks = groupRowsByDepartment(rowsForSave);
     if (blocks.length === 0) return true;
     try {
       const results = await Promise.all(blocks.map(async (block) => {
@@ -2323,7 +2361,23 @@ export default function Home() {
             <div className="table-heading" style={{ minHeight: 0, padding: '8px 19px 8px 30px' }}>
               <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <div style={{ fontSize: '20px', color: '#1e3a5f', fontWeight: '600' }}>세출예산내역서</div>
+                  <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
+                    {([["revenue", "세입예산내역서"], ["expenditure", "세출예산내역서"]] as const).map(([view, label]) => (
+                      <button
+                        key={view}
+                        type="button"
+                        onClick={() => setStatementView(view)}
+                        style={{
+                          fontSize: '20px', fontWeight: 600, padding: '2px 10px', borderRadius: '6px',
+                          border: 'none', cursor: 'pointer',
+                          background: statementView === view ? '#1e3a5f' : 'transparent',
+                          color: statementView === view ? '#fff' : '#1e3a5f',
+                        }}
+                      >
+                        {label}
+                      </button>
+                    ))}
+                  </div>
                   {department === "전국체전추진단" && (
                     <>
                       <button
