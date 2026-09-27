@@ -83,7 +83,13 @@ export default function CitywideBudgetOverview() {
   return (
     <div className="citywide-overview">
       <div className="citywide-overview__head">
-        <h1>2027년 화성시<br />세입세출 요구현황</h1>
+        <div className="citywide-overview__title-row">
+          <h1>2027년 화성시<br />세입세출 요구현황</h1>
+          <div className="cw-hero-card__head">
+            <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
+            <span className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
+          </div>
+        </div>
         <img className="citywide-overview__slogan" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
       </div>
 
@@ -93,10 +99,6 @@ export default function CitywideBudgetOverview() {
         const special = data.totalsByAccount.find((r) => r.name === "특별회계")!;
         return (
           <>
-            <div className="cw-hero-card__head">
-              <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
-              <span className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
-            </div>
             <div className="cw-hero-section">
               <div className="cw-hero-box">
                 <span className="cw-hero-label">세입요구(예산규모)</span>

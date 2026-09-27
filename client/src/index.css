@@ -478,7 +478,8 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* "부서예산요구" 초기 화면(부서 미선택)에 뜨는 시 전체 세입세출 요구 현황 대시보드 */
 .citywide-overview { margin-top: 8px; }
 .citywide-overview__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.citywide-overview__slogan { flex: none; height: 48px; width: auto; }
+.citywide-overview__title-row { display: flex; align-items: flex-end; gap: 16px; }
+.citywide-overview__slogan { flex: none; height: 85px; width: auto; }
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
    서로 무관해 보이는 박스 3개 대신 총계를 히어로 숫자로 세우고 그 총계가 어떤 회계로
    구성되는지 스택 막대로 곧바로 이어 보여준다. */
@@ -486,7 +487,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 /* 세입-세출 박스 옆 빈 공간에 놓는 개별 박스(세출요구액/기금조성/조정액). 서로 합쳐진
    하나의 카드가 아니라 각각 독립된 박스라 hero-box와 같은 자체 테두리를 갖는다. */
-.cw-hero-equals { display: flex; align-items: center; color: #6f8195; font-size: 26px; font-weight: 700; flex: none; }
+.cw-hero-equals { display: flex; align-items: center; color: #6f8195; font-size: 36px; font-weight: 700; flex: none; }
 .cw-flow-box { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 14px 22px; }
 .cw-flow-box--center { justify-content: center; }
 
@@ -499,34 +500,36 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-income-title { color: #a8bcce; font-size: 28px; font-weight: 600; }
 .cw-income-scope { display: inline-flex; align-items: center; padding: 3px 10px; border-radius: 999px; background: rgba(217, 173, 82, 0.18); color: #e8c47e; font-size: 12px; font-weight: 700; }
 .cw-income-total { color: #edf5fe; font-size: 28px; font-weight: 700; letter-spacing: -0.02em; }
-.cw-income-total-diff { margin-left: 4px; color: #4ade80; font-size: 16px; font-weight: 400; }
+.cw-income-total-diff { margin-left: 4px; color: #a7d2ff; font-size: 16px; font-weight: 400; }
 .cw-income-list { margin-top: 8px; padding-top: 4px; border-top: 1px solid rgba(164, 192, 221, 0.14); }
 .cw-income-row { display: flex; align-items: center; gap: 12px; padding: 5px 0; }
 .cw-income-row--group-end { border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
 .cw-income-row--group-end:last-child { border-bottom: none; }
 .cw-income-badge { flex: none; width: 32px; height: 32px; border-radius: 50%; display: flex; align-items: center; justify-content: center; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 12px; font-weight: 400; }
 .cw-income-name-text { flex: 1; color: #edf5fe; font-size: 15px; font-weight: 600; }
-.cw-income-note { margin-left: 8px; color: #6f8195; font-size: 12px; font-weight: 400; }
+.cw-income-section .cw-income-card:first-child .cw-income-name-text { font-weight: 400; }
+.cw-income-section .cw-income-card:last-child .cw-income-name-text { font-weight: 500; }
+.cw-income-note { margin-left: 8px; color: #6f8195; font-size: 15px; font-weight: 400; }
 .cw-income-figures { flex: none; display: flex; align-items: baseline; gap: 8px; }
-.cw-income-amount { color: #edf5fe; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
-.cw-income-diff { font-size: 16px; font-weight: 400; font-variant-numeric: tabular-nums; }
-.cw-income-diff--up { color: #4ade80; }
+.cw-income-amount { display: inline-block; min-width: 92px; text-align: right; color: #edf5fe; font-size: 19px; font-weight: 700; font-variant-numeric: tabular-nums; }
+.cw-income-diff { display: inline-block; min-width: 84px; text-align: right; font-size: 16px; font-weight: 400; font-variant-numeric: tabular-nums; }
+.cw-income-diff--up { color: #a7d2ff; }
 .cw-income-diff--down { color: #f87171; }
 .cw-income-diff--flat { color: #8fa1b3; }
 .cw-footnote-bar { max-width: 860px; margin-top: 8px; padding: 10px 20px; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); color: #cbd8e6; font-size: 16px; font-weight: 500; line-height: 1.6; }
 .cw-flow-box .cw-hero-value { font-size: 30px; }
 /* 기준일/회계 구성 문구는 박스를 둘러싼 별도 카드가 아니라, 박스 자체의 우측 상단에
    절대 위치로 얹는다 - 겹박스(이중 테두리)를 만들지 않기 위해서다. */
-.cw-hero-card__head { display: flex; flex-direction: column; align-items: flex-end; gap: 2px; }
+.cw-hero-card__head { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; margin-bottom: 6px; }
 .cw-hero-asof { color: #6f8195; font-size: 12px; font-weight: 500; }
 .cw-hero-box { flex: 1; display: flex; flex-direction: column; justify-content: flex-start; align-items: center; gap: 6px; text-align: center; border: 1px solid rgba(164, 192, 221, 0.16); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.08); padding: 14px 22px; }
 .cw-hero-label { color: #a8bcce; font-size: 22px; font-weight: 600; }
-.cw-hero-value { color: #edf5fe; font-size: 42px; font-weight: 700; letter-spacing: -0.02em; }
+.cw-hero-value { color: #edf5fe; font-size: 30px; font-weight: 700; letter-spacing: -0.02em; }
 .cw-hero-unit { color: #8fa1b3; font-size: 16px; font-weight: 500; margin-left: 5px; }
 .cw-hero-split-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
 .cw-hero-split { display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 999px; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 13px; font-weight: 400; white-space: nowrap; }
 .cw-hero-split--general { background: rgba(217, 173, 82, 0.18); color: #e8c47e; }
-.cw-structure-note { color: #6f8195; font-size: 14px; text-align: right; }
+.cw-structure-note { color: #6f8195; font-size: 14px; text-align: left; }
 
 @media (max-width: 960px) {
   .cw-hero-section { flex-direction: column; }
