@@ -5,10 +5,10 @@ import { DEPARTMENTS } from "@/lib/departments";
 type RequestStatus = "검토중" | "반영" | "미반영";
 // 요구가 들어온 경로. 탭을 가르는 기준이며, 소속 정당명과는 별개다.
 // "시장"·"부시장"은 원래 별도 메뉴(요구사항 반영)였는데, 같은 화면으로 합쳐졌다.
-type RequestType = "당정협의회" | "정책간담회" | "시의원" | "특별조정교부금" | "시장" | "부시장";
+type RequestType = "당정협의회" | "정책간담회" | "시의원" | "특별조정교부금" | "시장" | "부시장" | "민선9기공약";
 
-// 시장·부시장 탭은 선거구/소속정당명/위원회 칸이 없다(시의원이 아니므로).
-const isMayorType = (type: RequestType) => type === "시장" || type === "부시장";
+// 시장·부시장·민선9기공약 탭은 선거구/소속정당명/위원회 칸이 없다(시의원이 아니므로).
+const isMayorType = (type: RequestType) => type === "시장" || type === "부시장" || type === "민선9기공약";
 
 type CouncilRequest = {
   id: string;
@@ -26,7 +26,7 @@ type CouncilRequest = {
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
-const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원", "특별조정교부금", "시장", "부시장"];
+const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회", "시의원", "특별조정교부금", "시장", "부시장", "민선9기공약"];
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
@@ -64,7 +64,8 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
 type MainTabKey = RequestType | "원구성 현황";
 
 const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?: string; color?: string }[] = [
-  { key: "시장", label: "시장님 요구사항", emptyText: "등록된 시장님 요구사항이 없습니다", color: "#b98cf0" },
+  { key: "시장", label: "시장님 지시사항", emptyText: "등록된 시장님 지시사항이 없습니다", color: "#b98cf0" },
+  { key: "민선9기공약", label: "민선9기 공약사항", emptyText: "등록된 민선9기 공약사항이 없습니다", color: "#f2905e" },
   { key: "부시장", label: "부시장님 요구사항", emptyText: "등록된 부시장님 요구사항이 없습니다", color: "#52c4d9" },
   { key: "당정협의회", label: "당정협의회", subtitle: "정당 요구사업\n정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
   { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업\n소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
