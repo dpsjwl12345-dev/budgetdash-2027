@@ -858,10 +858,9 @@ export default function Home() {
     const saved = localStorage.getItem('staffData');
     return saved ? JSON.parse(saved) : {};
   });
-  // 정현원 옆 "부서 메모" — "부서별 주요 쟁점사항" 화면(department_issues 테이블)과 완전히 같은
-  // 데이터를 읽고 쓴다. 별도 저장소를 새로 만들면 같은 내용이 화면마다 따로 놀게 된다.
+  // 정현원 옆 "부서 메모" — "부서별 주요 쟁점사항"(department_issues)과는 별개의 저장소(department_memos).
   const [showDeptMemoModal, setShowDeptMemoModal] = useState(false);
-  const [deptIssues, setDeptIssues] = useState<Record<string, { memos: { id?: string; text: string; date: string }[] }>>({});
+  const [deptMemos, setDeptMemos] = useState<Record<string, { memos: { id?: string; text: string; date: string }[] }>>({});
   const [deptMemoDraft, setDeptMemoDraft] = useState("");
   const [toast, setToast] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
@@ -973,7 +972,7 @@ export default function Home() {
     loadExecutionDataFromServer();
     loadCsvData();
     loadStaffDataFromServer();
-    loadDeptIssuesFromServer();
+    loadDeptMemosFromServer();
   }, []);
 
   // 부서가 실제로 영향을 주는 건 메모와 부기명 강조 표시뿐이다.
@@ -996,13 +995,13 @@ export default function Home() {
     }
   };
 
-  const loadDeptIssuesFromServer = async () => {
+  const loadDeptMemosFromServer = async () => {
     try {
-      const response = await fetch('/api/cloud-sync?type=issues');
+      const response = await fetch('/api/cloud-sync?type=dept-memos');
       if (!response.ok) return;
       const { data } = await response.json();
       if (data && typeof data === 'object' && !Array.isArray(data)) {
-        setDeptIssues(data);
+        setDeptMemos(data);
       }
     } catch (error) {
       console.log('부서 메모 클라우드 로드 실패:', error);
@@ -1012,17 +1011,17 @@ export default function Home() {
   const saveDeptMemo = async () => {
     if (!deptMemoDraft.trim()) return;
     const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
-    const existing = deptIssues[department] || { memos: [] };
+    const existing = deptMemos[department] || { memos: [] };
     const updated = {
-      ...deptIssues,
+      ...deptMemos,
       [department]: {
         memos: [...existing.memos, { id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`, text: deptMemoDraft.trim(), date: today }],
       },
     };
-    setDeptIssues(updated);
+    setDeptMemos(updated);
     setDeptMemoDraft("");
     try {
-      await fetch('/api/cloud-sync?type=issues', {
+      await fetch('/api/cloud-sync?type=dept-memos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: updated }),
@@ -1034,14 +1033,14 @@ export default function Home() {
   };
 
   const deleteDeptMemo = async (memoIndex: number) => {
-    const existing = deptIssues[department] || { memos: [] };
+    const existing = deptMemos[department] || { memos: [] };
     const updated = {
-      ...deptIssues,
+      ...deptMemos,
       [department]: { memos: existing.memos.filter((_, index) => index !== memoIndex) },
     };
-    setDeptIssues(updated);
+    setDeptMemos(updated);
     try {
-      await fetch('/api/cloud-sync?type=issues', {
+      await fetch('/api/cloud-sync?type=dept-memos', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ data: updated }),
@@ -2396,7 +2395,7 @@ export default function Home() {
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
               <div className="select-field"><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); setHierarchyProgramFilter([]); setHierarchyItemFilter([]); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
-              <div className="select-field"><span>부서 메모</span><button className="staff-summary" onClick={() => setShowDeptMemoModal(true)}><StickyNote size={17} /><span>{department}</span>{(deptIssues[department]?.memos.length ?? 0) > 0 && <span className="dept-memo-count">{deptIssues[department]?.memos.length}</span>}</button></div>
+              <div className="select-field"><span>부서 메모</span><button className="staff-summary" onClick={() => setShowDeptMemoModal(true)}><StickyNote size={17} /><span>{department}</span>{(deptMemos[department]?.memos.length ?? 0) > 0 && <span className="dept-memo-count">{deptMemos[department]?.memos.length}</span>}</button></div>
             </div>
           </section>
 
@@ -2985,8 +2984,8 @@ export default function Home() {
         <div className="modal-head"><div><span>DEPARTMENT MEMO</span><h2 id="dept-memo-modal-title">{department} 주요 내용 메모</h2></div><button className="close-button" onClick={() => setShowDeptMemoModal(false)} aria-label="닫기"><X size={19} /></button></div>
         <div className="dept-memo-body">
           <div className="dept-memo-list">
-            {(deptIssues[department]?.memos.length ?? 0) > 0 ? [...deptIssues[department].memos].reverse().map((memo, reverseIndex) => {
-              const memoIndex = deptIssues[department].memos.length - 1 - reverseIndex;
+            {(deptMemos[department]?.memos.length ?? 0) > 0 ? [...deptMemos[department].memos].reverse().map((memo, reverseIndex) => {
+              const memoIndex = deptMemos[department].memos.length - 1 - reverseIndex;
               return (
                 <div key={memo.id || `${memo.date}-${memoIndex}`} className="dept-memo-item">
                   <div className="dept-memo-item-head"><span>{memo.date}</span><button type="button" onClick={() => deleteDeptMemo(memoIndex)} aria-label="메모 삭제">삭제</button></div>

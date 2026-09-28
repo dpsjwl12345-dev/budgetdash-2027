@@ -242,6 +242,57 @@ async function saveIssues(req: any, res: any) {
   res.status(200).json({ success: true, message: "저장 완료" });
 }
 
+// 정현원 옆 "부서 메모" - "부서별 주요 쟁점사항"(department_issues)과는 별개의 저장소.
+// 데이터 구조만 같게 재사용하되(문자열 JSON, department별 memos 배열) 테이블은 department_memos로 분리한다.
+async function loadDeptMemos(res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const { data, error } = await supabase.from('department_memos').select('*');
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const memos: Record<string, any> = {};
+  (data || []).forEach((row: any) => {
+    try {
+      memos[row.department] = row.memos ? JSON.parse(row.memos) : { memos: [] };
+    } catch {
+      memos[row.department] = { memos: [] };
+    }
+  });
+  res.status(200).json({ data: memos });
+}
+
+async function saveDeptMemos(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+  const memosData = req.body?.data && typeof req.body.data === 'object' ? req.body.data : {};
+  const rows = Object.entries(memosData).map(([department, value]) => ({
+    department,
+    memos: JSON.stringify(value),
+    updated_at: new Date().toISOString(),
+  }));
+
+  if (rows.length === 0) {
+    res.status(200).json({ success: true, message: "저장할 메모가 없습니다." });
+    return;
+  }
+
+  const { error: upsertError } = await supabase.from('department_memos').upsert(rows, { onConflict: 'department' });
+  if (upsertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    return;
+  }
+
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
 async function loadCouncilRequests(res: any) {
   const supabase = getClient();
   if (!supabase) {
@@ -638,6 +689,7 @@ export default async function handler(req: any, res: any) {
       if (type === 'memos') return await loadMemos(req, res);
       if (type === 'marks') return await loadRowMarks(req, res);
       if (type === 'issues') return await loadIssues(res);
+      if (type === 'dept-memos') return await loadDeptMemos(res);
       if (type === 'council-requests') return await loadCouncilRequests(res);
       if (type === 'mayor-requests') return await loadMayorRequests(res);
       if (type === 'execution-details') return await loadExecutionDetails(req, res);
@@ -649,6 +701,7 @@ export default async function handler(req: any, res: any) {
       if (type === 'memos') return await saveMemos(req, res);
       if (type === 'marks') return await saveRowMarks(req, res);
       if (type === 'issues') return await saveIssues(req, res);
+      if (type === 'dept-memos') return await saveDeptMemos(req, res);
       if (type === 'council-requests') {
         if (req.body?.action === 'delete') return await deleteCouncilRequest(req, res);
         return await saveCouncilRequest(req, res);
