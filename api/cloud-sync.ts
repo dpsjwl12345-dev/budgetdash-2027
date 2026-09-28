@@ -531,11 +531,15 @@ async function saveBudget2026(req: any, res: any) {
     res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
     return;
   }
+  // 사용자가 콤마(예: "61,509")를 섞어 입력해도 클라이언트에서 Number() 변환이 깨지지
+  // 않도록, 저장 시점에 숫자·소수점·부호만 남기고 정리한다.
+  const cleanAmount = (value: any): string => (typeof value === 'string' ? value.replace(/[^0-9.-]/g, '') : '');
+
   const budget2026 = req.body?.data && typeof req.body.data === 'object' ? req.body.data : {};
   const rows = Object.entries(budget2026).map(([department, value]: [string, any]) => ({
     department,
-    base_amount: value?.base2026 ?? '',
-    supp3_amount: value?.supp3 ?? '',
+    base_amount: cleanAmount(value?.base2026),
+    supp3_amount: cleanAmount(value?.supp3),
     updated_at: new Date().toISOString(),
   }));
 

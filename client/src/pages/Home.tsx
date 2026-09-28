@@ -238,6 +238,13 @@ function formatMillion(value: number) {
   return new Intl.NumberFormat("ko-KR").format(Math.round(value / 1000));
 }
 
+// 사용자가 콤마(예: "61,509")를 섞어 입력해도 깨지지 않도록 숫자만 남기고 변환한다.
+function parseBudgetInput(value: string): number {
+  const cleaned = value.replace(/[^0-9.-]/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : 0;
+}
+
 // row.program은 엑셀 업로드 시 "단위사업명\n세부사업명"으로 합쳐져 저장되므로,
 // 필터 드롭다운에는 세부사업명(마지막 줄)만 보여준다.
 function getDetailName(program: string) {
@@ -2470,13 +2477,13 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(Number(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(parseBudgetInput(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026년 예산액 (3추 기준)</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(Number(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(parseBudgetInput(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
             </article>
           </section>
 
