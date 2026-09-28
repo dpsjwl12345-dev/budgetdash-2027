@@ -70,7 +70,7 @@ const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?
   { key: "당정협의회", label: "당정협의회", subtitle: "정당 요구사업\n정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
   { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업\n소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
   { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
-  { key: "특별조정교부금", label: "특별조정교부금", subtitle: "경기도 관할 시의 지역개발사업 등\n시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
+  { key: "특별조정교부금", label: "특별조정교부금", subtitle: "도 관할 시의 지역개발사업 등\n시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
   { key: "원구성 현황", label: "원구성 현황" },
 ];
 
