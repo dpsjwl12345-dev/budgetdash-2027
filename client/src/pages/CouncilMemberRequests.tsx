@@ -85,12 +85,13 @@ function hexToRgba(hex: string, alpha: number): string {
   return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }
 
-type CompositionTabKey = "위원회별 의원 현황" | "상임위원회별 소관부서 현황" | "지역구별 의원 현황" | "국회의원 현황";
+type CompositionTabKey = "위원회별 의원 현황" | "상임위원회별 소관부서 현황" | "지역구별 시의원현황" | "지역구별 도의원현황" | "국회의원 현황";
 
 const COMPOSITION_TABS: { key: CompositionTabKey; label: string }[] = [
   { key: "위원회별 의원 현황", label: "위원회별 의원 현황" },
   { key: "상임위원회별 소관부서 현황", label: "상임위원회별 소관부서 현황" },
-  { key: "지역구별 의원 현황", label: "지역구별 의원 현황" },
+  { key: "지역구별 시의원현황", label: "지역구별 시의원현황" },
+  { key: "지역구별 도의원현황", label: "지역구별 도의원현황" },
   { key: "국회의원 현황", label: "국회의원 현황" },
 ];
 
@@ -339,15 +340,8 @@ const DISTRICT_MEMBERS: DistrictMember[] = [
   { district: "비례대표", area: "", name: "정명희", committee: "기획행정", party: "국민의힘" },
 ];
 
-// 시의원 선거구 표기(가선거구 등)에 병기할 숫자 선거구 번호.
-const DISTRICT_ORDINAL_TO_NUMBER: Record<string, number> = {
-  가: 1, 나: 2, 다: 3, 라: 4, 마: 5, 바: 6, 사: 7, 아: 8, 자: 9,
-};
-
 function districtDisplayLabel(district: string): string {
-  const ordinal = district.replace("선거구", "");
-  const number = DISTRICT_ORDINAL_TO_NUMBER[ordinal];
-  return number === undefined ? district : `${district} / ${number}선거구`;
+  return district;
 }
 
 // 시의원 선거구별 관할 도의원과 소속 정당(경기도의회 홈페이지 현역의원 명단 기준,
@@ -1042,79 +1036,77 @@ export default function CouncilMemberRequests() {
               </div>
             )}
 
-            {compositionTab === "지역구별 의원 현황" && (
-              <>
-                <div className="cc-subsection-title">시의원 현황</div>
-                <div className="cc-table-wrap">
-                  <table className="cc-table cc-district-table">
-                    <thead>
-                      <tr>
-                        <th>선거구</th>
-                        <th>시의원</th>
-                        <th>위원회</th>
-                        <th>정당명</th>
+            {compositionTab === "지역구별 시의원현황" && (
+              <div className="cc-table-wrap">
+                <table className="cc-table cc-district-table">
+                  <thead>
+                    <tr>
+                      <th>선거구</th>
+                      <th>시의원</th>
+                      <th>위원회</th>
+                      <th>정당명</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {DISTRICT_MEMBERS.map((row, i) => (
+                      <tr key={i}>
+                        {districtRowSpans[i] && (
+                          <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
+                            <div className="cc-district-name">{districtDisplayLabel(row.district)}</div>
+                            {districtAreaByGroup[row.district] && (
+                              <div className="cc-district-area">{districtAreaByGroup[row.district]}</div>
+                            )}
+                          </td>
+                        )}
+                        <td className="cc-row-text">{row.name}</td>
+                        <td className="cc-row-text">{row.committee}</td>
+                        <td>
+                          <span className="cc-party-badge cc-row-text" style={{ color: partyColor(row.party) }}>
+                            {row.party}
+                          </span>
+                        </td>
                       </tr>
-                    </thead>
-                    <tbody>
-                      {DISTRICT_MEMBERS.map((row, i) => (
-                        <tr key={i}>
-                          {districtRowSpans[i] && (
-                            <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
-                              <div className="cc-district-name">{districtDisplayLabel(row.district)}</div>
-                              {districtAreaByGroup[row.district] && (
-                                <div className="cc-district-area">{districtAreaByGroup[row.district]}</div>
-                              )}
-                            </td>
-                          )}
-                          <td className={districtRowSpans[i] ? "cc-bold" : undefined}>{row.name}</td>
-                          <td className={districtRowSpans[i] ? undefined : "cc-bold"}>{row.committee}</td>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            )}
+
+            {compositionTab === "지역구별 도의원현황" && (
+              <div className="cc-table-wrap">
+                <table className="cc-table cc-district-table">
+                  <thead>
+                    <tr>
+                      <th>선거구</th>
+                      <th>도의원</th>
+                      <th>정당명</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => {
+                      const provincial = PROVINCIAL_MEMBER_BY_DISTRICT[district];
+                      return (
+                        <tr key={district}>
+                          <td className="cc-district-cell">
+                            <div className="cc-district-name">{districtDisplayLabel(district)}</div>
+                            {districtAreaByGroup[district] && (
+                              <div className="cc-district-area">{districtAreaByGroup[district]}</div>
+                            )}
+                          </td>
+                          <td className="cc-row-text">{provincial?.name || "-"}</td>
                           <td>
-                            <span className="cc-party-badge" style={{ color: partyColor(row.party) }}>
-                              {row.party}
-                            </span>
+                            {provincial && (
+                              <span className="cc-party-badge cc-row-text" style={{ color: partyColor(provincial.party) }}>
+                                {provincial.party}
+                              </span>
+                            )}
                           </td>
                         </tr>
-                      ))}
-                    </tbody>
-                  </table>
-                </div>
-
-                <div className="cc-subsection-title cc-subsection-title-spaced">도의원 현황</div>
-                <div className="cc-table-wrap">
-                  <table className="cc-table cc-district-table">
-                    <thead>
-                      <tr>
-                        <th>선거구</th>
-                        <th>도의원</th>
-                        <th>정당명</th>
-                      </tr>
-                    </thead>
-                    <tbody>
-                      {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => {
-                        const provincial = PROVINCIAL_MEMBER_BY_DISTRICT[district];
-                        return (
-                          <tr key={district}>
-                            <td className="cc-district-cell">
-                              <div className="cc-district-name">{districtDisplayLabel(district)}</div>
-                              {districtAreaByGroup[district] && (
-                                <div className="cc-district-area">{districtAreaByGroup[district]}</div>
-                              )}
-                            </td>
-                            <td className="cc-bold">{provincial?.name || "-"}</td>
-                            <td>
-                              {provincial && (
-                                <span className="cc-party-badge" style={{ color: partyColor(provincial.party) }}>
-                                  {provincial.party}
-                                </span>
-                              )}
-                            </td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                </div>
-              </>
+                      );
+                    })}
+                  </tbody>
+                </table>
+              </div>
             )}
 
             {compositionTab === "국회의원 현황" && (
@@ -1696,8 +1688,8 @@ export default function CouncilMemberRequests() {
           color: var(--text-muted);
         }
 
-        .cc-district-table td.cc-bold {
-          font-weight: 600;
+        .cc-district-table .cc-district-cell {
+          width: 130px;
         }
 
         .cc-district-cell {
@@ -1716,8 +1708,12 @@ export default function CouncilMemberRequests() {
           white-space: normal;
         }
 
+        .cc-row-text {
+          font-weight: 600;
+        }
+
         .cc-party-badge {
-          font-weight: 700;
+          font-weight: 600;
         }
 
         .cc-table td.cc-national-jurisdiction {
