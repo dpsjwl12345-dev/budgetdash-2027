@@ -23,6 +23,9 @@ type CouncilRequest = {
   requestedAmount: string;
   status: RequestStatus;
   requestedDate: string;
+  // 민선9기공약 탭 전용 부가정보(사업주체·신규여부·연도별 예산계획)를 JSON으로 담는다.
+  // 테이블 스키마를 바꾸지 않고 이 탭만 다른 항목을 쓰기 위한 용도.
+  note?: string;
 };
 
 const STATUS_OPTIONS: RequestStatus[] = ["검토중", "반영", "미반영"];
@@ -30,6 +33,57 @@ const REQUEST_TYPE_OPTIONS: RequestType[] = ["당정협의회", "정책간담회
 
 const todayString = () =>
   new Date().toLocaleDateString("ko-KR", { year: "numeric", month: "2-digit", day: "2-digit" });
+
+// 민선9기공약 전용 부가정보: 사업주체·신규여부·연도별 예산계획(단위 자유, 예: 백만원/억원).
+type PledgeExtra = {
+  subject: string;
+  isNew: string;
+  total: string;
+  prior: string;
+  y2026: string;
+  y2027: string;
+  y2028: string;
+  y2029: string;
+  y2030: string;
+  postTerm: string;
+};
+
+const emptyPledgeExtra = (): PledgeExtra => ({
+  subject: "",
+  isNew: "",
+  total: "",
+  prior: "",
+  y2026: "",
+  y2027: "",
+  y2028: "",
+  y2029: "",
+  y2030: "",
+  postTerm: "",
+});
+
+const parsePledgeExtra = (note?: string): PledgeExtra => {
+  if (!note) return emptyPledgeExtra();
+  try {
+    return { ...emptyPledgeExtra(), ...JSON.parse(note) };
+  } catch {
+    return emptyPledgeExtra();
+  }
+};
+
+const serializePledgeExtra = (pledge: PledgeExtra): string => JSON.stringify(pledge);
+
+const PLEDGE_SUBJECT_OPTIONS = ["국가", "도", "자체", "민간"];
+const PLEDGE_NEW_OPTIONS = ["신규", "계속"];
+const PLEDGE_YEAR_FIELDS: { key: keyof PledgeExtra; label: string }[] = [
+  { key: "total", label: "총계" },
+  { key: "prior", label: "기투자액" },
+  { key: "y2026", label: "2026" },
+  { key: "y2027", label: "2027" },
+  { key: "y2028", label: "2028" },
+  { key: "y2029", label: "2029" },
+  { key: "y2030", label: "2030" },
+  { key: "postTerm", label: "임기후" },
+];
 
 const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestType,
@@ -43,9 +97,10 @@ const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestedAmount: "",
   status: "검토중" as RequestStatus,
   requestedDate: todayString(),
+  pledge: emptyPledgeExtra(),
 });
 
-type EditDraft = Omit<CouncilRequest, "id" | "status">;
+type EditDraft = Omit<CouncilRequest, "id" | "status" | "note"> & { pledge: PledgeExtra };
 
 const draftFromItem = (item: CouncilRequest): EditDraft => ({
   requestType: item.requestType,
@@ -58,6 +113,7 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
   budgetItemName: item.budgetItemName,
   requestedAmount: item.requestedAmount,
   requestedDate: item.requestedDate,
+  pledge: parsePledgeExtra(item.note),
 });
 
 // ── 원구성 현황 (제10대 화성시의회 전반기, 26. 7. 3. 기준) ──────────────────
@@ -541,14 +597,17 @@ export default function CouncilMemberRequests() {
   };
 
   const handleAdd = async () => {
-    if (!form.memberName.trim() || !form.content.trim()) return;
+    // 민선9기공약 탭은 이름 대신 공약명이 필수 항목이다(이름 칸을 쓰지 않으므로).
+    const isPledge = form.requestType === "민선9기공약";
+    const memberName = isPledge ? form.budgetItemName.trim() : form.memberName.trim();
+    if (!memberName || !form.content.trim()) return;
 
     const newItem: CouncilRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       requestType: form.requestType,
       electoralDistrict: form.electoralDistrict.trim(),
       partyName: form.partyName.trim(),
-      memberName: form.memberName.trim(),
+      memberName,
       committee: form.committee.trim(),
       department: form.department,
       content: form.content.trim(),
@@ -556,6 +615,7 @@ export default function CouncilMemberRequests() {
       requestedAmount: form.requestedAmount.trim(),
       status: form.status,
       requestedDate: form.requestedDate,
+      note: isPledge ? serializePledgeExtra(form.pledge) : undefined,
     };
 
     const updated = [...requests, newItem];
@@ -611,19 +671,22 @@ export default function CouncilMemberRequests() {
     if (!editDraft) return;
     const target = requests.find((item) => item.id === id);
     if (!target) return;
-    if (!editDraft.memberName.trim() || !editDraft.content.trim()) return;
+    const isPledge = editDraft.requestType === "민선9기공약";
+    const memberName = isPledge ? editDraft.budgetItemName.trim() : editDraft.memberName.trim();
+    if (!memberName || !editDraft.content.trim()) return;
 
     const updatedItem: CouncilRequest = {
       ...target,
       electoralDistrict: editDraft.electoralDistrict.trim(),
       partyName: editDraft.partyName.trim(),
-      memberName: editDraft.memberName.trim(),
+      memberName,
       committee: editDraft.committee.trim(),
       department: editDraft.department,
       content: editDraft.content.trim(),
       budgetItemName: editDraft.budgetItemName.trim(),
       requestedAmount: editDraft.requestedAmount.trim(),
       requestedDate: editDraft.requestedDate,
+      note: isPledge ? serializePledgeExtra(editDraft.pledge) : target.note,
     };
     const updated = requests.map((item) => (item.id === id ? updatedItem : item));
     setRequests(updated);
@@ -812,6 +875,165 @@ export default function CouncilMemberRequests() {
           </table>
   );
 
+  // 민선9기공약 탭 전용 표: 다른 탭과 달리 이름 대신 공약명·사업주체·신규여부·연도별 예산계획을 보여준다.
+  const renderPledgeTable = (rows: CouncilRequest[], emptyText: string) => (
+          <table className="requests-table pledge-table">
+            <colgroup>
+              <col className="col-num" />
+              <col className="col-pledge-name" />
+              <col className="col-pledge-subject" />
+              <col className="col-pledge-new" />
+              <col className="col-dept" />
+              <col className="col-pledge-content" />
+              {PLEDGE_YEAR_FIELDS.map((field) => (
+                <col key={field.key} className="col-pledge-year" />
+              ))}
+              <col className="col-status" />
+              <col className="col-action" />
+            </colgroup>
+            <thead>
+              <tr>
+                <th className="col-num">번호</th>
+                <th>공약명</th>
+                <th>사업주체</th>
+                <th>신규</th>
+                <th className="col-dept">소관부서</th>
+                <th>추진내용</th>
+                {PLEDGE_YEAR_FIELDS.map((field) => (
+                  <th key={field.key}>{field.label}</th>
+                ))}
+                <th>추진현황</th>
+                <th className="col-action">관리</th>
+              </tr>
+            </thead>
+            <tbody>
+              {rows.length > 0 ? (
+                rows.map((item, index) => {
+                  const isEditing = editingId === item.id && editDraft;
+                  const pledge = isEditing ? editDraft!.pledge : parsePledgeExtra(item.note);
+                  return (
+                    <tr key={item.id}>
+                      <td className="col-num">{index + 1}</td>
+                      {isEditing ? (
+                        <>
+                          <td>
+                            <input
+                              className="cell-input"
+                              placeholder="공약명"
+                              value={editDraft!.budgetItemName}
+                              onChange={(e) => setEditDraft({ ...editDraft!, budgetItemName: e.target.value })}
+                            />
+                          </td>
+                          <td>
+                            <select
+                              className="cell-input"
+                              value={pledge.subject}
+                              onChange={(e) => setEditDraft({ ...editDraft!, pledge: { ...pledge, subject: e.target.value } })}
+                            >
+                              <option value="">-</option>
+                              {PLEDGE_SUBJECT_OPTIONS.map((opt) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <select
+                              className="cell-input"
+                              value={pledge.isNew}
+                              onChange={(e) => setEditDraft({ ...editDraft!, pledge: { ...pledge, isNew: e.target.value } })}
+                            >
+                              <option value="">-</option>
+                              {PLEDGE_NEW_OPTIONS.map((opt) => (
+                                <option key={opt} value={opt}>{opt}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <select
+                              className="cell-input"
+                              value={editDraft!.department}
+                              onChange={(e) => setEditDraft({ ...editDraft!, department: e.target.value })}
+                            >
+                              {DEPARTMENTS.map((dept) => (
+                                <option key={dept} value={dept}>{dept}</option>
+                              ))}
+                            </select>
+                          </td>
+                          <td>
+                            <textarea
+                              className="cell-input cell-textarea"
+                              value={editDraft!.content}
+                              onChange={(e) => setEditDraft({ ...editDraft!, content: e.target.value })}
+                            />
+                          </td>
+                          {PLEDGE_YEAR_FIELDS.map((field) => (
+                            <td key={field.key}>
+                              <input
+                                className="cell-input"
+                                value={pledge[field.key]}
+                                onChange={(e) => setEditDraft({ ...editDraft!, pledge: { ...pledge, [field.key]: e.target.value } })}
+                              />
+                            </td>
+                          ))}
+                        </>
+                      ) : (
+                        <>
+                          <td className="col-member">{item.budgetItemName}</td>
+                          <td className="col-party">{pledge.subject || "-"}</td>
+                          <td className="col-party">{pledge.isNew || "-"}</td>
+                          <td className="col-dept">{item.department}</td>
+                          <td className="col-content">{item.content}</td>
+                          {PLEDGE_YEAR_FIELDS.map((field) => (
+                            <td key={field.key} className="col-amount">{pledge[field.key] || "-"}</td>
+                          ))}
+                        </>
+                      )}
+                      <td>
+                        <select
+                          className={`status-badge status-${item.status}`}
+                          value={item.status}
+                          onChange={(e) => handleStatusChange(item.id, e.target.value as RequestStatus)}
+                        >
+                          {STATUS_OPTIONS.map((status) => (
+                            <option key={status} value={status}>{status}</option>
+                          ))}
+                        </select>
+                      </td>
+                      <td className="col-action">
+                        {isEditing ? (
+                          <div className="action-buttons">
+                            <button type="button" className="save-button" onClick={() => saveEdit(item.id)}>저장</button>
+                            <button type="button" className="cancel-button" onClick={cancelEdit}>취소</button>
+                          </div>
+                        ) : (
+                          <div className="action-buttons">
+                            <button
+                              type="button"
+                              className="edit-button"
+                              onClick={() => startEdit(item)}
+                              aria-label="공약 편집"
+                            >편집</button>
+                            <button
+                              type="button"
+                              className="delete-button"
+                              onClick={() => handleDelete(item.id)}
+                              aria-label="공약 삭제"
+                            >삭제</button>
+                          </div>
+                        )}
+                      </td>
+                    </tr>
+                  );
+                })
+              ) : (
+                <tr>
+                  <td colSpan={8 + PLEDGE_YEAR_FIELDS.length} className="empty-row">{emptyText}</td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+  );
+
   return (
     <Layout>
       <div className="page-content">
@@ -849,7 +1071,7 @@ export default function CouncilMemberRequests() {
           })}
         </section>
 
-        {activeTab !== "원구성 현황" && (
+        {activeTab !== "원구성 현황" && activeTab !== "민선9기공약" && (
         <section className="request-form-section">
           <div className="form-row">
             <select
@@ -949,9 +1171,95 @@ export default function CouncilMemberRequests() {
         </section>
         )}
 
-        {activeTab !== "원구성 현황" && (
+        {activeTab === "민선9기공약" && (
+        <section className="request-form-section pledge-form-section">
+          <div className="form-row">
+            <select
+              className="form-input type-select"
+              value={form.requestType}
+              onChange={(e) => setForm({ ...form, requestType: e.target.value as RequestType })}
+            >
+              {REQUEST_TYPE_OPTIONS.map((type) => (
+                <option key={type} value={type}>{type}</option>
+              ))}
+            </select>
+            <input
+              className="form-input pledge-name-input"
+              placeholder="공약명"
+              value={form.budgetItemName}
+              onChange={(e) => setForm({ ...form, budgetItemName: e.target.value })}
+            />
+            <select
+              className="form-input pledge-select"
+              value={form.pledge.subject}
+              onChange={(e) => setForm({ ...form, pledge: { ...form.pledge, subject: e.target.value } })}
+            >
+              <option value="">사업주체</option>
+              {PLEDGE_SUBJECT_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <select
+              className="form-input pledge-select"
+              value={form.pledge.isNew}
+              onChange={(e) => setForm({ ...form, pledge: { ...form.pledge, isNew: e.target.value } })}
+            >
+              <option value="">신규여부</option>
+              {PLEDGE_NEW_OPTIONS.map((opt) => (
+                <option key={opt} value={opt}>{opt}</option>
+              ))}
+            </select>
+            <select
+              className="form-input dept-select"
+              value={form.department}
+              onChange={(e) => setForm({ ...form, department: e.target.value })}
+            >
+              {DEPARTMENTS.map((dept) => (
+                <option key={dept} value={dept}>{dept}</option>
+              ))}
+            </select>
+            <select
+              className="form-input status-select"
+              value={form.status}
+              onChange={(e) => setForm({ ...form, status: e.target.value as RequestStatus })}
+            >
+              {STATUS_OPTIONS.map((status) => (
+                <option key={status} value={status}>{status}</option>
+              ))}
+            </select>
+          </div>
+          <div className="form-row">
+            <textarea
+              className="form-input content-textarea"
+              placeholder="추진내용을 입력하세요..."
+              value={form.content}
+              onChange={(e) => setForm({ ...form, content: e.target.value })}
+            />
+          </div>
+          <div className="form-row pledge-budget-row">
+            {PLEDGE_YEAR_FIELDS.map((field) => (
+              <input
+                key={field.key}
+                className="form-input pledge-year-input"
+                placeholder={field.label}
+                value={form.pledge[field.key]}
+                onChange={(e) => setForm({ ...form, pledge: { ...form.pledge, [field.key]: e.target.value } })}
+              />
+            ))}
+            <button className="add-button" onClick={handleAdd}>추가</button>
+          </div>
+        </section>
+        )}
+
+        {activeTab !== "원구성 현황" && activeTab !== "민선9기공약" && (
         <section className="table-section">
-          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType), activeTab !== "시장" && activeTab !== "민선9기공약")}
+          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType), activeTab !== "시장")}
+        </section>
+        )}
+
+        {activeTab === "민선9기공약" && (
+        <section className="table-section">
+          {renderPledgeTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 공약이 없습니다")}
         </section>
         )}
 
@@ -1241,6 +1549,23 @@ export default function CouncilMemberRequests() {
           flex: 0 0 130px;
         }
 
+        .pledge-name-input {
+          flex: 1 1 220px;
+        }
+
+        .pledge-select {
+          flex: 0 0 110px;
+        }
+
+        .pledge-budget-row {
+          flex-wrap: wrap;
+        }
+
+        .pledge-year-input {
+          flex: 0 0 90px;
+          text-align: right;
+        }
+
         .add-button {
           flex: 0 0 88px;
           border: 1px solid rgba(91, 155, 240, 0.35);
@@ -1394,6 +1719,13 @@ export default function CouncilMemberRequests() {
         col.col-dept { width: 7%; }
         col.col-budget-item { width: 12%; }
         col.col-amount { width: 7%; }
+
+        /* 민선9기공약 전용 표 열 너비 */
+        .pledge-table col.col-pledge-name { width: 12%; }
+        .pledge-table col.col-pledge-subject { width: 6%; }
+        .pledge-table col.col-pledge-new { width: 5%; }
+        .pledge-table col.col-pledge-content { width: 12%; }
+        .pledge-table col.col-pledge-year { width: 4.5%; }
 
         .requests-table td.col-num {
           text-align: center;
