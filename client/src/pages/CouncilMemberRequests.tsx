@@ -64,12 +64,12 @@ const draftFromItem = (item: CouncilRequest): EditDraft => ({
 type MainTabKey = RequestType | "원구성 현황";
 
 const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?: string; color?: string }[] = [
-  { key: "당정협의회", label: "당정협의회", subtitle: "정당 요구사업 · 정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
-  { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업 · 소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
-  { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
-  { key: "특별조정교부금", label: "특별조정교부금", subtitle: "경기도 관할 시의 지역개발사업 등 시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
   { key: "시장", label: "시장님 요구사항", emptyText: "등록된 시장님 요구사항이 없습니다", color: "#b98cf0" },
   { key: "부시장", label: "부시장님 요구사항", emptyText: "등록된 부시장님 요구사항이 없습니다", color: "#52c4d9" },
+  { key: "당정협의회", label: "당정협의회", subtitle: "정당 요구사업\n정책기획관 주관", emptyText: "등록된 당정협의회 요구가 없습니다", color: "#5b9bf0" },
+  { key: "정책간담회", label: "정책간담회", subtitle: "당과 무관한 시의원 요구사업\n소통협치실을 통한 요구", emptyText: "등록된 정책간담회 요구가 없습니다", color: "#7ee787" },
+  { key: "시의원", label: "시의원 요구사항", emptyText: "등록된 시의원 요구사항이 없습니다" },
+  { key: "특별조정교부금", label: "특별조정교부금", subtitle: "경기도 관할 시의 지역개발사업 등\n시책 추진을 위한 재원", emptyText: "등록된 특별조정교부금 요구가 없습니다", color: "#d9ad52" },
   { key: "원구성 현황", label: "원구성 현황" },
 ];
 
@@ -1305,7 +1305,10 @@ export default function CouncilMemberRequests() {
           font-weight: 400;
           color: var(--text-muted);
           opacity: 0.85;
-          white-space: nowrap;
+          white-space: pre-line;
+          width: 150px;
+          text-align: center;
+          line-height: 1.4;
         }
 
         .type-select {
