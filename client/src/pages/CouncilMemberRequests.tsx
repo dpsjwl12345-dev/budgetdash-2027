@@ -1363,7 +1363,7 @@ export default function CouncilMemberRequests() {
           background: rgba(118, 157, 194, 0.08);
           color: var(--text-muted);
           font-weight: 600;
-          font-size: 15px;
+          font-size: 17px;
           text-align: center;
         }
 
