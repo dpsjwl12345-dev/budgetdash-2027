@@ -1703,11 +1703,13 @@ export default function CouncilMemberRequests() {
         }
 
         .cc-district-table .cc-district-cell {
-          width: 130px;
+          width: 190px;
+          min-width: 190px;
         }
 
         .cc-district-cell {
           white-space: nowrap;
+          vertical-align: middle;
         }
 
         .cc-district-name {
