@@ -1259,6 +1259,7 @@ export default function CouncilMemberRequests() {
 
         {activeTab === "민선9기공약" && (
         <section className="table-section">
+          <div className="pledge-table-caption">추진년도별 예산액 (단위:백만원)</div>
           {renderPledgeTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 공약이 없습니다")}
         </section>
         )}
@@ -1729,6 +1730,13 @@ export default function CouncilMemberRequests() {
         .pledge-table col.col-pledge-new { width: 5%; }
         .pledge-table col.col-pledge-content { width: 12%; }
         .pledge-table col.col-pledge-year { width: 4.5%; }
+
+        .pledge-table-caption {
+          text-align: right;
+          padding: 10px 16px 0;
+          font-size: 12px;
+          color: var(--text-muted);
+        }
 
         .requests-table td.col-num {
           text-align: center;
