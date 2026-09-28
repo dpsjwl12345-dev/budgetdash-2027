@@ -951,7 +951,7 @@ export default function CouncilMemberRequests() {
 
         {activeTab !== "원구성 현황" && (
         <section className="table-section">
-          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType), activeTab !== "시장")}
+          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType), activeTab !== "시장" && activeTab !== "민선9기공약")}
         </section>
         )}
 
