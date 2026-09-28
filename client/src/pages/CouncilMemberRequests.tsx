@@ -641,7 +641,6 @@ export default function CouncilMemberRequests() {
             <colgroup>
               <col className="col-num" />
               <col className="col-member" />
-              {showCouncilFields && <col className="col-committee" />}
               {showCouncilFields && <col className="col-party" />}
               <col className="col-content" />
               <col className="col-dept" />
@@ -653,8 +652,7 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th>이름</th>
-                {showCouncilFields && <th>위원회</th>}
+                <th>{showCouncilFields ? "이름(위원회)" : "이름"}</th>
                 {showCouncilFields && <th>소속 정당명(선거구)</th>}
                 <th>요구내용</th>
                 <th>소관부서</th>
@@ -677,19 +675,19 @@ export default function CouncilMemberRequests() {
                             <input
                               className="cell-input"
                               list={MEMBER_NAME_DATALIST_ID}
+                              placeholder="이름"
                               value={editDraft.memberName}
                               onChange={(e) => setEditDraft(fillFromRoster(editDraft, e.target.value))}
                             />
-                          </td>
-                          {showCouncilFields && (
-                          <td>
+                            {showCouncilFields && (
                             <input
                               className="cell-input"
+                              placeholder="위원회"
                               value={editDraft.committee}
                               onChange={(e) => setEditDraft({ ...editDraft, committee: e.target.value })}
                             />
+                            )}
                           </td>
-                          )}
                           {showCouncilFields && (
                           <td>
                             <input
@@ -741,8 +739,10 @@ export default function CouncilMemberRequests() {
                         </>
                       ) : (
                         <>
-                          <td className="col-member">{item.memberName}</td>
-                          {showCouncilFields && <td>{item.committee}</td>}
+                          <td className="col-member">
+                            {item.memberName}
+                            {showCouncilFields && item.committee && `(${item.committee})`}
+                          </td>
                           {showCouncilFields && (
                           <td>
                             {item.partyName}
@@ -794,7 +794,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={showCouncilFields ? 10 : 8} className="empty-row">{emptyText}</td>
+                  <td colSpan={showCouncilFields ? 9 : 8} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -1372,7 +1372,6 @@ export default function CouncilMemberRequests() {
 
         col.col-num { width: 4%; }
         col.col-party { width: 8%; }
-        col.col-committee { width: 9%; }
         col.col-content { width: 24%; }
         col.col-status { width: 7%; }
         col.col-action { width: 8%; }
@@ -1380,7 +1379,7 @@ export default function CouncilMemberRequests() {
         col.col-member, col.col-dept, col.col-budget-item, col.col-amount {
           background-color: rgba(91, 155, 240, 0.08);
         }
-        col.col-member { width: 6%; }
+        col.col-member { width: 12%; }
         col.col-dept { width: 7%; }
         col.col-budget-item { width: 12%; }
         col.col-amount { width: 7%; }
