@@ -8,19 +8,6 @@ import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
-// 2026년 예산액(3추 기준) - 부서별 3차 추경 확정액(천원). 사용자가 직접 전달한 값.
-const BUDGET_2026_SUPP3: Record<string, number> = {
-  "문화예술과": 19427984,
-  "체육진흥과": 18744316,
-  "문화유산과": 9855173,
-  "독립기념관": 2287352,
-  "관광진흥과": 37534298,
-  "교육지원과": 46902382,
-  "평생학습과": 4322110,
-  "도서관정책과": 42365034,
-  "전국체전추진단": 17508261,
-};
-
 type BudgetExecution = {
   id: number;
   department: string;
@@ -875,6 +862,9 @@ export default function Home() {
   const [showDeptMemoModal, setShowDeptMemoModal] = useState(false);
   const [deptMemos, setDeptMemos] = useState<Record<string, { memos: { id?: string; text: string; date: string }[] }>>({});
   const [deptMemoDraft, setDeptMemoDraft] = useState("");
+  // 2026 본예산액·3추 기준 예산액 — 부서별로 직접 입력해 편집하는 값(천원).
+  const [showBudget2026Modal, setShowBudget2026Modal] = useState(false);
+  const [budget2026Data, setBudget2026Data] = useState<Record<string, { base2026: string; supp3: string }>>({});
   const [toast, setToast] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [hierarchyPage, setHierarchyPage] = useState(1);
@@ -910,6 +900,7 @@ export default function Home() {
   const getHierarchyColumnWidth = (key: string) => columnWidths[key] ?? DEFAULT_HIERARCHY_COLUMN_WIDTHS[key];
   const staffModalRef = useRef<HTMLDivElement>(null);
   const deptMemoModalRef = useRef<HTMLDivElement>(null);
+  const budget2026ModalRef = useRef<HTMLDivElement>(null);
   const editModalRef = useRef<HTMLDivElement>(null);
   const hierarchyEditModalRef = useRef<HTMLDivElement>(null);
   const badgeConfirmModalRef = useRef<HTMLDivElement>(null);
@@ -927,18 +918,19 @@ export default function Home() {
 
   // Esc로 모달 닫기
   useEffect(() => {
-    if (!showStaffModal && !showDeptMemoModal && !editingRow && !editingHierarchyRow) return;
+    if (!showStaffModal && !showDeptMemoModal && !showBudget2026Modal && !editingRow && !editingHierarchyRow) return;
     const onKeyDown = (event: KeyboardEvent) => {
       if (event.key === "Escape") {
         setShowStaffModal(false);
         setShowDeptMemoModal(false);
+        setShowBudget2026Modal(false);
         setEditingRow(null);
         setEditingHierarchyRow(null);
       }
     };
     document.addEventListener("keydown", onKeyDown);
     return () => document.removeEventListener("keydown", onKeyDown);
-  }, [showStaffModal, showDeptMemoModal, editingRow, editingHierarchyRow]);
+  }, [showStaffModal, showDeptMemoModal, showBudget2026Modal, editingRow, editingHierarchyRow]);
 
   // 모달 열림/닫힘 시 포커스 이동 (열릴 때 모달 안으로, 닫힐 때 트리거로 복귀)
   useEffect(() => {
@@ -959,6 +951,15 @@ export default function Home() {
       lastFocusedRef.current?.focus();
     }
   }, [showDeptMemoModal]);
+
+  useEffect(() => {
+    if (showBudget2026Modal) {
+      lastFocusedRef.current = document.activeElement as HTMLElement;
+      budget2026ModalRef.current?.querySelector<HTMLElement>("button, input, select, textarea, [href]")?.focus();
+    } else {
+      lastFocusedRef.current?.focus();
+    }
+  }, [showBudget2026Modal]);
 
   useEffect(() => {
     if (editingRow) {
@@ -986,6 +987,7 @@ export default function Home() {
     loadCsvData();
     loadStaffDataFromServer();
     loadDeptMemosFromServer();
+    loadBudget2026FromServer();
   }, []);
 
   // 부서가 실제로 영향을 주는 건 메모와 부기명 강조 표시뿐이다.
@@ -1005,6 +1007,39 @@ export default function Home() {
       }
     } catch (error) {
       console.log('정원·현원 클라우드 로드 실패:', error);
+    }
+  };
+
+  const loadBudget2026FromServer = async () => {
+    try {
+      const response = await fetch('/api/cloud-sync?type=budget-2026');
+      if (response.ok) {
+        const { data } = await response.json();
+        if (data && typeof data === 'object' && Object.keys(data).length > 0) {
+          setBudget2026Data(data);
+        }
+      }
+    } catch (error) {
+      console.log('2026 예산액 클라우드 로드 실패:', error);
+    }
+  };
+
+  const saveBudget2026 = async () => {
+    setShowBudget2026Modal(false);
+    try {
+      const response = await fetch('/api/cloud-sync?type=budget-2026', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: budget2026Data }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || '서버 저장 실패');
+      }
+      showToast('서버에 2026 예산액이 저장되었습니다.');
+    } catch (error) {
+      console.warn('2026 예산액 클라우드 저장 실패:', error);
+      showToast('2026 예산액을 이 기기에만 저장했습니다 (클라우드 저장 실패).');
     }
   };
 
@@ -2433,15 +2468,15 @@ export default function Home() {
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
-                <div className="metric-top"><span>2026 본예산액</span></div>
+                <div className="metric-top"><span>2026 본예산액</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(Number(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
-                <div className="metric-top"><span>2026년 예산액 (3추 기준)</span></div>
+                <div className="metric-top"><span>2026년 예산액 (3추 기준)</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && BUDGET_2026_SUPP3[department] != null ? formatMillion(BUDGET_2026_SUPP3[department]) : "-"}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(Number(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
             </article>
           </section>
 
@@ -2993,6 +3028,7 @@ export default function Home() {
         </div>
 
       {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card staff-modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" />명</label><label>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
+      {showBudget2026Modal && <div className="modal-backdrop" onMouseDown={() => setShowBudget2026Modal(false)}><div className="modal-card staff-modal-card" ref={budget2026ModalRef} role="dialog" aria-modal="true" aria-labelledby="budget2026-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, budget2026ModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="budget2026-modal-title">부서별 2026 예산액 설정</h2></div><button className="close-button" onClick={() => setShowBudget2026Modal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>본예산(천원)<input value={budget2026Data[dept]?.base2026 || ""} onChange={(event) => setBudget2026Data({...budget2026Data, [dept]: {...(budget2026Data[dept] || {}), base2026: event.target.value}})} inputMode="numeric" /></label><label>3추기준(천원)<input value={budget2026Data[dept]?.supp3 || ""} onChange={(event) => setBudget2026Data({...budget2026Data, [dept]: {...(budget2026Data[dept] || {}), supp3: event.target.value}})} inputMode="numeric" /></label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowBudget2026Modal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveBudget2026}>저장</AppButton></div></div></div>}
       {showDeptMemoModal && <div className="modal-backdrop" onMouseDown={() => setShowDeptMemoModal(false)}><div className="modal-card dept-memo-modal-card" ref={deptMemoModalRef} role="dialog" aria-modal="true" aria-labelledby="dept-memo-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, deptMemoModalRef.current)}>
         <div className="modal-head"><div><span>DEPARTMENT MEMO</span><h2 id="dept-memo-modal-title">{department} 주요 내용 메모</h2></div><button className="close-button" onClick={() => setShowDeptMemoModal(false)} aria-label="닫기"><X size={19} /></button></div>
         <div className="dept-memo-body">

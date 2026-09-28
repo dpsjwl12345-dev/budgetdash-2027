@@ -506,6 +506,52 @@ async function saveStaff(req: any, res: any) {
   res.status(200).json({ success: true, message: "저장 완료" });
 }
 
+// 부서별 2026년 본예산액·3추 기준 예산액 - 사용자가 직접 입력/수정하는 값(천원).
+async function loadBudget2026(res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const { data, error } = await supabase.from('department_budget_2026').select('*');
+  if (error) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const budget2026: Record<string, { base2026: string; supp3: string }> = {};
+  (data || []).forEach((row: any) => {
+    budget2026[row.department] = { base2026: row.base_amount ?? '', supp3: row.supp3_amount ?? '' };
+  });
+  res.status(200).json({ data: budget2026 });
+}
+
+async function saveBudget2026(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+  const budget2026 = req.body?.data && typeof req.body.data === 'object' ? req.body.data : {};
+  const rows = Object.entries(budget2026).map(([department, value]: [string, any]) => ({
+    department,
+    base_amount: value?.base2026 ?? '',
+    supp3_amount: value?.supp3 ?? '',
+    updated_at: new Date().toISOString(),
+  }));
+
+  if (rows.length === 0) {
+    res.status(200).json({ success: true, message: "저장할 데이터가 없습니다." });
+    return;
+  }
+
+  const { error: upsertError } = await supabase.from('department_budget_2026').upsert(rows, { onConflict: 'department' });
+  if (upsertError) {
+    res.status(200).json({ success: false, message: "저장 실패", error: upsertError.message });
+    return;
+  }
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
 // 부기명 강조 표시. 키는 "부서::세부사업::통계목::부기명"이라 엑셀을 다시 올려 행 id가
 // 새로 발급돼도 표시가 그대로 따라붙는다(행 id로 잡으면 재업로드 때마다 전부 끊긴다).
 async function loadRowMarks(req: any, res: any) {
@@ -686,6 +732,7 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'GET') {
       if (type === 'staff') return await loadStaff(res);
+      if (type === 'budget-2026') return await loadBudget2026(res);
       if (type === 'memos') return await loadMemos(req, res);
       if (type === 'marks') return await loadRowMarks(req, res);
       if (type === 'issues') return await loadIssues(res);
@@ -698,6 +745,7 @@ export default async function handler(req: any, res: any) {
 
     if (req.method === 'POST') {
       if (type === 'staff') return await saveStaff(req, res);
+      if (type === 'budget-2026') return await saveBudget2026(req, res);
       if (type === 'memos') return await saveMemos(req, res);
       if (type === 'marks') return await saveRowMarks(req, res);
       if (type === 'issues') return await saveIssues(req, res);

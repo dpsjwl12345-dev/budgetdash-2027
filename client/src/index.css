@@ -457,6 +457,8 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .metric-alert .metric-top { color: #edf5fe; }
 .metric-alert .metric-top svg { color: #ff6f7d; }
 .metric-alert .metric-sub { color: #ff949e; background: rgba(255, 111, 125, 0.1); border-color: rgba(255, 111, 125, 0.25); }
+.metric-edit-trigger { display: inline-flex; align-items: center; justify-content: center; width: 20px; height: 20px; margin-left: 6px; border: none; border-radius: 4px; background: transparent; color: inherit; opacity: 0.55; cursor: pointer; flex-shrink: 0; }
+.metric-edit-trigger:hover { opacity: 1; background: rgba(255, 255, 255, 0.08); }
 .metric-alert > strong { color: #edf5fe; }
 .alert-ring { width: 22px; height: 22px; border: 1px solid rgba(239, 68, 68, 0.4); border-radius: 50%; position: relative; }
 .alert-ring::after { content: ""; position: absolute; inset: 6px; border-radius: 50%; background: #ef4444; }
