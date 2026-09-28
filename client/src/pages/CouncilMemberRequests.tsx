@@ -84,6 +84,16 @@ const PLEDGE_YEAR_FIELDS: { key: keyof PledgeExtra; label: string }[] = [
   { key: "y2030", label: "2030" },
   { key: "postTerm", label: "임기후" },
 ];
+// 총계는 입력받지 않고 기투자액~임기후 합계로 자동 계산한다.
+const PLEDGE_INPUT_YEAR_FIELDS = PLEDGE_YEAR_FIELDS.filter((field) => field.key !== "total");
+
+const parsePledgeAmount = (value: string): number => {
+  const n = Number(value.replace(/,/g, "").trim());
+  return Number.isFinite(n) ? n : 0;
+};
+
+const calcPledgeTotal = (pledge: PledgeExtra): number =>
+  PLEDGE_INPUT_YEAR_FIELDS.reduce((sum, field) => sum + parsePledgeAmount(pledge[field.key]), 0);
 
 const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestType,
@@ -602,6 +612,8 @@ export default function CouncilMemberRequests() {
     const memberName = isPledge ? form.budgetItemName.trim() : form.memberName.trim();
     if (!memberName || !form.content.trim()) return;
 
+    const pledgeToSave = { ...form.pledge, total: String(calcPledgeTotal(form.pledge)) };
+
     const newItem: CouncilRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       requestType: form.requestType,
@@ -615,7 +627,7 @@ export default function CouncilMemberRequests() {
       requestedAmount: form.requestedAmount.trim(),
       status: form.status,
       requestedDate: form.requestedDate,
-      note: isPledge ? serializePledgeExtra(form.pledge) : undefined,
+      note: isPledge ? serializePledgeExtra(pledgeToSave) : undefined,
     };
 
     const updated = [...requests, newItem];
@@ -675,6 +687,8 @@ export default function CouncilMemberRequests() {
     const memberName = isPledge ? editDraft.budgetItemName.trim() : editDraft.memberName.trim();
     if (!memberName || !editDraft.content.trim()) return;
 
+    const pledgeToSave = { ...editDraft.pledge, total: String(calcPledgeTotal(editDraft.pledge)) };
+
     const updatedItem: CouncilRequest = {
       ...target,
       electoralDistrict: editDraft.electoralDistrict.trim(),
@@ -686,7 +700,7 @@ export default function CouncilMemberRequests() {
       budgetItemName: editDraft.budgetItemName.trim(),
       requestedAmount: editDraft.requestedAmount.trim(),
       requestedDate: editDraft.requestedDate,
-      note: isPledge ? serializePledgeExtra(editDraft.pledge) : target.note,
+      note: isPledge ? serializePledgeExtra(pledgeToSave) : target.note,
     };
     const updated = requests.map((item) => (item.id === id ? updatedItem : item));
     setRequests(updated);
@@ -966,7 +980,8 @@ export default function CouncilMemberRequests() {
                               onChange={(e) => setEditDraft({ ...editDraft!, content: e.target.value })}
                             />
                           </td>
-                          {PLEDGE_YEAR_FIELDS.map((field) => (
+                          <td className="col-amount">{calcPledgeTotal(pledge).toLocaleString("ko-KR")}</td>
+                          {PLEDGE_INPUT_YEAR_FIELDS.map((field) => (
                             <td key={field.key}>
                               <input
                                 className="cell-input"
@@ -983,7 +998,8 @@ export default function CouncilMemberRequests() {
                           <td className="col-party">{pledge.isNew || "-"}</td>
                           <td className="col-dept">{item.department}</td>
                           <td className="col-content">{item.content}</td>
-                          {PLEDGE_YEAR_FIELDS.map((field) => (
+                          <td className="col-amount">{calcPledgeTotal(pledge).toLocaleString("ko-KR")}</td>
+                          {PLEDGE_INPUT_YEAR_FIELDS.map((field) => (
                             <td key={field.key} className="col-amount">{pledge[field.key] || "-"}</td>
                           ))}
                         </>
@@ -1237,7 +1253,14 @@ export default function CouncilMemberRequests() {
             />
           </div>
           <div className="form-row pledge-budget-row">
-            {PLEDGE_YEAR_FIELDS.map((field) => (
+            <input
+              className="form-input pledge-year-input pledge-total-input"
+              placeholder="총계"
+              value={calcPledgeTotal(form.pledge).toLocaleString("ko-KR")}
+              readOnly
+              disabled
+            />
+            {PLEDGE_INPUT_YEAR_FIELDS.map((field) => (
               <input
                 key={field.key}
                 className="form-input pledge-year-input"
@@ -1556,6 +1579,13 @@ export default function CouncilMemberRequests() {
 
         .pledge-select {
           flex: 0 0 110px;
+        }
+
+        .pledge-total-input {
+          font-weight: 700;
+          color: #7ee787;
+          opacity: 1;
+          cursor: default;
         }
 
         .pledge-budget-row {
