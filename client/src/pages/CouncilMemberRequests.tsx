@@ -1707,6 +1707,10 @@ export default function CouncilMemberRequests() {
           font-size: 16px;
         }
 
+        .pledge-table td.col-content {
+          font-weight: 300;
+        }
+
         .requests-table td {
           color: var(--text);
         }
