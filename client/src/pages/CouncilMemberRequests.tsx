@@ -1344,13 +1344,14 @@ export default function CouncilMemberRequests() {
 
         .requests-table th,
         .requests-table td {
-          padding: 10px 12px;
+          padding: 6px 10px;
           border-bottom: 1px solid var(--border);
           border-right: 1px solid var(--border);
           text-align: left;
-          vertical-align: top;
+          vertical-align: middle;
           word-break: break-word;
           overflow-wrap: break-word;
+          line-height: 1.35;
         }
 
         .requests-table th:last-child,
@@ -1436,9 +1437,10 @@ export default function CouncilMemberRequests() {
 
         .action-buttons {
           display: flex;
-          flex-direction: column;
+          flex-direction: row;
           gap: 4px;
-          align-items: stretch;
+          align-items: center;
+          justify-content: center;
         }
 
         .status-badge {
