@@ -673,6 +673,20 @@ table.budget-table.hierarchy-budget-table tbody tr td:nth-child(2), table.budget
 @media (max-width: 560px) { .staff-modal-card { width: calc(100vw - 20px); padding: 18px 14px 16px; } .modal-card.staff-modal-card .staff-modal-fields { gap: 8px; } .staff-dept-card { padding: 9px; gap: 7px 6px; } .staff-dept-card label { gap: 3px; font-size: 11px; } .staff-dept-card input { width: 45px; height: 28px; padding: 0 5px; } }
 @keyframes modal-in { from { opacity: 0; transform: translateY(7px) scale(0.985); } to { opacity: 1; transform: translateY(0) scale(1); } }
 
+.dept-memo-count { display: inline-flex; align-items: center; justify-content: center; min-width: 18px; height: 18px; padding: 0 5px; border-radius: 999px; background: rgba(91, 155, 240, 0.25); color: #9cd0ff; font-size: 11px; font-weight: 700; }
+.dept-memo-modal-card { width: min(640px, calc(100vw - 32px)); max-width: none; }
+.dept-memo-body { display: flex; flex-direction: column; gap: 12px; margin-top: 12px; }
+.dept-memo-list { display: flex; flex-direction: column; gap: 8px; max-height: 260px; overflow-y: auto; padding-right: 4px; }
+.dept-memo-empty { padding: 18px; text-align: center; color: #9cb1c6; font-size: 13px; }
+.dept-memo-item { padding: 10px 12px; border: 1px solid var(--border); border-radius: 8px; background: rgba(13, 33, 54, 0.5); }
+.dept-memo-item-head { display: flex; align-items: center; justify-content: space-between; margin-bottom: 6px; }
+.dept-memo-item-head span { color: #7ca8d4; font-size: 12px; font-weight: 600; }
+.dept-memo-item-head button { border: 1px solid rgba(255, 107, 125, 0.35); border-radius: 5px; padding: 2px 8px; background: rgba(255, 107, 125, 0.08); color: #ff9aa7; font-size: 11px; cursor: pointer; }
+.dept-memo-item-head button:hover { background: rgba(255, 107, 125, 0.18); color: #ffd8dd; }
+.dept-memo-item-text { color: #dbe8f5; font-size: 13px; line-height: 1.6; white-space: pre-wrap; word-break: break-word; }
+.dept-memo-textarea { width: 100%; min-height: 88px; padding: 10px 12px; border: 1px solid var(--line); border-radius: 8px; background: #1a1a1a; color: #eaf2fb; font-family: inherit; font-size: 13px; line-height: 1.6; resize: vertical; }
+.dept-memo-textarea:focus { outline: none; border-color: var(--accent); }
+
 
 .modal-head { display: flex; align-items: flex-start; justify-content: space-between; width: 100%; }
 .modal-head span { color: #7e9ab4; font-size: 10.5px; font-weight: 800; letter-spacing: 0.12em; }
