@@ -636,11 +636,11 @@ export default function CouncilMemberRequests() {
   const visibleRequests = requests.filter((item) => typeOf(item) === activeTab);
   const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
 
-  const renderTable = (rows: CouncilRequest[], emptyText: string, showCouncilFields: boolean) => (
+  const renderTable = (rows: CouncilRequest[], emptyText: string, showCouncilFields: boolean, showMemberColumn: boolean = true) => (
           <table className="requests-table">
             <colgroup>
               <col className="col-num" />
-              <col className="col-member" />
+              {showMemberColumn && <col className="col-member" />}
               {showCouncilFields && <col className="col-party" />}
               <col className="col-content" />
               <col className="col-dept" />
@@ -652,7 +652,7 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th className="col-member">{showCouncilFields ? <>이름<br />(위원회)</> : "이름"}</th>
+                {showMemberColumn && <th className="col-member">{showCouncilFields ? <>이름<br />(위원회)</> : "이름"}</th>}
                 {showCouncilFields && <th className="col-party">소속 정당명<br />(선거구)</th>}
                 <th className="col-content">요구내용</th>
                 <th className="col-dept">소관부서</th>
@@ -671,6 +671,7 @@ export default function CouncilMemberRequests() {
                       <td className="col-num">{index + 1}</td>
                       {isEditing ? (
                         <>
+                          {showMemberColumn && (
                           <td>
                             <input
                               className="cell-input"
@@ -688,6 +689,7 @@ export default function CouncilMemberRequests() {
                             />
                             )}
                           </td>
+                          )}
                           {showCouncilFields && (
                           <td>
                             <input
@@ -739,10 +741,12 @@ export default function CouncilMemberRequests() {
                         </>
                       ) : (
                         <>
+                          {showMemberColumn && (
                           <td className="col-member">
                             {item.memberName}
                             {showCouncilFields && item.committee && <><br />({item.committee})</>}
                           </td>
+                          )}
                           {showCouncilFields && (
                           <td className="col-party">
                             {item.partyName}
@@ -794,7 +798,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={showCouncilFields ? 9 : 8} className="empty-row">{emptyText}</td>
+                  <td colSpan={7 + (showMemberColumn ? 1 : 0) + (showCouncilFields ? 1 : 0)} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -940,7 +944,7 @@ export default function CouncilMemberRequests() {
 
         {activeTab !== "원구성 현황" && (
         <section className="table-section">
-          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType))}
+          {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType), activeTab !== "시장")}
         </section>
         )}
 
