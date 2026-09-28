@@ -360,6 +360,19 @@ const PROVINCIAL_MEMBER_BY_DISTRICT: Record<string, { name: string; party: Party
   비례대표: null,
 };
 
+// 도의원 선거구는 시의원 선거구(가~자)와 관할 구역이 달라 따로 표기(제1~9선거구, 경기도의회 기준).
+const PROVINCIAL_DISTRICT_INFO: Record<string, { label: string; area: string }> = {
+  가선거구: { label: "제1선거구", area: "향남읍, 양감면, 정남면" },
+  나선거구: { label: "제2선거구", area: "우정읍, 팔탄면, 장안면, 매송면, 비봉면" },
+  다선거구: { label: "제3선거구", area: "동탄1동, 동탄2동, 동탄5동" },
+  라선거구: { label: "제4선거구", area: "동탄4동, 동탄6동, 동탄8동" },
+  마선거구: { label: "제5선거구", area: "동탄7동, 동탄9동" },
+  바선거구: { label: "제6선거구", area: "봉담읍, 기배동" },
+  사선거구: { label: "제7선거구", area: "진안동, 병점1동, 병점2동, 화산동" },
+  아선거구: { label: "제8선거구", area: "반월동, 동탄3동" },
+  자선거구: { label: "제9선거구", area: "마도면, 송산면, 서신면, 새솔동" },
+};
+
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
   if (party === "국민의힘") return "#ff6b7d";
@@ -1085,12 +1098,13 @@ export default function CouncilMemberRequests() {
                   <tbody>
                     {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => {
                       const provincial = PROVINCIAL_MEMBER_BY_DISTRICT[district];
+                      const provincialDistrict = PROVINCIAL_DISTRICT_INFO[district];
                       return (
                         <tr key={district}>
                           <td className="cc-district-cell">
-                            <div className="cc-district-name">{districtDisplayLabel(district)}</div>
-                            {districtAreaByGroup[district] && (
-                              <div className="cc-district-area">{districtAreaByGroup[district]}</div>
+                            <div className="cc-district-name">{provincialDistrict?.label ?? districtDisplayLabel(district)}</div>
+                            {provincialDistrict?.area && (
+                              <div className="cc-district-area">{provincialDistrict.area}</div>
                             )}
                           </td>
                           <td className="cc-row-text">{provincial?.name || "-"}</td>
