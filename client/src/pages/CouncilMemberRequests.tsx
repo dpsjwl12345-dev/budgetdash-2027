@@ -1378,7 +1378,7 @@ export default function CouncilMemberRequests() {
         col.col-action { width: 8%; }
         /* 시의원 이름·소관부서·사업명·요구액 - 나머지 칸과 구분되는 배경색 */
         col.col-member, col.col-dept, col.col-budget-item, col.col-amount {
-          background-color: rgba(91, 155, 240, 0.08);
+          background-color: rgba(126, 231, 187, 0.12);
         }
         col.col-member { width: 12%; }
         col.col-dept { width: 7%; }
