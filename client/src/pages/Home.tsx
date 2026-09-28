@@ -8,6 +8,17 @@ import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
+// 2026년 예산액(3추 기준) - 부서별 3차 추경 확정액(천원). 사용자가 직접 전달한 값.
+const BUDGET_2026_SUPP3: Record<string, number> = {
+  "문화유산과": 9855173,
+  "독립기념관": 2287352,
+  "관광진흥과": 37534298,
+  "교육지원과": 46902382,
+  "평생학습과": 4322110,
+  "도서관정책과": 42365034,
+  "전국체전추진단": 17508261,
+};
+
 type BudgetExecution = {
   id: number;
   department: string;
@@ -2428,7 +2439,7 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2026년 예산액 (3추 기준)</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>-<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && BUDGET_2026_SUPP3[department] != null ? formatMillion(BUDGET_2026_SUPP3[department]) : "-"}<span className="metric-unit">백만원</span></strong>
             </article>
           </section>
 
