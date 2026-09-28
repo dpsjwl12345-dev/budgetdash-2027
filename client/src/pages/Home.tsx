@@ -2424,11 +2424,11 @@ export default function Home() {
               </div>
               <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
-            <article className="metric-card metric-alert">
+            <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
-                <div className="metric-top"><span>점검 · 오류</span><AlertCircle size={18} /></div>
+                <div className="metric-top"><span>2026년 예산액 (3추 기준)</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>0<span className="metric-unit">건</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
           </section>
 
