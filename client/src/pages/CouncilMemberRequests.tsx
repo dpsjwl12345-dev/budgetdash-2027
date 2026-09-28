@@ -652,8 +652,8 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                <th className="col-member">{showCouncilFields ? "이름(위원회)" : "이름"}</th>
-                {showCouncilFields && <th className="col-party">소속 정당명(선거구)</th>}
+                <th className="col-member">{showCouncilFields ? <>이름<br />(위원회)</> : "이름"}</th>
+                {showCouncilFields && <th className="col-party">소속 정당명<br />(선거구)</th>}
                 <th className="col-content">요구내용</th>
                 <th className="col-dept">소관부서</th>
                 <th>사업명 (세부사업+부기명)</th>
@@ -1384,28 +1384,29 @@ export default function CouncilMemberRequests() {
         col.col-budget-item { width: 12%; }
         col.col-amount { width: 7%; }
 
-        .col-num {
+        .requests-table td.col-num {
           text-align: center;
           color: var(--text-muted);
         }
 
-        .col-member {
+        .requests-table td.col-member {
           font-weight: 600;
           text-align: center;
         }
 
-        .col-party,
-        .col-dept {
+        .requests-table td.col-party,
+        .requests-table td.col-dept {
           text-align: center;
         }
 
-        .col-content {
+        .requests-table td.col-content {
           white-space: pre-wrap;
           text-align: center;
         }
 
-        .col-amount {
+        .requests-table td.col-amount {
           white-space: nowrap;
+          text-align: right;
         }
 
         .col-date {
