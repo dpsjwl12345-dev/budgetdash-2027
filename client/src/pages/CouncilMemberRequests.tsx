@@ -1703,6 +1703,10 @@ export default function CouncilMemberRequests() {
           text-align: center;
         }
 
+        .pledge-table th {
+          font-size: 16px;
+        }
+
         .requests-table td {
           color: var(--text);
         }
