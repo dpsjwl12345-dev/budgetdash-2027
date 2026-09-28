@@ -640,12 +640,11 @@ export default function CouncilMemberRequests() {
           <table className="requests-table">
             <colgroup>
               <col className="col-num" />
-              {showCouncilFields && <col className="col-district" />}
-              {showCouncilFields && <col className="col-party" />}
               <col className="col-member" />
               {showCouncilFields && <col className="col-committee" />}
-              <col className="col-dept" />
+              {showCouncilFields && <col className="col-party" />}
               <col className="col-content" />
+              <col className="col-dept" />
               <col className="col-budget-item" />
               <col className="col-amount" />
               <col className="col-status" />
@@ -654,12 +653,11 @@ export default function CouncilMemberRequests() {
             <thead>
               <tr>
                 <th className="col-num">번호</th>
-                {showCouncilFields && <th>선거구</th>}
-                {showCouncilFields && <th>소속 정당명</th>}
                 <th>이름</th>
                 {showCouncilFields && <th>위원회</th>}
-                <th>소관부서</th>
+                {showCouncilFields && <th>소속 정당명(선거구)</th>}
                 <th>요구내용</th>
+                <th>소관부서</th>
                 <th>사업명 (세부사업+부기명)</th>
                 <th>요구액</th>
                 <th>반영여부</th>
@@ -675,24 +673,6 @@ export default function CouncilMemberRequests() {
                       <td className="col-num">{index + 1}</td>
                       {isEditing ? (
                         <>
-                          {showCouncilFields && (
-                          <td>
-                            <input
-                              className="cell-input"
-                              value={editDraft.electoralDistrict}
-                              onChange={(e) => setEditDraft({ ...editDraft, electoralDistrict: e.target.value })}
-                            />
-                          </td>
-                          )}
-                          {showCouncilFields && (
-                          <td>
-                            <input
-                              className="cell-input"
-                              value={editDraft.partyName}
-                              onChange={(e) => setEditDraft({ ...editDraft, partyName: e.target.value })}
-                            />
-                          </td>
-                          )}
                           <td>
                             <input
                               className="cell-input"
@@ -710,6 +690,29 @@ export default function CouncilMemberRequests() {
                             />
                           </td>
                           )}
+                          {showCouncilFields && (
+                          <td>
+                            <input
+                              className="cell-input"
+                              placeholder="소속 정당명"
+                              value={editDraft.partyName}
+                              onChange={(e) => setEditDraft({ ...editDraft, partyName: e.target.value })}
+                            />
+                            <input
+                              className="cell-input"
+                              placeholder="선거구"
+                              value={editDraft.electoralDistrict}
+                              onChange={(e) => setEditDraft({ ...editDraft, electoralDistrict: e.target.value })}
+                            />
+                          </td>
+                          )}
+                          <td>
+                            <textarea
+                              className="cell-input cell-textarea"
+                              value={editDraft.content}
+                              onChange={(e) => setEditDraft({ ...editDraft, content: e.target.value })}
+                            />
+                          </td>
                           <td>
                             <select
                               className="cell-input"
@@ -720,13 +723,6 @@ export default function CouncilMemberRequests() {
                                 <option key={dept} value={dept}>{dept}</option>
                               ))}
                             </select>
-                          </td>
-                          <td>
-                            <textarea
-                              className="cell-input cell-textarea"
-                              value={editDraft.content}
-                              onChange={(e) => setEditDraft({ ...editDraft, content: e.target.value })}
-                            />
                           </td>
                           <td>
                             <input
@@ -745,12 +741,16 @@ export default function CouncilMemberRequests() {
                         </>
                       ) : (
                         <>
-                          {showCouncilFields && <td>{item.electoralDistrict}</td>}
-                          {showCouncilFields && <td>{item.partyName}</td>}
                           <td className="col-member">{item.memberName}</td>
                           {showCouncilFields && <td>{item.committee}</td>}
-                          <td>{item.department}</td>
+                          {showCouncilFields && (
+                          <td>
+                            {item.partyName}
+                            {item.electoralDistrict && <><br />({item.electoralDistrict})</>}
+                          </td>
+                          )}
                           <td className="col-content">{item.content}</td>
+                          <td>{item.department}</td>
                           <td>{item.budgetItemName}</td>
                           <td className="col-amount">{item.requestedAmount}</td>
                         </>
@@ -794,7 +794,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={showCouncilFields ? 11 : 8} className="empty-row">{emptyText}</td>
+                  <td colSpan={showCouncilFields ? 10 : 8} className="empty-row">{emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -1371,16 +1371,19 @@ export default function CouncilMemberRequests() {
         }
 
         col.col-num { width: 4%; }
-        col.col-district { width: 8%; }
         col.col-party { width: 8%; }
-        col.col-member { width: 6%; }
         col.col-committee { width: 9%; }
-        col.col-dept { width: 7%; }
         col.col-content { width: 24%; }
-        col.col-budget-item { width: 12%; }
-        col.col-amount { width: 7%; }
         col.col-status { width: 7%; }
         col.col-action { width: 8%; }
+        /* 시의원 이름·소관부서·사업명·요구액 - 나머지 칸과 구분되는 배경색 */
+        col.col-member, col.col-dept, col.col-budget-item, col.col-amount {
+          background-color: rgba(91, 155, 240, 0.08);
+        }
+        col.col-member { width: 6%; }
+        col.col-dept { width: 7%; }
+        col.col-budget-item { width: 12%; }
+        col.col-amount { width: 7%; }
 
         .col-num {
           text-align: center;
