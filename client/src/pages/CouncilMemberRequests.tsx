@@ -741,7 +741,7 @@ export default function CouncilMemberRequests() {
                         <>
                           <td className="col-member">
                             {item.memberName}
-                            {showCouncilFields && item.committee && `(${item.committee})`}
+                            {showCouncilFields && item.committee && <><br />({item.committee})</>}
                           </td>
                           {showCouncilFields && (
                           <td className="col-party">
