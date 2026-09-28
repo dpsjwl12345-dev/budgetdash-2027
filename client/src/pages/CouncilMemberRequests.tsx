@@ -1721,7 +1721,10 @@ export default function CouncilMemberRequests() {
         col.col-amount { width: 7%; }
 
         /* 민선9기공약 전용 표 열 너비 */
-        .pledge-table col.col-pledge-name { width: 12%; }
+        .pledge-table col.col-pledge-name {
+          width: 12%;
+          background-color: rgba(126, 231, 187, 0.12);
+        }
         .pledge-table col.col-pledge-subject { width: 6%; }
         .pledge-table col.col-pledge-new { width: 5%; }
         .pledge-table col.col-pledge-content { width: 12%; }
