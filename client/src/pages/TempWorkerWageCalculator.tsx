@@ -249,26 +249,48 @@ export default function TempWorkerWageCalculator() {
               </div>
 
               <div className="calc-reference">
-              <h4>참고 - 4대 보험료(기관 부담금) 요율</h4>
+              <h4>참고 - 4대 보험료 개별 항목(기관 부담) 요율</h4>
               <table className="content-table">
                 <thead>
                   <tr>
                     <th>구분</th>
-                    <th>요율</th>
+                    <th>기관 부담 요율</th>
+                    <th>비고</th>
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className={insuranceRate === 11.75 ? "calc-tier-active" : ""}>
-                    <td>국민연금 4.75% 적용</td>
-                    <td>11.75%</td>
+                  <tr>
+                    <td>국민연금</td>
+                    <td>5.0%</td>
+                    <td>2027년 확정 (9.5%→10.0%, 노사 각 5.0%)</td>
                   </tr>
-                  <tr className={insuranceRate === 12 ? "calc-tier-active" : ""}>
-                    <td>국민연금 5% 적용 (인상분 반영)</td>
-                    <td>12%</td>
+                  <tr>
+                    <td>건강보험</td>
+                    <td>3.595%</td>
+                    <td>2027년 확정 (7.19% 동결)</td>
+                  </tr>
+                  <tr>
+                    <td>장기요양보험료</td>
+                    <td>미정</td>
+                    <td>2027년분 10월 이후 결정 (2026년 0.9448% 참고)</td>
+                  </tr>
+                  <tr>
+                    <td>고용보험(실업급여)</td>
+                    <td>1.0%</td>
+                    <td>2027년 시행 예정 (1.8%→2.0%, 노사 각 1.0%, 정부안·입법 진행중)</td>
+                  </tr>
+                  <tr>
+                    <td>산재보험</td>
+                    <td>업종별 상이</td>
+                    <td>2027년분 12월경 고시 예정 (2026년 평균 1.47% 참고)</td>
                   </tr>
                 </tbody>
               </table>
-                <p className="calc-footnote">국민연금 사업주 부담 비율 인상(4.75%→5%) 반영 여부에 따라 선택합니다.</p>
+                <p className="calc-footnote">
+                  위 요율 중 국민연금·건강보험은 2027년 기준으로 확정되었고, 장기요양보험료·고용보험(고용안정·직업능력개발사업분 별도)·산재보험은
+                  아직 미정이거나 입법 절차가 진행 중입니다. 좌측 "4대 보험료(기관 부담금) 요율" 입력의 12%/11.75%는 이 개별 항목들을
+                  합산한 참고용 총 부담률이며, 확정되는 대로 갱신이 필요합니다.
+                </p>
               </div>
             </div>
           </div>
