@@ -82,6 +82,8 @@ export default function Layout({
         return "세출 통계목별 상세";
       case "/formula-overview":
         return "산출식(함수) 전체 목록";
+      case "/temp-worker-wage-calculator":
+        return "인건비 계산기";
       case "/department-key-issues":
         return "부서별 주요 쟁점사항";
       case "/local-bonds":
