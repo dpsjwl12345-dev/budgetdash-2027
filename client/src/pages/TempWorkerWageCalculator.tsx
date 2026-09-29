@@ -492,7 +492,7 @@ export default function TempWorkerWageCalculator() {
 
         .calc-reference h4 {
           margin: 0 0 12px 0;
-          font-size: 14px;
+          font-size: 13px;
           color: var(--text);
         }
 
@@ -507,6 +507,7 @@ export default function TempWorkerWageCalculator() {
           padding: 10px;
           border: 1px solid var(--border);
           text-align: center;
+          font-size: 14px;
         }
 
         .calc-reference .content-table th {
@@ -525,7 +526,7 @@ export default function TempWorkerWageCalculator() {
 
         .calc-footnote {
           margin-top: 10px;
-          font-size: 12.5px;
+          font-size: 11.5px;
           color: var(--text-muted);
         }
       `}</style>
