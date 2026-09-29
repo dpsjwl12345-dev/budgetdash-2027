@@ -86,7 +86,7 @@ export default function TempWorkerWageCalculator() {
     <Layout>
       <div className="page-content">
         <section className="page-heading">
-          <h1>기간제 인건비 계산기</h1>
+          <h1 className="calc-title">기간제 인건비 계산기</h1>
         </section>
 
         <section className="guide-section">
@@ -182,9 +182,8 @@ export default function TempWorkerWageCalculator() {
 
               <div className="calc-output">
               <div className="calc-result">
-                <h3>인건비 내역</h3>
                 <div className="calc-result-row total calc-result-total-top">
-                  <span>총 인건비</span>
+                  <span>총인건비</span>
                   <strong>{won(result.total)}</strong>
                 </div>
                 <div className="calc-result-row">
@@ -288,10 +287,14 @@ export default function TempWorkerWageCalculator() {
           gap: 18px 24px;
         }
 
+        .calc-title {
+          color: #d9ad52;
+        }
+
         .calc-inputs-amount {
           grid-template-columns: repeat(3, minmax(0, 1fr));
-          background: rgba(118, 157, 194, 0.07);
-          border: 1px solid rgba(118, 157, 194, 0.22);
+          background: rgba(217, 173, 82, 0.14);
+          border: 1px solid rgba(217, 173, 82, 0.4);
           border-radius: 8px;
           padding: 18px 20px;
         }
@@ -387,12 +390,6 @@ export default function TempWorkerWageCalculator() {
           border-bottom: 1px solid var(--border);
         }
 
-        .calc-result h3 {
-          margin: 0 0 16px 0;
-          font-size: 15px;
-          color: var(--text);
-        }
-
         .calc-result-row {
           display: flex;
           justify-content: space-between;
@@ -409,7 +406,7 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-result-sub {
-          font-size: 12px;
+          font-size: 14px;
           color: var(--text-muted);
           margin-top: -6px;
           padding-bottom: 4px;
@@ -443,6 +440,29 @@ export default function TempWorkerWageCalculator() {
           margin: 0 0 12px 0;
           font-size: 14px;
           color: var(--text);
+        }
+
+        .calc-reference .content-table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 1px solid var(--border);
+        }
+
+        .calc-reference .content-table th,
+        .calc-reference .content-table td {
+          padding: 10px;
+          border: 1px solid var(--border);
+          text-align: center;
+        }
+
+        .calc-reference .content-table th {
+          background: rgba(118, 157, 194, 0.1);
+          color: var(--text);
+          font-weight: 600;
+        }
+
+        .calc-reference .content-table td {
+          color: var(--text-muted);
         }
 
         .calc-tier-active {
