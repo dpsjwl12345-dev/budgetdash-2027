@@ -1146,6 +1146,20 @@ select option {
 .execution-filter-bar .execution-filter-segment > button.is-selected[aria-expanded="true"] {
   background: rgba(91, 155, 240, 0.3) !important;
 }
+.execution-filter-bar .execution-filter-segment.is-wide > button {
+  min-width: 360px;
+  max-width: 520px;
+}
+.execution-filter-segment.is-wide .dropdown-menu {
+  right: auto;
+  min-width: 100%;
+  width: max-content;
+  max-width: min(720px, 90vw);
+}
+.execution-filter-segment.is-wide .option-text {
+  white-space: normal;
+  overflow: visible;
+}
 .unit-note {
   display: inline-flex;
   align-items: center;

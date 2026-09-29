@@ -62,6 +62,7 @@ function ExecutionFilterDropdown({
   onChange,
   placeholder,
   clearable = true,
+  wide = false,
 }: {
   label: string;
   value: string;
@@ -69,6 +70,8 @@ function ExecutionFilterDropdown({
   onChange: (value: string) => void;
   placeholder: string;
   clearable?: boolean;
+  // 세부사업명처럼 긴 항목은 버튼·목록을 넓혀 이름 전체가 보이게 한다.
+  wide?: boolean;
 }) {
   const [open, setOpen] = useState(false);
   const containerRef = useRef<HTMLDivElement>(null);
@@ -92,7 +95,7 @@ function ExecutionFilterDropdown({
   const current = options.find((option) => option.value === value);
 
   return (
-    <div className="execution-filter-segment" ref={containerRef}>
+    <div className={`execution-filter-segment${wide ? " is-wide" : ""}`} ref={containerRef}>
       <button
         type="button"
         aria-haspopup="listbox"
@@ -718,6 +721,7 @@ export default function BudgetExecution2026() {
                   options={programNames.map((prog) => ({ value: prog, label: prog }))}
                   onChange={setSelectedProgramName}
                   placeholder="세부사업명 선택"
+                  wide
                 />
               </div>
             </div>
