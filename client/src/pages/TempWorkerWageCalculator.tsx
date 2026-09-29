@@ -247,6 +247,29 @@ export default function TempWorkerWageCalculator() {
               </table>
                 <p className="calc-footnote">1개월 미만은 근무기간을 고려해 일할계산합니다. (자세한 산출식·직종별 단가는 "세출 통계목별 상세 &gt; 인건비(100) &gt; 101-04" 탭 참고)</p>
               </div>
+
+              <div className="calc-reference">
+              <h4>참고 - 4대 보험료(기관 부담금) 요율</h4>
+              <table className="content-table">
+                <thead>
+                  <tr>
+                    <th>구분</th>
+                    <th>요율</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  <tr className={insuranceRate === 11.75 ? "calc-tier-active" : ""}>
+                    <td>국민연금 4.75% 적용</td>
+                    <td>11.75%</td>
+                  </tr>
+                  <tr className={insuranceRate === 12 ? "calc-tier-active" : ""}>
+                    <td>국민연금 5% 적용 (인상분 반영)</td>
+                    <td>12%</td>
+                  </tr>
+                </tbody>
+              </table>
+                <p className="calc-footnote">국민연금 사업주 부담 비율 인상(4.75%→5%) 반영 여부에 따라 선택합니다.</p>
+              </div>
             </div>
           </div>
           </div>
@@ -366,12 +389,18 @@ export default function TempWorkerWageCalculator() {
         /* 결과 박스와 공정수당 참고표를 가로로 나란히 둔다. */
         .calc-output {
           display: grid;
-          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
           gap: 24px;
           align-items: start;
         }
 
-        @media (max-width: 1100px) {
+        @media (max-width: 1400px) {
+          .calc-output {
+            grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+          }
+        }
+
+        @media (max-width: 900px) {
           .calc-output {
             grid-template-columns: minmax(0, 1fr);
           }
@@ -395,7 +424,7 @@ export default function TempWorkerWageCalculator() {
           justify-content: space-between;
           align-items: baseline;
           padding: 8px 0;
-          font-size: 14px;
+          font-size: 16px;
           color: var(--text);
         }
 
@@ -406,7 +435,7 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-result-sub {
-          font-size: 14px;
+          font-size: 16px;
           color: var(--text-muted);
           margin-top: -6px;
           padding-bottom: 4px;
@@ -433,7 +462,10 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-reference {
-          margin-top: 32px;
+          background: rgba(118, 157, 194, 0.07);
+          border: 1px solid rgba(118, 157, 194, 0.22);
+          border-radius: 8px;
+          padding: 24px;
         }
 
         .calc-reference h4 {
