@@ -94,7 +94,7 @@ export default function TempWorkerWageCalculator() {
             <div className="calc-layout">
               <div className="calc-inputs">
                 <div className="calc-field">
-                  <label>직종 (화성시 생활임금 기준 - 빠른 채우기)</label>
+                  <label>직종 (화성시 생활임금 기준)</label>
                   <select
                     value={jobKey}
                     onChange={(e) => {
@@ -428,7 +428,7 @@ export default function TempWorkerWageCalculator() {
 
         /* 총 인건비 금액은 눈에 바로 들어오게 색을 달리 한다. */
         .calc-result-total-top strong {
-          color: #a4c0dd;
+          color: #f0c94d;
           font-size: 20px;
         }
 
