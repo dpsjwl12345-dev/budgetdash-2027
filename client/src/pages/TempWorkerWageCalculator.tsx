@@ -413,7 +413,7 @@ export default function TempWorkerWageCalculator() {
           display: grid;
           grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1fr);
           gap: 24px;
-          align-items: start;
+          align-items: stretch;
         }
 
         @media (max-width: 1400px) {
