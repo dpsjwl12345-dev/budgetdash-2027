@@ -15,15 +15,20 @@ type BudgetExecution = {
   id: number;
   year?: string;
   department: string;
-  policyName: string;
-  programName: string;
+  // 정책사업명·단위사업명·예비비는 예전 업로드 양식에만 있던 값이라 선택 항목으로 남겨둔다.
+  policyName?: string;
+  programName?: string;
   unitName: string;
   statisticsCode: string;
+  formedAmount: number;
   original: number;
   supplementary: number;
   preEstablishment: number;
-  reserve: number;
+  reserve?: number;
   carryover: number;
+  carryoverExplicit: number;
+  carryoverAccident: number;
+  carryoverContinuing: number;
   budget: number;
   executed: number;
   executionRate: number;
@@ -132,20 +137,54 @@ function ExecutionFilterDropdown({
 }
 
 const EXECUTION_COLUMNS = [
-  ["policyName", 85],
-  ["programName", 85],
-  ["unitName", 145],
+  ["department", 90],
+  ["unitName", 170],
   ["statisticsCode", 140],
   ["budget", 82],
   ["formedAmount", 82],
   ["original", 82],
   ["supplementary", 78],
   ["preEstablishment", 78],
-  ["reserve", 78],
   ["carryover", 82],
+  ["carryoverExplicit", 78],
+  ["carryoverAccident", 78],
+  ["carryoverContinuing", 78],
   ["executed", 82],
   ["executionRate", 74],
 ] as const;
+
+// 금액 열: [필드, 제목, 제목 색]. 표 머리·합계·본문을 이 목록 하나로 그린다.
+const AMOUNT_COLUMNS = [
+  ["budget", "예산현액", "#d9ad52"],
+  ["formedAmount", "편성액", "#d9ad52"],
+  ["original", "본예산", "#d9ad52"],
+  ["supplementary", "추경", "#d9ad52"],
+  ["preEstablishment", "성립전", "var(--text)"],
+  ["carryover", "이월액 계", "var(--text)"],
+  ["carryoverExplicit", "명시", "var(--text)"],
+  ["carryoverAccident", "사고", "var(--text)"],
+  ["carryoverContinuing", "계속비", "var(--text)"],
+  ["executed", "집행액", "#4fc3a1"],
+] as const;
+
+type AmountKey = (typeof AMOUNT_COLUMNS)[number][0];
+
+// 업로드 엑셀 머리글(한 줄). 공백을 뺀 뒤 아래 이름 중 하나와 맞으면 그 열로 읽는다.
+const UPLOAD_HEADERS: Record<"department" | "unitName" | "statisticsCode" | AmountKey, string[]> = {
+  department: ["부서명", "부서"],
+  unitName: ["세부사업명", "세부사업"],
+  statisticsCode: ["통계목"],
+  budget: ["예산현액"],
+  formedAmount: ["편성액"],
+  original: ["본예산"],
+  supplementary: ["추경"],
+  preEstablishment: ["성립전"],
+  carryover: ["이월액계", "이월액", "이월계", "계"],
+  carryoverExplicit: ["명시", "명시이월", "명시이월액"],
+  carryoverAccident: ["사고", "사고이월", "사고이월액"],
+  carryoverContinuing: ["계속비", "계속비이월", "계속비이월액"],
+  executed: ["집행액"],
+};
 
 function ExecutionBar({ rate }: { rate: number }) {
   return (
@@ -375,6 +414,10 @@ export default function BudgetExecution2026() {
           preEstablishment: row.preEstablishment ?? row.pre_establishment,
           reserve: row.reserve,
           carryover: row.carryover,
+          carryoverExplicit: row.carryoverExplicit ?? 0,
+          carryoverAccident: row.carryoverAccident ?? 0,
+          carryoverContinuing: row.carryoverContinuing ?? 0,
+          formedAmount: row.formedAmount || (row.original ?? 0) + (row.supplementary ?? 0) + (row.preEstablishment ?? 0),
           budget: row.budget,
           executed: row.executed,
           executionRate: row.executionRate ?? row.execution_rate,
@@ -400,28 +443,50 @@ export default function BudgetExecution2026() {
       };
       const parseText = (value: unknown): string => (value == null ? "" : String(value));
 
+      // 머리글 공백 차이("이월액 계"/"이월액계")를 흡수해서 열을 찾는다.
+      const headerOf = (record: Record<string, unknown>) =>
+        new Map(Object.keys(record).map((key) => [key.replace(/\s/g, ""), key] as const));
+      const pick = (record: Record<string, unknown>, headers: Map<string, string>, field: keyof typeof UPLOAD_HEADERS) => {
+        const key = UPLOAD_HEADERS[field].map((name) => headers.get(name)).find(Boolean);
+        return key ? record[key] : undefined;
+      };
+
+      const firstHeaders = imported.length ? headerOf(imported[0]) : new Map<string, string>();
+      const missing = (["department", "unitName", "statisticsCode", "budget", "executed"] as const)
+        .filter((field) => pick(imported[0] ?? {}, firstHeaders, field) === undefined)
+        .map((field) => UPLOAD_HEADERS[field][0]);
+      if (missing.length) {
+        showToast(`엑셀 머리글에 ${missing.join(", ")} 열이 없습니다`);
+        return;
+      }
+
       const nextData: BudgetExecution[] = imported
         .map((record, index) => {
-          const budgetAmount = parseNumber(record["예산현액"]);
-          const executedAmount = parseNumber(record["집행액"]);
+          const amount = (field: AmountKey) => parseNumber(pick(record, firstHeaders, field));
+          const budgetAmount = amount("budget");
+          const executedAmount = amount("executed");
+          const original = amount("original");
+          const supplementary = amount("supplementary");
+          const preEstablishment = amount("preEstablishment");
 
           return {
             id: Date.now() + index,
             year: selectedYear,
-            department: parseText(record["부서명"]) || "미분류",
-            policyName: parseText(record["정책사업명"]),
-            programName: parseText(record["단위사업명"]),
-            unitName: parseText(record["세부사업명"]),
+            department: parseText(pick(record, firstHeaders, "department")) || "미분류",
+            unitName: parseText(pick(record, firstHeaders, "unitName")),
             statisticsCode: (() => {
-              const raw = parseText(record["통계목"]);
+              const raw = parseText(pick(record, firstHeaders, "statisticsCode"));
               // 엑셀에서 "05" 같은 코드가 숫자로 읽히면 앞자리 0이 사라지므로 2자리로 복원한다.
               return /^\d+$/.test(raw) ? raw.padStart(2, "0") : raw;
             })(),
-            original: parseNumber(record["본예산"]),
-            supplementary: parseNumber(record["추경"]),
-            preEstablishment: parseNumber(record["성립전"]),
-            reserve: parseNumber(record["예비비"]),
-            carryover: parseNumber(record["이월액계"]),
+            formedAmount: amount("formedAmount") || original + supplementary + preEstablishment,
+            original,
+            supplementary,
+            preEstablishment,
+            carryover: amount("carryover"),
+            carryoverExplicit: amount("carryoverExplicit"),
+            carryoverAccident: amount("carryoverAccident"),
+            carryoverContinuing: amount("carryoverContinuing"),
             budget: budgetAmount,
             executed: executedAmount,
             executionRate: budgetAmount > 0 ? (executedAmount / budgetAmount) * 100 : 0,
@@ -458,10 +523,13 @@ export default function BudgetExecution2026() {
         const response = await fetch(`/api/budget-execution-${selectedYear}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ data: merged }),
+          // 연도별 테이블에 저장하므로 선택한 연도 행만 보낸다.
+          body: JSON.stringify({ data: merged.filter((row) => String(row.year ?? selectedYear) === selectedYear) }),
         });
-        if (!response.ok) {
-          showToast('저장에 실패했습니다 (로컬에만 저장됨)');
+        // 저장 API는 DB 거부도 200으로 돌려주므로 success 값까지 확인한다.
+        const result = response.ok ? await response.json().catch(() => null) : null;
+        if (!result?.success) {
+          showToast(`저장에 실패했습니다 (이 브라우저에만 저장됨)${result?.error ? `: ${result.error}` : ''}`);
         } else {
           showToast(`${selectedYear}년 ${nextData.length}개 데이터를 교체 저장했습니다.`);
         }
@@ -530,11 +598,11 @@ export default function BudgetExecution2026() {
   const filteredData = useMemo(() => {
     let filtered = data.filter((row) => {
       const matchesYear = String(row.year ?? selectedYear) === selectedYear;
-      const matchesSearch = row.department.toLowerCase().includes(search.toLowerCase()) ||
-                           row.policyName.toLowerCase().includes(search.toLowerCase()) ||
-                           row.programName.toLowerCase().includes(search.toLowerCase());
+      const keyword = search.toLowerCase();
+      const matchesSearch = [row.department, row.unitName, row.statisticsCode]
+        .some((text) => (text ?? "").toLowerCase().includes(keyword));
       const matchesDepartment = selectedDepartment === "" || selectedDepartment === "전체" || row.department === selectedDepartment;
-      const matchesProgramName = selectedProgramName === "" || selectedProgramName === "전체" || row.programName === selectedProgramName;
+      const matchesProgramName = selectedProgramName === "" || selectedProgramName === "전체" || row.unitName === selectedProgramName;
       return matchesYear && matchesSearch && matchesDepartment && matchesProgramName;
     });
 
@@ -554,18 +622,11 @@ export default function BudgetExecution2026() {
   }, [data, search, sortBy, selectedDepartment, selectedProgramName, selectedYear]);
 
   const filteredTotals = useMemo(() => {
-    return filteredData.reduce(
-      (sum, row) => ({
-        budget: sum.budget + row.budget,
-        original: sum.original + row.original,
-        supplementary: sum.supplementary + row.supplementary,
-        preEstablishment: sum.preEstablishment + row.preEstablishment,
-        reserve: sum.reserve + row.reserve,
-        carryover: sum.carryover + row.carryover,
-        executed: sum.executed + row.executed,
-      }),
-      { budget: 0, original: 0, supplementary: 0, preEstablishment: 0, reserve: 0, carryover: 0, executed: 0 }
-    );
+    const totals = Object.fromEntries(AMOUNT_COLUMNS.map(([key]) => [key, 0])) as Record<AmountKey, number>;
+    for (const row of filteredData) {
+      for (const [key] of AMOUNT_COLUMNS) totals[key] += row[key] ?? 0;
+    }
+    return totals;
   }, [filteredData]);
 
   const departments = useMemo(() => {
@@ -576,7 +637,7 @@ export default function BudgetExecution2026() {
   const programNames = useMemo(() => {
     const dept = selectedDepartment && selectedDepartment !== "전체" ? selectedDepartment : null;
     const filtered = dept ? data.filter(row => row.department === dept) : data;
-    const unique = Array.from(new Set(filtered.map(row => row.programName).filter(Boolean)));
+    const unique = Array.from(new Set(filtered.map(row => row.unitName).filter(Boolean)));
     return unique.sort();
   }, [data, selectedDepartment]);
 
@@ -679,7 +740,7 @@ export default function BudgetExecution2026() {
           </div>
 
           <div className="table-scroll">
-            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1173px' }}>
+            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1274px' }}>
               <colgroup>
                 {EXECUTION_COLUMNS.map(([key, fallback]) => (
                   <col key={key} style={{ width: `${colWidth(key, fallback)}px` }} />
@@ -687,53 +748,37 @@ export default function BudgetExecution2026() {
               </colgroup>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>정책사업명{renderResizeHandle("policyName", 85)}</th>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>단위사업명{renderResizeHandle("programName", 85)}</th>
-                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업명{renderResizeHandle("unitName", 145)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>부서명{renderResizeHandle("department", 90)}</th>
+                  <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>세부사업명{renderResizeHandle("unitName", 170)}</th>
                   <th style={{ position: 'relative', textAlign: 'left', padding: '12px 8px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>통계목{renderResizeHandle("statisticsCode", 140)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>예산현액{renderResizeHandle("budget", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>편성액{renderResizeHandle("formedAmount", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>본예산{renderResizeHandle("original", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#d9ad52', fontSize: '15px' }}>추경{renderResizeHandle("supplementary", 78)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>성립전{renderResizeHandle("preEstablishment", 78)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>예비비{renderResizeHandle("reserve", 78)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: 'var(--text)', fontSize: '15px' }}>이월액계{renderResizeHandle("carryover", 82)}</th>
-                  <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#4fc3a1', fontSize: '15px' }}>집행액{renderResizeHandle("executed", 82)}</th>
+                  {AMOUNT_COLUMNS.map(([key, label, color]) => (
+                    <th key={key} style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color, fontSize: '15px' }}>
+                      {label}{renderResizeHandle(key, EXECUTION_COLUMNS.find(([colKey]) => colKey === key)?.[1] ?? 82)}
+                    </th>
+                  ))}
                   <th style={{ position: 'relative', textAlign: 'right', padding: '12px 6px', fontWeight: '600', color: '#4fc3a1', fontSize: '15px' }}>집행률{renderResizeHandle("executionRate", 74)}</th>
                 </tr>
               </thead>
               <tbody>
                 {paginatedData.length > 0 && (
                   <tr key="total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
-                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#5b9bf0' }}></td>
-                    <td style={{ padding: '12px 8px', fontSize: '13px', color: '#5b9bf0' }}></td>
                     <td style={{ textAlign: 'left', padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}>합계</td>
                     <td style={{ padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}></td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.budget)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.original + filteredTotals.supplementary + filteredTotals.preEstablishment)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.original)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.supplementary)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(filteredTotals.preEstablishment)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(filteredTotals.reserve)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(filteredTotals.carryover)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(filteredTotals.executed)}</td>
+                    <td style={{ padding: '12px 8px', fontSize: '14px', color: '#5b9bf0' }}></td>
+                    {AMOUNT_COLUMNS.map(([key]) => (
+                      <td key={key} style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', overflow: 'hidden', textOverflow: 'ellipsis' }}>{formatAmount(filteredTotals[key])}</td>
+                    ))}
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums' }}>{filteredTotals.budget > 0 ? ((filteredTotals.executed / filteredTotals.budget) * 100).toFixed(1) : '0.0'}%</td>
                   </tr>
                 )}
                 {paginatedData.map((row) => (
                   <tr key={row.id} className="budget-row">
-                    <td title={row.policyName} style={{ padding: '12px 8px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.policyName}</td>
-                    <td title={row.programName} style={{ padding: '12px 8px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.programName}</td>
+                    <td title={row.department} style={{ padding: '12px 8px', fontSize: '12px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.department}</td>
                     <td title={row.unitName} style={{ padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.unitName}</td>
                     <td title={row.statisticsCode} style={{ textAlign: 'left', padding: '12px 8px', fontSize: '13px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{row.statisticsCode}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.budget)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.original + row.supplementary + row.preEstablishment)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.original)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.supplementary)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.preEstablishment)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.reserve)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.carryover)}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row.executed)}</td>
+                    {AMOUNT_COLUMNS.map(([key]) => (
+                      <td key={key} style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{formatAmount(row[key] ?? 0)}</td>
+                    ))}
                     <td style={{ textAlign: 'right', padding: '12px 6px', fontSize: '13px', fontVariantNumeric: 'tabular-nums' }}>{row.executionRate.toFixed(1)}%</td>
                   </tr>
                 ))}
