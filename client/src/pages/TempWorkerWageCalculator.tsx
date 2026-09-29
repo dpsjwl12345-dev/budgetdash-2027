@@ -182,9 +182,8 @@ export default function TempWorkerWageCalculator() {
 
               <div className="calc-output">
               <div className="calc-result">
-                <h3>인건비 내역</h3>
                 <div className="calc-result-row total calc-result-total-top">
-                  <span>총 인건비</span>
+                  <span>총인건비</span>
                   <strong>{won(result.total)}</strong>
                 </div>
                 <div className="calc-result-row">
@@ -389,12 +388,6 @@ export default function TempWorkerWageCalculator() {
           margin-bottom: 8px;
           padding-bottom: 14px;
           border-bottom: 1px solid var(--border);
-        }
-
-        .calc-result h3 {
-          margin: 0 0 16px 0;
-          font-size: 15px;
-          color: var(--text);
         }
 
         .calc-result-row {
