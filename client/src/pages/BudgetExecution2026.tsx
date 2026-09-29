@@ -523,15 +523,17 @@ export default function BudgetExecution2026() {
         const response = await fetch(`/api/budget-execution-${selectedYear}/save`, {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          // 연도별 테이블에 저장하므로 선택한 연도 행만 보낸다.
-          body: JSON.stringify({ data: merged.filter((row) => String(row.year ?? selectedYear) === selectedYear) }),
+          // 이번 파일에 있는 부서 행만 보낸다. 서버는 그 부서만 교체하고 다른 부서는 그대로
+          // 두므로, 부서별 파일을 여러 번 올리면 누적된다(브라우저에 남은 예전 행은 올리지 않음).
+          body: JSON.stringify({ data: nextData }),
         });
         // 저장 API는 DB 거부도 200으로 돌려주므로 success 값까지 확인한다.
         const result = response.ok ? await response.json().catch(() => null) : null;
         if (!result?.success) {
           showToast(`저장에 실패했습니다 (이 브라우저에만 저장됨)${result?.error ? `: ${result.error}` : ''}`);
         } else {
-          showToast(`${selectedYear}년 ${nextData.length}개 데이터를 교체 저장했습니다.`);
+          showToast(`${Array.from(uploadedDepartments).join(", ")} ${nextData.length}건 저장 (다른 부서는 유지)`);
+          loadDataFromServer();
         }
       } catch (error) {
         console.warn('서버 저장 실패:', error);
