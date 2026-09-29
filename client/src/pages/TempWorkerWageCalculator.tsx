@@ -406,7 +406,7 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-result-sub {
-          font-size: 12px;
+          font-size: 14px;
           color: var(--text-muted);
           margin-top: -6px;
           padding-bottom: 4px;
@@ -440,6 +440,29 @@ export default function TempWorkerWageCalculator() {
           margin: 0 0 12px 0;
           font-size: 14px;
           color: var(--text);
+        }
+
+        .calc-reference .content-table {
+          width: 100%;
+          border-collapse: collapse;
+          border: 1px solid var(--border);
+        }
+
+        .calc-reference .content-table th,
+        .calc-reference .content-table td {
+          padding: 10px;
+          border: 1px solid var(--border);
+          text-align: center;
+        }
+
+        .calc-reference .content-table th {
+          background: rgba(118, 157, 194, 0.1);
+          color: var(--text);
+          font-weight: 600;
+        }
+
+        .calc-reference .content-table td {
+          color: var(--text-muted);
         }
 
         .calc-tier-active {
