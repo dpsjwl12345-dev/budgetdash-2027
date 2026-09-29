@@ -821,6 +821,7 @@ export default function BudgetExecution2026() {
                   options={detailPrograms.map((prog) => ({ value: prog, label: prog }))}
                   onChange={(value) => { setDetailProgramFilter(value); setDetailStatisticsFilter(""); setDetailPage(1); }}
                   placeholder="세부사업 선택"
+                  wide
                 />
                 <ExecutionFilterDropdown
                   label="통계목"
