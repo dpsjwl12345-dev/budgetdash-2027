@@ -249,7 +249,7 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .nav-item:hover { color: #ffffff; background: transparent; }
 .nav-item:hover svg { color: var(--ic, #dbe2e8); background: color-mix(in srgb, var(--ic, #cbd5e1) 26%, transparent); border-color: color-mix(in srgb, var(--ic, #cbd5e1) 50%, transparent); }
 .nav-item.active { color: #ffffff; background: rgba(203, 213, 225, 0.08); border-color: transparent; }
-.nav-item.active svg { color: #e6fffb; background: color-mix(in srgb, var(--ic, #cbd5e1) 45%, transparent); border: 1px solid color-mix(in srgb, var(--ic, #cbd5e1) 60%, transparent); }
+.nav-item.active svg { color: #e8f2ff; background: color-mix(in srgb, var(--ic, #cbd5e1) 45%, transparent); border: 1px solid color-mix(in srgb, var(--ic, #cbd5e1) 60%, transparent); }
 .nav-item.active:hover svg { background: color-mix(in srgb, var(--ic, #cbd5e1) 55%, transparent); }
 .nav-count { display: none; }
 .sidebar-bottom { margin-top: 80px; padding: 8px 10px 0; border-top: none; color: var(--text-faint); font-size: 12.5px; }
