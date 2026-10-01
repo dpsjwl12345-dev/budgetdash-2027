@@ -493,10 +493,10 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 
 /* "부서예산요구" 초기 화면(부서 미선택)에 뜨는 시 전체 세입세출 요구 현황 대시보드 */
 .citywide-overview { margin-top: 8px; }
-.citywide-overview__head { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; }
-.citywide-overview__title-row { display: flex; align-items: flex-end; gap: 16px; }
-.citywide-overview__title-row h1 { font-size: 35px; }
-.citywide-overview__slogan { flex: none; height: 85px; width: auto; }
+.citywide-overview__head { position: relative; display: flex; align-items: center; justify-content: center; gap: 20px; }
+.citywide-overview__title-row { display: flex; justify-content: center; }
+.citywide-overview__title-row h1 { font-size: 40px; white-space: nowrap; text-align: center; }
+.citywide-overview__slogan { position: absolute; right: 0; top: 50%; transform: translateY(-50%); flex: none; height: 85px; width: auto; }
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
    서로 무관해 보이는 박스 3개 대신 총계를 히어로 숫자로 세우고 그 총계가 어떤 회계로
    구성되는지 스택 막대로 곧바로 이어 보여준다. */
@@ -554,10 +554,15 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-hero-split-row { display: flex; align-items: center; gap: 8px; margin-top: 4px; flex-wrap: wrap; justify-content: center; }
 .cw-hero-split { display: inline-flex; align-items: center; padding: 5px 14px; border-radius: 999px; background: rgba(57, 135, 229, 0.16); color: #a7d2ff; font-size: 13px; font-weight: 400; white-space: nowrap; }
 .cw-hero-split--general { background: rgba(217, 173, 82, 0.18); color: #e8c47e; }
+.cw-flow-box { position: relative; }
+.cw-hero-card__head--corner { align-items: flex-end; margin: 6px 0 0 auto; text-align: right; }
+.cw-hero-card__head--corner .cw-structure-note { text-align: right; font-size: 13px; }
 .cw-structure-note { color: #6f8195; font-size: 14px; text-align: left; }
 
 @media (max-width: 960px) {
   .cw-main-grid { grid-template-columns: minmax(0, 1fr); }
+  .citywide-overview__slogan { display: none; }
+  .citywide-overview__title-row h1 { white-space: normal; font-size: 28px; }
   .cw-hero-box { max-width: none; }
   .cw-flow-box { flex: none; width: 100%; }
 }
