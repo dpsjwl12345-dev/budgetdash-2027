@@ -35,17 +35,17 @@ type ToolItem = {
 };
 
 const navItems: NavItem[] = [
-  { label: "시 전체 현황", icon: LayoutDashboard, path: "/", iconColor: "#2dd4bf" },
-  { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", iconColor: "#2dd4bf", count: "01" },
-  { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#2dd4bf" },
-  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#2dd4bf" },
+  { label: "시 전체 현황", icon: LayoutDashboard, path: "/", iconColor: "#60a5fa" },
+  { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", iconColor: "#60a5fa", count: "01" },
+  { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#60a5fa" },
+  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#60a5fa" },
 ];
 
 const toolItems: ToolItem[] = [
   {
     label: "예산 편성 가이드",
     icon: SlidersHorizontal,
-    iconColor: "#2dd4bf",
+    iconColor: "#60a5fa",
     subItems: [
       { label: "사전절차" },
       { label: "세출 통계목별 상세" },
@@ -53,10 +53,10 @@ const toolItems: ToolItem[] = [
       { label: "산출식(함수) 전체 목록" },
     ],
   },
-  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#2dd4bf" },
-  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests", iconColor: "#2dd4bf" },
-  { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#2dd4bf" },
-  { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues", iconColor: "#2dd4bf" },
+  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#60a5fa" },
+  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests", iconColor: "#60a5fa" },
+  { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#60a5fa" },
+  { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues", iconColor: "#60a5fa" },
 ];
 
 export default function Layout({
