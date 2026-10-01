@@ -213,13 +213,13 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   padding: 2px;
   border-radius: 15px;
   transition: 0.3s ease;
-  background: linear-gradient(to bottom right, #2e8eff 0%, rgba(46, 142, 255, 0) 30%);
-  background-color: rgba(46, 142, 255, 0.2);
+  background: linear-gradient(to bottom right, #f3dc8a 0%, rgba(243, 220, 138, 0) 30%);
+  background-color: rgba(243, 220, 138, 0.2);
 }
 .brand-lockup:hover,
 .brand-lockup:focus-visible {
-  background-color: rgba(46, 142, 255, 0.7);
-  box-shadow: 0 0 10px rgba(46, 142, 255, 0.5);
+  background-color: rgba(243, 220, 138, 0.6);
+  box-shadow: 0 0 10px rgba(243, 220, 138, 0.4);
   outline: none;
 }
 /* 접힌 사이드바에서는 제목이 숨겨지므로 빈 테두리 박스가 남지 않게 프레임을 끈다. */
@@ -237,14 +237,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 }
 .sidebar-title span:first-child {
   font-size: 22px;
-  color: #8a9bb0;
+  color: #e6d9a6;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.2;
 }
 .sidebar-title span:last-child {
   font-size: 22px;
-  color: #ffffff;
+  color: #fff6d6;
   font-weight: 750;
   letter-spacing: -0.03em;
   line-height: 1.2;
