@@ -500,7 +500,9 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
    서로 무관해 보이는 박스 3개 대신 총계를 히어로 숫자로 세우고 그 총계가 어떤 회계로
    구성되는지 스택 막대로 곧바로 이어 보여준다. */
-.cw-hero-section { display: flex; align-items: stretch; gap: 16px; margin-top: 6px; }
+.cw-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 6px; }
+.cw-hero-section { display: flex; flex-direction: column; align-items: stretch; gap: 12px; height: 100%; }
+.cw-hero-section > .cw-hero-box, .cw-hero-section > .cw-flow-box { flex: 1; justify-content: center; }
 
 /* 세입-세출 박스 옆 빈 공간에 놓는 개별 박스(세출요구액/기금조성/조정액). 서로 합쳐진
    하나의 카드가 아니라 각각 독립된 박스라 hero-box와 같은 자체 테두리를 갖는다. */
@@ -511,7 +513,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* 세입요구 현황 - 증권 앱의 "보유 종목" 리스트 스타일을 참고한 카드. 배지·태그는 모두 같은
    톤(옅은 블루 틴트)으로 통일해 색이 제각각 튀지 않게 하고, 글자 크기도 제목/값 15~16px,
    보조정보(비고·증감·배지) 12~13px 두 단계로만 고정한다. */
-.cw-income-section { display: flex; align-items: flex-start; gap: 16px; margin-top: 14px; }
+.cw-income-section { display: flex; flex-direction: column; align-items: stretch; gap: 16px; }
 .cw-income-card { flex: 1; min-width: 0; border: 1px solid var(--line); border-radius: var(--radius-lg); background: rgba(140, 155, 170, 0.12); padding: 16px 22px; }
 .cw-income-head { display: flex; align-items: baseline; gap: 10px; flex-wrap: wrap; }
 .cw-income-title { color: #a8bcce; font-size: 28px; font-weight: 600; }
@@ -549,10 +551,9 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .cw-structure-note { color: #6f8195; font-size: 14px; text-align: left; }
 
 @media (max-width: 960px) {
-  .cw-hero-section { flex-direction: column; }
+  .cw-main-grid { grid-template-columns: minmax(0, 1fr); }
   .cw-hero-box { max-width: none; }
   .cw-flow-box { flex: none; width: 100%; }
-  .cw-income-section { flex-direction: column; }
 }
 .table-heading { min-height: 78px; padding: 16px 19px 16px 30px; display: flex; align-items: center; justify-content: flex-start; gap: 16px; border-bottom: 1px solid var(--line); border-left: none !important; flex-wrap: wrap; }
 .table-title { display: flex; align-items: center; gap: 13px; border-left: none !important; }
