@@ -109,6 +109,8 @@ export default function CitywideBudgetOverview() {
                   <span className="cw-hero-split">특별 {fmtEok(special.revenue)}억원</span>
                 </div>
               </div>
+              <span className="cw-hero-equals cw-hero-equals--down">=</span>
+              <div className="cw-flow-row">
               <div className="cw-flow-box">
                 <span className="cw-hero-label">세출요구액</span>
                 <strong className="cw-hero-value">56,510<span className="cw-hero-unit">억원</span></strong>
@@ -121,6 +123,8 @@ export default function CitywideBudgetOverview() {
                 <span className="cw-hero-label">기금조성</span>
                 <strong className="cw-hero-value">9,500<span className="cw-hero-unit">억원</span></strong>
               </div>
+              </div>
+              <span className="cw-hero-equals cw-hero-equals--down">↓</span>
               <div className="cw-flow-box cw-flow-box--center">
                 <span className="cw-hero-label">조정액</span>
                 <strong className="cw-hero-value">4,500<span className="cw-hero-unit">억원 +α</span></strong>
