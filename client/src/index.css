@@ -244,13 +244,13 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .tools-label { margin-top: 15px; }
 .nav-list { display: grid; gap: 4px; }
 .nav-item { width: 100%; min-height: 42px; padding: 0 12px; display: flex; align-items: center; gap: 11px; border: 1px solid transparent; border-radius: 8px; background: transparent; color: #aaaaaa; text-align: left; font-size: 16px; font-weight: 560; transition: background 160ms cubic-bezier(0.23, 1, 0.32, 1), color 160ms cubic-bezier(0.23, 1, 0.32, 1), border-color 160ms cubic-bezier(0.23, 1, 0.32, 1); }
-.nav-item svg { color: var(--ic, #b7c2cf); background: color-mix(in srgb, var(--ic, #6478961f) 16%, transparent); padding: 10px; border-radius: 50%; border: 1px solid transparent; width: 40px; height: 40px; box-sizing: border-box; transition: all 200ms ease; stroke-width: 1.5px !important; flex-shrink: 0; }
+.nav-item svg { color: color-mix(in srgb, var(--ic, #b7c2cf) 80%, transparent); background: color-mix(in srgb, var(--ic, #6478961f) 14%, transparent); padding: 10px; border-radius: 50%; border: 1px solid transparent; width: 40px; height: 40px; box-sizing: border-box; transition: all 200ms ease; stroke-width: 1.5px !important; flex-shrink: 0; }
 .nav-item svg:last-child { background: none !important; padding: 0 !important; border: none !important; width: auto !important; height: auto !important; }
 .nav-item:hover { color: #ffffff; background: transparent; }
 .nav-item:hover svg { color: var(--ic, #dbe2e8); background: color-mix(in srgb, var(--ic, #cbd5e1) 26%, transparent); border-color: color-mix(in srgb, var(--ic, #cbd5e1) 50%, transparent); }
 .nav-item.active { color: #ffffff; background: rgba(203, 213, 225, 0.08); border-color: transparent; }
-.nav-item.active svg { color: #14181b; background: var(--ic, #cbd5e1); border: none; }
-.nav-item.active:hover svg { background: var(--ic, #cbd5e1); }
+.nav-item.active svg { color: #e6fffb; background: color-mix(in srgb, var(--ic, #cbd5e1) 45%, transparent); border: 1px solid color-mix(in srgb, var(--ic, #cbd5e1) 60%, transparent); }
+.nav-item.active:hover svg { background: color-mix(in srgb, var(--ic, #cbd5e1) 55%, transparent); }
 .nav-count { display: none; }
 .sidebar-bottom { margin-top: 80px; padding: 8px 10px 0; border-top: none; color: var(--text-faint); font-size: 12.5px; }
 .sidebar-toggle { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(203, 213, 225, 0.18); border-radius: 6px; background: rgba(203, 213, 225, 0.06); color: var(--text-muted); cursor: pointer; font-size: 12px; }
