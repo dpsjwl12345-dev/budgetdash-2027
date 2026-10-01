@@ -495,7 +495,10 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .citywide-overview { margin-top: 8px; }
 .citywide-overview__head { position: relative; min-height: 85px; margin-bottom: 10px; display: flex; align-items: center; justify-content: center; gap: 20px; }
 .citywide-overview__title-row { display: flex; justify-content: center; align-items: flex-end; gap: 14px; }
-.cw-title-asof { font-size: 15px; padding-bottom: 8px; white-space: nowrap; }
+.cw-title-meta { display: flex; flex-direction: column; align-items: flex-start; gap: 2px; padding-bottom: 6px; white-space: nowrap; }
+.cw-title-meta .cw-hero-asof { font-size: 14px; }
+.cw-title-meta .cw-structure-note { font-size: 14px; }
+.cw-hero-section > .cw-hero-box, .cw-hero-section > .cw-flow-box { padding-top: 52px; padding-bottom: 14px; }
 .citywide-overview__title-row h1 { font-size: 40px; white-space: nowrap; text-align: center; }
 .citywide-overview__slogan { position: absolute; right: 0; top: 50%; transform: translateY(-50%); flex: none; height: 85px; width: auto; }
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
