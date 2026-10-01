@@ -500,9 +500,15 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
    서로 무관해 보이는 박스 3개 대신 총계를 히어로 숫자로 세우고 그 총계가 어떤 회계로
    구성되는지 스택 막대로 곧바로 이어 보여준다. */
-.cw-main-grid { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 6px; }
+.cw-main-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 6px; }
 .cw-hero-section { display: flex; flex-direction: column; align-items: stretch; gap: 12px; height: 100%; }
-.cw-hero-section > .cw-hero-box, .cw-hero-section > .cw-flow-box { flex: 1; justify-content: center; }
+.cw-hero-section > .cw-hero-box, .cw-hero-section > .cw-flow-row, .cw-hero-section > .cw-flow-box { flex: 1; justify-content: center; }
+.cw-flow-row { display: flex; gap: 12px; align-items: stretch; }
+.cw-flow-row > .cw-flow-box { flex: 1; min-width: 0; justify-content: center; padding: 14px 12px; }
+.cw-hero-equals--down { justify-content: center; font-size: 28px; line-height: 1; margin: -4px 0; flex: none; }
+.cw-flow-row .cw-hero-label { font-size: 18px; }
+.cw-flow-row .cw-hero-split-row { gap: 6px; }
+.cw-flow-row .cw-hero-split { padding: 4px 10px; font-size: 12px; }
 
 /* 세입-세출 박스 옆 빈 공간에 놓는 개별 박스(세출요구액/기금조성/조정액). 서로 합쳐진
    하나의 카드가 아니라 각각 독립된 박스라 hero-box와 같은 자체 테두리를 갖는다. */
