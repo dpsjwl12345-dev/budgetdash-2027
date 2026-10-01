@@ -93,6 +93,7 @@ export default function CitywideBudgetOverview() {
         <img className="citywide-overview__slogan" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
       </div>
 
+      <div className="cw-main-grid">
       {(() => {
         const total = data.totalsByAccount.find((r) => r.name === "합계")!;
         const general = data.totalsByAccount.find((r) => r.name === "일반회계")!;
@@ -108,7 +109,6 @@ export default function CitywideBudgetOverview() {
                   <span className="cw-hero-split">특별 {fmtEok(special.revenue)}억원</span>
                 </div>
               </div>
-              <span className="cw-hero-equals">=</span>
               <div className="cw-flow-box">
                 <span className="cw-hero-label">세출요구액</span>
                 <strong className="cw-hero-value">56,510<span className="cw-hero-unit">억원</span></strong>
@@ -121,7 +121,6 @@ export default function CitywideBudgetOverview() {
                 <span className="cw-hero-label">기금조성</span>
                 <strong className="cw-hero-value">9,500<span className="cw-hero-unit">억원</span></strong>
               </div>
-              <span className="cw-hero-equals">→</span>
               <div className="cw-flow-box cw-flow-box--center">
                 <span className="cw-hero-label">조정액</span>
                 <strong className="cw-hero-value">4,500<span className="cw-hero-unit">억원 +α</span></strong>
@@ -134,6 +133,7 @@ export default function CitywideBudgetOverview() {
       <div className="cw-income-section">
         <BudgetListCard scope="일반회계" title="세입요구 총계" total={data.revenueTotal} groups={data.revenueGroups} />
         <BudgetListCard scope="일반회계" title="세출요구 총계" total={data.expenditureTotal} groups={data.expenditureGroups} />
+      </div>
       </div>
 
       <div className="cw-footnote-bar">
