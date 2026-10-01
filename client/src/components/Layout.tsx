@@ -30,20 +30,22 @@ type ToolItem = {
   label: string;
   icon: React.FC<{ size: number }>;
   path?: string;
+  iconColor?: string;
   subItems?: { label: string; path?: string }[];
 };
 
 const navItems: NavItem[] = [
-  { label: "시 전체 현황", icon: LayoutDashboard, path: "/" },
-  { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", count: "01" },
-  { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#d9ad52" },
-  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#d9ad52" },
+  { label: "시 전체 현황", icon: LayoutDashboard, path: "/", iconColor: "#2dd4bf" },
+  { label: "부서예산요구", icon: ClipboardCheck, path: "/department-budget-request", iconColor: "#2dd4bf", count: "01" },
+  { label: "예산설명자료", icon: Database, path: "/budget-explainer", iconColor: "#2dd4bf" },
+  { label: "예산집행현황", icon: History, path: "/budget-execution-2026", iconColor: "#2dd4bf" },
 ];
 
 const toolItems: ToolItem[] = [
   {
     label: "예산 편성 가이드",
     icon: SlidersHorizontal,
+    iconColor: "#2dd4bf",
     subItems: [
       { label: "사전절차" },
       { label: "세출 통계목별 상세" },
@@ -51,10 +53,10 @@ const toolItems: ToolItem[] = [
       { label: "산출식(함수) 전체 목록" },
     ],
   },
-  { label: "지방채사업", icon: Banknote, path: "/local-bonds" },
-  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests" },
-  { label: "성과평가반영", icon: Award, path: "/performance-evaluation" },
-  { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues" },
+  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#2dd4bf" },
+  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests", iconColor: "#2dd4bf" },
+  { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#2dd4bf" },
+  { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues", iconColor: "#2dd4bf" },
 ];
 
 export default function Layout({
@@ -136,6 +138,7 @@ export default function Layout({
                 key={label}
                 className={`nav-item ${activeNav === label ? "active" : ""} ${disabled ? "disabled" : ""}`}
                 aria-label={label}
+                style={iconColor ? ({ "--ic": iconColor } as React.CSSProperties) : undefined}
                 disabled={disabled}
                 onClick={() => {
                   setActiveNav(label);
@@ -228,7 +231,7 @@ export default function Layout({
 
         <div className="sidebar-label tools-label">TOOLS</div>
         <nav className="nav-list" aria-label="도구">
-          {toolItems.map(({ label, icon: Icon, path, subItems }) => {
+          {toolItems.map(({ label, icon: Icon, path, subItems, iconColor }) => {
             const hasSubItems = subItems && subItems.length > 0;
             const isExpanded = label === "예산 편성 가이드" ? expandedGuide : false;
 
@@ -237,6 +240,7 @@ export default function Layout({
                 key={label}
                 className="nav-item"
                 aria-label={label}
+                style={iconColor ? ({ "--ic": iconColor } as React.CSSProperties) : undefined}
                 onClick={() => {
                   if (hasSubItems && label === "예산 편성 가이드") {
                     setExpandedGuide(!expandedGuide);
