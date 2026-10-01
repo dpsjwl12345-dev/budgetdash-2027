@@ -236,14 +236,14 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
   font-family: "Gmarket Sans", "Pretendard", system-ui, sans-serif;
 }
 .sidebar-title span:first-child {
-  font-size: 22px;
+  font-size: 20px;
   color: #8a9bb0;
   font-weight: 800;
   letter-spacing: -0.03em;
   line-height: 1.2;
 }
 .sidebar-title span:last-child {
-  font-size: 22px;
+  font-size: 20px;
   color: #ffffff;
   font-weight: 750;
   letter-spacing: -0.03em;
@@ -262,8 +262,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .nav-item:hover { color: #ffffff; background: transparent; }
 .nav-item:hover svg { color: #ffffff; background: radial-gradient(circle at 30% 22%, rgba(255,255,255,0.5) 0%, rgba(255,255,255,0.14) 38%, rgba(0,0,0,0.12) 100%), color-mix(in srgb, var(--ic, #cbd5e1) 40%, rgba(30,41,59,0.45)); box-shadow: inset 0 -5px 8px rgba(0,0,0,0.3), inset 0 3px 5px rgba(255,255,255,0.3), 0 8px 16px color-mix(in srgb, var(--ic, #000) 35%, rgba(0,0,0,0.4)), 0 2px 3px rgba(0,0,0,0.4); transform: translateY(-1px); }
 .nav-item.active { color: #ffffff; background: rgba(203, 213, 225, 0.08); border-color: transparent; }
-.nav-item.active svg { color: #ffffff; background: radial-gradient(circle at 30% 22%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.12) 40%, rgba(0,0,0,0.15) 100%), linear-gradient(145deg, #ffb347, #ff6a3d); border: none; box-shadow: inset 0 -5px 8px rgba(120,30,0,0.4), inset 0 3px 5px rgba(255,255,255,0.4), 0 8px 18px rgba(255,106,61,0.5), 0 2px 3px rgba(0,0,0,0.4); transform: translateY(-1px); }
-.nav-item.active:hover svg { background: radial-gradient(circle at 30% 22%, rgba(255,255,255,0.68) 0%, rgba(255,255,255,0.14) 40%, rgba(0,0,0,0.12) 100%), linear-gradient(145deg, #ffc266, #ff7a4d); }
+.nav-item.active svg { color: #6b5410; background: radial-gradient(circle at 30% 22%, rgba(255,255,255,0.6) 0%, rgba(255,255,255,0.12) 40%, rgba(0,0,0,0.15) 100%), linear-gradient(145deg, #fbf0b5, #f0d878); border: none; box-shadow: inset 0 -5px 8px rgba(150,120,20,0.35), inset 0 3px 5px rgba(255,255,255,0.4), 0 8px 18px rgba(240,216,120,0.45), 0 2px 3px rgba(0,0,0,0.4); transform: translateY(-1px); }
+.nav-item.active:hover svg { background: radial-gradient(circle at 30% 22%, rgba(255,255,255,0.68) 0%, rgba(255,255,255,0.14) 40%, rgba(0,0,0,0.12) 100%), linear-gradient(145deg, #fff5c8, #f5e08a); }
 .nav-count { display: none; }
 .sidebar-bottom { margin-top: 80px; padding: 8px 10px 0; border-top: none; color: var(--text-faint); font-size: 12.5px; }
 .sidebar-toggle { width: 100%; display: flex; align-items: center; justify-content: center; gap: 8px; padding: 8px 10px; border: 1px solid rgba(203, 213, 225, 0.18); border-radius: 6px; background: rgba(203, 213, 225, 0.06); color: var(--text-muted); cursor: pointer; font-size: 12px; }
