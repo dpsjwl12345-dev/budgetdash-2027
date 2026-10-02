@@ -503,7 +503,7 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 /* 시 전체 예산 구조: "합계 = 일반회계 + 특별회계"라는 관계 자체가 이야기이므로,
    서로 무관해 보이는 박스 3개 대신 총계를 히어로 숫자로 세우고 그 총계가 어떤 회계로
    구성되는지 스택 막대로 곧바로 이어 보여준다. */
-.cw-main-grid { display: grid; grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 6px; }
+.cw-main-grid { display: grid; grid-template-columns: minmax(0, 0.82fr) minmax(0, 1fr); gap: 16px; align-items: stretch; margin-top: 6px; }
 .cw-hero-section { display: flex; flex-direction: column; align-items: stretch; gap: 12px; height: 100%; }
 .cw-hero-section > .cw-hero-box, .cw-hero-section > .cw-flow-row, .cw-hero-section > .cw-flow-box { flex: 1; justify-content: center; }
 .cw-flow-row { display: flex; gap: 12px; align-items: stretch; }
