@@ -2859,43 +2859,88 @@ export default function Home() {
                     // 화성시 주요투자사업 대시보드에 등록된 세부사업이면 사업명 앞에 "주요" 배지를 붙인다.
                     const isMajorProgram = row.level === 'program' && isMajorInvestmentProgram(department, row.label);
 
+                    // 부기명 줄의 사업명·예산액·전년도·증감 칸은 항상 비어 있다(해당 값은
+                    // 위 통계목 줄에 이미 표시됨). 그 빈 공간을 하나로 합쳐 오른쪽의 좁은
+                    // 92px 메모 칸 대신 쓸 수 있는 넓은 메모 입력칸으로 쓴다. 같은 markKey를
+                    // 공유하므로 왼쪽/오른쪽 어느 쪽에서 적어도 같은 메모다.
+                    const isEditingLeftNote = markKey !== null && editingRowNoteKey === markKey;
                     return (
                       <Fragment key={row.id}>
                         <tr>
-                          <td
-                            onClick={handleProgramClick}
-                            style={{
-                              paddingLeft: getPaddingLeft(),
-                              paddingRight: '8px',
-                              background: getBackground(),
-                              fontSize: getLabelFontSize(),
-                              fontWeight: getFontWeight(),
-                              color: getColor(),
-                              verticalAlign: 'top',
-                              paddingTop: rowSpacing,
-                              paddingBottom: rowSpacing,
-                              borderRight: '1px solid rgba(60,50,35,0.12)',
-                              cursor: row.level === 'program' ? 'pointer' : 'default',
-                              textDecoration: row.level === 'program' ? 'underline' : 'none',
-                              textDecorationColor: row.level === 'program' ? '#4a90e2' : 'transparent'
-                            }}
-                          >
-                            {isMajorProgram && (
-                              <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
-                                주요
-                              </span>
-                            )}
-                            {row.label}
-                          </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                            {formatNumber(row.budget)}
-                          </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                            {formatNumber(row.previous)}
-                          </td>
-                          <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                            {formatNumber(row.difference)}
-                          </td>
+                          {row.level === 'note' ? (
+                            <td
+                              colSpan={4}
+                              onClick={markKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteKey(markKey); } : undefined}
+                              title={markKey ? (rowNotes[markKey] ? '클릭하여 메모 수정' : '클릭하여 메모 입력') : undefined}
+                              style={{
+                                paddingLeft: getPaddingLeft(),
+                                paddingRight: '8px',
+                                background: getBackground(),
+                                verticalAlign: 'top',
+                                paddingTop: rowSpacing,
+                                paddingBottom: rowSpacing,
+                                borderRight: '1px solid rgba(60,50,35,0.12)',
+                                cursor: markKey && !isEditingLeftNote ? 'pointer' : 'default',
+                              }}
+                            >
+                              {markKey && isEditingLeftNote ? (
+                                <input
+                                  autoFocus
+                                  value={rowNoteDraft}
+                                  onChange={(event) => setRowNoteDraft(event.target.value)}
+                                  onBlur={() => setRowNote(markKey, rowNoteDraft)}
+                                  onClick={(event) => event.stopPropagation()}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter') setRowNote(markKey, rowNoteDraft);
+                                    if (event.key === 'Escape') { setEditingRowNoteKey(null); setRowNoteDraft(""); }
+                                  }}
+                                  placeholder="예: 전년 대비 증액 사유"
+                                  style={{ width: '100%', padding: '3px 8px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: '13px', fontWeight: 600, color: '#1d4ed8' }}
+                                />
+                              ) : (
+                                <span style={{ fontSize: '13px', fontWeight: 600, color: markKey && rowNotes[markKey] ? '#1d4ed8' : '#c3ccd6' }}>
+                                  {(markKey && rowNotes[markKey]) || (markKey ? '클릭하여 메모 입력' : '')}
+                                </span>
+                              )}
+                            </td>
+                          ) : (
+                            <>
+                              <td
+                                onClick={handleProgramClick}
+                                style={{
+                                  paddingLeft: getPaddingLeft(),
+                                  paddingRight: '8px',
+                                  background: getBackground(),
+                                  fontSize: getLabelFontSize(),
+                                  fontWeight: getFontWeight(),
+                                  color: getColor(),
+                                  verticalAlign: 'top',
+                                  paddingTop: rowSpacing,
+                                  paddingBottom: rowSpacing,
+                                  borderRight: '1px solid rgba(60,50,35,0.12)',
+                                  cursor: row.level === 'program' ? 'pointer' : 'default',
+                                  textDecoration: row.level === 'program' ? 'underline' : 'none',
+                                  textDecorationColor: row.level === 'program' ? '#4a90e2' : 'transparent'
+                                }}
+                              >
+                                {isMajorProgram && (
+                                  <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: '11px', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                    주요
+                                  </span>
+                                )}
+                                {row.label}
+                              </td>
+                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                                {formatNumber(row.budget)}
+                              </td>
+                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                                {formatNumber(row.previous)}
+                              </td>
+                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                                {formatNumber(row.difference)}
+                              </td>
+                            </>
+                          )}
                           <td
                             onClick={markKey ? () => setMarkPickerKey(markPickerKey === markKey ? null : markKey) : undefined}
                             title={markKey ? '클릭하여 강조 표시' : undefined}
