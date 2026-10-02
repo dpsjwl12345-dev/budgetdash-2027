@@ -85,10 +85,7 @@ export default function CitywideBudgetOverview() {
       <div className="citywide-overview__head">
         <div className="citywide-overview__title-row">
           <h1>2027년 화성시 세입세출 요구현황</h1>
-          <div className="cw-title-meta">
-            <span className="cw-hero-asof">기준일 2026. 9. 9.</span>
-            <span className="cw-structure-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
-          </div>
+          <span className="cw-hero-asof cw-title-asof">기준일 2026. 9. 9.</span>
         </div>
         <img className="citywide-overview__slogan" src="/hwaseong-slogan.png" alt="모두의 행복 더큰 화성" />
       </div>
@@ -128,6 +125,7 @@ export default function CitywideBudgetOverview() {
               <div className="cw-flow-box cw-flow-box--center">
                 <span className="cw-hero-label">조정액</span>
                 <strong className="cw-hero-value">4,500<span className="cw-hero-unit">억원 +α</span></strong>
+                <span className="cw-structure-note cw-corner-note">일반회계 + 특별회계(공기업 2 + 특별회계 11)</span>
               </div>
             </div>
           </>
