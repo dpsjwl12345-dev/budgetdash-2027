@@ -1446,7 +1446,7 @@ export default function CouncilMemberRequests() {
                     </tr>
                   </thead>
                   <tbody>
-                    {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).map((district) => {
+                    {Array.from(new Set(DISTRICT_MEMBERS.map((row) => row.district))).filter((district) => district !== "비례대표").map((district) => {
                       const provincial = PROVINCIAL_MEMBER_BY_DISTRICT[district];
                       const provincialDistrict = PROVINCIAL_DISTRICT_INFO[district];
                       return (
