@@ -971,7 +971,7 @@ export default function Home() {
   });
   const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const DEFAULT_HIERARCHY_COLUMN_WIDTHS: Record<string, number> = {
-    label: 210, budget: 120, previous: 120, supp3: 120, difference: 120, supp3Diff: 120, statisticsCode: 152, description: 310, review: 90,
+    label: 210, budget: 120, previous: 120, difference: 120, statisticsCode: 152, description: 310, review: 90,
   };
   const getHierarchyColumnWidth = (key: string) => columnWidths[key] ?? DEFAULT_HIERARCHY_COLUMN_WIDTHS[key];
   const staffModalRef = useRef<HTMLDivElement>(null);
@@ -2893,7 +2893,7 @@ export default function Home() {
             <div className="table-scroll ledger-scrollbar" ref={tableRef} style={{ overflowX: 'auto', overflowY: 'visible', border: '1px solid #b7c2cf' }}>
               <table className="budget-table hierarchy-budget-table" style={{ width: '100%', minWidth: '1440px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <colgroup>
-                  {(['label', 'budget', 'previous', 'supp3', 'difference', 'supp3Diff', 'statisticsCode', 'description', 'review'] as const).map((key) => (
+                  {(['label', 'budget', 'previous', 'difference', 'statisticsCode', 'description', 'review'] as const).map((key) => (
                     <col key={key} style={{ width: `${getHierarchyColumnWidth(key)}px` }} />
                   ))}
                 </colgroup>
@@ -2909,10 +2909,8 @@ export default function Home() {
                       {renderHierarchyResizeHandle('label')}
                     </th>
                     <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>본예산{renderHierarchyResizeHandle('previous')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>3추{renderHierarchyResizeHandle('supp3')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감<br /><span style={{ fontSize: '0.72em', fontWeight: 500, opacity: 0.85 }}>(본예산)</span>{renderHierarchyResizeHandle('difference')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감<br /><span style={{ fontSize: '0.72em', fontWeight: 500, opacity: 0.85 }}>(3추)</span>{renderHierarchyResizeHandle('supp3Diff')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>기정액(본){renderHierarchyResizeHandle('previous')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
                     <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(15px + 1pt)' }}>
                       <HeaderFilterDropdown
                         label="통계목"
@@ -3055,7 +3053,7 @@ export default function Home() {
                     const isEditingMemo = memoProgramId && editingMemoId === memoProgramId;
                     const memoRow = memoProgramId && !hiddenMemoIds.includes(memoProgramId) && (
                       <tr key={`${row.id}-memo`}>
-                        <td colSpan={9} style={{ padding: '4px 16px', background: 'rgba(60, 50, 35, 0.05)' }}>
+                        <td colSpan={7} style={{ padding: '4px 16px', background: 'rgba(60, 50, 35, 0.05)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {isEditingMemo ? (
                               <>
@@ -3197,7 +3195,7 @@ export default function Home() {
                         <tr>
                           {row.level === 'note' ? (
                             <td
-                              colSpan={6}
+                              colSpan={4}
                               onClick={leftNoteKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[leftNoteKey] ?? ''); setEditingRowNoteSide('left'); setEditingRowNoteKey(leftNoteKey); } : undefined}
                               title={leftNoteKey ? (rowNotes[leftNoteKey] ? '클릭하여 메모 수정' : '클릭하여 메모 입력') : undefined}
                               style={{
@@ -3270,13 +3268,7 @@ export default function Home() {
                                 {formatNumber(row.previous)}
                               </td>
                               <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                                {supplementaryValues.has(row.id) ? formatNumber(supplementaryValues.get(row.id)) : ''}
-                              </td>
-                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                                 {formatNumber(getDisplayDifference(row))}
-                              </td>
-                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                                {supplementaryValues.has(row.id) && typeof row.budget === 'number' ? formatNumber(row.budget - (supplementaryValues.get(row.id) ?? 0)) : ''}
                               </td>
                             </>
                           )}
