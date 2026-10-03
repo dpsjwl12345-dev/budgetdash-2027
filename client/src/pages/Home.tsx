@@ -1092,39 +1092,27 @@ export default function Home() {
     }
   };
 
-  const handleSupplementaryUpload = async (file: File) => {
+  // 부서·회차가 파일에 적혀 있지 않은 내역서는 올릴 때 직접 고르게 한다.
+  const [supplementaryPending, setSupplementaryPending] = useState<{ report: SupplementaryReport; fileName: string; department: string; round: string } | null>(null);
+
+  const showSupplementaryError = (fileName: string, error: string, department = '') => {
+    setSupplementaryResult({ department, round: 0, fileName, programCount: 0, itemCount: 0, unmatched: [], error });
+  };
+
+  const commitSupplementary = async (report: SupplementaryReport, fileName: string) => {
     try {
-      const report = await readSupplementaryFile(file);
-      if (!report.department || !report.round || report.programs.length === 0) {
-        // 무엇을 읽었고 무엇을 못 읽었는지 화면에 남겨 원인을 알 수 있게 한다.
-        const missing = [
-          !report.department ? '부서명("부 서 : 문화예술과" 줄)' : '',
-          !report.round ? '추경 회차("추경 3 회" 표기)' : '',
-          report.programs.length === 0 ? '세부사업 금액 줄(예산액/기정 예산액 열이 있는 표)' : '',
-        ].filter(Boolean);
-        setSupplementaryResult({
-          department: report.department || '(읽지 못함)',
-          round: report.round,
-          fileName: file.name,
-          programCount: report.programs.length,
-          itemCount: report.items.length,
-          unmatched: [],
-          error: `추경 세출예산내역서 형식으로 읽지 못했습니다. 파일에서 찾지 못한 것: ${missing.join(', ')}. "세 출 예 산 내 역 서" 제목, 부서·회차 머리글, "예산액 / 기정 예산액 / 비교증감" 열이 있는 추경 내역서 엑셀을 올려주세요.`,
-        });
-        return;
-      }
       const response = await fetch('/api/cloud-sync?type=supplementary', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ department: report.department, round: report.round, fileName: file.name, data: report }),
+        body: JSON.stringify({ department: report.department, round: report.round, fileName, data: report }),
       });
       const result = await response.json().catch(() => ({}));
       if (!response.ok || result.success !== true) {
-        throw new Error(result.message || '서버 저장 실패');
+        throw new Error(result.error || result.message || '서버 저장 실패');
       }
       setSupplementaryRecords((prev) => [
         ...prev.filter((record) => !(record.department === report.department && record.round === report.round)),
-        { department: report.department, round: report.round, fileName: file.name, data: report },
+        { department: report.department, round: report.round, fileName, data: report },
       ]);
 
       // 현재 예산서에 같은 이름의 세부사업이 없어 붙지 못한 항목을 알려준다.
@@ -1138,23 +1126,43 @@ export default function Home() {
       setSupplementaryResult({
         department: report.department,
         round: report.round,
-        fileName: file.name,
+        fileName,
         programCount: report.programs.length,
         itemCount: report.items.length,
         unmatched,
       });
       showToast(`${report.department} 추경 ${report.round}회 내역서를 반영했습니다.`);
     } catch (error) {
-      console.warn('추경 자료 업로드 실패:', error);
-      setSupplementaryResult({
-        department: '',
-        round: 0,
-        fileName: file.name,
-        programCount: 0,
-        itemCount: 0,
-        unmatched: [],
-        error: `추경 자료를 처리하지 못했습니다. (${error instanceof Error ? error.message : String(error)}) 잠시 후 다시 시도하고, 계속 안 되면 이 문구를 알려주세요.`,
-      });
+      console.warn('추경 자료 저장 실패:', error);
+      showSupplementaryError(fileName, `추경 자료를 저장하지 못했습니다. (${error instanceof Error ? error.message : String(error)}) 잠시 후 다시 시도하고, 계속 안 되면 이 문구를 알려주세요.`);
+    }
+  };
+
+  const handleSupplementaryUpload = async (file: File) => {
+    try {
+      const report = await readSupplementaryFile(file);
+      if (report.programs.length === 0) {
+        // 무엇을 읽었고 무엇을 못 읽었는지 화면에 남겨 원인을 알 수 있게 한다.
+        showSupplementaryError(
+          file.name,
+          '추경 세출예산내역서 형식으로 읽지 못했습니다. 세부사업 금액 줄을 찾지 못했습니다. "예산액 / 기정 예산액 / 비교증감" 열이 있는 추경 세출예산내역서 엑셀을 올려주세요.',
+        );
+        return;
+      }
+      if (!report.department || !report.round) {
+        // 부서나 회차가 파일에 없으면 읽은 내용은 그대로 두고 어느 부서·몇 회인지만 물어본다.
+        setSupplementaryPending({
+          report,
+          fileName: file.name,
+          department: report.department || department || '',
+          round: report.round ? String(report.round) : '',
+        });
+        return;
+      }
+      await commitSupplementary(report, file.name);
+    } catch (error) {
+      console.warn('추경 자료 읽기 실패:', error);
+      showSupplementaryError(file.name, `엑셀 파일을 읽지 못했습니다. (${error instanceof Error ? error.message : String(error)}) 파일이 손상되었거나 엑셀 형식이 아닐 수 있습니다.`);
     } finally {
       if (supplementaryInputRef.current) supplementaryInputRef.current.value = '';
     }
@@ -3386,6 +3394,35 @@ export default function Home() {
 
       {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card staff-modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" />명</label><label>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
       {showBudget2026Modal && <div className="modal-backdrop" onMouseDown={() => setShowBudget2026Modal(false)}><div className="modal-card staff-modal-card" ref={budget2026ModalRef} role="dialog" aria-modal="true" aria-labelledby="budget2026-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, budget2026ModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="budget2026-modal-title">부서별 2026 예산액 설정</h2></div><button className="close-button" onClick={() => setShowBudget2026Modal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>본예산(천원)<input value={budget2026Data[dept]?.base2026 || ""} onChange={(event) => setBudget2026Data({...budget2026Data, [dept]: {...(budget2026Data[dept] || {}), base2026: event.target.value}})} inputMode="numeric" /></label><label>3추기준(천원)<input value={budget2026Data[dept]?.supp3 || ""} onChange={(event) => setBudget2026Data({...budget2026Data, [dept]: {...(budget2026Data[dept] || {}), supp3: event.target.value}})} inputMode="numeric" /></label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowBudget2026Modal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveBudget2026}>저장</AppButton></div></div></div>}
+      {supplementaryPending && <div className="modal-backdrop" onMouseDown={() => setSupplementaryPending(null)}><div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="supp-pending-title" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-head"><div><span>SUPPLEMENTARY BUDGET</span><h2 id="supp-pending-title">어느 부서의 몇 회 추경인가요?</h2></div><button className="close-button" onClick={() => setSupplementaryPending(null)} aria-label="닫기"><X size={19} /></button></div>
+        <div style={{ padding: '4px 4px 8px', lineHeight: 1.7 }}>
+          <p style={{ margin: 0 }}>{supplementaryPending.fileName}에서 세부사업 {supplementaryPending.report.programs.length}개, 통계목 {supplementaryPending.report.items.length}개를 읽었습니다. 이 파일에는 {!supplementaryPending.report.department && !supplementaryPending.report.round ? '부서와 추경 회차가' : !supplementaryPending.report.department ? '부서가' : '추경 회차가'} 적혀 있지 않아 직접 골라주세요.</p>
+          <div style={{ display: 'flex', gap: '12px', marginTop: '12px', flexWrap: 'wrap' }}>
+            <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>부서
+              <select value={supplementaryPending.department} onChange={(event) => setSupplementaryPending({ ...supplementaryPending, department: event.target.value })} style={{ height: '36px', padding: '0 8px', borderRadius: '6px', minWidth: '170px' }}>
+                <option value="">선택</option>
+                {DEPARTMENTS.map((name) => <option key={name} value={name}>{name}</option>)}
+              </select>
+            </label>
+            <label style={{ display: 'grid', gap: '4px', fontSize: '13px' }}>추경 회차
+              <select value={supplementaryPending.round} onChange={(event) => setSupplementaryPending({ ...supplementaryPending, round: event.target.value })} style={{ height: '36px', padding: '0 8px', borderRadius: '6px', minWidth: '110px' }}>
+                <option value="">선택</option>
+                {[1, 2, 3, 4, 5].map((no) => <option key={no} value={String(no)}>{no}회</option>)}
+              </select>
+            </label>
+          </div>
+        </div>
+        <div className="modal-actions">
+          <AppButton variant="ghost" onClick={() => setSupplementaryPending(null)}>취소</AppButton>
+          <AppButton variant="primary" onClick={() => {
+            const pending = supplementaryPending;
+            if (!pending.department || !pending.round) { showToast('부서와 추경 회차를 모두 골라주세요.'); return; }
+            setSupplementaryPending(null);
+            commitSupplementary({ ...pending.report, department: pending.department, round: Number(pending.round) }, pending.fileName);
+          }}>반영</AppButton>
+        </div>
+      </div></div>}
       {supplementaryResult && <div className="modal-backdrop" onMouseDown={() => setSupplementaryResult(null)}><div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="supp-result-title" onMouseDown={(event) => event.stopPropagation()}>
         <div className="modal-head"><div><span>SUPPLEMENTARY BUDGET</span><h2 id="supp-result-title">{supplementaryResult.error ? '추경 내역서를 반영하지 못했습니다' : `${supplementaryResult.department} 추경 ${supplementaryResult.round}회 반영`}</h2></div><button className="close-button" onClick={() => setSupplementaryResult(null)} aria-label="닫기"><X size={19} /></button></div>
         <div style={{ padding: '4px 4px 8px', lineHeight: 1.7 }}>

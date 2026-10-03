@@ -61,6 +61,9 @@ function readHeaderField(headText: string, label: string): string | null {
   return match ? match[1].trim() : null;
 }
 
+// 열 제목은 "예 산 액"처럼 글자 사이에 공백이 섞여 있어도 찾도록 공백을 지우고 비교한다.
+const compact = (value: unknown) => String(value ?? "").replace(/\s+/g, "");
+
 export function parseSupplementaryWorkbook(workbook: XLSX.WorkBook, fileName: string): SupplementaryReport {
   const programs: SupplementaryProgram[] = [];
   const items: SupplementaryItem[] = [];
@@ -70,16 +73,26 @@ export function parseSupplementaryWorkbook(workbook: XLSX.WorkBook, fileName: st
   let totalAmount: number | null = null;
   let totalPrevious: number | null = null;
 
-  // 정책·단위는 쪽 머리글에 따로 적히거나 행에 들어 있어 쪽을 넘어 이어서 기억한다.
+  // 쪽(시트)이 여러 장이든 한 장이든 같은 방식으로 읽는다. 세부사업 이름은 쪽을 넘어 이어서 기억한다.
   let currentProgram = "";
 
   for (const sheetName of workbook.SheetNames) {
     const rows = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[sheetName], { header: 1, raw: false, defval: "" });
-    const headerIndex = rows.findIndex((row) => row.includes("예산액"));
+    const headerIndex = rows.findIndex((row) => row.some((cell) => compact(cell) === "예산액"));
     if (headerIndex === -1) continue;
-    const amountCol = rows[headerIndex].indexOf("예산액");
+    const header = rows[headerIndex];
 
-    const headText = rows.slice(0, 5).map((row) => String(row[0] ?? "")).join("\n");
+    // 금액 열 위치는 파일마다 다르므로(칸이 하나씩 벌어진 파일도 있다) 열 제목으로 찾는다.
+    const amountCol = header.findIndex((cell) => compact(cell) === "예산액");
+    let previousCol = header.findIndex((cell) => compact(cell) === "기정예산액");
+    if (previousCol < 0) previousCol = amountCol + 1;
+    let differenceCol = header.findIndex((cell) => compact(cell) === "비교증감");
+    if (differenceCol < 0) differenceCol = previousCol + 1;
+    let statCol = header.findIndex((cell) => compact(cell) === "산출근거");
+    if (statCol < 0) statCol = differenceCol + 1;
+
+    // 머리글(부서·회계명·추경 회차)은 있으면 쓰고, 없으면 아래에서 표 안의 부서 줄로 채운다.
+    const headText = rows.slice(0, headerIndex).map((row) => String(row[0] ?? "")).join("\n");
     if (!department) department = readHeaderField(headText, "부\\s*서") ?? "";
     if (!accountName) accountName = readHeaderField(headText, "회\\s*계\\s*명") ?? "";
     if (!round) {
@@ -90,25 +103,29 @@ export function parseSupplementaryWorkbook(workbook: XLSX.WorkBook, fileName: st
     for (const row of rows.slice(headerIndex + 1)) {
       const labelIndex = row.slice(0, amountCol).findIndex((cell) => String(cell ?? "").trim() !== "");
       const amount = readAmount(row[amountCol]);
-      const previous = readAmount(row[amountCol + 1]);
-      const difference = readAmount(row[amountCol + 3]);
+      const previous = readAmount(row[previousCol]);
+      const difference = readAmount(row[differenceCol]);
       if (amount === null) continue;
 
       if (labelIndex >= 0) {
         // 라벨이 놓인 칸이 금액 칸에서 얼마나 떨어졌는지로 계층을 안다
-        // (1=편성목, 2=세부사업, 3=단위, 4=정책, 5=부서, 6=총계).
+        // (1=편성목, 2=세부사업, 3=단위, 4=정책, 5 이상=총계/부서).
         const level = amountCol - labelIndex;
         const name = String(row[labelIndex]).trim();
-        if (level === 6) {
-          totalAmount = amount;
-          totalPrevious = previous;
+        if (level >= 5) {
+          if (compact(name) === "총계") {
+            totalAmount = amount;
+            totalPrevious = previous;
+          } else if (!department) {
+            department = name;
+          }
         } else if (level === 2) {
           currentProgram = name;
           programs.push({ name, amount, previous: previous ?? 0, difference: difference ?? 0 });
         }
       } else {
         // 라벨 칸이 모두 비어 있고 산출근거 칸에 통계목명이 있으면 통계목 합계 줄
-        const stat = String(row[amountCol + 4] ?? "").trim();
+        const stat = String(row[statCol] ?? "").trim();
         if (stat && currentProgram) {
           items.push({ program: currentProgram, stat, amount, previous: previous ?? 0, difference: difference ?? 0 });
         }
