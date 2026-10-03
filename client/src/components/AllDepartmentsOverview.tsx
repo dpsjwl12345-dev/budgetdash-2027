@@ -109,9 +109,9 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
               <th style={{ ...head, width: "190px" }}>국 · 부서</th>
               <th style={{ ...head, background: "#2f6fd6" }}>2027 요구액</th>
               <th style={head}>본예산</th>
-              <th style={head}>본 대비</th>
+              <th style={head}>본 증감</th>
               <th style={head}>3추 예산</th>
-              <th style={head}>3추 대비</th>
+              <th style={head}>3추 증감</th>
               <th style={head}>3추 대비 증감액</th>
               <th style={head}>지방채 상환</th>
               <th style={{ ...head, borderRight: "none" }}>지방채 빼면</th>
