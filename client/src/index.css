@@ -1239,3 +1239,21 @@ select option {
     font-size: 11px !important;
   }
 }
+
+/* 초기화면 제목 애니메이션: 등장 + 빛이 훑고 지나가는 shine 효과 */
+@keyframes cw-title-in { from { opacity: 0; transform: translateY(18px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes cw-title-shine { 0% { background-position: 100% 0; } 60%, 100% { background-position: -100% 0; } }
+@keyframes cw-fade-in { from { opacity: 0; } to { opacity: 1; } }
+.citywide-overview__title-row h1 {
+  background: linear-gradient(110deg, #7fb8ff 0%, #7fb8ff 40%, #ffe9b0 50%, #7fb8ff 60%, #7fb8ff 100%);
+  background-size: 250% 100%;
+  -webkit-background-clip: text; background-clip: text;
+  -webkit-text-fill-color: transparent; color: transparent;
+  animation: cw-title-in 0.9s cubic-bezier(0.22, 1, 0.36, 1) both, cw-title-shine 4s linear 1s infinite;
+}
+.cw-title-asof { animation: cw-fade-in 0.7s ease-out 0.7s both; }
+.citywide-overview__slogan { animation: cw-fade-in 0.8s ease-out 0.4s both; }
+@media (prefers-reduced-motion: reduce) {
+  .citywide-overview__title-row h1 { animation: none; background-position: 0 0; }
+  .cw-title-asof, .citywide-overview__slogan { animation: none; }
+}
