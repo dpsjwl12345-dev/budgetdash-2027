@@ -455,11 +455,11 @@ input[type="checkbox"]:checked::after { content: "✓"; position: absolute; colo
 .last-updated { margin-top: 12px; display: flex; align-items: center; gap: 8px; color: #758aa1; font-size: 12px; }
 .status-dot { width: 6px; height: 6px; box-shadow: none; }
 
-.metric-grid { display: grid; grid-template-columns: repeat(5, minmax(0, 1fr)); gap: 12px; margin-top: 22px; }
-.metric-card { min-height: 105px; padding: var(--spacing-lg); border: 1px solid rgba(164, 192, 221, 0.2); border-top: 3px solid color-mix(in srgb, var(--tint, #cbd5e1) 70%, transparent); border-radius: var(--radius-lg); background: rgba(13, 33, 54, 0.55); transition: all 200ms ease-out; display: flex; flex-direction: column; }
+.metric-grid { display: grid; grid-template-columns: minmax(0, 1.6fr) repeat(4, minmax(0, 1fr)); gap: 12px; margin-top: 16px; }
+.metric-card { min-height: 78px; padding: 10px 12px 12px; border: 1px solid rgba(164, 192, 221, 0.2); border-top: 3px solid color-mix(in srgb, var(--tint, #cbd5e1) 70%, transparent); border-radius: var(--radius-lg); background: rgba(13, 33, 54, 0.55); transition: all 200ms ease-out; display: flex; flex-direction: column; }
 .metric-card:hover { background: rgba(13, 33, 54, 0.68); border-color: var(--line-strong); }
 .metric-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
-.metric-top { display: flex; align-items: center; color: #c0d0df; font-size: 19px; font-weight: 600; line-height: 1.4; white-space: normal; word-break: keep-all; }
+.metric-top { display: flex; align-items: center; color: #c0d0df; font-size: 19px; font-weight: 600; line-height: 1.25; white-space: normal; word-break: keep-all; }
 .metric-top .unit { color: #8fa1b3; font-size: 12px; font-weight: 600; }
 .metric-top svg { color: var(--tint, #64748b); }
 .metric-card > strong { display: block; margin-top: 9px; color: #edf5fe; font-size: 28px; line-height: 1.1; letter-spacing: -0.045em; font-weight: 700; font-variant-numeric: tabular-nums; }
@@ -1265,3 +1265,9 @@ select option {
 .metric-grid.dept-selected .metric-card[style*="#e8b84b"] > strong { color: #f6d27e; }
 .metric-grid.dept-selected .metric-card[style*="#e8b84b"] > strong .metric-unit { color: #d1a94f; }
 .metric-grid.dept-selected .metric-card[style*="#e8b84b"] .metric-top { color: #f4e2b4; }
+
+.metric-grid > .metric-card:first-child .metric-header { flex-wrap: nowrap; align-items: center; }
+.metric-grid > .metric-card:first-child .metric-top { white-space: nowrap; }
+.metric-grid > .metric-card:first-child .metric-header > div:last-child span { white-space: nowrap; }
+.metric-grid > .metric-card:first-child .metric-header > div:last-child { flex: none; }
+.metric-top { letter-spacing: -0.035em; }
