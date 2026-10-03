@@ -71,22 +71,20 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
   const grandIncrease = grand.budget - grand.supp3;
   // 부서 가운데 2027 요구액이 가장 큰 곳과 3추 대비 증감액이 가장 큰 곳은 칸 색을 따로 칠한다.
   const allDepartments = bureaus.flatMap((bureau) => bureau.list);
-  const increaseOf = (item: DeptSummary) => item.budget - (item.supp3 ?? item.previous);
+  const increaseOf = (item: DeptSummary) => item.budget / (item.supp3 || item.previous || 1);
   const topBudget = allDepartments.reduce<DeptSummary | undefined>((top, item) => (!top || item.budget > top.budget ? item : top), undefined)?.name;
   const topIncrease = allDepartments.reduce<DeptSummary | undefined>((top, item) => (!top || increaseOf(item) > increaseOf(top) ? item : top), undefined)?.name;
 
   const amountCells = (total: { budget: number; previous: number; supp3: number | null; debt: number }, strong = false, mark: { budget?: boolean; increase?: boolean } = {}) => {
     const increase = total.supp3 === null ? null : total.budget - total.supp3;
     const tone = (value: number | null) => (value !== null && value < 0 ? "#c0392b" : undefined);
-    const weight = strong ? 700 : 500;
     return (
       <>
         <td style={{ ...cell, fontWeight: 700, background: "rgba(47, 111, 214, 0.14)", ...(mark.budget ? TOP_BUDGET : { color: "#0f4c9e" }) }} title={mark.budget ? "요구액이 가장 큰 부서" : undefined}>{toMillion(total.budget)}</td>
         <td style={cell}>{toMillion(total.previous)}</td>
         <td style={{ ...cell, fontWeight: 600 }}>{percent(total.budget, total.previous)}</td>
         <td style={cell}>{total.supp3 === null ? "-" : toMillion(total.supp3)}</td>
-        <td style={{ ...cell, fontWeight: 700, color: tone(increase) }}>{percent(total.budget, total.supp3)}</td>
-        <td style={{ ...cell, fontWeight: weight, color: tone(increase), ...(mark.increase ? TOP_INCREASE : {}) }} title={mark.increase ? "3추 대비 증감액이 가장 큰 부서" : undefined}>{increase === null ? "-" : signedMillion(increase)}</td>
+        <td style={{ ...cell, fontWeight: 700, color: tone(increase), ...(mark.increase ? TOP_INCREASE : {}) }} title={mark.increase ? "3추 대비 증가율이 가장 큰 부서" : undefined}>{percent(total.budget, total.supp3)}</td>
         <td style={cell}>{total.debt ? toMillion(total.debt) : "-"}</td>
         <td style={{ ...cell, fontWeight: 600, color: tone(increase === null ? null : increase - total.debt) }}>{percent(total.budget - total.debt, total.supp3)}</td>
       </>
@@ -111,7 +109,6 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
               <th style={head}>본예산</th>
               <th style={head}>본 증감</th>
               <th style={head}>3추 예산</th>
-              <th style={head}>3추 대비</th>
               <th style={head}>3추 증감</th>
               <th style={head}>지방채 상환</th>
               <th style={{ ...head, borderRight: "none" }}>지방채 빼면</th>
@@ -145,7 +142,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
                       </tr>
                       {open && (
                         <tr>
-                          <td colSpan={9} style={{ padding: "8px 16px 14px 44px", borderBottom: "1px solid #dde3ea", background: "#f4f7fb", fontSize: "14px" }}>
+                          <td colSpan={8} style={{ padding: "8px 16px 14px 44px", borderBottom: "1px solid #dde3ea", background: "#f4f7fb", fontSize: "14px" }}>
                             <div style={{ color: "#4b5563", marginBottom: "6px" }}>본예산 대비 증가가 큰 세부사업 · 신규 세부사업 {dept.newCount}개</div>
                             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto auto", gap: "4px 24px", maxWidth: "900px" }}>
                               {dept.drivers.map((driver) => (
