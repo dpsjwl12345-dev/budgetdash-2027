@@ -2620,9 +2620,10 @@ export default function Home() {
                         style={{
                           fontSize: '20px', fontWeight: 600, padding: '2px 10px', borderRadius: '6px',
                           border: 'none', cursor: 'pointer',
-                          background: statementView === view ? '#10304f' : '#0d2136',
-                          color: statementView === view ? '#a9d3ff' : '#7fb4ea',
-                          boxShadow: statementView === view ? 'inset 0 -3px 0 #5b9bf0' : 'none',
+                          background: 'transparent',
+                          color: '#1e3a5f',
+                          opacity: statementView === view ? 1 : 0.7,
+                          boxShadow: statementView === view ? 'inset 0 0 0 2px #d9ad52' : 'none',
                         }}
                       >
                         {label}
