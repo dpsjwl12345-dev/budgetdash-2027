@@ -170,7 +170,6 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
       <p style={{ margin: "8px 0 0", color: "#c3cdd9", fontSize: "13px" }}>
         <span style={{ marginRight: "10px", ...TOP_BUDGET }}>■ 요구액 최대</span>
         <span style={{ marginRight: "12px", ...TOP_INCREASE }}>■ 증감액 최대</span>
-        ※ 3추는 부서별 2026 예산액 설정값(세출예산서). 지방채 상환은 2026년에 없던 항목으로 시 전체 지방채 원금 상환을 부서에 나눈 것이라 "지방채 빼면"을 따로 계산.
       </p>
     </section>
   );
