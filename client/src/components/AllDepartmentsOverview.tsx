@@ -5,8 +5,8 @@ import { Fragment, useMemo, useState } from "react";
 type HierarchyRow = { id: string; level: string; label: string; budget?: number; previous?: number };
 
 const BUREAUS = [
-  { name: "문화관광국", departments: ["문화예술과", "문화유산과", "관광진흥과", "독립기념관"] },
-  { name: "교육체육국", departments: ["체육진흥과", "교육지원과", "도서관정책과", "평생학습과", "전국체전추진단"] },
+  { name: "문화관광국", departments: ["문화예술과", "문화유산과", "독립기념관", "관광진흥과"] },
+  { name: "교육체육국", departments: ["교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"] },
 ];
 const DEBT_PROGRAM = "지방채 상환";
 
@@ -63,8 +63,8 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     { budget: 0, previous: 0, supp3: 0, debt: 0 },
   );
   const bureaus = BUREAUS.map((bureau) => {
-    const list = bureau.departments.map((name) => summaries.get(name)).filter((item): item is DeptSummary => !!item)
-      .sort((a, b) => (b.budget - (b.supp3 ?? b.previous)) - (a.budget - (a.supp3 ?? a.previous)));
+    // 부서 순서는 편성 부서 선택 목록과 같은 고정 순서.
+    const list = bureau.departments.map((name) => summaries.get(name)).filter((item): item is DeptSummary => !!item);
     return { ...bureau, list, total: sumOf(list) };
   });
   const grand = sumOf(bureaus.flatMap((bureau) => bureau.list));
