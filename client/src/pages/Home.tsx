@@ -2621,8 +2621,9 @@ export default function Home() {
                           fontSize: '20px', fontWeight: 600, padding: '2px 10px', borderRadius: '6px',
                           border: 'none', cursor: 'pointer',
                           background: 'transparent',
-                          color: '#1e3a5f',
-                          opacity: statementView === view ? 1 : 0.7,
+                          color: '#f6d27e',
+                          textShadow: '0 1px 2px rgba(30, 58, 95, 0.55)',
+                          opacity: statementView === view ? 1 : 0.8,
                           boxShadow: statementView === view ? 'inset 0 0 0 2px #d9ad52' : 'none',
                         }}
                       >
