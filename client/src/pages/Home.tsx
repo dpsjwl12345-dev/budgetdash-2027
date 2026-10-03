@@ -3139,18 +3139,18 @@ export default function Home() {
                     const isMajorProgram = row.level === 'program' && isMajorInvestmentProgram(department, row.label);
 
                     // 부기명 줄의 사업명·예산액·전년도·증감 칸은 항상 비어 있다(해당 값은
-                    // 위 통계목 줄에 이미 표시됨). 그 빈 공간을 하나로 합쳐 오른쪽의 좁은
-                    // 92px 메모 칸 대신 쓸 수 있는 넓은 메모 입력칸으로 쓴다. 같은 markKey를
-                    // 공유하므로 왼쪽/오른쪽 어느 쪽에서 적어도 같은 메모다.
-                    const isEditingLeftNote = markKey !== null && editingRowNoteKey === markKey && editingRowNoteSide === 'left';
+                    // 위 통계목 줄에 이미 표시됨). 그 빈 공간을 키워드 등을 적는 넓은 메모칸으로 쓴다.
+                    // 오른쪽 검토 칸의 짧은 메모와는 따로 저장한다(키 끝에 "::왼쪽메모").
+                    const leftNoteKey = markKey ? `${markKey}::왼쪽메모` : null;
+                    const isEditingLeftNote = leftNoteKey !== null && editingRowNoteKey === leftNoteKey && editingRowNoteSide === 'left';
                     return (
                       <Fragment key={row.id}>
                         <tr>
                           {row.level === 'note' ? (
                             <td
                               colSpan={6}
-                              onClick={markKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteSide('left'); setEditingRowNoteKey(markKey); } : undefined}
-                              title={markKey ? (rowNotes[markKey] ? '클릭하여 메모 수정' : '클릭하여 메모 입력') : undefined}
+                              onClick={leftNoteKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[leftNoteKey] ?? ''); setEditingRowNoteSide('left'); setEditingRowNoteKey(leftNoteKey); } : undefined}
+                              title={leftNoteKey ? (rowNotes[leftNoteKey] ? '클릭하여 메모 수정' : '클릭하여 메모 입력') : undefined}
                               style={{
                                 paddingLeft: getPaddingLeft(),
                                 paddingRight: '8px',
@@ -3159,26 +3159,26 @@ export default function Home() {
                                 paddingTop: rowSpacing,
                                 paddingBottom: rowSpacing,
                                 borderRight: '1px solid rgba(60,50,35,0.12)',
-                                cursor: markKey && !isEditingLeftNote ? 'pointer' : 'default',
+                                cursor: leftNoteKey && !isEditingLeftNote ? 'pointer' : 'default',
                               }}
                             >
-                              {markKey && isEditingLeftNote ? (
+                              {leftNoteKey && isEditingLeftNote ? (
                                 <input
                                   autoFocus
                                   value={rowNoteDraft}
                                   onChange={(event) => setRowNoteDraft(event.target.value)}
-                                  onBlur={() => setRowNote(markKey, rowNoteDraft)}
+                                  onBlur={() => setRowNote(leftNoteKey, rowNoteDraft)}
                                   onClick={(event) => event.stopPropagation()}
                                   onKeyDown={(event) => {
-                                    if (event.key === 'Enter') setRowNote(markKey, rowNoteDraft);
+                                    if (event.key === 'Enter') setRowNote(leftNoteKey, rowNoteDraft);
                                     if (event.key === 'Escape') { setEditingRowNoteKey(null); setRowNoteDraft(""); }
                                   }}
                                   placeholder="예: 전년 대비 증액 사유"
                                   style={{ width: '100%', padding: '3px 8px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: '#1d4ed8' }}
                                 />
                               ) : (
-                                <span style={{ fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: markKey && rowNotes[markKey] ? '#1d4ed8' : '#c3ccd6' }}>
-                                  {(markKey && rowNotes[markKey]) || (markKey ? '클릭하여 메모 입력' : '')}
+                                <span style={{ fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: leftNoteKey && rowNotes[leftNoteKey] ? '#1d4ed8' : '#c3ccd6' }}>
+                                  {(leftNoteKey && rowNotes[leftNoteKey]) || (leftNoteKey ? '클릭하여 메모 입력' : '')}
                                 </span>
                               )}
                             </td>
