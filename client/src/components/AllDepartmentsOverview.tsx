@@ -108,9 +108,9 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             <tr style={{ background: NAVY }}>
               <th style={{ ...head, width: "190px" }}>국 · 부서</th>
               <th style={{ ...head, background: "#2f6fd6" }}>2027 요구액</th>
-              <th style={head}>기정액(본)</th>
+              <th style={head}>본예산</th>
               <th style={head}>본 대비</th>
-              <th style={head}>2026 3추</th>
+              <th style={head}>3추 예산</th>
               <th style={head}>3추 대비</th>
               <th style={head}>3추 대비 증감액</th>
               <th style={head}>지방채 상환</th>
@@ -146,7 +146,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
                       {open && (
                         <tr>
                           <td colSpan={9} style={{ padding: "8px 16px 14px 44px", borderBottom: "1px solid #dde3ea", background: "#f4f7fb", fontSize: "14px" }}>
-                            <div style={{ color: "#4b5563", marginBottom: "6px" }}>기정액(본) 대비 증가가 큰 세부사업 · 신규 세부사업 {dept.newCount}개</div>
+                            <div style={{ color: "#4b5563", marginBottom: "6px" }}>본예산 대비 증가가 큰 세부사업 · 신규 세부사업 {dept.newCount}개</div>
                             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto auto", gap: "4px 24px", maxWidth: "900px" }}>
                               {dept.drivers.map((driver) => (
                                 <Fragment key={driver.label}>
