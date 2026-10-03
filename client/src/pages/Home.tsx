@@ -1116,6 +1116,52 @@ export default function Home() {
     }
   };
 
+  // 부서 메모: 부서 전체 사항을 자유롭게 적어두는 한 칸짜리 메모장. 기존 "메모 추가" 방식으로 쌓인
+  // 메모가 있으면 줄바꿈으로 이어 붙여 그대로 보여주고, 저장할 때 하나의 메모로 합쳐 보관한다.
+  const [deptNote, setDeptNote] = useState("");
+  const deptNoteDirty = useRef(false);
+  const deptNoteTimer = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  useEffect(() => {
+    if (deptNoteDirty.current) return;
+    setDeptNote((deptMemos[department]?.memos ?? []).map((memo) => memo.text).join("\n\n"));
+  }, [department, deptMemos]);
+
+  const persistDeptNote = async (dept: string, text: string) => {
+    deptNoteDirty.current = false;
+    if (!dept) return;
+    const today = new Date().toLocaleDateString('ko-KR', { year: 'numeric', month: '2-digit', day: '2-digit' });
+    const updated = {
+      ...deptMemos,
+      [dept]: { memos: text.trim() ? [{ id: `note-${dept}`, text, date: today }] : [] },
+    };
+    setDeptMemos(updated);
+    try {
+      await fetch('/api/cloud-sync?type=dept-memos', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ data: updated }),
+      });
+    } catch (error) {
+      console.warn('부서 메모 저장 실패:', error);
+      showToast('메모를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    }
+  };
+
+  const onDeptNoteChange = (text: string) => {
+    setDeptNote(text);
+    deptNoteDirty.current = true;
+    if (deptNoteTimer.current) clearTimeout(deptNoteTimer.current);
+    const dept = department;
+    deptNoteTimer.current = setTimeout(() => persistDeptNote(dept, text), 1200);
+  };
+
+  const flushDeptNote = () => {
+    if (!deptNoteDirty.current) return;
+    if (deptNoteTimer.current) clearTimeout(deptNoteTimer.current);
+    persistDeptNote(department, deptNote);
+  };
+
   const deleteDeptMemo = async (memoIndex: number) => {
     const existing = deptMemos[department] || { memos: [] };
     const updated = {
@@ -2479,7 +2525,7 @@ export default function Home() {
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
               <div className={`select-field${department && departmentOptions.some((o: { value: string }) => o.value === department) ? " dept-picked" : ""}`}><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); setHierarchyProgramFilter([]); setHierarchyItemFilter([]); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
-              <div className="select-field"><span>부서 메모</span><button className="staff-summary" onClick={() => setShowDeptMemoModal(true)}><StickyNote size={17} /><span>{department}</span>{(deptMemos[department]?.memos.length ?? 0) > 0 && <span className="dept-memo-count">{deptMemos[department]?.memos.length}</span>}</button></div>
+              <div className="select-field dept-note-field"><span>부서 메모</span><textarea className="dept-note" value={deptNote} disabled={!department} placeholder={department ? "부서 전체 사항, 잊지 말아야 할 내용을 자유롭게 적어두세요" : "편성 부서를 먼저 선택하세요"} onChange={(event) => onDeptNoteChange(event.target.value)} onBlur={flushDeptNote} rows={2} aria-label="부서 메모" /></div>
             </div>
           </section>
 
@@ -2574,8 +2620,8 @@ export default function Home() {
                         style={{
                           fontSize: '20px', fontWeight: 600, padding: '2px 10px', borderRadius: '6px',
                           border: 'none', cursor: 'pointer',
-                          background: statementView === view ? '#1e3a5f' : 'transparent',
-                          color: statementView === view ? '#fff' : '#1e3a5f',
+                          background: statementView === view ? '#0f766e' : 'transparent',
+                          color: statementView === view ? '#fff' : '#0f766e',
                         }}
                       >
                         {label}
