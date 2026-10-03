@@ -666,11 +666,11 @@ export default function BudgetExecution2026() {
                     type="button"
                     onClick={() => setExecView(view)}
                     style={{
-                      fontSize: '26px', fontWeight: 700, padding: '2px 10px', borderRadius: '6px',
+                      fontSize: '26px', fontWeight: 700, padding: '6px 12px 2px', lineHeight: 1.15, borderRadius: '6px',
                       border: 'none', cursor: 'pointer',
                       background: 'transparent',
                       color: execView === view ? '#3d70b8' : '#8b9099',
-                      boxShadow: execView === view ? 'inset 0 0 0 2px #3d70b8' : 'none',
+                      boxShadow: execView === view ? 'inset 0 0 0 1px #3d70b8' : 'none',
                     }}
                   >
                     {label}
