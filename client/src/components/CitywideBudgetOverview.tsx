@@ -15,11 +15,11 @@ function fmtEok(millionWon: number) {
   return fmt(Math.round(millionWon / 100));
 }
 
-// 전년 대비 증감액(억원 단위). 원본 표기 그대로 부호를 살린다: 감소는 "△", 증감 없음은 "-".
+// 전년 대비 증감액(억원 단위). 감소는 "△", 증감 없음은 "-"로 표기하고 증가는 부호 없이 숫자만 보여준다.
 function fmtEokDiff(y2026: number, y2027: number) {
   const diffEok = Math.round((y2027 - y2026) / 100);
   if (diffEok === 0) return "-";
-  return diffEok > 0 ? `+${fmt(diffEok)}` : `△${fmt(Math.abs(diffEok))}`;
+  return diffEok > 0 ? fmt(diffEok) : `△${fmt(Math.abs(diffEok))}`;
 }
 
 type BudgetGroup = {
