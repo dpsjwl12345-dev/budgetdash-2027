@@ -64,6 +64,20 @@ function readHeaderField(headText: string, label: string): string | null {
 // 열 제목은 "예 산 액"처럼 글자 사이에 공백이 섞여 있어도 찾도록 공백을 지우고 비교한다.
 const compact = (value: unknown) => String(value ?? "").replace(/\s+/g, "");
 
+// 추경 회차 표기: "추경 3 회", "3회 추경", "제3회 추경", "3추", "3차 추경" 등을 모두 읽는다.
+export function detectSupplementaryRound(text: string): number {
+  const t = String(text ?? "").replace(/\s+/g, "");
+  const patterns = [/추경(\d+)회/, /(\d+)회추경/, /(\d+)차추경/, /추경(\d+)차/, /(?:^|[^0-9])(\d+)추(?:[^가-힣]|$)/];
+  for (const pattern of patterns) {
+    const match = t.match(pattern);
+    if (match) {
+      const no = Number(match[1]);
+      if (no >= 1 && no <= 20) return no;
+    }
+  }
+  return 0;
+}
+
 export function parseSupplementaryWorkbook(workbook: XLSX.WorkBook, fileName: string): SupplementaryReport {
   const programs: SupplementaryProgram[] = [];
   const items: SupplementaryItem[] = [];
@@ -78,26 +92,31 @@ export function parseSupplementaryWorkbook(workbook: XLSX.WorkBook, fileName: st
 
   for (const sheetName of workbook.SheetNames) {
     const rows = XLSX.utils.sheet_to_json<unknown[]>(workbook.Sheets[sheetName], { header: 1, raw: false, defval: "" });
-    const headerIndex = rows.findIndex((row) => row.some((cell) => compact(cell) === "예산액"));
+    const isAmountHeader = (cell: unknown) => {
+      const text = compact(cell);
+      return text.includes("예산액") && !text.includes("기정");
+    };
+    const headerIndex = rows.findIndex((row) => row.some(isAmountHeader));
     if (headerIndex === -1) continue;
     const header = rows[headerIndex];
 
     // 금액 열 위치는 파일마다 다르므로(칸이 하나씩 벌어진 파일도 있다) 열 제목으로 찾는다.
-    const amountCol = header.findIndex((cell) => compact(cell) === "예산액");
-    let previousCol = header.findIndex((cell) => compact(cell) === "기정예산액");
+    const amountCol = header.findIndex(isAmountHeader);
+    let previousCol = header.findIndex((cell) => compact(cell).includes("기정"));
     if (previousCol < 0) previousCol = amountCol + 1;
-    let differenceCol = header.findIndex((cell) => compact(cell) === "비교증감");
+    let differenceCol = header.findIndex((cell) => compact(cell).includes("비교증감"));
     if (differenceCol < 0) differenceCol = previousCol + 1;
-    let statCol = header.findIndex((cell) => compact(cell) === "산출근거");
+    let statCol = header.findIndex((cell) => compact(cell).includes("산출근거"));
     if (statCol < 0) statCol = differenceCol + 1;
 
     // 머리글(부서·회계명·추경 회차)은 있으면 쓰고, 없으면 아래에서 표 안의 부서 줄로 채운다.
     const headText = rows.slice(0, headerIndex).map((row) => String(row[0] ?? "")).join("\n");
     if (!department) department = readHeaderField(headText, "부\\s*서") ?? "";
     if (!accountName) accountName = readHeaderField(headText, "회\\s*계\\s*명") ?? "";
+    // 회차는 표 위의 아무 칸, 열 제목 칸, 시트 이름, 파일 이름에 적혀 있어도 읽는다.
     if (!round) {
-      const roundMatch = headText.match(/추경\s*(\d+)\s*회/);
-      if (roundMatch) round = Number(roundMatch[1]);
+      const everyHeaderCell = rows.slice(0, headerIndex + 1).flat().map((cell) => String(cell ?? "")).join("\n");
+      round = detectSupplementaryRound(everyHeaderCell) || detectSupplementaryRound(sheetName);
     }
 
     for (const row of rows.slice(headerIndex + 1)) {
@@ -133,6 +152,7 @@ export function parseSupplementaryWorkbook(workbook: XLSX.WorkBook, fileName: st
     }
   }
 
+  if (!round) round = detectSupplementaryRound(fileName);
   return { department, round, accountName, fileName, totalAmount, totalPrevious, programs, items };
 }
 
