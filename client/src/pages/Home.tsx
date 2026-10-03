@@ -264,6 +264,16 @@ function parseBudgetInput(value: string): number {
   return Number.isFinite(n) ? n : 0;
 }
 
+// 2027 요구액 카드의 "본예산대비"/"3추대비" 증감률. 기준값이 없거나 0이면 비교 자체가
+// 의미 없으므로 null을 반환해 배지를 숨긴다. 부호 표기는 시 전체 현황 카드와 통일
+// (증가 "+", 감소 "△").
+function formatYoyPercent(current: number, base: number | null): string | null {
+  if (!base) return null;
+  const pct = Math.round(((current - base) / base) * 1000) / 10;
+  if (pct === 0) return "0%";
+  return pct > 0 ? `+${pct.toFixed(1)}%` : `△${Math.abs(pct).toFixed(1)}%`;
+}
+
 // row.program은 엑셀 업로드 시 "단위사업명\n세부사업명"으로 합쳐져 저장되므로,
 // 필터 드롭다운에는 세부사업명(마지막 줄)만 보여준다.
 function getDetailName(program: string) {
@@ -2479,6 +2489,24 @@ export default function Home() {
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
               <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
+              {(() => {
+                const base2026Amount = department && budget2026Data[department]?.base2026
+                  ? parseBudgetInput(budget2026Data[department].base2026)
+                  : hierarchyTotals.previous;
+                const supp3Amount = department && budget2026Data[department]?.supp3
+                  ? parseBudgetInput(budget2026Data[department].supp3)
+                  : null;
+                const basePct = formatYoyPercent(hierarchyTotals.amount, base2026Amount);
+                const supp3Pct = formatYoyPercent(hierarchyTotals.amount, supp3Amount);
+                const pctColor = (pct: string) => (pct.startsWith("+") ? "#a7d2ff" : pct.startsWith("△") ? "#f87171" : "#8fa1b3");
+                if (!basePct && !supp3Pct) return null;
+                return (
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px", fontSize: "12px", fontWeight: 600 }}>
+                    {basePct && <span style={{ color: pctColor(basePct) }}>본예산대비 {basePct}</span>}
+                    {supp3Pct && <span style={{ color: pctColor(supp3Pct) }}>3추대비 {supp3Pct}</span>}
+                  </div>
+                );
+              })()}
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
