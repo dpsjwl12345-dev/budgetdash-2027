@@ -95,6 +95,17 @@ const parsePledgeAmount = (value: string): number => {
 const calcPledgeTotal = (pledge: PledgeExtra): number =>
   PLEDGE_INPUT_YEAR_FIELDS.reduce((sum, field) => sum + parsePledgeAmount(pledge[field.key]), 0);
 
+// 요구액은 천원 단위로 적는 것이 기본이라, 숫자만 입력하면 단위 "천원"을 자동으로 붙인다
+// (예: 6000 → 6,000천원). 이미 "6억", "500백만원"처럼 단위를 직접 적었으면 그대로 둔다.
+const normalizeRequestedAmount = (raw: string): string => {
+  const value = raw.trim();
+  if (!value) return "";
+  if (!/^[\d,\s]+$/.test(value)) return value;
+  const digits = value.replace(/[^\d]/g, "");
+  if (!digits) return value;
+  return `${Number(digits).toLocaleString("ko-KR")}천원`;
+};
+
 const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestType,
   electoralDistrict: "",
@@ -624,7 +635,7 @@ export default function CouncilMemberRequests() {
       department: form.department,
       content: form.content.trim(),
       budgetItemName: form.budgetItemName.trim(),
-      requestedAmount: form.requestedAmount.trim(),
+      requestedAmount: normalizeRequestedAmount(form.requestedAmount),
       status: form.status,
       requestedDate: form.requestedDate,
       note: isPledge ? serializePledgeExtra(pledgeToSave) : undefined,
@@ -698,7 +709,7 @@ export default function CouncilMemberRequests() {
       department: editDraft.department,
       content: editDraft.content.trim(),
       budgetItemName: editDraft.budgetItemName.trim(),
-      requestedAmount: editDraft.requestedAmount.trim(),
+      requestedAmount: normalizeRequestedAmount(editDraft.requestedAmount),
       requestedDate: editDraft.requestedDate,
       note: isPledge ? serializePledgeExtra(pledgeToSave) : target.note,
     };
@@ -820,6 +831,7 @@ export default function CouncilMemberRequests() {
                               className="cell-input"
                               value={editDraft.requestedAmount}
                               onChange={(e) => setEditDraft({ ...editDraft, requestedAmount: e.target.value })}
+                              onBlur={() => setEditDraft((draft) => (draft ? { ...draft, requestedAmount: normalizeRequestedAmount(draft.requestedAmount) } : draft))}
                             />
                           </td>
                         </>
@@ -1178,9 +1190,10 @@ export default function CouncilMemberRequests() {
             />
             <input
               className="form-input amount-input"
-              placeholder="요구액 (예: 6억)"
+              placeholder="요구액 (천원 단위, 예: 6000)"
               value={form.requestedAmount}
               onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
+              onBlur={() => setForm((current) => ({ ...current, requestedAmount: normalizeRequestedAmount(current.requestedAmount) }))}
             />
             <button className="add-button" onClick={handleAdd}>추가</button>
           </div>
