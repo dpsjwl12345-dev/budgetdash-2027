@@ -2487,76 +2487,77 @@ export default function Home() {
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
-              </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
-              {(() => {
-                const base2026Amount = department && budget2026Data[department]?.base2026
-                  ? parseBudgetInput(budget2026Data[department].base2026)
-                  : hierarchyTotals.previous;
-                const supp3Amount = department && budget2026Data[department]?.supp3
-                  ? parseBudgetInput(budget2026Data[department].supp3)
-                  : null;
-                const basePct = formatYoyPercent(hierarchyTotals.amount, base2026Amount);
-                const supp3Pct = formatYoyPercent(hierarchyTotals.amount, supp3Amount);
-                if (!basePct && !supp3Pct) return null;
-                // 증가는 초록 ▲, 감소는 빨강 ▼, 변동 없음은 회색 ▶ — 화살표가 방향을
-                // 전달하므로 부호(+/△)는 칩 안에서는 떼고 숫자만 보여준다.
-                const renderChip = (label: string, pct: string) => {
-                  const isUp = pct.startsWith("+");
-                  const isDown = pct.startsWith("△");
-                  const color = isUp ? "#4ade80" : isDown ? "#f87171" : "#9ca3af";
-                  const arrow = isUp ? "▲" : isDown ? "▼" : "▶";
+                {(() => {
+                  const base2026Amount = department && budget2026Data[department]?.base2026
+                    ? parseBudgetInput(budget2026Data[department].base2026)
+                    : hierarchyTotals.previous;
+                  const supp3Amount = department && budget2026Data[department]?.supp3
+                    ? parseBudgetInput(budget2026Data[department].supp3)
+                    : null;
+                  const basePct = formatYoyPercent(hierarchyTotals.amount, base2026Amount);
+                  const supp3Pct = formatYoyPercent(hierarchyTotals.amount, supp3Amount);
+                  if (!basePct && !supp3Pct) return null;
+                  // 증가는 초록 ▲, 감소는 빨강 ▼, 변동 없음은 회색 ▶ — 화살표가 방향을
+                  // 전달하므로 부호(+/△)는 칩 안에서는 떼고 숫자만 보여준다.
+                  const renderChip = (label: string, pct: string) => {
+                    const isUp = pct.startsWith("+");
+                    const isDown = pct.startsWith("△");
+                    const color = isUp ? "#4ade80" : isDown ? "#f87171" : "#9ca3af";
+                    const arrow = isUp ? "▲" : isDown ? "▼" : "▶";
+                    return (
+                      <span
+                        key={label}
+                        style={{
+                          display: "inline-flex",
+                          alignItems: "center",
+                          gap: "3px",
+                          padding: "1px 6px",
+                          border: "1px solid rgba(255,255,255,0.18)",
+                          borderRadius: "6px",
+                          background: "rgba(255,255,255,0.04)",
+                          fontSize: "12px",
+                          fontWeight: 500,
+                          whiteSpace: "nowrap",
+                        }}
+                      >
+                        <span style={{ color: "#c0d0df" }}>{label}</span>
+                        <span style={{ color }}>{arrow} {pct.replace(/^[+△]/, "")}</span>
+                      </span>
+                    );
+                  };
                   return (
-                    <span
-                      key={label}
-                      style={{
-                        display: "inline-flex",
-                        alignItems: "center",
-                        gap: "4px",
-                        padding: "2px 8px",
-                        border: "1px solid rgba(255,255,255,0.18)",
-                        borderRadius: "6px",
-                        background: "rgba(255,255,255,0.04)",
-                        fontSize: "12px",
-                        fontWeight: 500,
-                      }}
-                    >
-                      <span style={{ color: "#c0d0df" }}>{label}</span>
-                      <span style={{ color }}>{arrow} {pct.replace(/^[+△]/, "")}</span>
-                    </span>
+                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px" }}>
+                      {basePct && renderChip("본", basePct)}
+                      {supp3Pct && renderChip("3추", supp3Pct)}
+                    </div>
                   );
-                };
-                return (
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px", marginTop: "6px" }}>
-                    {basePct && renderChip("본", basePct)}
-                    {supp3Pct && renderChip("3추", supp3Pct)}
-                  </div>
-                );
-              })()}
+                })()}
+              </div>
+              <strong style={{ textAlign: "right", marginTop: "4px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 신규 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "4px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 주요투자사업 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(majorInvestmentTotal)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "4px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(majorInvestmentTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(parseBudgetInput(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "4px", fontSize: "calc(1rem + 5px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(parseBudgetInput(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026년 예산액 (3추 기준)</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(parseBudgetInput(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "4px", fontSize: "calc(1rem + 5px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(parseBudgetInput(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
             </article>
           </section>
 
