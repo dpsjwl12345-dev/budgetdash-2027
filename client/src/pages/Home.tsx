@@ -2501,7 +2501,7 @@ export default function Home() {
                 const pctColor = (pct: string) => (pct.startsWith("+") ? "#a7d2ff" : pct.startsWith("△") ? "#f87171" : "#8fa1b3");
                 if (!basePct && !supp3Pct) return null;
                 return (
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px", fontSize: "12px", fontWeight: 600 }}>
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px", fontSize: "13px", fontWeight: 400 }}>
                     {basePct && <span style={{ color: pctColor(basePct) }}>본예산대비 {basePct}</span>}
                     {supp3Pct && <span style={{ color: pctColor(supp3Pct) }}>3추대비 {supp3Pct}</span>}
                   </div>
