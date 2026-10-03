@@ -167,10 +167,6 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
           </tbody>
         </table>
       </div>
-      <p style={{ margin: "8px 0 0", color: "#c3cdd9", fontSize: "13px" }}>
-        <span style={{ marginRight: "10px", ...TOP_BUDGET }}>■ 요구액 최대</span>
-        <span style={{ marginRight: "12px", ...TOP_INCREASE }}>■ 증감액 최대</span>
-      </p>
     </section>
   );
 }
