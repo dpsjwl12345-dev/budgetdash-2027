@@ -7,6 +7,7 @@ import { useLocation } from "wouter";
 import * as XLSX from "xlsx";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
+import { normalizeSupplementaryName, normalizeSupplementaryStat, readSupplementaryFile, type SupplementaryReport } from "@/lib/supplementaryBudget";
 
 type BudgetExecution = {
   id: number;
@@ -27,6 +28,7 @@ type BudgetExecution = {
 import Pagination from "@/components/Pagination";
 import {
   AlertCircle,
+  FilePlus2,
   Bell,
   Check,
   ChevronDown,
@@ -934,7 +936,7 @@ export default function Home() {
   });
   const [resizingColumn, setResizingColumn] = useState<{ key: string; startX: number; startWidth: number } | null>(null);
   const DEFAULT_HIERARCHY_COLUMN_WIDTHS: Record<string, number> = {
-    label: 168, budget: 120, previous: 120, difference: 120, statisticsCode: 152, description: 310, review: 90, edit: 60,
+    label: 210, budget: 120, previous: 120, supp3: 120, difference: 120, supp3Diff: 120, statisticsCode: 152, description: 310, review: 90, edit: 60,
   };
   const getHierarchyColumnWidth = (key: string) => columnWidths[key] ?? DEFAULT_HIERARCHY_COLUMN_WIDTHS[key];
   const staffModalRef = useRef<HTMLDivElement>(null);
@@ -1027,6 +1029,7 @@ export default function Home() {
     loadStaffDataFromServer();
     loadDeptMemosFromServer();
     loadBudget2026FromServer();
+    loadSupplementaryFromServer();
   }, []);
 
   // 부서가 실제로 영향을 주는 건 메모와 부기명 강조 표시뿐이다.
@@ -1060,6 +1063,78 @@ export default function Home() {
       }
     } catch (error) {
       console.log('2026 예산액 클라우드 로드 실패:', error);
+    }
+  };
+
+  // ── 추경 세출예산내역서 ──────────────────────────────────────────────────────
+  // 부서·회차(1회, 3회…)별로 올린 추경 내역서. 각 항목의 3추 금액은 "그 항목이 실려 있는 가장 최근
+  // 회차의 예산액"이고, 어느 회차에도 없으면 추경에서 바뀌지 않은 것이라 본예산(전년도 열)을 쓴다.
+  type SupplementaryRecord = { department: string; round: number; fileName: string; data: SupplementaryReport };
+  const [supplementaryRecords, setSupplementaryRecords] = useState<SupplementaryRecord[]>([]);
+  const [supplementaryResult, setSupplementaryResult] = useState<{ department: string; round: number; fileName: string; programCount: number; itemCount: number; unmatched: string[] } | null>(null);
+  const supplementaryInputRef = useRef<HTMLInputElement>(null);
+
+  const loadSupplementaryFromServer = async () => {
+    try {
+      const response = await fetch('/api/cloud-sync?type=supplementary');
+      if (!response.ok) return;
+      const { data } = await response.json();
+      if (Array.isArray(data)) {
+        setSupplementaryRecords(data.map((row: any) => ({
+          department: row.department,
+          round: Number(row.round),
+          fileName: row.file_name || '',
+          data: row.data as SupplementaryReport,
+        })));
+      }
+    } catch (error) {
+      console.log('추경 자료 클라우드 로드 실패:', error);
+    }
+  };
+
+  const handleSupplementaryUpload = async (file: File) => {
+    try {
+      const report = await readSupplementaryFile(file);
+      if (!report.department || !report.round || report.programs.length === 0) {
+        showToast('추경 세출예산내역서 형식으로 읽지 못했습니다. 부서·회차(추경 N회)가 적힌 내역서 엑셀인지 확인해주세요.');
+        return;
+      }
+      const response = await fetch('/api/cloud-sync?type=supplementary', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ department: report.department, round: report.round, fileName: file.name, data: report }),
+      });
+      const result = await response.json().catch(() => ({}));
+      if (!response.ok || result.success !== true) {
+        throw new Error(result.message || '서버 저장 실패');
+      }
+      setSupplementaryRecords((prev) => [
+        ...prev.filter((record) => !(record.department === report.department && record.round === report.round)),
+        { department: report.department, round: report.round, fileName: file.name, data: report },
+      ]);
+
+      // 현재 예산서에 같은 이름의 세부사업이 없어 붙지 못한 항목을 알려준다.
+      const programKeys = new Set<string>();
+      let currentDept = '';
+      for (const row of expenditureHierarchyRows) {
+        if (row.level === 'dept') currentDept = row.label;
+        else if (row.level === 'program' && currentDept === report.department) programKeys.add(normalizeSupplementaryName(row.label));
+      }
+      const unmatched = report.programs.filter((program) => !programKeys.has(normalizeSupplementaryName(program.name))).map((program) => program.name);
+      setSupplementaryResult({
+        department: report.department,
+        round: report.round,
+        fileName: file.name,
+        programCount: report.programs.length,
+        itemCount: report.items.length,
+        unmatched,
+      });
+      showToast(`${report.department} 추경 ${report.round}회 내역서를 반영했습니다.`);
+    } catch (error) {
+      console.warn('추경 자료 업로드 실패:', error);
+      showToast('추경 자료를 저장하지 못했습니다. 잠시 후 다시 시도해주세요.');
+    } finally {
+      if (supplementaryInputRef.current) supplementaryInputRef.current.value = '';
     }
   };
 
@@ -1598,6 +1673,44 @@ export default function Home() {
     }
     return map;
   }, [budgetHierarchyRows]);
+
+  // 선택한 부서에 올라온 추경 회차들 (큰 회차부터).
+  const supplementaryRounds = useMemo(
+    () => supplementaryRecords.filter((record) => record.department === department).sort((a, b) => b.round - a.round),
+    [supplementaryRecords, department],
+  );
+
+  // 행마다 3추 기준 금액: 세부사업·통계목은 가장 최근 회차에 실린 예산액, 없으면 본예산(전년도 열).
+  // 편성목·단위·정책·부서는 아래 세부사업/통계목 값을 더해서 만든다. 세출예산내역서에서만 계산한다.
+  const supplementaryValues = useMemo(() => {
+    const values = new Map<string, number>();
+    if (!department || statementView !== 'expenditure' || supplementaryRounds.length === 0) return values;
+    const programMaps = supplementaryRounds.map((record) => new Map<string, number>(record.data.programs.map((program) => [normalizeSupplementaryName(program.name), program.amount] as [string, number])));
+    const itemMaps = supplementaryRounds.map((record) => new Map<string, number>(record.data.items.map((item) => [`${normalizeSupplementaryName(item.program)}|${normalizeSupplementaryStat(item.stat)}`, item.amount] as [string, number])));
+    const addTo = (target: BudgetHierarchyRow | undefined, amount: number) => {
+      if (target) values.set(target.id, (values.get(target.id) ?? 0) + amount);
+    };
+    for (const row of budgetHierarchyRows) {
+      const ancestors = hierarchyAncestors.get(row.id);
+      if (ancestors?.deptRow?.label !== department) continue;
+      if (row.level === 'program') {
+        const key = normalizeSupplementaryName(row.label);
+        const hit = programMaps.map((map) => map.get(key)).find((amount) => amount !== undefined);
+        const amount = hit ?? row.previous ?? 0;
+        values.set(row.id, amount);
+        addTo(ancestors.unitRow, amount);
+        addTo(ancestors.policyRow, amount);
+        addTo(ancestors.deptRow, amount);
+      } else if (row.level === 'item') {
+        const key = `${normalizeSupplementaryName(ancestors.programRow?.label ?? '')}|${normalizeSupplementaryStat(row.statisticsCode ?? '')}`;
+        const hit = itemMaps.map((map) => map.get(key)).find((amount) => amount !== undefined);
+        const amount = hit ?? row.previous ?? 0;
+        values.set(row.id, amount);
+        addTo(ancestors.accountRow, amount);
+      }
+    }
+    return values;
+  }, [department, statementView, supplementaryRounds, budgetHierarchyRows, hierarchyAncestors]);
 
   // 세부사업 드롭다운 필터 값 목록 (세부사업명만, 중복 제거).
   // budgetHierarchyRows는 모든 부서의 행이 한 배열에 섞여 있는데, 부서 필터링 없이 돌면
@@ -2528,6 +2641,19 @@ export default function Home() {
                       }}
                     />
                   </label>
+                  <label className="icon-stack-btn" aria-label="추경 내역서 업로드" data-tooltip="추경 내역서 업로드">
+                    <div className="icon-stack-front"><FilePlus2 size={20} /></div>
+                    <input
+                      ref={supplementaryInputRef}
+                      className="upload-input"
+                      type="file"
+                      accept=".xlsx,.xls"
+                      onChange={(event) => {
+                        const file = event.target.files?.[0];
+                        if (file) handleSupplementaryUpload(file);
+                      }}
+                    />
+                  </label>
                 </div>
               </div>
             </div>
@@ -2639,6 +2765,11 @@ export default function Home() {
                       </button>
                     ))}
                   </div>
+                  {statementView === 'expenditure' && supplementaryRounds.length > 0 && (
+                    <span className="no-print" title={supplementaryRounds.map((record) => `${record.round}회: ${record.fileName}`).join('\n')} style={{ fontSize: '13px', fontWeight: 600, color: '#1e3a5f', background: '#e3e9f1', border: '1px solid #b7c2cf', borderRadius: '999px', padding: '3px 10px' }}>
+                      추경 {[...supplementaryRounds].sort((a, b) => a.round - b.round).map((record) => record.round).join('·')}회 반영
+                    </span>
+                  )}
                   {department === "전국체전추진단" && (
                     <>
                       <button
@@ -2688,9 +2819,9 @@ export default function Home() {
             </div>
 
             <div className="table-scroll ledger-scrollbar" ref={tableRef} style={{ overflowX: 'auto', overflowY: 'visible', border: '1px solid #b7c2cf' }}>
-              <table className="budget-table hierarchy-budget-table" style={{ width: '100%', minWidth: '1140px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
+              <table className="budget-table hierarchy-budget-table" style={{ width: '100%', minWidth: '1440px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <colgroup>
-                  {(['label', 'budget', 'previous', 'difference', 'statisticsCode', 'description', 'review', 'edit'] as const).map((key) => (
+                  {(['label', 'budget', 'previous', 'supp3', 'difference', 'supp3Diff', 'statisticsCode', 'description', 'review', 'edit'] as const).map((key) => (
                     <col key={key} style={{ width: `${getHierarchyColumnWidth(key)}px` }} />
                   ))}
                 </colgroup>
@@ -2706,8 +2837,10 @@ export default function Home() {
                       {renderHierarchyResizeHandle('label')}
                     </th>
                     <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>본예산{renderHierarchyResizeHandle('previous')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>3추{renderHierarchyResizeHandle('supp3')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감<br /><span style={{ fontSize: '0.72em', fontWeight: 500, opacity: 0.85 }}>(본예산)</span>{renderHierarchyResizeHandle('difference')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감<br /><span style={{ fontSize: '0.72em', fontWeight: 500, opacity: 0.85 }}>(3추)</span>{renderHierarchyResizeHandle('supp3Diff')}</th>
                     <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(15px + 1pt)' }}>
                       <HeaderFilterDropdown
                         label="통계목"
@@ -2851,7 +2984,7 @@ export default function Home() {
                     const isEditingMemo = memoProgramId && editingMemoId === memoProgramId;
                     const memoRow = memoProgramId && !hiddenMemoIds.includes(memoProgramId) && (
                       <tr key={`${row.id}-memo`}>
-                        <td colSpan={8} style={{ padding: '4px 16px', background: 'rgba(60, 50, 35, 0.05)' }}>
+                        <td colSpan={10} style={{ padding: '4px 16px', background: 'rgba(60, 50, 35, 0.05)' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {isEditingMemo ? (
                               <>
@@ -2993,7 +3126,7 @@ export default function Home() {
                         <tr>
                           {row.level === 'note' ? (
                             <td
-                              colSpan={4}
+                              colSpan={6}
                               onClick={markKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteSide('left'); setEditingRowNoteKey(markKey); } : undefined}
                               title={markKey ? (rowNotes[markKey] ? '클릭하여 메모 수정' : '클릭하여 메모 입력') : undefined}
                               style={{
@@ -3061,7 +3194,13 @@ export default function Home() {
                                 {formatNumber(row.previous)}
                               </td>
                               <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                                {supplementaryValues.has(row.id) ? formatNumber(supplementaryValues.get(row.id)) : ''}
+                              </td>
+                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                                 {formatNumber(getDisplayDifference(row))}
+                              </td>
+                              <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
+                                {supplementaryValues.has(row.id) && typeof row.budget === 'number' ? formatNumber(row.budget - (supplementaryValues.get(row.id) ?? 0)) : ''}
                               </td>
                             </>
                           )}
@@ -3225,6 +3364,24 @@ export default function Home() {
 
       {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card staff-modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" />명</label><label>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
       {showBudget2026Modal && <div className="modal-backdrop" onMouseDown={() => setShowBudget2026Modal(false)}><div className="modal-card staff-modal-card" ref={budget2026ModalRef} role="dialog" aria-modal="true" aria-labelledby="budget2026-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, budget2026ModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="budget2026-modal-title">부서별 2026 예산액 설정</h2></div><button className="close-button" onClick={() => setShowBudget2026Modal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>본예산(천원)<input value={budget2026Data[dept]?.base2026 || ""} onChange={(event) => setBudget2026Data({...budget2026Data, [dept]: {...(budget2026Data[dept] || {}), base2026: event.target.value}})} inputMode="numeric" /></label><label>3추기준(천원)<input value={budget2026Data[dept]?.supp3 || ""} onChange={(event) => setBudget2026Data({...budget2026Data, [dept]: {...(budget2026Data[dept] || {}), supp3: event.target.value}})} inputMode="numeric" /></label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowBudget2026Modal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveBudget2026}>저장</AppButton></div></div></div>}
+      {supplementaryResult && <div className="modal-backdrop" onMouseDown={() => setSupplementaryResult(null)}><div className="modal-card" role="dialog" aria-modal="true" aria-labelledby="supp-result-title" onMouseDown={(event) => event.stopPropagation()}>
+        <div className="modal-head"><div><span>SUPPLEMENTARY BUDGET</span><h2 id="supp-result-title">{supplementaryResult.department} 추경 {supplementaryResult.round}회 반영</h2></div><button className="close-button" onClick={() => setSupplementaryResult(null)} aria-label="닫기"><X size={19} /></button></div>
+        <div style={{ padding: '4px 4px 8px', lineHeight: 1.7 }}>
+          <p style={{ margin: 0 }}>{supplementaryResult.fileName}에서 세부사업 {supplementaryResult.programCount}개, 통계목 {supplementaryResult.itemCount}개를 읽어 저장했습니다.</p>
+          {supplementaryResult.unmatched.length > 0 ? (
+            <>
+              <p style={{ margin: '10px 0 4px', fontWeight: 700 }}>2027 예산서에서 같은 이름을 찾지 못한 세부사업 {supplementaryResult.unmatched.length}개</p>
+              <ul style={{ margin: 0, paddingLeft: '20px' }}>
+                {supplementaryResult.unmatched.map((name) => <li key={name}>{name}</li>)}
+              </ul>
+              <p style={{ margin: '8px 0 0', opacity: 0.75, fontSize: '13px' }}>올해 사업명이 바뀌었거나 2027 요구가 없는 사업이면 3추 열에 나타나지 않습니다.</p>
+            </>
+          ) : (
+            <p style={{ margin: '10px 0 0' }}>모든 세부사업이 2027 예산서와 이름이 맞았습니다.</p>
+          )}
+        </div>
+        <div className="modal-actions"><AppButton variant="primary" onClick={() => setSupplementaryResult(null)}>확인</AppButton></div>
+      </div></div>}
       {showDeptMemoModal && <div className="modal-backdrop" onMouseDown={() => setShowDeptMemoModal(false)}><div className="modal-card dept-memo-modal-card" ref={deptMemoModalRef} role="dialog" aria-modal="true" aria-labelledby="dept-memo-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, deptMemoModalRef.current)}>
         <div className="modal-head"><div><span>DEPARTMENT MEMO</span><h2 id="dept-memo-modal-title">{department} 주요 내용 메모</h2></div><button className="close-button" onClick={() => setShowDeptMemoModal(false)} aria-label="닫기"><X size={19} /></button></div>
         <div className="dept-memo-body">

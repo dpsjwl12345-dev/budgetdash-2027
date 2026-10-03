@@ -293,6 +293,60 @@ async function saveDeptMemos(req: any, res: any) {
   res.status(200).json({ success: true, message: "저장 완료" });
 }
 
+// 추경 세출예산내역서(회차별). 부서·회차마다 한 건씩, 엑셀에서 읽어낸 세부사업·통계목 금액을 JSON으로 보관한다.
+// 같은 부서·회차를 다시 올리면 덮어쓴다.
+async function loadSupplementary(res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ data: null });
+    return;
+  }
+  const { data, error } = await supabase.from('supplementary_budget').select('department, round, file_name, data, updated_at');
+  if (error) {
+    res.status(200).json({ data: null, error: error.message });
+    return;
+  }
+  res.status(200).json({ data: data || [] });
+}
+
+async function saveSupplementary(req: any, res: any) {
+  const supabase = getClient();
+  if (!supabase) {
+    res.status(200).json({ success: false, message: "저장 실패 (환경 변수 누락)" });
+    return;
+  }
+  const { department, round, fileName, data, action } = req.body || {};
+  const roundNo = Number(round);
+  if (!department || !Number.isInteger(roundNo) || roundNo < 1) {
+    res.status(400).json({ success: false, message: "부서와 추경 회차가 필요합니다." });
+    return;
+  }
+
+  if (action === 'delete') {
+    const { error } = await supabase.from('supplementary_budget').delete().eq('department', department).eq('round', roundNo);
+    if (error) {
+      res.status(200).json({ success: false, message: "삭제 실패", error: error.message });
+      return;
+    }
+    res.status(200).json({ success: true, message: "삭제 완료" });
+    return;
+  }
+
+  if (!data || typeof data !== 'object') {
+    res.status(400).json({ success: false, message: "저장할 추경 자료가 없습니다." });
+    return;
+  }
+  const { error } = await supabase.from('supplementary_budget').upsert(
+    { department, round: roundNo, file_name: fileName || '', data, updated_at: new Date().toISOString() },
+    { onConflict: 'department,round' },
+  );
+  if (error) {
+    res.status(200).json({ success: false, message: "저장 실패", error: error.message });
+    return;
+  }
+  res.status(200).json({ success: true, message: "저장 완료" });
+}
+
 async function loadCouncilRequests(res: any) {
   const supabase = getClient();
   if (!supabase) {
@@ -741,6 +795,7 @@ export default async function handler(req: any, res: any) {
       if (type === 'marks') return await loadRowMarks(req, res);
       if (type === 'issues') return await loadIssues(res);
       if (type === 'dept-memos') return await loadDeptMemos(res);
+      if (type === 'supplementary') return await loadSupplementary(res);
       if (type === 'council-requests') return await loadCouncilRequests(res);
       if (type === 'mayor-requests') return await loadMayorRequests(res);
       if (type === 'execution-details') return await loadExecutionDetails(req, res);
@@ -754,6 +809,7 @@ export default async function handler(req: any, res: any) {
       if (type === 'marks') return await saveRowMarks(req, res);
       if (type === 'issues') return await saveIssues(req, res);
       if (type === 'dept-memos') return await saveDeptMemos(req, res);
+      if (type === 'supplementary') return await saveSupplementary(req, res);
       if (type === 'council-requests') {
         if (req.body?.action === 'delete') return await deleteCouncilRequest(req, res);
         return await saveCouncilRequest(req, res);
