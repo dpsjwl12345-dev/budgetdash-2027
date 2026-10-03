@@ -89,11 +89,11 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
   return (
     <section className="table-section" style={{ marginTop: "18px" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "baseline", marginBottom: "10px" }}>
-        <h2 style={{ margin: 0, fontSize: "20px", color: NAVY }}>부서별 2027 요구 증감</h2>
-        <span style={{ color: "#4b5563", fontSize: "14px" }}>
+        <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>부서별 2027 요구 증감</h2>
+        <span style={{ color: "#c3cdd9", fontSize: "14px" }}>
           9개 부서 합계 {toMillion(grand.budget)} · 3추 대비 {signedMillion(grandIncrease)} ({percent(grand.budget, grand.supp3)}) · 지방채 상환 {toMillion(grand.debt)} 빼면 {percent(grand.budget - grand.debt, grand.supp3)}
         </span>
-        <span style={{ marginLeft: "auto", color: "#6b7280", fontSize: "13px" }}>[단위: 백만원]</span>
+        <span style={{ marginLeft: "auto", color: "#c3cdd9", fontSize: "13px" }}>[단위: 백만원]</span>
       </div>
       <div className="table-scroll ledger-scrollbar" style={{ overflowX: "auto", border: "1px solid #b7c2cf" }}>
         <table style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", background: "#ffffff", color: "#1a2129", fontSize: "15px" }}>
@@ -160,7 +160,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
           </tbody>
         </table>
       </div>
-      <p style={{ margin: "8px 0 0", color: "#6b7280", fontSize: "13px" }}>
+      <p style={{ margin: "8px 0 0", color: "#c3cdd9", fontSize: "13px" }}>
         ※ 3추는 부서별 2026 예산액 설정값(세출예산서). 지방채 상환은 2026년에 없던 항목으로 시 전체 지방채 원금 상환을 부서에 나눈 것이라 "지방채 빼면"을 따로 계산.
       </p>
     </section>
