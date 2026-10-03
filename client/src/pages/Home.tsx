@@ -2618,7 +2618,7 @@ export default function Home() {
                         type="button"
                         onClick={() => setStatementView(view)}
                         style={{
-                          fontSize: '20px', fontWeight: 600, padding: '7px 12px 1px', lineHeight: 1.15, borderRadius: '6px',
+                          fontSize: '20px', fontWeight: 600, padding: '5px 12px 3px', lineHeight: 1.15, borderRadius: '6px',
                           border: 'none', cursor: 'pointer',
                           background: 'transparent',
                           color: statementView === view ? '#3d70b8' : '#8b9099',
