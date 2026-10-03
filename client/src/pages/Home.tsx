@@ -256,6 +256,15 @@ function requestBadge(request: RequestRecord): RequestBadge | null {
   return null;
 }
 
+// 이름만으로는 예산서 줄을 찾을 수 없는 요구사항을 어느 세부사업에 붙일지 정해 둔 표(사용자 확인).
+// match는 요구 내용·항목명에 들어 있는 말, target은 예산서 세부사업명.
+const REQUEST_TARGETS: { department: string; match: string; target: string }[] = [
+  { department: "문화예술과", match: "봉담권예술의전당", target: "문화예술타운 효행아트홀 건립" },
+  { department: "문화예술과", match: "국제음악제", target: "화성시문화관광재단 지원" },
+  { department: "관광진흥과", match: "선셋콘서트", target: "화성시문화관광재단 관광진흥본부 지원" },
+  { department: "교육지원과", match: "테크노폴해외연수", target: "인재육성재단 운영지원" },
+];
+
 // 요구사항에서 예산서 이름과 맞춰 볼 후보들: 예산 항목명·내용의 각 줄, 괄호 안쪽 이름.
 function requestKeys(request: RequestRecord): string[] {
   const texts = [request.budgetItemName, ...request.content.split("\n")].flatMap((text) => text.split(/[()]/));
@@ -1751,6 +1760,11 @@ export default function Home() {
       const badge = requestBadge(request);
       if (!badge) return;
       const keys = requestKeys(request);
+      const target = REQUEST_TARGETS.find((entry) => entry.department === department && keys.some((key) => key.includes(entry.match)));
+      if (target) {
+        programs.filter((program) => program.name === normalizeBudgetName(target.target)).forEach((program) => add(program.row.id, badge));
+        return;
+      }
       const noteHits = notes.filter((note) => keys.some((key) => matches(note.name, key)));
       if (noteHits.length) { noteHits.forEach((note) => add(note.row.id, badge)); return; }
       programs.filter((program) => keys.some((key) => matches(program.name, key))).forEach((program) => add(program.row.id, badge));
