@@ -3044,6 +3044,7 @@ export default function Home() {
                             </>
                           )}
                           <td
+                            className="stat-code-cell"
                             onClick={markKey ? () => setMarkPickerKey(markPickerKey === markKey ? null : markKey) : undefined}
                             title={markKey ? '클릭하여 강조 표시' : undefined}
                             style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: markPickerKey && markPickerKey === markKey ? 3 : 1, cursor: markKey ? 'pointer' : 'default' }}
