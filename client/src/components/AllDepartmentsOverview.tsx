@@ -125,7 +125,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             {bureaus.map((bureau) => (
               <Fragment key={bureau.name}>
                 <tr style={{ background: "#e3e9f1" }}>
-                  <td style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{bureau.name} ({bureau.list.length}과)</td>
+                  <td style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{bureau.name}</td>
                   {amountCells(bureau.total, true)}
                 </tr>
                 {bureau.list.map((dept) => {
