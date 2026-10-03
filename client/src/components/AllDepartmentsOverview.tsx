@@ -1,12 +1,12 @@
 import { Fragment, useMemo, useState } from "react";
 
-// 편성 부서 "전체": 국별로 묶어 부서마다 2027 요구액을 2026 본예산(예산서 기정액)·3추와 견준다.
+// 편성 부서 "전체": 국별로 묶어(국마다 행 바탕색을 옅게 달리 칠한다) 부서마다 2027 요구액을 2026 본예산(예산서 기정액)·3추와 견준다.
 // 지방채 상환은 2027년에 처음 부서별로 나눠 넣은 항목이라 "지방채 빼면" 칸을 따로 둔다.
 type HierarchyRow = { id: string; level: string; label: string; budget?: number; previous?: number };
 
 const BUREAUS = [
-  { name: "문화관광국", departments: ["문화예술과", "문화유산과", "독립기념관", "관광진흥과"] },
-  { name: "교육체육국", departments: ["교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"] },
+  { name: "문화관광국", departments: ["문화예술과", "문화유산과", "독립기념관", "관광진흥과"], tint: "rgba(232, 89, 12, 0.07)", headTint: "rgba(232, 89, 12, 0.16)" },
+  { name: "교육체육국", departments: ["교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"], tint: "rgba(18, 140, 90, 0.07)", headTint: "rgba(18, 140, 90, 0.16)" },
 ];
 const DEBT_PROGRAM = "지방채 상환";
 
@@ -121,7 +121,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             </tr>
             {bureaus.map((bureau) => (
               <Fragment key={bureau.name}>
-                <tr style={{ background: "#e3e9f1" }}>
+                <tr style={{ background: bureau.headTint }}>
                   <td style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{bureau.name}</td>
                   {amountCells(bureau.total, true)}
                 </tr>
@@ -134,7 +134,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
                         aria-expanded={open}
                         onClick={() => setOpenDepartment(open ? null : dept.name)}
                         onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); setOpenDepartment(open ? null : dept.name); } }}
-                        style={{ cursor: "pointer", background: open ? "#f4f7fb" : undefined }}
+                        style={{ cursor: "pointer", background: open ? bureau.headTint : bureau.tint }}
                         title="눌러서 증가 요인 세부사업 보기"
                       >
                         <td style={{ ...cell, textAlign: "left", paddingLeft: "26px", fontWeight: 600 }}>{open ? "▾" : "▸"} {dept.name}</td>
@@ -142,7 +142,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
                       </tr>
                       {open && (
                         <tr>
-                          <td colSpan={8} style={{ padding: "8px 16px 14px 44px", borderBottom: "1px solid #dde3ea", background: "#f4f7fb", fontSize: "14px" }}>
+                          <td colSpan={8} style={{ padding: "8px 16px 14px 44px", borderBottom: "1px solid #dde3ea", background: bureau.tint, fontSize: "14px" }}>
                             <div style={{ color: "#4b5563", marginBottom: "6px" }}>본예산 대비 증가가 큰 세부사업 · 신규 세부사업 {dept.newCount}개</div>
                             <div style={{ display: "grid", gridTemplateColumns: "minmax(0, 1fr) auto auto", gap: "4px 24px", maxWidth: "900px" }}>
                               {dept.drivers.map((driver) => (
