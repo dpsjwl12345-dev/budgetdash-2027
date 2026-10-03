@@ -1432,7 +1432,12 @@ export default function CouncilMemberRequests() {
 
             {compositionTab === "지역구별 도의원현황" && (
               <div className="cc-table-wrap">
-                <table className="cc-table cc-district-table">
+                <table className="cc-table cc-district-table cc-provincial-table">
+                  <colgroup>
+                    <col className="cc-prov-col-district" />
+                    <col className="cc-prov-col-member" />
+                    <col className="cc-prov-col-party" />
+                  </colgroup>
                   <thead>
                     <tr>
                       <th>선거구</th>
@@ -1447,10 +1452,12 @@ export default function CouncilMemberRequests() {
                       return (
                         <tr key={district}>
                           <td className="cc-district-cell">
-                            <div className="cc-district-name">{provincialDistrict?.label ?? districtDisplayLabel(district)}</div>
-                            {provincialDistrict?.area && (
-                              <div className="cc-district-area">{provincialDistrict.area}</div>
-                            )}
+                            <div className="cc-district-line">
+                              <span className="cc-district-name">{provincialDistrict?.label ?? districtDisplayLabel(district)}</span>
+                              {provincialDistrict?.area && (
+                                <span className="cc-district-area">{provincialDistrict.area}</span>
+                              )}
+                            </div>
                           </td>
                           <td className="cc-row-text">{provincial?.name || "-"}</td>
                           <td>
@@ -2099,6 +2106,36 @@ export default function CouncilMemberRequests() {
         .cc-district-table .cc-district-cell {
           width: 190px;
           min-width: 190px;
+        }
+
+        /* 도의원 현황: 선거구(제N선거구 + 관할 구역)는 넓은 칸에 한 줄로, 정당명은 글자에 맞는 폭으로 */
+        .cc-provincial-table {
+          table-layout: fixed;
+          min-width: 760px;
+        }
+
+        .cc-provincial-table col.cc-prov-col-district { width: 60%; }
+        .cc-provincial-table col.cc-prov-col-member { width: 18%; }
+        .cc-provincial-table col.cc-prov-col-party { width: 22%; }
+
+        .cc-provincial-table .cc-district-table .cc-district-cell,
+        .cc-provincial-table .cc-district-cell {
+          width: auto;
+          min-width: 0;
+          text-align: left;
+          padding-left: 20px;
+        }
+
+        .cc-district-line {
+          display: flex;
+          align-items: baseline;
+          gap: 14px;
+          white-space: nowrap;
+        }
+
+        .cc-provincial-table .cc-district-area {
+          margin-top: 0;
+          white-space: nowrap;
         }
 
         .cc-district-cell {
