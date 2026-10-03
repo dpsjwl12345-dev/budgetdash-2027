@@ -2622,7 +2622,7 @@ export default function Home() {
                           border: 'none', cursor: 'pointer',
                           background: 'transparent',
                           color: '#f6d27e',
-                          textShadow: '0 1px 2px rgba(30, 58, 95, 0.55)',
+                          textShadow: '0 1px 0 #6b4a05, 0 2px 0 #6b4a05, 0 3px 4px rgba(0, 0, 0, 0.35)',
                           opacity: statementView === view ? 1 : 0.8,
                           boxShadow: statementView === view ? 'inset 0 0 0 2px #d9ad52' : 'none',
                         }}
