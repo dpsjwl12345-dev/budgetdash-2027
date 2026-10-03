@@ -61,6 +61,7 @@ import {
 } from "lucide-react";
 import { CHEJEON_ESTIMATES, CHEJEON_CONF_LABEL } from "@/lib/chejeonEstimates";
 import { CHEJEON_ORG } from "@/lib/chejeonOrg";
+import AllDepartmentsOverview from "@/components/AllDepartmentsOverview";
 
 type Status = "정상" | "오류" | "주의" | "사전";
 
@@ -138,6 +139,8 @@ const yearOptions = [
 
 const departmentOptions = [
   { value: "", label: "선택" },
+  // "전체"를 고르면 부서 예산서 대신 국별·부서별 증감 비교 표를 보여 준다.
+  { value: "전체", label: "전체" },
   { value: "문화예술과", label: "문화예술과" },
   { value: "문화유산과", label: "문화유산과" },
   { value: "독립기념관", label: "독립기념관" },
@@ -1709,6 +1712,11 @@ export default function Home() {
 
   // 세출예산내역서 표의 각 행에 대해 가장 가까운 상위 계층(부서/정책/단위/세부사업/편성목/통계목) 행을 찾아둔다.
   // 검색·필터 드롭다운이 "이 행의 조상이 조건에 맞으면 전체 하위행도 같이 보여준다" 식으로 동작하는 데 쓰인다.
+  // 편성 부서 "전체" 화면에서 쓰는 부서별 3추 금액(2026 예산액 설정값, 천원).
+  const supp3ByDepartment = useMemo(() => Object.fromEntries(
+    Object.entries(budget2026Data).map(([name, value]) => [name, value?.supp3 ? parseBudgetInput(value.supp3) : null]),
+  ), [budget2026Data]);
+
   const hierarchyAncestors = useMemo(() => {
     const map = new Map<string, {
       deptRow?: BudgetHierarchyRow; policyRow?: BudgetHierarchyRow; unitRow?: BudgetHierarchyRow;
@@ -2733,10 +2741,14 @@ export default function Home() {
               <div className="select-field"><span>회계연도</span><Dropdown value={year} options={yearOptions} onChange={setYear} label="회계연도" /></div>
               <div className={`select-field${department && departmentOptions.some((o: { value: string }) => o.value === department) ? " dept-picked" : ""}`}><span>편성 부서</span><Dropdown value={department} options={departmentOptions} onChange={(value) => { setDepartment(value); localStorage.setItem('selectedDepartment', value); setCurrentPage(1); setProgramFilter(""); setAccountFilter(""); setSearch(""); setStatusFilter("전체"); setHierarchyProgramFilter([]); setHierarchyItemFilter([]); }} label="편성 부서" /></div>
               <div className="select-field"><span>정현원</span><button className="staff-summary" onClick={() => setShowStaffModal(true)}><UsersRound size={17} /><span>정원 <b>{staffData[department]?.capacity || "-"}명</b></span><span>현원 <b>{staffData[department]?.current || "-"}명</b></span></button></div>
-              <div className="select-field dept-note-field"><span>부서 메모</span><textarea className="dept-note" value={deptNote} disabled={!department} placeholder={department ? "부서 전체 사항, 잊지 말아야 할 내용을 자유롭게 적어두세요" : "편성 부서를 먼저 선택하세요"} onChange={(event) => onDeptNoteChange(event.target.value)} onBlur={flushDeptNote} rows={2} aria-label="부서 메모" /></div>
+              <div className="select-field dept-note-field"><span>부서 메모</span><textarea className="dept-note" value={deptNote} disabled={!department || department === '전체'} placeholder={department && department !== '전체' ? "부서 전체 사항, 잊지 말아야 할 내용을 자유롭게 적어두세요" : "편성 부서를 먼저 선택하세요"} onChange={(event) => onDeptNoteChange(event.target.value)} onBlur={flushDeptNote} rows={2} aria-label="부서 메모" /></div>
             </div>
           </section>
 
+          {department === '전체' ? (
+            <AllDepartmentsOverview rows={budgetHierarchyRows} supp3ByDepartment={supp3ByDepartment} />
+          ) : (
+          <>
           <section className={`metric-grid no-print${department ? " dept-selected" : ""}`} aria-label="예산 요약">
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
@@ -3420,6 +3432,8 @@ export default function Home() {
               })()}
             </div>
           </section>
+          </>
+          )}
         </div>
 
       {showStaffModal && <div className="modal-backdrop" onMouseDown={() => setShowStaffModal(false)}><div className="modal-card staff-modal-card" ref={staffModalRef} role="dialog" aria-modal="true" aria-labelledby="staff-modal-title" onMouseDown={(event) => event.stopPropagation()} onKeyDown={(event) => trapTabKey(event, staffModalRef.current)}><div className="modal-head"><div><span>DEPARTMENT PROFILE</span><h2 id="staff-modal-title">부서별 정원·현원 설정</h2></div><button className="close-button" onClick={() => setShowStaffModal(false)} aria-label="닫기"><X size={19} /></button></div><div className="modal-fields staff-modal-fields">{DEPARTMENTS.map((dept) => (<div key={dept} className="staff-dept-card"><h3>{dept}</h3><label>정원<input value={staffData[dept]?.capacity || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), capacity: event.target.value}})} inputMode="numeric" />명</label><label>현원<input value={staffData[dept]?.current || ""} onChange={(event) => setStaffData({...staffData, [dept]: {...(staffData[dept] || {}), current: event.target.value}})} inputMode="numeric" />명</label></div>))}</div><div className="modal-actions"><AppButton variant="ghost" onClick={() => setShowStaffModal(false)}>취소</AppButton><AppButton variant="primary" onClick={saveStaff}>저장</AppButton></div></div></div>}
