@@ -2618,13 +2618,11 @@ export default function Home() {
                         type="button"
                         onClick={() => setStatementView(view)}
                         style={{
-                          fontSize: '20px', fontWeight: 600, padding: '2px 10px', borderRadius: '6px',
+                          fontSize: '20px', fontWeight: 600, padding: '7px 12px 1px', lineHeight: 1.15, borderRadius: '6px',
                           border: 'none', cursor: 'pointer',
                           background: 'transparent',
-                          color: '#f6d27e',
-                          textShadow: '0 1px 3px rgba(70, 45, 0, 0.55), 0 2px 8px rgba(70, 45, 0, 0.3)',
-                          opacity: statementView === view ? 1 : 0.8,
-                          boxShadow: statementView === view ? 'inset 0 0 0 2px #d9ad52' : 'none',
+                          color: statementView === view ? '#3d70b8' : '#8b9099',
+                          boxShadow: statementView === view ? 'inset 0 0 0 1px #3d70b8' : 'none',
                         }}
                       >
                         {label}
