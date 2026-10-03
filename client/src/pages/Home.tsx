@@ -236,6 +236,32 @@ function isMajorInvestmentProgram(department: string, label: string): boolean {
   return MAJOR_INVESTMENT_PROGRAMS[department]?.includes(label) ?? false;
 }
 
+// "요구사항 반영" 메뉴의 시의원 요구·민선9기 공약·시장/부시장 지시사항이 예산서에 실려 있으면
+// 그 줄(부기명, 없으면 세부사업)에 배지를 단다. 이름은 공백·괄호·"○"·끝의 "공사"를 빼고 비교한다.
+type RequestRecord = { requestType: string; memberName: string; department: string; content: string; budgetItemName: string; requestedAmount: string; status: string };
+type RequestBadge = { label: string; tone: "council" | "pledge" | "mayor"; title: string };
+const REQUEST_BADGE_STYLES: Record<RequestBadge["tone"], { background: string; color: string }> = {
+  council: { background: "rgba(144, 133, 233, 0.18)", color: "#6b5fd3" },
+  pledge: { background: "rgba(25, 158, 112, 0.16)", color: "#13805a" },
+  mayor: { background: "rgba(217, 89, 38, 0.15)", color: "#c24a1a" },
+};
+const normalizeBudgetName = (text: string) => text.replace(/^[○◦·\-\s]+/, "").replace(/[\s()·,\[\]]/g, "").replace(/공사$/, "");
+
+function requestBadge(request: RequestRecord): RequestBadge | null {
+  const title = [request.requestType, request.content.replace(/\n/g, " "), request.requestedAmount, request.status].filter(Boolean).join(" · ");
+  if (request.requestType === "시의원" && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
+  if (request.requestType === "민선9기공약") return { label: "공약", tone: "pledge", title };
+  if (request.requestType === "시장") return { label: "시장 지시", tone: "mayor", title };
+  if (request.requestType === "부시장") return { label: `${request.memberName || "부시장"} 지시`, tone: "mayor", title };
+  return null;
+}
+
+// 요구사항에서 예산서 이름과 맞춰 볼 후보들: 예산 항목명·내용의 각 줄, 괄호 안쪽 이름.
+function requestKeys(request: RequestRecord): string[] {
+  const texts = [request.budgetItemName, ...request.content.split("\n")].flatMap((text) => text.split(/[()]/));
+  return Array.from(new Set(texts.map(normalizeBudgetName).filter((key) => key.length >= 4)));
+}
+
 const columns = [
   ["policy", "정책 · 단위 · 세부사업"],
   ["account", "편성목·통계목"],
@@ -901,6 +927,7 @@ export default function Home() {
   });
   // 정현원 옆 "부서 메모" — "부서별 주요 쟁점사항"(department_issues)과는 별개의 저장소(department_memos).
   const [showDeptMemoModal, setShowDeptMemoModal] = useState(false);
+  const [requestRecords, setRequestRecords] = useState<RequestRecord[]>([]);
   const [deptMemos, setDeptMemos] = useState<Record<string, { memos: { id?: string; text: string; date: string }[] }>>({});
   const [deptMemoDraft, setDeptMemoDraft] = useState("");
   // 2026 본예산액·3추 기준 예산액 — 부서별로 직접 입력해 편집하는 값(천원).
@@ -1023,6 +1050,10 @@ export default function Home() {
   // 아래 넷은 부서와 무관한 전체 데이터다(예산행 246KB, 계층 CSV 453KB 등). 예전에는 department가
   // 의존성에 들어 있어서 부서를 바꿀 때마다 이걸 통째로 다시 받느라 매번 3초씩 걸렸다. 최초 1회만 받는다.
   useEffect(() => {
+    fetch('/api/cloud-sync?type=council-requests')
+      .then((response) => (response.ok ? response.json() : null))
+      .then((result) => { if (Array.isArray(result?.data)) setRequestRecords(result.data); })
+      .catch((error) => console.log('요구사항 로드 실패:', error));
     loadDataFromServer();
     loadExecutionDataFromServer();
     loadCsvData();
@@ -1703,6 +1734,29 @@ export default function Home() {
     }
     return map;
   }, [budgetHierarchyRows]);
+
+  const requestBadgesByRow = useMemo(() => {
+    const map = new Map<string, RequestBadge[]>();
+    if (!department) return map;
+    const rows = budgetHierarchyRows.filter((row) => hierarchyAncestors.get(row.id)?.deptRow?.label === department);
+    const notes = rows.filter((row) => row.level === 'note' && row.statisticsCode).map((row) => ({ row, name: normalizeBudgetName(row.statisticsCode ?? '') }));
+    const programs = rows.filter((row) => row.level === 'program').map((row) => ({ row, name: normalizeBudgetName(row.label) }));
+    const matches = (name: string, key: string) => name === key || (key.length >= 6 && name.includes(key)) || (name.length >= 6 && key.includes(name));
+    const add = (rowId: string, badge: RequestBadge) => {
+      const list = map.get(rowId) ?? [];
+      if (!list.some((existing) => existing.label === badge.label)) list.push(badge);
+      map.set(rowId, list);
+    };
+    requestRecords.filter((request) => request.department === department).forEach((request) => {
+      const badge = requestBadge(request);
+      if (!badge) return;
+      const keys = requestKeys(request);
+      const noteHits = notes.filter((note) => keys.some((key) => matches(note.name, key)));
+      if (noteHits.length) { noteHits.forEach((note) => add(note.row.id, badge)); return; }
+      programs.filter((program) => keys.some((key) => matches(program.name, key))).forEach((program) => add(program.row.id, badge));
+    });
+    return map;
+  }, [budgetHierarchyRows, hierarchyAncestors, requestRecords, department]);
 
   // 선택한 부서에 올라온 추경 회차들 (큰 회차부터).
   const supplementaryRounds = useMemo(
@@ -3215,6 +3269,11 @@ export default function Home() {
                                     주요
                                   </span>
                                 )}
+                                {(requestBadgesByRow.get(row.id) ?? []).map((badge) => (
+                                  <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                    {badge.label}
+                                  </span>
+                                ))}
                                 {row.label}
                               </td>
                               <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
@@ -3241,6 +3300,11 @@ export default function Home() {
                             style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: markPickerKey && markPickerKey === markKey ? 3 : 1, cursor: markKey ? 'pointer' : 'default' }}
                           >
                             {row.statisticsCode || ''}
+                            {(requestBadgesByRow.get(row.id) ?? []).map((badge) => (
+                              <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginLeft: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                                {badge.label}
+                              </span>
+                            ))}
                             {markKey && markPickerKey === markKey && (
                               <span
                                 onClick={(event) => event.stopPropagation()}
