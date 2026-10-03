@@ -29,8 +29,8 @@ const percent = (amount: number, base: number | null) => {
 };
 
 const NAVY = "#1e3a5f";
-const TOP_BUDGET: React.CSSProperties = { color: "#ffffff", background: "#2f6fd6" };
-const TOP_INCREASE: React.CSSProperties = { color: "#ffffff", background: "#d9480f", fontWeight: 700 };
+const TOP_BUDGET: React.CSSProperties = { color: "#e8590c", fontWeight: 800 };
+const TOP_INCREASE: React.CSSProperties = { color: "#7048e8", fontWeight: 800 };
 const cell: React.CSSProperties = { padding: "10px 12px", borderBottom: "1px solid #dde3ea", textAlign: "right", whiteSpace: "nowrap", fontVariantNumeric: "tabular-nums" };
 const head: React.CSSProperties = { padding: "11px 12px", color: "#ffffff", fontWeight: 600, textAlign: "center", whiteSpace: "nowrap", borderRight: "1px solid rgba(255,255,255,0.15)" };
 
@@ -81,7 +81,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     const weight = strong ? 700 : 500;
     return (
       <>
-        <td style={{ ...cell, fontWeight: 700, ...(mark.budget ? TOP_BUDGET : { color: "#0f4c9e", background: "rgba(47, 111, 214, 0.10)" }) }} title={mark.budget ? "요구액이 가장 큰 부서" : undefined}>{toMillion(total.budget)}</td>
+        <td style={{ ...cell, fontWeight: 700, background: "rgba(47, 111, 214, 0.14)", ...(mark.budget ? TOP_BUDGET : { color: "#0f4c9e" }) }} title={mark.budget ? "요구액이 가장 큰 부서" : undefined}>{toMillion(total.budget)}</td>
         <td style={cell}>{toMillion(total.previous)}</td>
         <td style={{ ...cell, fontWeight: 600 }}>{percent(total.budget, total.previous)}</td>
         <td style={cell}>{total.supp3 === null ? "-" : toMillion(total.supp3)}</td>
@@ -168,8 +168,8 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
         </table>
       </div>
       <p style={{ margin: "8px 0 0", color: "#c3cdd9", fontSize: "13px" }}>
-        <span style={{ display: "inline-block", padding: "0 6px", marginRight: "4px", borderRadius: "3px", ...TOP_BUDGET }}>요구액 최대</span>
-        <span style={{ display: "inline-block", padding: "0 6px", marginRight: "10px", borderRadius: "3px", ...TOP_INCREASE }}>증감액 최대</span>
+        <span style={{ marginRight: "10px", ...TOP_BUDGET }}>■ 요구액 최대</span>
+        <span style={{ marginRight: "12px", ...TOP_INCREASE }}>■ 증감액 최대</span>
         ※ 3추는 부서별 2026 예산액 설정값(세출예산서). 지방채 상환은 2026년에 없던 항목으로 시 전체 지방채 원금 상환을 부서에 나눈 것이라 "지방채 빼면"을 따로 계산.
       </p>
     </section>
