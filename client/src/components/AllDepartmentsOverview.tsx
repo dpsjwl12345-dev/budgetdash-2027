@@ -74,7 +74,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     const weight = strong ? 700 : 500;
     return (
       <>
-        <td style={{ ...cell, fontWeight: weight }}>{toMillion(total.budget)}</td>
+        <td style={{ ...cell, fontWeight: 700, color: "#0f4c9e", background: "rgba(47, 111, 214, 0.10)" }}>{toMillion(total.budget)}</td>
         <td style={cell}>{toMillion(total.previous)}</td>
         <td style={{ ...cell, fontWeight: 600 }}>{percent(total.budget, total.previous)}</td>
         <td style={cell}>{total.supp3 === null ? "-" : toMillion(total.supp3)}</td>
@@ -100,7 +100,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
           <thead>
             <tr style={{ background: NAVY }}>
               <th style={{ ...head, width: "190px" }}>국 · 부서</th>
-              <th style={head}>2027 요구액</th>
+              <th style={{ ...head, background: "#2f6fd6" }}>2027 요구액</th>
               <th style={head}>기정액(본)</th>
               <th style={head}>본 대비</th>
               <th style={head}>2026 3추</th>
