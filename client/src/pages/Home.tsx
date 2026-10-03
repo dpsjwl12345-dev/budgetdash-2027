@@ -2498,12 +2498,38 @@ export default function Home() {
                   : null;
                 const basePct = formatYoyPercent(hierarchyTotals.amount, base2026Amount);
                 const supp3Pct = formatYoyPercent(hierarchyTotals.amount, supp3Amount);
-                const pctColor = (pct: string) => (pct.startsWith("+") ? "#a7d2ff" : pct.startsWith("△") ? "#f87171" : "#8fa1b3");
                 if (!basePct && !supp3Pct) return null;
+                // 증가는 초록 ▲, 감소는 빨강 ▼, 변동 없음은 회색 ▶ — 화살표가 방향을
+                // 전달하므로 부호(+/△)는 칩 안에서는 떼고 숫자만 보여준다.
+                const renderChip = (label: string, pct: string) => {
+                  const isUp = pct.startsWith("+");
+                  const isDown = pct.startsWith("△");
+                  const color = isUp ? "#4ade80" : isDown ? "#f87171" : "#9ca3af";
+                  const arrow = isUp ? "▲" : isDown ? "▼" : "▶";
+                  return (
+                    <span
+                      key={label}
+                      style={{
+                        display: "inline-flex",
+                        alignItems: "center",
+                        gap: "4px",
+                        padding: "2px 8px",
+                        border: "1px solid rgba(255,255,255,0.18)",
+                        borderRadius: "6px",
+                        background: "rgba(255,255,255,0.04)",
+                        fontSize: "12px",
+                        fontWeight: 500,
+                      }}
+                    >
+                      <span style={{ color: "#c0d0df" }}>{label}</span>
+                      <span style={{ color }}>{arrow} {pct.replace(/^[+△]/, "")}</span>
+                    </span>
+                  );
+                };
                 return (
-                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "10px", marginTop: "4px", fontSize: "13px", fontWeight: 400 }}>
-                    {basePct && <span style={{ color: pctColor(basePct) }}>본예산대비 {basePct}</span>}
-                    {supp3Pct && <span style={{ color: pctColor(supp3Pct) }}>3추대비 {supp3Pct}</span>}
+                  <div style={{ display: "flex", justifyContent: "flex-end", gap: "6px", marginTop: "6px" }}>
+                    {basePct && renderChip("본", basePct)}
+                    {supp3Pct && renderChip("3추", supp3Pct)}
                   </div>
                 );
               })()}
