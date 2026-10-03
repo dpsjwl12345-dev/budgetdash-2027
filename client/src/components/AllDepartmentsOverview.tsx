@@ -80,7 +80,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     const tone = (value: number | null) => (value !== null && value < 0 ? "#c0392b" : undefined);
     return (
       <>
-        <td style={{ ...cell, fontWeight: 700, background: "rgba(47, 111, 214, 0.14)", ...(mark.budget ? TOP_BUDGET : { color: "#0f4c9e" }) }} title={mark.budget ? "요구액이 가장 큰 부서" : undefined}>{toMillion(total.budget)}</td>
+        <td style={{ ...cell, fontWeight: 700, ...(mark.budget ? TOP_BUDGET : { color: "#0f4c9e" }) }} title={mark.budget ? "요구액이 가장 큰 부서" : undefined}>{toMillion(total.budget)}</td>
         <td style={cell}>{toMillion(total.previous)}</td>
         <td style={{ ...cell, fontWeight: 600 }}>{percent(total.budget, total.previous)}</td>
         <td style={cell}>{total.supp3 === null ? "-" : toMillion(total.supp3)}</td>
@@ -105,7 +105,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
           <thead>
             <tr style={{ background: NAVY }}>
               <th style={{ ...head, width: "190px" }}>국 · 부서</th>
-              <th style={{ ...head, background: "#2f6fd6" }}>2027 요구액</th>
+              <th style={head}>2027 요구액</th>
               <th style={head}>본예산</th>
               <th style={head}>본 증감</th>
               <th style={head}>3추 예산</th>
