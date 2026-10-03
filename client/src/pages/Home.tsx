@@ -2620,8 +2620,8 @@ export default function Home() {
                         style={{
                           fontSize: '20px', fontWeight: 600, padding: '2px 10px', borderRadius: '6px',
                           border: 'none', cursor: 'pointer',
-                          background: statementView === view ? '#0f766e' : 'transparent',
-                          color: statementView === view ? '#fff' : '#0f766e',
+                          background: statementView === view ? '#4ade80' : 'transparent',
+                          color: statementView === view ? '#052e16' : '#16a34a',
                         }}
                       >
                         {label}

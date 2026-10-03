@@ -1282,3 +1282,7 @@ select option {
 .dept-note::placeholder { color: #6f8195; }
 .dept-note:focus { outline: none; border-color: #f6d27e; background: rgba(13, 33, 54, 0.85); }
 .dept-note:disabled { opacity: 0.55; cursor: not-allowed; }
+
+/* 2026 본예산액 / 3추 기준 카드: 글자 크기는 원래대로(제목 18px, 금액 20px) */
+.metric-grid .metric-card[style*="#e8b84b"] .metric-top { font-size: 18px; }
+.metric-grid .metric-card[style*="#e8b84b"] > strong { font-size: calc(1rem + 4px) !important; }
