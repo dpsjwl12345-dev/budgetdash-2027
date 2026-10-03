@@ -853,6 +853,9 @@ export default function Home() {
   // 부기명 줄에 다는 한두 단어짜리 메모. 저장 위치는 강조 표시와 같은 행이다.
   const [rowNotes, setRowNotes] = useState<Record<string, string>>({});
   const [editingRowNoteKey, setEditingRowNoteKey] = useState<string | null>(null);
+  // 부기명 메모는 왼쪽 넓은 칸과 오른쪽 좁은 칸 두 군데서 적을 수 있는데, 입력칸은 클릭한 쪽에만 띄운다
+  // (둘 다 띄우면 autoFocus끼리 포커스를 뺏어 곧바로 blur로 편집이 닫혀 버린다).
+  const [editingRowNoteSide, setEditingRowNoteSide] = useState<'left' | 'right'>('left');
   const [rowNoteDraft, setRowNoteDraft] = useState("");
   // X(숨기기)를 누른 직후 "정말 숨길까요?"를 묻는 동안의 대상. 연필(수정) 버튼과 22px 간격이라
   // 잘못 눌리기 쉬운데, 예전엔 그 한 번으로 메모 줄이 모든 기기에서 영구히 사라졌다.
@@ -2965,14 +2968,14 @@ export default function Home() {
                     // 위 통계목 줄에 이미 표시됨). 그 빈 공간을 하나로 합쳐 오른쪽의 좁은
                     // 92px 메모 칸 대신 쓸 수 있는 넓은 메모 입력칸으로 쓴다. 같은 markKey를
                     // 공유하므로 왼쪽/오른쪽 어느 쪽에서 적어도 같은 메모다.
-                    const isEditingLeftNote = markKey !== null && editingRowNoteKey === markKey;
+                    const isEditingLeftNote = markKey !== null && editingRowNoteKey === markKey && editingRowNoteSide === 'left';
                     return (
                       <Fragment key={row.id}>
                         <tr>
                           {row.level === 'note' ? (
                             <td
                               colSpan={4}
-                              onClick={markKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteKey(markKey); } : undefined}
+                              onClick={markKey && !isEditingLeftNote ? () => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteSide('left'); setEditingRowNoteKey(markKey); } : undefined}
                               title={markKey ? (rowNotes[markKey] ? '클릭하여 메모 수정' : '클릭하여 메모 입력') : undefined}
                               style={{
                                 paddingLeft: getPaddingLeft(),
@@ -3118,7 +3121,7 @@ export default function Home() {
                               )}
                               {/* 부기명 줄에만 한두 단어짜리 메모를 단다. 통계목 줄의 사전/산출식
                                   배너와 같은 칸을 쓰되, 이쪽은 직접 적는 글자다. */}
-                              {markKey && (editingRowNoteKey === markKey ? (
+                              {markKey && (editingRowNoteKey === markKey && editingRowNoteSide === 'right' ? (
                                 <input
                                   autoFocus
                                   value={rowNoteDraft}
@@ -3135,7 +3138,7 @@ export default function Home() {
                                 <button
                                   type="button"
                                   title={rowNotes[markKey] ? '클릭하여 수정' : '클릭하여 메모 입력'}
-                                  onClick={() => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteKey(markKey); }}
+                                  onClick={() => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteSide('right'); setEditingRowNoteKey(markKey); }}
                                   style={{
                                     padding: '1px 4px', border: 'none', background: 'transparent', cursor: 'pointer',
                                     fontSize: 'calc(12px + 1pt)', fontWeight: 700,
