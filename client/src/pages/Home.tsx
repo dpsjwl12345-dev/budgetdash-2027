@@ -1824,7 +1824,14 @@ export default function Home() {
     });
   };
 
-  const parseNumber = (value: unknown) => Number(String(value ?? "0").replace(/[^0-9.-]/g, "")) || 0;
+  // 감액은 엑셀에서 "△1,000"(또는 "-1,000", "(1,000)")으로 적는다. 숫자 외의 글자를 전부 지우면
+  // △가 사라져 감액이 증액(+1,000)으로 바뀌므로, 부호는 따로 먼저 읽어 음수로 만든다.
+  const parseNumber = (value: unknown) => {
+    const text = String(value ?? "0").trim();
+    const negative = /^[△▽▼−-]/.test(text) || /^\(.*\)$/.test(text);
+    const amount = Number(text.replace(/[^0-9.]/g, "")) || 0;
+    return negative && amount ? -amount : amount;
+  };
   // 엑셀 헤더에 공백이 섞여 있으면("정책 사업명", "정책사업명 " 등) 완전 일치 검색이
   // 항상 실패해 모든 행이 기본값("미분류 정책" 등)으로 떨어진다. 모든 공백을 지운 뒤
   // 비교해 이런 표기 차이를 흡수한다.
@@ -2823,9 +2830,21 @@ export default function Home() {
                     const getAmountFontSize = () => (isUpperAmountLevel ? 'calc(14px + 1pt)' : 'calc(13px + 1pt)');
                     const getAmountFontWeight = () => (isUpperAmountLevel ? '600' : '400');
 
+                    // 감액(음수)은 예산서 관행대로 "△1,000"으로 표시한다.
                     const formatNumber = (num?: number) => {
                       if (!num && num !== 0) return '';
-                      return new Intl.NumberFormat('ko-KR').format(num);
+                      const text = new Intl.NumberFormat('ko-KR').format(Math.abs(num));
+                      return num < 0 ? `△${text}` : text;
+                    };
+                    // 예전 버전이 "△1,000"을 +1,000으로 잘못 읽어 저장해 둔 행도 바로잡아 보여준다:
+                    // 증감액은 항상 (예산액 - 전년도)이므로, 크기는 같고 부호만 반대면 계산값을 쓴다.
+                    const getDisplayDifference = (target: BudgetHierarchyRow) => {
+                      const diff = target.difference;
+                      if (typeof target.budget === 'number' && typeof target.previous === 'number' && typeof diff === 'number') {
+                        const computed = target.budget - target.previous;
+                        if (diff !== computed && Math.abs(diff) === Math.abs(computed)) return computed;
+                      }
+                      return diff;
                     };
 
                     const memoProgramId = memoAfterRowId[row.id];
@@ -3042,7 +3061,7 @@ export default function Home() {
                                 {formatNumber(row.previous)}
                               </td>
                               <td style={{ textAlign: 'right', background: getBackground(), fontSize: getAmountFontSize(), fontWeight: getAmountFontWeight(), color: getColor(), verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '10px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                                {formatNumber(row.difference)}
+                                {formatNumber(getDisplayDifference(row))}
                               </td>
                             </>
                           )}
