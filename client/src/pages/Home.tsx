@@ -2685,7 +2685,7 @@ export default function Home() {
                 </colgroup>
                 <thead>
                   <tr style={{ background: '#1e3a5f', position: 'sticky', top: 0, zIndex: 2 }}>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>
                       <HeaderFilterDropdown
                         label="부서/정책/단위/세부/과목"
                         value={hierarchyProgramFilter}
@@ -2694,10 +2694,10 @@ export default function Home() {
                       />
                       {renderHierarchyResizeHandle('label')}
                     </th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(15px + 2pt)' }}>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>예산액{renderHierarchyResizeHandle('budget')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>전년도{renderHierarchyResizeHandle('previous')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>증감{renderHierarchyResizeHandle('difference')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(15px + 1pt)' }}>
                       <HeaderFilterDropdown
                         label="통계목"
                         value={hierarchyItemFilter}
@@ -2707,9 +2707,9 @@ export default function Home() {
                       />
                       {renderHierarchyResizeHandle('statisticsCode')}
                     </th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>검토{renderHierarchyResizeHandle('review')}</th>
-                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 2pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>편집{renderHierarchyResizeHandle('edit')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>산출근거{renderHierarchyResizeHandle('description')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>검토{renderHierarchyResizeHandle('review')}</th>
+                    <th style={{ position: 'relative', textAlign: 'center', padding: '12px', fontWeight: '600', color: '#ffffff', fontSize: 'calc(16px + 1pt)', borderRight: '1px solid rgba(255,255,255,0.15)' }}>편집{renderHierarchyResizeHandle('edit')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -2790,20 +2790,20 @@ export default function Home() {
                     };
 
                     const getFontSize = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return 'calc(15px + 2pt)';
-                      if (row.level === 'item' || row.level === 'note') return 'calc(14px + 2pt)';
-                      return 'calc(13px + 2pt)';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return 'calc(15px + 1pt)';
+                      if (row.level === 'item' || row.level === 'note') return 'calc(14px + 1pt)';
+                      return 'calc(13px + 1pt)';
                     };
 
                     // 부서~세부사업(첫 컬럼) 전용: 나머지 레벨은 기존과 동일하고, 상위 레벨만 1포인트 크게.
                     const getLabelFontSize = () => {
-                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return 'calc(16px + 2pt)';
+                      if (row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program') return 'calc(16px + 1pt)';
                       return getFontSize();
                     };
 
                     // 통계목 컬럼 전용: 통계목(item)과 부기명(note)만 1포인트 크게.
                     const getStatCodeFontSize = () => {
-                      if (row.level === 'item' || row.level === 'note') return 'calc(15px + 2pt)';
+                      if (row.level === 'item' || row.level === 'note') return 'calc(15px + 1pt)';
                       return getFontSize();
                     };
 
@@ -2816,7 +2816,7 @@ export default function Home() {
                     // 예산액·전년도·증감 컬럼 전용: 부서~세부사업(상위 레벨)은 기존 굵기/크기 그대로 유지하고,
                     // 그 아래(편성목·통계목·부기 등)는 레벨에 상관없이 동일하게 얇고 한 단계 작은 글씨로 통일한다.
                     const isUpperAmountLevel = row.level === 'dept' || row.level === 'policy' || row.level === 'unit' || row.level === 'program';
-                    const getAmountFontSize = () => (isUpperAmountLevel ? 'calc(14px + 2pt)' : 'calc(13px + 2pt)');
+                    const getAmountFontSize = () => (isUpperAmountLevel ? 'calc(14px + 1pt)' : 'calc(13px + 1pt)');
                     const getAmountFontWeight = () => (isUpperAmountLevel ? '600' : '400');
 
                     const formatNumber = (num?: number) => {
@@ -2838,7 +2838,7 @@ export default function Home() {
                                   onChange={(event) => setMemoDraft(event.target.value)}
                                   placeholder="메모"
                                   autoFocus
-                                  style={{ flex: 1, background: 'transparent', border: '1px dashed #d7dbe0', borderRadius: '4px', padding: '4px 8px', color: '#111827', fontSize: 'calc(13px + 2pt)' }}
+                                  style={{ flex: 1, background: 'transparent', border: '1px dashed #d7dbe0', borderRadius: '4px', padding: '4px 8px', color: '#111827', fontSize: 'calc(13px + 1pt)' }}
                                 />
                                 <button
                                   type="button"
@@ -2852,7 +2852,7 @@ export default function Home() {
                               </>
                             ) : (
                               <>
-                                <span style={{ flex: 1, fontSize: 'calc(13px + 2pt)', color: programMemos[memoProgramId] ? '#2563eb' : '#6b7280', padding: '4px 8px' }}>
+                                <span style={{ flex: 1, fontSize: 'calc(13px + 1pt)', color: programMemos[memoProgramId] ? '#2563eb' : '#6b7280', padding: '4px 8px' }}>
                                   {programMemos[memoProgramId] || '메모'}
                                 </span>
                                 <button
@@ -2866,7 +2866,7 @@ export default function Home() {
                                 </button>
                                 {pendingHideId === memoProgramId ? (
                                   <>
-                                    <span style={{ flexShrink: 0, fontSize: 'calc(11px + 2pt)', color: '#9b2c2c' }}>이 메모 줄을 숨길까요?</span>
+                                    <span style={{ flexShrink: 0, fontSize: 'calc(11px + 1pt)', color: '#9b2c2c' }}>이 메모 줄을 숨길까요?</span>
                                     <button
                                       type="button"
                                       aria-label="메모 줄 숨기기 확인"
@@ -2996,10 +2996,10 @@ export default function Home() {
                                     if (event.key === 'Escape') { setEditingRowNoteKey(null); setRowNoteDraft(""); }
                                   }}
                                   placeholder="예: 전년 대비 증액 사유"
-                                  style={{ width: '100%', padding: '3px 8px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: 'calc(13px + 2pt)', fontWeight: 600, color: '#1d4ed8' }}
+                                  style={{ width: '100%', padding: '3px 8px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: '#1d4ed8' }}
                                 />
                               ) : (
-                                <span style={{ fontSize: 'calc(13px + 2pt)', fontWeight: 600, color: markKey && rowNotes[markKey] ? '#1d4ed8' : '#c3ccd6' }}>
+                                <span style={{ fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: markKey && rowNotes[markKey] ? '#1d4ed8' : '#c3ccd6' }}>
                                   {(markKey && rowNotes[markKey]) || (markKey ? '클릭하여 메모 입력' : '')}
                                 </span>
                               )}
@@ -3025,7 +3025,7 @@ export default function Home() {
                                 }}
                               >
                                 {isMajorProgram && (
-                                  <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: 'calc(11px + 2pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                                  <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                                     주요
                                   </span>
                                 )}
@@ -3077,7 +3077,7 @@ export default function Home() {
                                   title="표시 지우기"
                                   aria-label="표시 지우기"
                                   onClick={() => setRowMark(markKey, '')}
-                                  style={{ padding: '2px 7px', borderRadius: '5px', border: '1px solid #c3ccd6', background: '#f7f8f6', color: '#46525e', fontSize: 'calc(11px + 2pt)', fontWeight: 600, cursor: 'pointer' }}
+                                  style={{ padding: '2px 7px', borderRadius: '5px', border: '1px solid #c3ccd6', background: '#f7f8f6', color: '#46525e', fontSize: 'calc(11px + 1pt)', fontWeight: 600, cursor: 'pointer' }}
                                 >
                                   지우기
                                 </button>
@@ -3086,7 +3086,7 @@ export default function Home() {
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
                             {isNewItemNote && (
-                              <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(214, 69, 90, 0.15)', color: '#d6455a', fontSize: 'calc(11px + 2pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
+                              <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(214, 69, 90, 0.15)', color: '#d6455a', fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                                 신규
                               </span>
                             )}
@@ -3099,7 +3099,7 @@ export default function Home() {
                                   type="button"
                                   title="클릭하여 사전절차 확인 처리"
                                   onClick={() => setConfirmingBadge({ rowId: row.id, type: 'procedure', detail: itemBadges.join(', ') })}
-                                  style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', fontSize: 'calc(11px + 2pt)', fontWeight: 600, color: '#e67e22', cursor: 'pointer' }}
+                                  style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(230, 126, 34, 0.12)', border: '1px solid rgba(230, 126, 34, 0.4)', fontSize: 'calc(11px + 1pt)', fontWeight: 600, color: '#e67e22', cursor: 'pointer' }}
                                 >
                                   사전
                                 </button>
@@ -3109,7 +3109,7 @@ export default function Home() {
                                   type="button"
                                   title="클릭하여 산출식 확인 처리"
                                   onClick={() => setConfirmingBadge({ rowId: row.id, type: 'formula', detail: formulaLabel })}
-                                  style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.12)', border: '1px solid rgba(91, 155, 240, 0.4)', fontSize: 'calc(11px + 2pt)', fontWeight: 600, color: '#5b9bf0', cursor: 'pointer' }}
+                                  style={{ display: 'inline-block', padding: '2px 7px', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.12)', border: '1px solid rgba(91, 155, 240, 0.4)', fontSize: 'calc(11px + 1pt)', fontWeight: 600, color: '#5b9bf0', cursor: 'pointer' }}
                                 >
                                   산출식
                                 </button>
@@ -3127,7 +3127,7 @@ export default function Home() {
                                     if (event.key === 'Escape') { setEditingRowNoteKey(null); setRowNoteDraft(""); }
                                   }}
                                   placeholder="예: 증빙 확인"
-                                  style={{ width: '92px', padding: '1px 4px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: 'calc(12px + 2pt)', fontWeight: 700, color: '#1d4ed8', textAlign: 'center' }}
+                                  style={{ width: '92px', padding: '1px 4px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: 'calc(12px + 1pt)', fontWeight: 700, color: '#1d4ed8', textAlign: 'center' }}
                                 />
                               ) : (
                                 <button
@@ -3136,7 +3136,7 @@ export default function Home() {
                                   onClick={() => { setRowNoteDraft(rowNotes[markKey] ?? ''); setEditingRowNoteKey(markKey); }}
                                   style={{
                                     padding: '1px 4px', border: 'none', background: 'transparent', cursor: 'pointer',
-                                    fontSize: 'calc(12px + 2pt)', fontWeight: 700,
+                                    fontSize: 'calc(12px + 1pt)', fontWeight: 700,
                                     color: rowNotes[markKey] ? '#1d4ed8' : '#c3ccd6',
                                   }}
                                 >
