@@ -1258,13 +1258,6 @@ select option {
   .cw-title-asof, .citywide-overview__slogan { animation: none; }
 }
 
-/* 편성 부서를 선택하면 요약 카드 금액·제목 색을 카드 성격(2027=파랑, 2026=금색)에 맞춰 달리 표시 */
-.metric-grid.dept-selected .metric-card > strong { color: #a9d3ff; }
-.metric-grid.dept-selected .metric-card > strong .metric-unit { color: #7fb4ea; }
-.metric-grid.dept-selected .metric-card .metric-top { color: #d7e8fb; }
-.metric-grid.dept-selected .metric-card[style*="#e8b84b"] > strong { color: #f6d27e; }
-.metric-grid.dept-selected .metric-card[style*="#e8b84b"] > strong .metric-unit { color: #d1a94f; }
-.metric-grid.dept-selected .metric-card[style*="#e8b84b"] .metric-top { color: #f4e2b4; }
 
 /* 2027 요구액 카드: 본/3추 증감 박스를 제목 줄 오른쪽 끝에 배치 */
 .metric-grid > .metric-card:first-child .metric-header { flex-wrap: nowrap; align-items: center; justify-content: space-between; }
