@@ -2483,12 +2483,12 @@ export default function Home() {
             </div>
           </section>
 
-          <section className="metric-grid no-print" aria-label="예산 요약">
+          <section className={`metric-grid no-print${department ? " dept-selected" : ""}`} aria-label="예산 요약">
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
               {(() => {
                 const base2026Amount = department && budget2026Data[department]?.base2026
                   ? parseBudgetInput(budget2026Data[department].base2026)
@@ -2538,25 +2538,25 @@ export default function Home() {
               <div className="metric-header">
                 <div className="metric-top"><span>2027 신규 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(newProjectTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 주요투자사업 예산액</span></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{formatMillion(majorInvestmentTotal)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(majorInvestmentTotal)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026 본예산액</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(parseBudgetInput(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{department && budget2026Data[department]?.base2026 ? formatMillion(parseBudgetInput(budget2026Data[department].base2026)) : formatMillion(hierarchyTotals.previous)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#e8b84b" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2026년 예산액 (3추 기준)</span><button type="button" className="metric-edit-trigger" onClick={() => setShowBudget2026Modal(true)} aria-label="2026 예산액 편집"><Pencil size={13} /></button></div>
               </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 4px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(parseBudgetInput(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{department && budget2026Data[department]?.supp3 ? formatMillion(parseBudgetInput(budget2026Data[department].supp3)) : "-"}<span className="metric-unit">백만원</span></strong>
             </article>
           </section>
 
