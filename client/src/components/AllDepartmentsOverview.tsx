@@ -238,7 +238,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             </button>
           </h2>
           <span style={{ color: "#c3cdd9", fontSize: "14px" }}>
-            {promo.departments.length}개 부서 {promo.count}줄 · 합계 {promo.total.toLocaleString("ko-KR")}천원 (약 {(promo.total / 100000).toFixed(1)}억 원)
+            {BUREAUS.flatMap((bureau) => bureau.departments).length}개 부서 · 합계 {promo.total.toLocaleString("ko-KR")}천원
           </span>
           <span style={{ marginLeft: "auto", color: "#c3cdd9", fontSize: "13px" }}>[단위: 천원 · 부기명에 홍보·SNS·광고·현수막·리플렛·BI·굿즈·캐릭터가 들어간 줄]</span>
         </div>
