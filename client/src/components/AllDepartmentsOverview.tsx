@@ -48,6 +48,14 @@ const head: React.CSSProperties = { padding: "11px 12px", color: "#ffffff", font
 
 export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { rows: HierarchyRow[]; supp3ByDepartment: Record<string, number | null> }) {
   const [openDepartment, setOpenDepartment] = useState<string | null>("문화예술과");
+  // 홍보 관련 예산 표: 표 전체와 부서별로 접고 펼친다(처음에는 모두 펼쳐 둔다).
+  const [promoOpen, setPromoOpen] = useState(true);
+  const [collapsedPromoDepartments, setCollapsedPromoDepartments] = useState<Set<string>>(new Set());
+  const togglePromoDepartment = (name: string) => setCollapsedPromoDepartments((prev) => {
+    const next = new Set(prev);
+    if (next.has(name)) next.delete(name); else next.add(name);
+    return next;
+  });
 
   const summaries = useMemo(() => {
     const map = new Map<string, DeptSummary>();
@@ -218,12 +226,23 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     {promo.departments.length > 0 && (
       <section className="table-section" style={{ marginTop: "26px" }}>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "baseline", marginBottom: "10px" }}>
-          <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>홍보 관련 예산</h2>
+          <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>
+            <button
+              type="button"
+              onClick={() => setPromoOpen((open) => !open)}
+              aria-expanded={promoOpen}
+              title={promoOpen ? "눌러서 표 접기" : "눌러서 표 펼치기"}
+              style={{ all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "8px" }}
+            >
+              <span style={{ display: "inline-block", width: "1em", fontSize: "0.85em" }}>{promoOpen ? "▾" : "▸"}</span>홍보 관련 예산
+            </button>
+          </h2>
           <span style={{ color: "#c3cdd9", fontSize: "14px" }}>
             {promo.departments.length}개 부서 {promo.count}줄 · 합계 {promo.total.toLocaleString("ko-KR")}천원 (약 {(promo.total / 100000).toFixed(1)}억 원)
           </span>
           <span style={{ marginLeft: "auto", color: "#c3cdd9", fontSize: "13px" }}>[단위: 천원 · 부기명에 홍보·SNS·광고·현수막·리플렛·BI·굿즈·캐릭터가 들어간 줄]</span>
         </div>
+        {promoOpen && (
         <div className="table-scroll ledger-scrollbar" style={{ overflowX: "auto", border: "1px solid #b7c2cf" }}>
           <table style={{ width: "100%", minWidth: "900px", borderCollapse: "collapse", background: "#ffffff", color: "#1a2129", fontSize: "15px" }}>
             <thead>
@@ -238,14 +257,22 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             <tbody>
               {promo.departments.map((dept) => {
                 const bureau = BUREAUS.find((item) => item.departments.includes(dept.name));
+                const collapsed = collapsedPromoDepartments.has(dept.name);
                 return (
                   <Fragment key={dept.name}>
-                    <tr style={{ background: bureau?.headTint }}>
-                      <td colSpan={3} style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{dept.name} <span style={{ fontWeight: 500, color: "#4b5563", fontSize: "13px" }}>· {dept.count}줄</span></td>
+                    <tr
+                      tabIndex={0}
+                      aria-expanded={!collapsed}
+                      onClick={() => togglePromoDepartment(dept.name)}
+                      onKeyDown={(event) => { if (event.key === "Enter" || event.key === " ") { event.preventDefault(); togglePromoDepartment(dept.name); } }}
+                      style={{ background: bureau?.headTint, cursor: "pointer" }}
+                      title={collapsed ? "눌러서 펼치기" : "눌러서 접기"}
+                    >
+                      <td colSpan={3} style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{collapsed ? "▸" : "▾"} {dept.name} <span style={{ fontWeight: 500, color: "#4b5563", fontSize: "13px" }}>· {dept.count}줄</span></td>
                       <td style={cell} />
                       <td style={{ ...cell, fontWeight: 800, color: NAVY }}>{dept.total.toLocaleString("ko-KR")}</td>
                     </tr>
-                    {dept.programs.map((program) => (
+                    {!collapsed && dept.programs.map((program) => (
                       <Fragment key={program.name}>
                         {program.lines.map((line, index) => (
                           <tr key={`${program.name}-${index}`} style={{ background: bureau?.tint }}>
@@ -264,6 +291,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             </tbody>
           </table>
         </div>
+        )}
       </section>
     )}
     </>
