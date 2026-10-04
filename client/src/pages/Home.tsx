@@ -2509,6 +2509,56 @@ export default function Home() {
     showToast("CSV 파일을 다운로드했습니다.");
   };
 
+  // 민간보조 3종 통계목을 세부사업 단위로 모아 "민간단체 보조금 반영 현황" 양식(엑셀)으로 내려받는다.
+  // 요구액은 예산서에서 확인할 수 없어 내용란에는 반영액만 적는다. 금액 단위는 천원.
+  const exportSubsidyReport = () => {
+    if (!department || statementView !== 'expenditure') {
+      showToast("세출예산내역서에서 편성 부서를 먼저 선택해 주세요.");
+      return;
+    }
+    const SUBSIDY_STATS = ["민간경상사업보조", "민간단체법정운영비보조", "민간행사사업보조"];
+    const shortName = (stat: string) => stat.replace(/^민간(단체)?/, "");
+    const hasSupp = supplementaryRounds.length > 0;
+    const byProgram = new Map<string, { name: string; base: number; reflected: number; lines: string[] }>();
+    for (const row of budgetHierarchyRows) {
+      const ancestors = hierarchyAncestors.get(row.id);
+      if (row.level !== 'item' || ancestors?.deptRow?.label !== department || !row.statisticsCode) continue;
+      const stat = SUBSIDY_STATS.find((name) => row.statisticsCode!.replace(/\s/g, "").includes(name));
+      if (!stat || !ancestors.programRow) continue;
+      const base = supplementaryValues.get(row.id) ?? row.previous ?? 0;
+      const reflected = row.budget ?? 0;
+      const entry = byProgram.get(ancestors.programRow.id) ?? { name: ancestors.programRow.label, base: 0, reflected: 0, lines: [] };
+      entry.base += base;
+      entry.reflected += reflected;
+      entry.lines.push(`○ ${shortName(stat)} : 반영액 ${reflected.toLocaleString("ko-KR")}천원`);
+      byProgram.set(ancestors.programRow.id, entry);
+    }
+    if (byProgram.size === 0) {
+      showToast(`${department}에는 민간경상사업보조·민간단체법정운영비보조·민간행사사업보조 통계목이 없습니다.`);
+      return;
+    }
+    const rateText = (base: number, diff: number) => (base === 0 ? (diff > 0 ? "신규" : "") : `${Math.round((diff / base) * 1000) / 10}%`);
+    const entries = Array.from(byProgram.values());
+    const totalBase = entries.reduce((sum, entry) => sum + entry.base, 0);
+    const totalReflected = entries.reduce((sum, entry) => sum + entry.reflected, 0);
+    const baseHeader = hasSupp ? "2026년 3추기준(A)" : "2026년 본예산(A)";
+    const header = ["연번", "부서명", "세부사업명", baseHeader, "2027년반영액(B)", "전년 대비 증감(C=B-A)", "전년 대비 증감률(C/A)", "내용(반영액)"];
+    const aoa: (string | number)[][] = [
+      header,
+      ["", "합계", "", totalBase, totalReflected, totalReflected - totalBase, rateText(totalBase, totalReflected - totalBase), ""],
+      ...entries.map((entry, index) => [
+        index + 1, department, entry.name, entry.base, entry.reflected, entry.reflected - entry.base,
+        rateText(entry.base, entry.reflected - entry.base), entry.lines.join("\n"),
+      ]),
+    ];
+    const worksheet = XLSX.utils.aoa_to_sheet(aoa);
+    worksheet["!cols"] = [{ wch: 6 }, { wch: 14 }, { wch: 34 }, { wch: 16 }, { wch: 16 }, { wch: 18 }, { wch: 14 }, { wch: 50 }];
+    const workbook = XLSX.utils.book_new();
+    XLSX.utils.book_append_sheet(workbook, worksheet, "민간보조");
+    XLSX.writeFile(workbook, `${department}_민간보조_반영현황.xlsx`);
+    showToast("민간보조 반영 현황을 다운로드했습니다.");
+  };
+
   // "PDF" 메뉴는 별도 PDF 렌더링 없이, 지금 화면의 세출예산내역서를 그대로 인쇄 미리보기로
   // 띄운다(브라우저 인쇄 대화상자에서 "PDF로 저장"을 고르면 곧 파일로 남는다). 단, 화면에는
   // 페이지당 30행만 그려져 있으므로 인쇄 전에 잠깐 전체 행을 그리도록 전환해야 한다.
@@ -2889,7 +2939,24 @@ export default function Home() {
                     </>
                   )}
                 </div>
-                <div className="no-print" style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                  {statementView === 'expenditure' && department && (
+                    <button
+                      type="button"
+                      onClick={exportSubsidyReport}
+                      title="민간경상사업보조·민간단체법정운영비보조·민간행사사업보조를 세부사업별로 정리해 엑셀로 내려받기"
+                      style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '6px',
+                        padding: '5px 11px', fontSize: '13px', fontWeight: 600,
+                        color: '#1e3a5f', background: '#e3e9f1',
+                        border: '1px solid #b7c2cf', borderRadius: '6px', cursor: 'pointer', whiteSpace: 'nowrap',
+                      }}
+                    >
+                      <Download size={14} />
+                      민간보조 현황
+                    </button>
+                  )}
+                  <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
                   <Search size={14} style={{ position: 'absolute', left: '10px', color: '#6b7280', pointerEvents: 'none' }} />
                   <input
                     type="text"
@@ -2898,6 +2965,7 @@ export default function Home() {
                     placeholder="검색"
                     style={{ width: '220px', padding: '6px 10px 6px 30px', fontSize: '13px', background: '#eef1f5', border: '1px solid #b7c2cf', borderRadius: '6px', color: '#111827' }}
                   />
+                  </div>
                 </div>
               </div>
             </div>
