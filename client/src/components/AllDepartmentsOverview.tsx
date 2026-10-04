@@ -48,8 +48,10 @@ const head: React.CSSProperties = { padding: "11px 12px", color: "#ffffff", font
 
 export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { rows: HierarchyRow[]; supp3ByDepartment: Record<string, number | null> }) {
   const [openDepartment, setOpenDepartment] = useState<string | null>("문화예술과");
-  // 홍보 관련 예산 표: 표 전체와 부서별로 접고 펼친다(처음에는 모두 펼쳐 둔다).
-  const [promoOpen, setPromoOpen] = useState(true);
+  // 홍보 관련 예산 표: 표 전체와 부서별로 접고 펼친다(표 전체는 처음에 접어 두고, 펼치면 부서는 모두 펼쳐 보인다).
+  const [promoOpen, setPromoOpen] = useState(false);
+  // 위쪽 부서별 증감 표도 같은 방식으로 접고 펼친다. 두 표 모두 처음에는 접어 둔다.
+  const [overviewOpen, setOverviewOpen] = useState(false);
   const [collapsedPromoDepartments, setCollapsedPromoDepartments] = useState<Set<string>>(new Set());
   const togglePromoDepartment = (name: string) => setCollapsedPromoDepartments((prev) => {
     const next = new Set(prev);
@@ -151,12 +153,23 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     <>
     <section className="table-section" style={{ marginTop: "18px" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "baseline", marginBottom: "10px" }}>
-        <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>부서별 2027 요구 증감</h2>
+        <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>
+          <button
+            type="button"
+            onClick={() => setOverviewOpen((open) => !open)}
+            aria-expanded={overviewOpen}
+            title={overviewOpen ? "눌러서 표 접기" : "눌러서 표 펼치기"}
+            style={{ all: "unset", cursor: "pointer", display: "inline-flex", alignItems: "center", gap: "8px" }}
+          >
+            <span style={{ display: "inline-block", width: "1em", fontSize: "0.85em" }}>{overviewOpen ? "▾" : "▸"}</span>부서별 2027 요구 증감
+          </button>
+        </h2>
         <span style={{ color: "#c3cdd9", fontSize: "14px" }}>
           9개 부서 합계 {toMillion(grand.budget)} · 3추 대비 {signedMillion(grandIncrease)} ({percent(grand.budget, grand.supp3)}) · 지방채 상환 {toMillion(grand.debt)} 빼면 {percent(grand.budget - grand.debt, grand.supp3)}
         </span>
         <span style={{ marginLeft: "auto", color: "#c3cdd9", fontSize: "13px" }}>[단위: 백만원]</span>
       </div>
+      {overviewOpen && (
       <div className="table-scroll ledger-scrollbar" style={{ overflowX: "auto", border: "1px solid #b7c2cf" }}>
         <table style={{ width: "100%", minWidth: "1100px", borderCollapse: "collapse", background: "#ffffff", color: "#1a2129", fontSize: "15px" }}>
           <thead>
@@ -221,6 +234,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
           </tbody>
         </table>
       </div>
+      )}
     </section>
 
     {promo.departments.length > 0 && (
@@ -238,20 +252,20 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
             </button>
           </h2>
           <span style={{ color: "#c3cdd9", fontSize: "14px" }}>
-            {promo.departments.length}개 부서 {promo.count}줄 · 합계 {promo.total.toLocaleString("ko-KR")}천원 (약 {(promo.total / 100000).toFixed(1)}억 원)
+            {BUREAUS.flatMap((bureau) => bureau.departments).length}개 부서 · 합계 {promo.total.toLocaleString("ko-KR")}천원
           </span>
           <span style={{ marginLeft: "auto", color: "#c3cdd9", fontSize: "13px" }}>[단위: 천원 · 부기명에 홍보·SNS·광고·현수막·리플렛·BI·굿즈·캐릭터가 들어간 줄]</span>
         </div>
         {promoOpen && (
-        <div className="table-scroll ledger-scrollbar" style={{ overflowX: "auto", border: "1px solid #b7c2cf" }}>
-          <table style={{ width: "100%", minWidth: "900px", borderCollapse: "collapse", background: "#ffffff", color: "#1a2129", fontSize: "15px" }}>
+        <div className="table-scroll ledger-scrollbar" style={{ overflowX: "auto", border: "1px solid #b7c2cf", width: "fit-content", maxWidth: "100%" }}>
+          <table style={{ width: "100%", maxWidth: "1040px", tableLayout: "fixed", borderCollapse: "collapse", background: "#ffffff", color: "#1a2129", fontSize: "15px" }}>
             <thead>
               <tr style={{ background: NAVY }}>
-                <th style={{ ...head, width: "180px" }}>부서</th>
-                <th style={{ ...head, textAlign: "left" }}>세부사업</th>
-                <th style={{ ...head, textAlign: "left" }}>홍보 관련 부기명</th>
-                <th style={{ ...head, width: "120px" }}>금액</th>
-                <th style={{ ...head, width: "120px", borderRight: "none" }}>소계</th>
+                <th style={{ ...head, width: "150px" }}>부서</th>
+                <th style={{ ...head, width: "250px", textAlign: "left" }}>세부사업</th>
+                <th style={{ ...head, textAlign: "left" }}>홍보 내용</th>
+                <th style={{ ...head, width: "105px" }}>금액</th>
+                <th style={{ ...head, width: "105px", borderRight: "none" }}>소계</th>
               </tr>
             </thead>
             <tbody>
@@ -268,9 +282,9 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
                       style={{ background: bureau?.headTint, cursor: "pointer" }}
                       title={collapsed ? "눌러서 펼치기" : "눌러서 접기"}
                     >
-                      <td colSpan={3} style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{collapsed ? "▸" : "▾"} {dept.name} <span style={{ fontWeight: 500, color: "#4b5563", fontSize: "13px" }}>· {dept.count}줄</span></td>
+                      <td colSpan={3} style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{collapsed ? "▸" : "▾"} {dept.name}</td>
                       <td style={cell} />
-                      <td style={{ ...cell, fontWeight: 800, color: NAVY }}>{dept.total.toLocaleString("ko-KR")}</td>
+                      <td style={{ ...cell, fontWeight: 800, color: "#d9480f" }} title={`${dept.name} 홍보 관련 예산 합계`}>{dept.total.toLocaleString("ko-KR")}</td>
                     </tr>
                     {!collapsed && dept.programs.map((program) => (
                       <Fragment key={program.name}>
@@ -280,7 +294,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
                             <td style={{ ...cell, textAlign: "left", whiteSpace: "normal", fontWeight: 600 }}>{index === 0 ? program.name : ""}</td>
                             <td style={{ ...cell, textAlign: "left", whiteSpace: "normal" }}>{line.note}{line.stat ? <span style={{ color: "#6b7280", fontSize: "12px" }}> · {line.stat}</span> : null}</td>
                             <td style={cell}>{line.amount ? line.amount.toLocaleString("ko-KR") : "-"}</td>
-                            <td style={{ ...cell, fontWeight: 700 }}>{index === program.lines.length - 1 ? program.total.toLocaleString("ko-KR") : ""}</td>
+                            <td style={{ ...cell, fontWeight: 700 }}>{index === 0 ? program.total.toLocaleString("ko-KR") : ""}</td>
                           </tr>
                         ))}
                       </Fragment>
