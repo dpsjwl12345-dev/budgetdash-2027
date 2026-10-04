@@ -270,6 +270,12 @@ const REQUEST_TARGETS: { department: string; match: string; target: string }[] =
   { department: "교육지원과", match: "테크노폴해외연수", target: "인재육성재단 운영지원" },
 ];
 
+// 요구사항이 다른 부서로 잘못 등록됐거나 예산서 부기명과 이름이 달라 자동으로 못 찾는 경우,
+// 특정 부서·세부사업·부기명 줄에 직접 붙인다(사용자 확인). match는 요구 내용에 들어 있는 말.
+const REQUEST_NOTE_TARGETS: { match: string; department: string; program: string; note: string }[] = [
+  { match: "매향리평화기념관관광조형물", department: "관광진흥과", program: "매향리평화기념관 시설운영", note: "기념관 시설조성비" },
+];
+
 // 요구사항에서 예산서 이름과 맞춰 볼 후보들: 예산 항목명·내용의 각 줄, 괄호 안쪽 이름.
 function requestKeys(request: RequestRecord): string[] {
   const texts = [request.budgetItemName, ...request.content.split("\n")].flatMap((text) => text.split(/[()]/));
@@ -1754,7 +1760,20 @@ export default function Home() {
       if (!list.some((existing) => existing.label === badge.label)) list.push(badge);
       map.set(rowId, list);
     };
-    requestRecords.filter((request) => request.department === department).forEach((request) => {
+    // 부서와 상관없이 지정해 둔 부기명에 붙이는 요구사항 (REQUEST_NOTE_TARGETS).
+    const pinnedRequests = new Set<RequestRecord>();
+    requestRecords.forEach((request) => {
+      const badge = requestBadge(request);
+      if (!badge) return;
+      const keys = requestKeys(request);
+      REQUEST_NOTE_TARGETS.filter((entry) => entry.department === department && keys.some((key) => key.includes(entry.match))).forEach((entry) => {
+        pinnedRequests.add(request);
+        notes
+          .filter((note) => note.name === normalizeBudgetName(entry.note) && hierarchyAncestors.get(note.row.id)?.programRow?.label === entry.program)
+          .forEach((note) => add(note.row.id, badge));
+      });
+    });
+    requestRecords.filter((request) => request.department === department && !pinnedRequests.has(request)).forEach((request) => {
       const badge = requestBadge(request);
       if (!badge) return;
       const keys = requestKeys(request);
