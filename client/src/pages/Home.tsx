@@ -239,14 +239,15 @@ function isMajorInvestmentProgram(department: string, label: string): boolean {
   return MAJOR_INVESTMENT_PROGRAMS[department]?.includes(label) ?? false;
 }
 
-// "요구사항 반영" 메뉴의 시의원 요구·민선9기 공약·시장/부시장 지시사항이 예산서에 실려 있으면
+// "요구사항 반영" 메뉴의 시의원 요구·민선9기 공약·시장/부시장 지시사항·당정협의회가 예산서에 실려 있으면
 // 그 줄(부기명, 없으면 세부사업)에 배지를 단다. 이름은 공백·괄호·"○"·끝의 "공사"를 빼고 비교한다.
 type RequestRecord = { requestType: string; memberName: string; department: string; content: string; budgetItemName: string; requestedAmount: string; status: string };
-type RequestBadge = { label: string; tone: "council" | "pledge" | "mayor"; title: string };
+type RequestBadge = { label: string; tone: "council" | "pledge" | "mayor" | "party"; title: string };
 const REQUEST_BADGE_STYLES: Record<RequestBadge["tone"], { background: string; color: string }> = {
   council: { background: "rgba(144, 133, 233, 0.18)", color: "#6b5fd3" },
   pledge: { background: "rgba(25, 158, 112, 0.16)", color: "#13805a" },
   mayor: { background: "rgba(217, 89, 38, 0.15)", color: "#c24a1a" },
+  party: { background: "rgba(37, 99, 235, 0.13)", color: "#1d4ed8" },
 };
 const normalizeBudgetName = (text: string) => text.replace(/^[○◦·\-\s]+/, "").replace(/[\s()·,\[\]]/g, "").replace(/공사$/, "");
 
@@ -256,6 +257,7 @@ function requestBadge(request: RequestRecord): RequestBadge | null {
   if (request.requestType === "민선9기공약") return { label: "공약", tone: "pledge", title };
   if (request.requestType === "시장") return { label: "시장 지시", tone: "mayor", title };
   if (request.requestType === "부시장") return { label: `${request.memberName || "부시장"} 지시`, tone: "mayor", title };
+  if (request.requestType === "당정협의회") return { label: "당정협의회", tone: "party", title };
   return null;
 }
 
