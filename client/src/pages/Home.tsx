@@ -3236,7 +3236,7 @@ export default function Home() {
                                   style={{ width: '100%', padding: '3px 8px', border: '1px solid #1d4ed8', borderRadius: '4px', fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: '#1d4ed8' }}
                                 />
                               ) : (
-                                <span style={{ fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: leftNoteKey && rowNotes[leftNoteKey] ? '#1d4ed8' : '#c3ccd6' }}>
+                                <span style={{ fontSize: 'calc(13px + 1pt)', fontWeight: 600, color: leftNoteKey && rowNotes[leftNoteKey] ? '#1d4ed8' : 'rgba(0,0,0,0.07)' }}>
                                   {(leftNoteKey && rowNotes[leftNoteKey]) || (leftNoteKey ? '클릭하여 메모 입력' : '')}
                                 </span>
                               )}
