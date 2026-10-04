@@ -636,8 +636,13 @@ export default function BudgetExecution2026() {
 
   const departments = useMemo(() => {
     const departmentOrder = ["문화예술과", "문화유산과", "문화시설과", "독립기념관", "관광진흥과", "교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"];
-    return departmentOrder;
-  }, [data]);
+    // 연도마다 부서명이 바뀌기도 해서(예: 2025 독립기념사업소·독립기념추진단) 업로드된 부서 중
+    // 고정 목록에 없는 이름도 뒤에 붙여 선택할 수 있게 한다.
+    const extras = Array.from(new Set(
+      data.filter((row) => String(row.year ?? selectedYear) === selectedYear).map((row) => row.department)
+    )).filter((name) => name && !departmentOrder.includes(name)).sort();
+    return [...departmentOrder, ...extras];
+  }, [data, selectedYear]);
 
   const programNames = useMemo(() => {
     const dept = selectedDepartment && selectedDepartment !== "전체" ? selectedDepartment : null;
