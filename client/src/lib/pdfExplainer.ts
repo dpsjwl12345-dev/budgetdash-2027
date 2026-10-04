@@ -83,14 +83,14 @@ function detectBlocks(
 
 async function renderPageImage(pdf: pdfjsLib.PDFDocumentProxy, pageNum: number): Promise<string> {
   const page = await pdf.getPage(pageNum);
-  const viewport = page.getViewport({ scale: 1.3 });
+  const viewport = page.getViewport({ scale: 2.0 });
   const canvas = document.createElement('canvas');
   canvas.width = viewport.width;
   canvas.height = viewport.height;
   const ctx = canvas.getContext('2d');
   if (!ctx) throw new Error('canvas 2d context를 생성하지 못했습니다');
   await page.render({ canvas, canvasContext: ctx, viewport }).promise;
-  return canvas.toDataURL('image/jpeg', 0.8);
+  return canvas.toDataURL('image/jpeg', 0.85);
 }
 
 // 세부사업 하나에 개별로 업로드하는 PDF(예: 기관이 별도로 제출한 설명자료) - 블록
