@@ -38,6 +38,7 @@ type BudgetExecution = {
 // 단위 집행률 요약)과는 별개 표라 데이터도 서버 테이블(budget_execution_details)도 따로 둔다.
 type ExecutionDetail = {
   id: number;
+  year: string;
   department: string;
   division: string;
   policyProgram: string;
@@ -238,6 +239,7 @@ export default function BudgetExecution2026() {
   const [execView, setExecView] = useState<"summary" | "details">("summary");
   const [executionDetails, setExecutionDetails] = useState<ExecutionDetail[]>([]);
   const [detailSearch, setDetailSearch] = useState("");
+  const [detailYear, setDetailYear] = useState("2026");
   const [detailDepartment, setDetailDepartment] = useState("");
   const [detailProgramFilter, setDetailProgramFilter] = useState("");
   const [detailStatisticsFilter, setDetailStatisticsFilter] = useState("");
@@ -288,6 +290,7 @@ export default function BudgetExecution2026() {
           if (parsedDepartment) lastDepartment = parsedDepartment;
           return {
             id: Date.now() + index,
+            year: detailYear,
             department: parsedDepartment || lastDepartment || "미분류",
             division: parseText(record["구분"]),
             policyProgram: parseText(record["정책사업"]),
@@ -306,7 +309,7 @@ export default function BudgetExecution2026() {
 
       const uploadedDepartments = new Set(nextRows.map((row) => row.department));
       setExecutionDetails((previous) => [
-        ...previous.filter((row) => !uploadedDepartments.has(row.department)),
+        ...previous.filter((row) => row.year !== detailYear || !uploadedDepartments.has(row.department)),
         ...nextRows,
       ]);
       setDetailPage(1);
@@ -324,7 +327,7 @@ export default function BudgetExecution2026() {
           const response = await fetch('/api/cloud-sync?type=execution-details', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ department, data: rows }),
+            body: JSON.stringify({ year: detailYear, department, data: rows }),
           });
           const result = await response.json().catch(() => ({}));
           return response.ok && result.success === true;
@@ -555,29 +558,35 @@ export default function BudgetExecution2026() {
     window.setTimeout(() => setToast(""), 2200);
   };
 
+  // 예산 집행내역은 회계연도별로 따로 보여준다(예전 자료는 연도 값이 없어 2026으로 본다).
+  const yearDetails = useMemo(
+    () => executionDetails.filter((row) => (row.year || "2026") === detailYear),
+    [executionDetails, detailYear]
+  );
+
   const detailDepartments = useMemo(
-    () => Array.from(new Set(executionDetails.map((row) => row.department))).sort(),
-    [executionDetails]
+    () => Array.from(new Set(yearDetails.map((row) => row.department))).sort(),
+    [yearDetails]
   );
 
   // 부서를 고르면 그 부서 안의 세부사업만 보이도록 좁힌다(다른 표의 세부사업명 드롭다운과 동일한 방식).
   const detailPrograms = useMemo(() => {
-    const scoped = detailDepartment === "" ? executionDetails : executionDetails.filter((row) => row.department === detailDepartment);
+    const scoped = detailDepartment === "" ? yearDetails : yearDetails.filter((row) => row.department === detailDepartment);
     return Array.from(new Set(scoped.map((row) => row.detailProgram).filter(Boolean))).sort();
-  }, [executionDetails, detailDepartment]);
+  }, [yearDetails, detailDepartment]);
 
   // 부서·세부사업 선택에 맞춰 통계목 목록도 같이 좁힌다.
   const detailStatisticsCodes = useMemo(() => {
-    const scoped = executionDetails.filter((row) =>
+    const scoped = yearDetails.filter((row) =>
       (detailDepartment === "" || row.department === detailDepartment) &&
       (detailProgramFilter === "" || row.detailProgram === detailProgramFilter)
     );
     return Array.from(new Set(scoped.map((row) => row.statisticsAccount).filter(Boolean))).sort();
-  }, [executionDetails, detailDepartment, detailProgramFilter]);
+  }, [yearDetails, detailDepartment, detailProgramFilter]);
 
   const filteredDetails = useMemo(() => {
     const keyword = detailSearch.toLowerCase();
-    return executionDetails.filter((row) => {
+    return yearDetails.filter((row) => {
       const matchesDepartment = detailDepartment === "" || row.department === detailDepartment;
       const matchesProgram = detailProgramFilter === "" || row.detailProgram === detailProgramFilter;
       const matchesStatistics = detailStatisticsFilter === "" || row.statisticsAccount === detailStatisticsFilter;
@@ -587,7 +596,7 @@ export default function BudgetExecution2026() {
         row.vendorName.toLowerCase().includes(keyword);
       return matchesDepartment && matchesProgram && matchesStatistics && matchesSearch;
     });
-  }, [executionDetails, detailDepartment, detailProgramFilter, detailStatisticsFilter, detailSearch]);
+  }, [yearDetails, detailDepartment, detailProgramFilter, detailStatisticsFilter, detailSearch]);
 
   const detailTotalPages = Math.max(1, Math.ceil(filteredDetails.length / detailRowsPerPage));
   const paginatedDetails = useMemo(() => {
@@ -814,6 +823,17 @@ export default function BudgetExecution2026() {
           <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
             <div className="table-title">
               <div className="execution-filter-bar">
+                <ExecutionFilterDropdown
+                  label="회계연도"
+                  value={detailYear}
+                  options={[
+                    { value: "2025", label: "2025년" },
+                    { value: "2026", label: "2026년" },
+                  ]}
+                  onChange={(value) => { setDetailYear(value); setDetailDepartment(""); setDetailProgramFilter(""); setDetailStatisticsFilter(""); setDetailPage(1); }}
+                  placeholder="연도 선택"
+                  clearable={false}
+                />
                 <ExecutionFilterDropdown
                   label="부서명"
                   value={detailDepartment}
