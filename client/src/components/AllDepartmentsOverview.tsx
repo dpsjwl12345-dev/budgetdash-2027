@@ -2,13 +2,25 @@ import { Fragment, useMemo, useState } from "react";
 
 // 편성 부서 "전체": 국별로 묶어(국마다 행 바탕색을 옅게 달리 칠한다) 부서마다 2027 요구액을 2026 본예산(예산서 기정액)·3추와 견준다.
 // 지방채 상환은 2027년에 처음 부서별로 나눠 넣은 항목이라 "지방채 빼면" 칸을 따로 둔다.
-type HierarchyRow = { id: string; level: string; label: string; budget?: number; previous?: number };
+type HierarchyRow = { id: string; level: string; label: string; budget?: number; previous?: number; statisticsCode?: string; description?: string };
 
 const BUREAUS = [
   { name: "문화관광국", departments: ["문화예술과", "문화유산과", "독립기념관", "관광진흥과"], tint: "rgba(232, 89, 12, 0.07)", headTint: "rgba(232, 89, 12, 0.16)" },
   { name: "교육체육국", departments: ["교육지원과", "평생학습과", "도서관정책과", "체육진흥과", "전국체전추진단"], tint: "rgba(18, 140, 90, 0.07)", headTint: "rgba(18, 140, 90, 0.16)" },
 ];
 const DEBT_PROGRAM = "지방채 상환";
+
+// 홍보 관련 예산: 부기명(○ 산출근거 줄) 이름에 아래 말이 들어간 줄만 모은다.
+// 홍보 성격이 있어도 이름에 표시가 없는 줄(기념품·영상제작·행사 등)은 넣지 않는다.
+const PROMO_PATTERN = /홍보|SNS|광고|현수막|리플렛|리플릿|팸플릿|포스터|브로슈어|배너|굿즈|캐릭터|(?<![A-Za-z])BI(?![A-Za-z])/;
+// 산출근거 칸 "40,000,000원 = 40,000"에서 "=" 뒤의 천원 금액을 읽는다.
+const readThousand = (description?: string) => {
+  const match = String(description ?? "").match(/=\s*([\d,]+)\s*$/);
+  return match ? Number(match[1].replace(/,/g, "")) || 0 : 0;
+};
+type PromoLine = { note: string; amount: number; stat: string };
+type PromoProgram = { name: string; lines: PromoLine[]; total: number };
+type PromoDepartment = { name: string; programs: PromoProgram[]; total: number; count: number };
 
 type DeptSummary = {
   name: string;
@@ -58,6 +70,42 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
     return map;
   }, [rows, supp3ByDepartment]);
 
+  // 부서 → 세부사업 → 홍보 관련 부기명. ○ 줄 아래의 ㅇ 세부 줄은 ○ 줄 금액에 이미 들어 있으므로
+  // ○ 줄이 홍보 줄이면 세부 줄은 세지 않고, ○ 줄이 아닌데 세부 줄만 해당하면 그 줄을 센다.
+  const promo = useMemo(() => {
+    const names = new Set(BUREAUS.flatMap((bureau) => bureau.departments));
+    const byDepartment = new Map<string, Map<string, PromoLine[]>>();
+    let department = "";
+    let program = "";
+    let stat = "";
+    let parentCounted = false;
+    for (const row of rows) {
+      if (row.level === "dept") { department = row.label; program = ""; stat = ""; parentCounted = false; }
+      else if (row.level === "program") { program = row.label; stat = ""; parentCounted = false; }
+      else if (row.level === "item") { stat = (row.statisticsCode ?? "").replace(/^\s*\d+\s*/, ""); parentCounted = false; }
+      else if (row.level === "note" && names.has(department) && program) {
+        const text = (row.statisticsCode ?? "").trim();
+        const isParent = text.startsWith("○");
+        const matched = PROMO_PATTERN.test(text);
+        if (isParent) parentCounted = matched;
+        if (!matched || (!isParent && parentCounted)) continue;
+        const programs = byDepartment.get(department) ?? new Map<string, PromoLine[]>();
+        const lines = programs.get(program) ?? [];
+        lines.push({ note: text.replace(/^[○ㅇ\s]+/, ""), amount: readThousand(row.description), stat });
+        programs.set(program, lines);
+        byDepartment.set(department, programs);
+      }
+    }
+    const departments: PromoDepartment[] = [];
+    BUREAUS.forEach((bureau) => bureau.departments.forEach((name) => {
+      const programs = byDepartment.get(name);
+      if (!programs) return;
+      const list: PromoProgram[] = Array.from(programs, ([programName, lines]) => ({ name: programName, lines, total: lines.reduce((sum, line) => sum + line.amount, 0) }));
+      departments.push({ name, programs: list, total: list.reduce((sum, item) => sum + item.total, 0), count: list.reduce((sum, item) => sum + item.lines.length, 0) });
+    }));
+    return { departments, total: departments.reduce((sum, item) => sum + item.total, 0), count: departments.reduce((sum, item) => sum + item.count, 0) };
+  }, [rows]);
+
   const sumOf = (list: DeptSummary[]) => list.reduce(
     (total, item) => ({ budget: total.budget + item.budget, previous: total.previous + item.previous, supp3: total.supp3 + (item.supp3 ?? 0), debt: total.debt + item.debt }),
     { budget: 0, previous: 0, supp3: 0, debt: 0 },
@@ -92,6 +140,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
   };
 
   return (
+    <>
     <section className="table-section" style={{ marginTop: "18px" }}>
       <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "baseline", marginBottom: "10px" }}>
         <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>부서별 2027 요구 증감</h2>
@@ -165,5 +214,58 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
         </table>
       </div>
     </section>
+
+    {promo.departments.length > 0 && (
+      <section className="table-section" style={{ marginTop: "26px" }}>
+        <div style={{ display: "flex", flexWrap: "wrap", gap: "8px 24px", alignItems: "baseline", marginBottom: "10px" }}>
+          <h2 style={{ margin: 0, fontSize: "20px", color: "#e8eef6" }}>홍보 관련 예산</h2>
+          <span style={{ color: "#c3cdd9", fontSize: "14px" }}>
+            {promo.departments.length}개 부서 {promo.count}줄 · 합계 {promo.total.toLocaleString("ko-KR")}천원 (약 {(promo.total / 100000).toFixed(1)}억 원)
+          </span>
+          <span style={{ marginLeft: "auto", color: "#c3cdd9", fontSize: "13px" }}>[단위: 천원 · 부기명에 홍보·SNS·광고·현수막·리플렛·BI·굿즈·캐릭터가 들어간 줄]</span>
+        </div>
+        <div className="table-scroll ledger-scrollbar" style={{ overflowX: "auto", border: "1px solid #b7c2cf" }}>
+          <table style={{ width: "100%", minWidth: "900px", borderCollapse: "collapse", background: "#ffffff", color: "#1a2129", fontSize: "15px" }}>
+            <thead>
+              <tr style={{ background: NAVY }}>
+                <th style={{ ...head, width: "180px" }}>부서</th>
+                <th style={{ ...head, textAlign: "left" }}>세부사업</th>
+                <th style={{ ...head, textAlign: "left" }}>홍보 관련 부기명</th>
+                <th style={{ ...head, width: "120px" }}>금액</th>
+                <th style={{ ...head, width: "120px", borderRight: "none" }}>소계</th>
+              </tr>
+            </thead>
+            <tbody>
+              {promo.departments.map((dept) => {
+                const bureau = BUREAUS.find((item) => item.departments.includes(dept.name));
+                return (
+                  <Fragment key={dept.name}>
+                    <tr style={{ background: bureau?.headTint }}>
+                      <td colSpan={3} style={{ ...cell, textAlign: "left", fontWeight: 700, color: NAVY }}>{dept.name} <span style={{ fontWeight: 500, color: "#4b5563", fontSize: "13px" }}>· {dept.count}줄</span></td>
+                      <td style={cell} />
+                      <td style={{ ...cell, fontWeight: 800, color: NAVY }}>{dept.total.toLocaleString("ko-KR")}</td>
+                    </tr>
+                    {dept.programs.map((program) => (
+                      <Fragment key={program.name}>
+                        {program.lines.map((line, index) => (
+                          <tr key={`${program.name}-${index}`} style={{ background: bureau?.tint }}>
+                            <td style={cell} />
+                            <td style={{ ...cell, textAlign: "left", whiteSpace: "normal", fontWeight: 600 }}>{index === 0 ? program.name : ""}</td>
+                            <td style={{ ...cell, textAlign: "left", whiteSpace: "normal" }}>{line.note}{line.stat ? <span style={{ color: "#6b7280", fontSize: "12px" }}> · {line.stat}</span> : null}</td>
+                            <td style={cell}>{line.amount ? line.amount.toLocaleString("ko-KR") : "-"}</td>
+                            <td style={{ ...cell, fontWeight: 700 }}>{index === program.lines.length - 1 ? program.total.toLocaleString("ko-KR") : ""}</td>
+                          </tr>
+                        ))}
+                      </Fragment>
+                    ))}
+                  </Fragment>
+                );
+              })}
+            </tbody>
+          </table>
+        </div>
+      </section>
+    )}
+    </>
   );
 }
