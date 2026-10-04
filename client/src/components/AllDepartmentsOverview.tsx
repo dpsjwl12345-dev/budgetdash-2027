@@ -50,7 +50,7 @@ export default function AllDepartmentsOverview({ rows, supp3ByDepartment }: { ro
   const [openDepartment, setOpenDepartment] = useState<string | null>("문화예술과");
   // 홍보 관련 예산 표: 표 전체와 부서별로 접고 펼친다(표 전체는 처음에 접어 두고, 펼치면 부서는 모두 펼쳐 보인다).
   const [promoOpen, setPromoOpen] = useState(false);
-  // 위쪽 부서별 증감 표도 같은 방식으로 접고 펼친다. 두 표 모두 처음에는 접어 둔다.
+  // 위쪽 부서별 증감 표도 같은 방식으로 접고 펼친다. 처음에는 펼쳐 두고, 홍보 표만 접어 둔다.
   const [overviewOpen, setOverviewOpen] = useState(true);
   const [collapsedPromoDepartments, setCollapsedPromoDepartments] = useState<Set<string>>(new Set());
   const togglePromoDepartment = (name: string) => setCollapsedPromoDepartments((prev) => {
