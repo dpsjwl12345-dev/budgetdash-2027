@@ -1283,3 +1283,7 @@ select option {
 /* 통계목 칸은 항상 왼쪽 정렬. 부기명 줄은 앞의 네 칸이 하나로 합쳐져 통계목 칸이 2번째 칸이 되므로,
    2·3번째 칸을 오른쪽 정렬하는 위 규칙(금액 열용)이 잘못 걸리지 않게 고정한다. */
 table.budget-table.hierarchy-budget-table tbody tr td.stat-code-cell { text-align: left !important; }
+
+/* 예산검토 부기명 줄의 "공약" 토글 - 표시 안 된 줄에서는 거의 안 보이다가 마우스를 올리면 드러난다. */
+.pledge-toggle-off { opacity: 0.08; transition: opacity 0.15s; }
+tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }

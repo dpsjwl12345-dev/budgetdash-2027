@@ -3203,6 +3203,10 @@ export default function Home() {
                     // 위 통계목 줄에 이미 표시됨). 그 빈 공간을 키워드 등을 적는 넓은 메모칸으로 쓴다.
                     // 오른쪽 검토 칸의 짧은 메모와는 따로 저장한다(키 끝에 "::왼쪽메모").
                     const leftNoteKey = markKey ? `${markKey}::왼쪽메모` : null;
+                    // 공약사항 표시 - 부기명마다 직접 켜고 끈다. 왼쪽메모처럼 키 끝에 "::공약"을 붙여
+                    // 같은 표시 테이블에 저장한다(값 '공약'이면 표시, 빈 값이면 해제).
+                    const pledgeKey = markKey ? `${markKey}::공약` : null;
+                    const isPledge = pledgeKey !== null && !!rowNotes[pledgeKey];
                     const isEditingLeftNote = leftNoteKey !== null && editingRowNoteKey === leftNoteKey && editingRowNoteSide === 'left';
                     return (
                       <Fragment key={row.id}>
@@ -3339,6 +3343,17 @@ export default function Home() {
                               <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(214, 69, 90, 0.15)', color: '#d6455a', fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                                 신규
                               </span>
+                            )}
+                            {pledgeKey && (
+                              <button
+                                type="button"
+                                className={isPledge ? undefined : 'pledge-toggle-off'}
+                                title={isPledge ? '공약사항 - 클릭하여 해제' : '클릭하여 공약사항으로 표시'}
+                                onClick={() => saveRowAnnotation(pledgeKey, '', isPledge ? '' : '공약')}
+                                style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', border: 'none', background: 'rgba(124, 58, 237, 0.15)', color: '#7c3aed', fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', cursor: 'pointer' }}
+                              >
+                                공약
+                              </button>
                             )}
                             {row.description || ''}
                           </td>
