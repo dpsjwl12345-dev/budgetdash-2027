@@ -3226,6 +3226,8 @@ export default function Home() {
                     // 같은 표시 테이블에 저장한다(값 '공약'이면 표시, 빈 값이면 해제).
                     const pledgeKey = markKey ? `${markKey}::공약` : null;
                     const isPledge = pledgeKey !== null && !!rowNotes[pledgeKey];
+                    // 통계목 안에 전년 금액이 있어 자동 "신규"가 안 붙는 부기명도, 검토자가 신규로 지정하면
+                    // (표시 테이블에 키 끝 "::신규") 같은 신규 배지를 붙인다.
                     const isEditingLeftNote = leftNoteKey !== null && editingRowNoteKey === leftNoteKey && editingRowNoteSide === 'left';
                     return (
                       <Fragment key={row.id}>
@@ -3358,7 +3360,7 @@ export default function Home() {
                             )}
                           </td>
                           <td style={{ background: getBackground(), fontSize: getFontSize(), color: getColor(), whiteSpace: 'pre-line', textAlign: 'right', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingRight: '16px', borderRight: '1px solid rgba(60,50,35,0.12)' }}>
-                            {isNewItemNote && (
+                            {(isNewItemNote || (markKey !== null && !!rowNotes[`${markKey}::신규`])) && (
                               <span style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', background: 'rgba(214, 69, 90, 0.15)', color: '#d6455a', fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap' }}>
                                 신규
                               </span>
