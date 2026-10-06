@@ -71,6 +71,79 @@ export default function BudgetExplainer() {
   const [deletingPageIndex, setDeletingPageIndex] = useState<number | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
 
+  // 설명자료 페이지 이미지 표시 배율(본문 폭 대비 %). 원본 픽셀 크기에 묶여 작게 보이던 것을
+  // 본문 폭에 맞춰 키우고, 사용자가 고른 배율은 다음 방문에도 유지한다.
+  const [pageZoom, setPageZoom] = useState<number>(() => {
+    try {
+      const saved = Number(localStorage.getItem("explainerPageZoom"));
+      return saved >= 50 && saved <= 250 ? saved : 100;
+    } catch {
+      return 100;
+    }
+  });
+  const [lightboxSrc, setLightboxSrc] = useState<string | null>(null);
+  useEffect(() => {
+    try {
+      localStorage.setItem("explainerPageZoom", String(pageZoom));
+    } catch {
+      // 저장소를 못 쓰는 환경이면 이번 방문에만 적용한다.
+    }
+  }, [pageZoom]);
+  useEffect(() => {
+    if (!lightboxSrc) return;
+    const onKey = (e: KeyboardEvent) => {
+      if (e.key === "Escape") setLightboxSrc(null);
+    };
+    window.addEventListener("keydown", onKey);
+    return () => window.removeEventListener("keydown", onKey);
+  }, [lightboxSrc]);
+
+  const zoomBar = (
+    <div style={{ display: "flex", alignItems: "center", justifyContent: "flex-end", gap: "6px", padding: "4px 0" }}>
+      {[
+        { label: "−", title: "축소", onClick: () => setPageZoom((z) => Math.max(50, z - 25)) },
+        { label: `${pageZoom}%`, title: "본문 폭에 맞춤(100%)", onClick: () => setPageZoom(100) },
+        { label: "+", title: "확대", onClick: () => setPageZoom((z) => Math.min(250, z + 25)) },
+      ].map((b) => (
+        <button
+          key={b.title}
+          type="button"
+          onClick={b.onClick}
+          title={b.title}
+          style={{
+            minWidth: "36px",
+            height: "30px",
+            padding: "0 8px",
+            border: "1px solid var(--line)",
+            borderRadius: "6px",
+            background: "var(--bg-secondary)",
+            color: "var(--text)",
+            fontSize: "13px",
+            fontWeight: 600,
+            cursor: "pointer",
+          }}
+        >
+          {b.label}
+        </button>
+      ))}
+    </div>
+  );
+  const pageWrapStyle: React.CSSProperties = {
+    position: "relative",
+    width: "100%",
+    overflowX: pageZoom > 100 ? "auto" : "visible",
+  };
+  const pageImgStyle: React.CSSProperties = {
+    display: "block",
+    width: `${pageZoom}%`,
+    maxWidth: "none",
+    margin: "0 auto",
+    border: "1px solid var(--line)",
+    borderRadius: "4px",
+    boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
+    cursor: "zoom-in",
+  };
+
   // 공공기관 예산 설명자료 (부서 세부사업 트리와는 별도)
   const [institutions, setInstitutions] = useState<string[]>([]);
   const [institutionSectionExpanded, setInstitutionSectionExpanded] = useState(false);
@@ -1324,6 +1397,7 @@ export default function BudgetExplainer() {
                     <ArrowLeft size={16} />
                   </button>
                 </div>
+                {zoomBar}
                 {/* 원본 PDF 페이지 그대로 - 텍스트 재조립 없이 이미지로 표시 */}
                 <div
                   style={{
@@ -1340,17 +1414,13 @@ export default function BudgetExplainer() {
                     </div>
                   ) : material?.sections_json?.images && material.sections_json.images.length > 0 ? (
                     material.sections_json.images.map((src, i) => (
-                      <div key={i} style={{ position: "relative", maxWidth: "100%" }}>
+                      <div key={i} style={pageWrapStyle}>
                         <img
                           src={src}
                           alt={`${selectedPath.split("|").pop()} 설명자료 ${i + 1}페이지`}
-                          style={{
-                            display: "block",
-                            maxWidth: "100%",
-                            border: "1px solid var(--line)",
-                            borderRadius: "4px",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
+                          onClick={() => setLightboxSrc(src)}
+                          title="클릭하면 원본 크기로 크게 봅니다"
+                          style={pageImgStyle}
                         />
                         <button
                           type="button"
@@ -1416,6 +1486,7 @@ export default function BudgetExplainer() {
                     />
                   </label>
                 </div>
+                {zoomBar}
 
                 <div
                   style={{
@@ -1436,19 +1507,15 @@ export default function BudgetExplainer() {
                     </div>
                   ) : institutionMaterial?.images && institutionMaterial.images.length > 0 ? (
                     institutionMaterial.images.map((src, i) => (
-                      <div key={i} style={{ position: "relative", maxWidth: "100%" }}>
+                      <div key={i} style={pageWrapStyle}>
                         <img
                           src={src}
                           loading="lazy"
                           decoding="async"
                           alt={`${selectedInstitution} 설명자료 ${i + 1}페이지`}
-                          style={{
-                            display: "block",
-                            maxWidth: "100%",
-                            border: "1px solid var(--line)",
-                            borderRadius: "4px",
-                            boxShadow: "0 1px 4px rgba(0,0,0,0.08)",
-                          }}
+                          onClick={() => setLightboxSrc(src)}
+                          title="클릭하면 원본 크기로 크게 봅니다"
+                          style={pageImgStyle}
                         />
                         <button
                           type="button"
@@ -1522,6 +1589,28 @@ export default function BudgetExplainer() {
         >
           <ArrowUp size={20} />
         </button>
+      )}
+      {lightboxSrc && (
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="설명자료 페이지 크게 보기"
+          onClick={() => setLightboxSrc(null)}
+          style={{
+            position: "fixed",
+            inset: 0,
+            zIndex: 50,
+            background: "rgba(0, 0, 0, 0.85)",
+            overflow: "auto",
+            cursor: "zoom-out",
+          }}
+        >
+          <img
+            src={lightboxSrc}
+            alt="설명자료 페이지 원본 크기"
+            style={{ display: "block", margin: "24px auto", maxWidth: "none", width: "auto", background: "#fff" }}
+          />
+        </div>
       )}
     </Layout>
   );
