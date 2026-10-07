@@ -473,6 +473,26 @@ function electoralDistrictLabel(value: string): string {
   return national ? `${trimmed}(${national})` : trimmed;
 }
 
+// 국회의원 지역구(갑~정)별 표시 색. 정당 색(파랑·빨강·노랑)과 겹치지 않게 골랐다.
+const NATIONAL_DISTRICT_COLORS: Record<string, string> = {
+  갑: "#f2905e",
+  을: "#b98cf0",
+  병: "#52c4d9",
+  정: "#7ee787",
+};
+
+// 요구사항 표의 선거구 문구에서 끝의 "(갑)" 같은 지역구만 색을 입혀 보여준다.
+function renderElectoralDistrict(value: string) {
+  const label = electoralDistrictLabel(value);
+  const match = label.match(/^(.*)\((갑|을|병|정)\)$/);
+  if (!match) return label;
+  return (
+    <>
+      {match[1]}(<span style={{ color: NATIONAL_DISTRICT_COLORS[match[2]], fontWeight: 700 }}>{match[2]}</span>)
+    </>
+  );
+}
+
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
   if (party === "국민의힘") return "#ff6b7d";
@@ -881,7 +901,7 @@ export default function CouncilMemberRequests() {
                           {showCouncilFields && (
                           <td className="col-party">
                             {item.partyName}
-                            {item.electoralDistrict && <><br />({electoralDistrictLabel(item.electoralDistrict)})</>}
+                            {item.electoralDistrict && <><br />({renderElectoralDistrict(item.electoralDistrict)})</>}
                           </td>
                           )}
                           <td className="col-content">{item.content}</td>
