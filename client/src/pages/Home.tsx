@@ -268,6 +268,7 @@ const REQUEST_TARGETS: { department: string; match: string; target: string }[] =
   { department: "문화예술과", match: "국제음악제", target: "화성시문화관광재단 지원" },
   { department: "관광진흥과", match: "선셋콘서트", target: "화성시문화관광재단 관광진흥본부 지원" },
   { department: "교육지원과", match: "테크노폴해외연수", target: "인재육성재단 운영지원" },
+  { department: "교육지원과", match: "화성형교육혁신", target: "화성형 교육혁신 프로그램 운영" },
 ];
 
 // 요구사항이 다른 부서로 잘못 등록됐거나 예산서 부기명과 이름이 달라 자동으로 못 찾는 경우,
