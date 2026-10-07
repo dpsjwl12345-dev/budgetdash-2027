@@ -253,7 +253,8 @@ const normalizeBudgetName = (text: string) => text.replace(/^[○◦·\-\s]+/, "
 
 function requestBadge(request: RequestRecord): RequestBadge | null {
   const title = [request.requestType, request.content.replace(/\n/g, " "), request.requestedAmount, request.status].filter(Boolean).join(" · ");
-  if (request.requestType === "시의원" && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
+  // 당정협의회·정책간담회도 요구한 시의원 이름으로 배지를 단다.
+  if (["시의원", "당정협의회", "정책간담회"].includes(request.requestType) && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
   if (request.requestType === "민선9기공약") return { label: "공약", tone: "pledge", title };
   if (request.requestType === "시장") return { label: "시장 지시", tone: "mayor", title };
   if (request.requestType === "부시장") return { label: `${request.memberName || "부시장"} 지시`, tone: "mayor", title };
@@ -3318,12 +3319,12 @@ export default function Home() {
                             title={markKey ? '클릭하여 강조 표시' : undefined}
                             style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: markPickerKey && markPickerKey === markKey ? 3 : 1, cursor: markKey ? 'pointer' : 'default' }}
                           >
-                            {row.statisticsCode || ''}
                             {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).map((badge) => (
-                              <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginLeft: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                              <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
                                 {badge.label}
                               </span>
                             ))}
+                            {row.statisticsCode || ''}
                             {markKey && markPickerKey === markKey && (
                               <span
                                 onClick={(event) => event.stopPropagation()}
