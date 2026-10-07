@@ -450,6 +450,29 @@ const PROVINCIAL_DISTRICT_INFO: Record<string, { label: string; area: string }> 
   자선거구: { label: "제9선거구", area: "마도면, 송산면, 서신면, 새솔동" },
 };
 
+// 시의원 선거구(가~자)가 속한 국회의원 지역구(화성시 갑·을·병·정). 각 선거구 관할 읍면동이
+// 국회의원 현황(NATIONAL_ASSEMBLY_DISTRICTS)의 관할구역 안에 통째로 들어가므로 1:1로 정해진다.
+// 도의원 선거구도 시의원 선거구와 같은 구역 단위라 같은 표를 쓴다.
+const NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT: Record<string, string> = {
+  가선거구: "갑",
+  나선거구: "갑",
+  다선거구: "정",
+  라선거구: "을",
+  마선거구: "을",
+  바선거구: "병",
+  사선거구: "병",
+  아선거구: "정",
+  자선거구: "갑",
+};
+
+// 요구사항 표에 보이는 선거구 문구. 예전에 "가선거구"만 저장된 건도 지역구(갑~정)를 붙여 보여준다.
+function electoralDistrictLabel(value: string): string {
+  const trimmed = value.trim();
+  if (!trimmed || /\((갑|을|병|정)\)$/.test(trimmed)) return trimmed;
+  const national = NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT[trimmed];
+  return national ? `${trimmed}(${national})` : trimmed;
+}
+
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
   if (party === "국민의힘") return "#ff6b7d";
@@ -475,11 +498,23 @@ const districtAreaByGroup = DISTRICT_MEMBERS.reduce<Record<string, string>>((acc
   return acc;
 }, {});
 
-// 이름만 넣으면 원구성 현황 명부에서 선거구·소속정당·위원회를 끌어다 채운다.
-const MEMBER_BY_NAME = DISTRICT_MEMBERS.reduce<Record<string, DistrictMember>>((acc, row) => {
-  if (!(row.name in acc)) acc[row.name] = row;
-  return acc;
-}, {});
+// 이름만 넣으면 원구성 현황 명부(시의원·도의원)에서 선거구·소속정당·위원회를 끌어다 채운다.
+// 선거구 칸에는 국회의원 지역구까지 붙인다(예: 가선거구(갑), 도의원 제1선거구(갑)).
+type RosterEntry = { district: string; party: Party; committee: string; label: string };
+
+const MEMBER_BY_NAME: Record<string, RosterEntry> = {};
+DISTRICT_MEMBERS.forEach((row) => {
+  if (row.name in MEMBER_BY_NAME) return;
+  const district = electoralDistrictLabel(row.district);
+  MEMBER_BY_NAME[row.name] = { district, party: row.party, committee: row.committee, label: `시의원 · ${district}` };
+});
+Object.entries(PROVINCIAL_MEMBER_BY_DISTRICT).forEach(([councilDistrict, member]) => {
+  if (!member || member.name in MEMBER_BY_NAME) return;
+  const provincialLabel = PROVINCIAL_DISTRICT_INFO[councilDistrict]?.label ?? councilDistrict;
+  const national = NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT[councilDistrict];
+  const district = `도의원 ${provincialLabel}${national ? `(${national})` : ""}`;
+  MEMBER_BY_NAME[member.name] = { district, party: member.party, committee: "경기도의원", label: district };
+});
 
 const MEMBER_NAMES = Object.keys(MEMBER_BY_NAME);
 const MEMBER_NAME_DATALIST_ID = "council-member-names";
@@ -846,7 +881,7 @@ export default function CouncilMemberRequests() {
                           {showCouncilFields && (
                           <td className="col-party">
                             {item.partyName}
-                            {item.electoralDistrict && <><br />({item.electoralDistrict})</>}
+                            {item.electoralDistrict && <><br />({electoralDistrictLabel(item.electoralDistrict)})</>}
                           </td>
                           )}
                           <td className="col-content">{item.content}</td>
@@ -1137,7 +1172,7 @@ export default function CouncilMemberRequests() {
             <datalist id={MEMBER_NAME_DATALIST_ID}>
               {MEMBER_NAMES.map((name) => (
                 <option key={name} value={name}>
-                  {`${MEMBER_BY_NAME[name].district} · ${MEMBER_BY_NAME[name].party} · ${MEMBER_BY_NAME[name].committee}`}
+                  {`${MEMBER_BY_NAME[name].label} · ${MEMBER_BY_NAME[name].party}`}
                 </option>
               ))}
             </datalist>
@@ -1399,6 +1434,7 @@ export default function CouncilMemberRequests() {
                 <table className="cc-table cc-district-table">
                   <thead>
                     <tr>
+                      <th>지역구</th>
                       <th>선거구</th>
                       <th>시의원</th>
                       <th>위원회</th>
@@ -1408,6 +1444,13 @@ export default function CouncilMemberRequests() {
                   <tbody>
                     {DISTRICT_MEMBERS.map((row, i) => (
                       <tr key={i}>
+                        {districtRowSpans[i] && (
+                          <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
+                            <div className="cc-district-name">
+                              {NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT[row.district] ? `화성시 ${NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT[row.district]}` : "-"}
+                            </div>
+                          </td>
+                        )}
                         {districtRowSpans[i] && (
                           <td className="cc-district-cell" rowSpan={districtRowSpans[i] as number}>
                             <div className="cc-district-name">{districtDisplayLabel(row.district)}</div>
@@ -1434,12 +1477,14 @@ export default function CouncilMemberRequests() {
               <div className="cc-table-wrap">
                 <table className="cc-table cc-district-table cc-provincial-table">
                   <colgroup>
+                    <col className="cc-prov-col-national" />
                     <col className="cc-prov-col-district" />
                     <col className="cc-prov-col-member" />
                     <col className="cc-prov-col-party" />
                   </colgroup>
                   <thead>
                     <tr>
+                      <th>지역구</th>
                       <th>선거구</th>
                       <th>도의원</th>
                       <th>정당명</th>
@@ -1451,6 +1496,11 @@ export default function CouncilMemberRequests() {
                       const provincialDistrict = PROVINCIAL_DISTRICT_INFO[district];
                       return (
                         <tr key={district}>
+                          <td className="cc-district-cell">
+                            <div className="cc-district-name">
+                              {NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT[district] ? `화성시 ${NATIONAL_DISTRICT_BY_COUNCIL_DISTRICT[district]}` : "-"}
+                            </div>
+                          </td>
                           <td className="cc-district-cell">
                             <div className="cc-district-line">
                               <span className="cc-district-name">{provincialDistrict?.label ?? districtDisplayLabel(district)}</span>
@@ -2114,9 +2164,10 @@ export default function CouncilMemberRequests() {
           min-width: 760px;
         }
 
-        .cc-provincial-table col.cc-prov-col-district { width: 60%; }
-        .cc-provincial-table col.cc-prov-col-member { width: 18%; }
-        .cc-provincial-table col.cc-prov-col-party { width: 22%; }
+        .cc-provincial-table col.cc-prov-col-national { width: 14%; }
+        .cc-provincial-table col.cc-prov-col-district { width: 50%; }
+        .cc-provincial-table col.cc-prov-col-member { width: 16%; }
+        .cc-provincial-table col.cc-prov-col-party { width: 20%; }
 
         .cc-provincial-table .cc-district-table .cc-district-cell,
         .cc-provincial-table .cc-district-cell {
