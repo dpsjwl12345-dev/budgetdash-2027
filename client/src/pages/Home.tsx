@@ -270,12 +270,17 @@ const REQUEST_TARGETS: { department: string; match: string; target: string }[] =
   { department: "관광진흥과", match: "선셋콘서트", target: "화성시문화관광재단 관광진흥본부 지원" },
   { department: "교육지원과", match: "테크노폴해외연수", target: "인재육성재단 운영지원" },
   { department: "교육지원과", match: "화성형교육혁신", target: "화성형 교육혁신 프로그램 운영" },
+  { department: "체육진흥과", match: "파크골프장확대", target: "오산천 파크골프장 조성사업" },
+  { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)반월도서관 건립" },
+  { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)화성시 독서문화공간 조성(전환사업)" },
 ];
 
 // 요구사항이 다른 부서로 잘못 등록됐거나 예산서 부기명과 이름이 달라 자동으로 못 찾는 경우,
 // 특정 부서·세부사업·부기명 줄에 직접 붙인다(사용자 확인). match는 요구 내용에 들어 있는 말.
 const REQUEST_NOTE_TARGETS: { match: string; department: string; program: string; note: string }[] = [
   { match: "매향리평화기념관관광조형물", department: "관광진흥과", program: "매향리평화기념관 시설운영", note: "기념관 시설조성비" },
+  { match: "영재교육원확대", department: "교육지원과", program: "인재육성재단 운영지원", note: "영재교육원 운영" },
+  { match: "핫플레이스선정플랫폼", department: "관광진흥과", program: "관광브랜드 강화", note: "AI기반 데이터 활용 관광플랫폼 구축" },
 ];
 
 // 요구사항에서 예산서 이름과 맞춰 볼 후보들: 예산 항목명·내용의 각 줄, 괄호 안쪽 이름.
@@ -1779,9 +1784,10 @@ export default function Home() {
       const badge = requestBadge(request);
       if (!badge) return;
       const keys = requestKeys(request);
-      const target = REQUEST_TARGETS.find((entry) => entry.department === department && keys.some((key) => key.includes(entry.match)));
-      if (target) {
-        programs.filter((program) => program.name === normalizeBudgetName(target.target)).forEach((program) => add(program.row.id, badge));
+      const targets = REQUEST_TARGETS.filter((entry) => entry.department === department && keys.some((key) => key.includes(entry.match)));
+      if (targets.length) {
+        const targetNames = targets.map((target) => normalizeBudgetName(target.target));
+        programs.filter((program) => targetNames.includes(program.name)).forEach((program) => add(program.row.id, badge));
         return;
       }
       const noteHits = notes.filter((note) => keys.some((key) => matches(note.name, key)));
