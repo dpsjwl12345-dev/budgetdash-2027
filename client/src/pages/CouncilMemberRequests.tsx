@@ -112,7 +112,7 @@ const emptyForm = (requestType: RequestType = "당정협의회") => ({
   partyName: "",
   memberName: "",
   committee: "",
-  department: DEPARTMENTS[0] || "",
+  department: (DEPARTMENTS[0] || "") as string,
   content: "",
   budgetItemName: "",
   requestedAmount: "",
