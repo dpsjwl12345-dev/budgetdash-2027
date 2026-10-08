@@ -107,6 +107,17 @@ const normalizeAmountLine = (line: string): string => {
 const normalizeRequestedAmount = (raw: string): string =>
   raw.split("\n").map(normalizeAmountLine).join("\n").trim();
 
+// 표에는 백만원 단위로 보여준다. 입력·저장은 천원 그대로 두고, 숫자만 있는 줄을 1,000으로 나눠 반올림한다.
+const displayAmountInMillions = (raw: string): string =>
+  normalizeRequestedAmount(raw)
+    .split("\n")
+    .map((line) => {
+      if (!/^[\d,]+$/.test(line)) return line;
+      const thousands = Number(line.replace(/,/g, ""));
+      return (thousands / 1000).toLocaleString("ko-KR", { maximumFractionDigits: thousands < 1000 ? 1 : 0 });
+    })
+    .join("\n");
+
 const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestType,
   electoralDistrict: "",
@@ -891,7 +902,7 @@ export default function CouncilMemberRequests() {
     const headerClass = (className: string) => (["col-budget-item", "col-amount", "col-status"].includes(className) ? "" : className);
     return (
           <table className="requests-table">
-            <caption className="requests-unit-caption">(단위: 천원)</caption>
+            <caption className="requests-unit-caption">(단위: 백만원)</caption>
             <colgroup>
               {columns.map((column) => (
                 <col
@@ -1012,7 +1023,7 @@ export default function CouncilMemberRequests() {
                           <td className="col-content">{item.content}</td>
                           <td className="col-dept">{item.department}</td>
                           <td className="col-budget-item">{item.budgetItemName}</td>
-                          <td className="col-amount">{normalizeRequestedAmount(item.requestedAmount)}</td>
+                          <td className="col-amount">{displayAmountInMillions(item.requestedAmount)}</td>
                         </>
                       )}
                       <td>
@@ -1943,8 +1954,9 @@ export default function CouncilMemberRequests() {
 
         .requests-table th {
           position: relative;
-          background: rgba(118, 157, 194, 0.08);
-          color: var(--text);
+          background: #1f3a5c;
+          color: #f1f6fc;
+          border-bottom: 2px solid rgba(91, 155, 240, 0.7);
           font-weight: 500;
           font-size: 18px;
           text-align: center;
