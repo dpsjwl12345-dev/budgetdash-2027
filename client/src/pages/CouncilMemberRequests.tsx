@@ -1609,7 +1609,7 @@ export default function CouncilMemberRequests() {
           border-radius: 6px;
           color: var(--text);
           font-family: inherit;
-          font-size: 14px;
+          font-size: 15px;
           padding: 10px 12px;
         }
 
@@ -1667,7 +1667,7 @@ export default function CouncilMemberRequests() {
         }
 
         .pledge-total-input {
-          font-weight: 700;
+          font-weight: 500;
           color: #7ee787;
           opacity: 1;
           cursor: default;
@@ -1688,8 +1688,8 @@ export default function CouncilMemberRequests() {
           border-radius: 6px;
           background: rgba(91, 155, 240, 0.15);
           color: #5b9bf0;
-          font-size: 14px;
-          font-weight: 600;
+          font-size: 15px;
+          font-weight: 500;
           cursor: pointer;
         }
 
@@ -1719,7 +1719,7 @@ export default function CouncilMemberRequests() {
           background: transparent;
           color: var(--text);
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 500;
           cursor: pointer;
         }
 
@@ -1743,17 +1743,17 @@ export default function CouncilMemberRequests() {
           display: flex;
           align-items: center;
           font-size: 18px;
-          font-weight: 800;
+          font-weight: 500;
         }
 
         .tab-count {
           margin-left: 6px;
-          font-size: 12.5px;
+          font-size: 14px;
           opacity: 0.85;
         }
 
         .tab-subtitle {
-          font-size: 11px;
+          font-size: 14px;
           font-weight: 400;
           color: var(--text-muted);
           opacity: 0.85;
@@ -1782,7 +1782,7 @@ export default function CouncilMemberRequests() {
           margin: 0;
           padding: 14px 16px;
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 500;
           border-bottom: 1px solid var(--border);
         }
 
@@ -1790,7 +1790,7 @@ export default function CouncilMemberRequests() {
           width: 100%;
           table-layout: fixed;
           border-collapse: collapse;
-          font-size: 14px;
+          font-size: 15px;
         }
 
         .requests-table th,
@@ -1813,7 +1813,7 @@ export default function CouncilMemberRequests() {
         .requests-table th {
           background: rgba(118, 157, 194, 0.08);
           color: var(--text-muted);
-          font-weight: 600;
+          font-weight: 500;
           font-size: 17px;
           text-align: center;
         }
@@ -1823,7 +1823,7 @@ export default function CouncilMemberRequests() {
         }
 
         .pledge-table td.col-content {
-          font-weight: 300;
+          font-weight: 500;
         }
 
         .requests-table td {
@@ -1857,7 +1857,7 @@ export default function CouncilMemberRequests() {
         .pledge-table-caption {
           text-align: right;
           padding: 10px 16px 0;
-          font-size: 12px;
+          font-size: 14px;
           color: var(--text-muted);
         }
 
@@ -1867,7 +1867,7 @@ export default function CouncilMemberRequests() {
         }
 
         .requests-table td.col-member {
-          font-weight: 600;
+          font-weight: 500;
           text-align: center;
         }
 
@@ -1902,7 +1902,7 @@ export default function CouncilMemberRequests() {
           border-radius: 4px;
           color: var(--text);
           font-family: inherit;
-          font-size: 13px;
+          font-size: 14px;
           padding: 4px 6px;
         }
 
@@ -1925,7 +1925,7 @@ export default function CouncilMemberRequests() {
           border: 1px solid var(--border);
           background: var(--bg-surface);
           color: var(--text);
-          font-size: 13px;
+          font-size: 14px;
           padding: 4px 6px;
           cursor: pointer;
         }
@@ -1954,7 +1954,7 @@ export default function CouncilMemberRequests() {
         .cancel-button {
           border-radius: 5px;
           padding: 3px 8px;
-          font-size: 12px;
+          font-size: 14px;
           cursor: pointer;
         }
 
@@ -2012,15 +2012,15 @@ export default function CouncilMemberRequests() {
           background: rgba(217, 173, 82, 0.06);
           padding: 10px 16px;
           margin-bottom: 14px;
-          font-size: 13px;
-          font-weight: 600;
+          font-size: 14px;
+          font-weight: 500;
           color: var(--text);
           line-height: 1.6;
         }
 
         .cc-summary-sub {
           margin-top: 2px;
-          font-size: 12px;
+          font-size: 14px;
           font-weight: 400;
           color: var(--text-muted);
         }
@@ -2039,8 +2039,8 @@ export default function CouncilMemberRequests() {
           border: 1px solid var(--border);
           border-radius: 20px;
           color: var(--text-muted);
-          font-size: 14px;
-          font-weight: 600;
+          font-size: 15px;
+          font-weight: 500;
           cursor: pointer;
           transition: all 0.15s;
           white-space: nowrap;
@@ -2063,7 +2063,7 @@ export default function CouncilMemberRequests() {
 
         .cc-subsection-title {
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 500;
           color: var(--text);
           margin-bottom: 10px;
         }
@@ -2082,7 +2082,7 @@ export default function CouncilMemberRequests() {
           width: 100%;
           min-width: 900px;
           border-collapse: collapse;
-          font-size: 14px;
+          font-size: 15px;
         }
 
         .cc-table th,
@@ -2102,7 +2102,7 @@ export default function CouncilMemberRequests() {
         }
 
         .cc-role-cell {
-          font-weight: 700;
+          font-weight: 500;
           background: rgba(217, 173, 82, 0.1);
           white-space: nowrap;
         }
@@ -2112,7 +2112,7 @@ export default function CouncilMemberRequests() {
         }
 
         .cc-member-name {
-          font-weight: 600;
+          font-weight: 500;
         }
 
         .cc-table tbody tr:nth-child(even) {
@@ -2134,7 +2134,7 @@ export default function CouncilMemberRequests() {
 
         .cc-dept-card-title {
           font-size: 15px;
-          font-weight: 700;
+          font-weight: 500;
           color: var(--text);
           margin-bottom: 10px;
           padding-bottom: 8px;
@@ -2150,7 +2150,7 @@ export default function CouncilMemberRequests() {
           margin: 0;
           padding: 0;
           list-style: none;
-          font-size: 13px;
+          font-size: 14px;
           color: var(--text);
           line-height: 1.8;
         }
@@ -2164,7 +2164,7 @@ export default function CouncilMemberRequests() {
           content: "○";
           position: absolute;
           left: 0;
-          font-size: 10px;
+          font-size: 12px;
           color: var(--text-muted);
         }
 
@@ -2211,22 +2211,22 @@ export default function CouncilMemberRequests() {
 
         .cc-district-name {
           font-size: 17px;
-          font-weight: 700;
+          font-weight: 500;
         }
 
         .cc-district-area {
           margin-top: 2px;
-          font-size: 14px;
+          font-size: 15px;
           color: var(--text-muted);
           white-space: normal;
         }
 
         .cc-row-text {
-          font-weight: 600;
+          font-weight: 500;
         }
 
         .cc-party-badge {
-          font-weight: 600;
+          font-weight: 500;
         }
 
         .cc-table td.cc-national-jurisdiction {
