@@ -3098,38 +3098,30 @@ export default function Home() {
                           <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                             {isEditingMemo ? (
                               <>
+                                {/* 부기명 메모처럼: 바로 입력, Enter·포커스 이동 시 저장, Esc 취소 */}
                                 <input
                                   type="text"
                                   value={memoDraft}
                                   onChange={(event) => setMemoDraft(event.target.value)}
-                                  placeholder="메모"
+                                  onBlur={() => { updateProgramMemo(memoProgramId, memoDraft); setEditingMemoId(null); }}
+                                  onKeyDown={(event) => {
+                                    if (event.key === 'Enter') { updateProgramMemo(memoProgramId, memoDraft); setEditingMemoId(null); }
+                                    if (event.key === 'Escape') setEditingMemoId(null);
+                                  }}
+                                  placeholder="세부사업 메모"
                                   autoFocus
-                                  style={{ flex: 1, background: 'transparent', border: '1px dashed #d7dbe0', borderRadius: '4px', padding: '4px 8px', color: '#111827', fontSize: 'calc(13px + 1pt)' }}
+                                  style={{ flex: 1, background: '#fff', border: '1px solid #111827', borderRadius: '4px', padding: '3px 8px', color: '#111827', fontSize: 'calc(13px + 1pt)' }}
                                 />
-                                <button
-                                  type="button"
-                                  aria-label="메모 저장"
-                                  title="저장"
-                                  onClick={() => { updateProgramMemo(memoProgramId, memoDraft); setEditingMemoId(null); }}
-                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #5b9bf0', borderRadius: '4px', background: 'rgba(91, 155, 240, 0.15)', color: '#5b9bf0', cursor: 'pointer' }}
-                                >
-                                  <Check size={12} />
-                                </button>
                               </>
                             ) : (
                               <>
-                                <span style={{ flex: 1, fontSize: 'calc(13px + 1pt)', color: programMemos[memoProgramId] ? '#2563eb' : '#6b7280', padding: '4px 8px' }}>
-                                  {programMemos[memoProgramId] || '메모'}
-                                </span>
-                                <button
-                                  type="button"
-                                  aria-label="메모 수정"
-                                  title="수정"
+                                <span
                                   onClick={() => { setMemoDraft(programMemos[memoProgramId] ?? ''); setEditingMemoId(memoProgramId); }}
-                                  style={{ flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', width: '22px', height: '22px', border: '1px solid #b7c2cf', borderRadius: '4px', background: 'transparent', color: '#475569', cursor: 'pointer' }}
+                                  title={programMemos[memoProgramId] ? '클릭하여 메모 수정' : '클릭하여 메모 입력'}
+                                  style={{ flex: 1, fontSize: 'calc(13px + 1pt)', color: programMemos[memoProgramId] ? '#111827' : 'rgba(0,0,0,0.25)', padding: '4px 8px', cursor: 'pointer' }}
                                 >
-                                  <Pencil size={12} />
-                                </button>
+                                  {programMemos[memoProgramId] || '클릭하여 메모 입력'}
+                                </span>
                                 {pendingHideId === memoProgramId ? (
                                   <>
                                     <span style={{ flexShrink: 0, fontSize: 'calc(11px + 1pt)', color: '#9b2c2c' }}>이 메모 줄을 숨길까요?</span>
