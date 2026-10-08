@@ -96,16 +96,16 @@ const parsePledgeAmount = (value: string): number => {
 const calcPledgeTotal = (pledge: PledgeExtra): number =>
   PLEDGE_INPUT_YEAR_FIELDS.reduce((sum, field) => sum + parsePledgeAmount(pledge[field.key]), 0);
 
-// 요구액은 천원 단위로 적는 것이 기본이라, 숫자만 입력하면 단위 "천원"을 자동으로 붙인다
-// (예: 6000 → 6,000천원). 이미 "6억", "500백만원"처럼 단위를 직접 적었으면 그대로 둔다.
-const normalizeRequestedAmount = (raw: string): string => {
-  const value = raw.trim();
-  if (!value) return "";
-  if (!/^[\d,\s]+$/.test(value)) return value;
+// 요구액은 천원 단위(표 위에 "단위: 천원" 표시)라 숫자만 적고, 줄마다 천 단위 쉼표를 붙인다
+// (예: 6000 → 6,000). 예전에 붙여 저장한 "천원"은 떼고, "6억"처럼 다른 단위를 적었으면 그대로 둔다.
+const normalizeAmountLine = (line: string): string => {
+  const value = line.trim().replace(/\s*천원$/, "");
+  if (!value || !/^[\d,\s]+$/.test(value)) return value;
   const digits = value.replace(/[^\d]/g, "");
-  if (!digits) return value;
-  return `${Number(digits).toLocaleString("ko-KR")}천원`;
+  return digits ? Number(digits).toLocaleString("ko-KR") : value;
 };
+const normalizeRequestedAmount = (raw: string): string =>
+  raw.split("\n").map(normalizeAmountLine).join("\n").trim();
 
 const emptyForm = (requestType: RequestType = "당정협의회") => ({
   requestType,
@@ -866,6 +866,7 @@ export default function CouncilMemberRequests() {
     const headerClass = (className: string) => (["col-budget-item", "col-amount", "col-status"].includes(className) ? "" : className);
     return (
           <table className="requests-table">
+            <caption className="requests-unit-caption">(단위: 천원)</caption>
             <colgroup>
               {columns.map((column) => (
                 <col
@@ -955,15 +956,15 @@ export default function CouncilMemberRequests() {
                             </select>
                           </td>
                           <td>
-                            <input
-                              className="cell-input"
+                            <textarea
+                              className="cell-input cell-textarea"
                               value={editDraft.budgetItemName}
                               onChange={(e) => setEditDraft({ ...editDraft, budgetItemName: e.target.value })}
                             />
                           </td>
                           <td>
-                            <input
-                              className="cell-input"
+                            <textarea
+                              className="cell-input cell-textarea"
                               value={editDraft.requestedAmount}
                               onChange={(e) => setEditDraft({ ...editDraft, requestedAmount: e.target.value })}
                               onBlur={() => setEditDraft((draft) => (draft ? { ...draft, requestedAmount: normalizeRequestedAmount(draft.requestedAmount) } : draft))}
@@ -986,8 +987,8 @@ export default function CouncilMemberRequests() {
                           )}
                           <td className="col-content">{item.content}</td>
                           <td className="col-dept">{item.department}</td>
-                          <td>{item.budgetItemName}</td>
-                          <td className="col-amount">{item.requestedAmount}</td>
+                          <td className="col-budget-item">{item.budgetItemName}</td>
+                          <td className="col-amount">{normalizeRequestedAmount(item.requestedAmount)}</td>
                         </>
                       )}
                       <td>
@@ -1318,14 +1319,16 @@ export default function CouncilMemberRequests() {
               value={form.content}
               onChange={(e) => setForm({ ...form, content: e.target.value })}
             />
-            <input
+            <textarea
               className="form-input budget-item-input"
+              rows={1}
               placeholder="사업명 (세부사업+부기명)"
               value={form.budgetItemName}
               onChange={(e) => setForm({ ...form, budgetItemName: e.target.value })}
             />
-            <input
+            <textarea
               className="form-input amount-input"
+              rows={1}
               placeholder="요구액 (천원 단위, 예: 6000)"
               value={form.requestedAmount}
               onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
@@ -1915,12 +1918,12 @@ export default function CouncilMemberRequests() {
           background: rgba(118, 157, 194, 0.08);
           color: var(--text);
           font-weight: 500;
-          font-size: 17px;
+          font-size: 18px;
           text-align: center;
         }
 
         .pledge-table th {
-          font-size: 16px;
+          font-size: 17px;
         }
 
         .pledge-table td.col-content {
@@ -1930,7 +1933,7 @@ export default function CouncilMemberRequests() {
         .requests-table td {
           color: var(--text);
           font-family: "Pretendard", system-ui, sans-serif;
-          font-size: 15.5px;
+          font-size: 17px;
           line-height: 1.5;
         }
 
@@ -1985,8 +1988,26 @@ export default function CouncilMemberRequests() {
           text-align: center;
         }
 
+        .requests-table td.col-budget-item {
+          white-space: pre-wrap;
+        }
+
+        .requests-unit-caption {
+          caption-side: top;
+          text-align: right;
+          padding: 0 4px 6px;
+          font-size: 14px;
+          color: var(--text-muted);
+        }
+
+        .budget-item-input,
+        .amount-input {
+          resize: vertical;
+          line-height: 1.5;
+        }
+
         .requests-table td.col-amount {
-          white-space: nowrap;
+          white-space: pre;
           text-align: right;
         }
 
