@@ -284,6 +284,15 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 .app-shell:has(.sidebar.collapsed) .main-area {
   margin-left: 70px;
 }
+/* 본문 넓게 보기: 사이드바를 화면 밖으로 밀고 본문이 그 자리까지 덮는다.
+   :has(.sidebar)를 붙여 위 collapsed 규칙과 같은 우선순위로 맞추고 뒤에 둬서 이긴다. */
+.app-shell.main-expanded:has(.sidebar) .sidebar { transform: translateX(-100%); pointer-events: none; box-shadow: none; }
+.app-shell.main-expanded:has(.sidebar) .main-area { margin-left: 0; }
+.main-expand-toggle { margin-right: 4px; }
+.main-expand-toggle[aria-pressed="true"] { color: #edf5fd; background: rgba(118, 157, 194, 0.12); border-color: var(--line); }
+@media (prefers-reduced-motion: reduce) {
+  .sidebar, .main-area { transition: none; }
+}
 .topbar { height: 65px; padding: 0 36px; display: flex; align-items: center; justify-content: space-between; border-bottom: 1px solid rgba(164, 192, 221, 0.13); background: rgba(7, 19, 33, 0.84); }
 .breadcrumbs { display: flex; align-items: center; gap: 9px; color: #7890a8; font-size: 14px; letter-spacing: 0.05em; }
 .breadcrumbs b { color: #aebfd0; font-weight: 650; white-space: nowrap; }

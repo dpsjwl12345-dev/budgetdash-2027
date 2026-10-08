@@ -97,6 +97,15 @@ export default function Layout({
     }
   };
 
+  // 본문 넓히기: 사이드바를 왼쪽으로 밀어내고 본문이 화면 전체를 쓴다(브라우저에 기억).
+  const [mainExpanded, setMainExpanded] = useState(() => {
+    try { return localStorage.getItem("budgetdash.mainExpanded") === "1"; } catch { return false; }
+  });
+  const toggleMainExpanded = () => setMainExpanded((expanded) => {
+    try { localStorage.setItem("budgetdash.mainExpanded", expanded ? "0" : "1"); } catch { /* 저장 실패해도 화면 전환은 그대로 */ }
+    return !expanded;
+  });
+
   const [activeNav, setActiveNav] = useState(getActiveNavLabel());
   const [expandedBudgetExplainer, setExpandedBudgetExplainer] = useState(false);
   const [expandedGuide, setExpandedGuide] = useState(false);
@@ -107,8 +116,9 @@ export default function Layout({
   }, [location]);
 
   return (
-    <div className="app-shell">
+    <div className={`app-shell ${mainExpanded ? "main-expanded" : ""}`}>
       <aside
+        aria-hidden={mainExpanded || undefined}
         className={`sidebar no-print ${sidebarCollapsed ? "collapsed" : ""}`}
         onMouseEnter={() => setSidebarCollapsed(false)}
         onMouseLeave={() => setSidebarCollapsed(true)}
@@ -347,6 +357,16 @@ export default function Layout({
       <main className="main-area">
         <header className="topbar no-print">
           <div className="breadcrumbs">
+            <button
+              type="button"
+              className="icon-button main-expand-toggle"
+              aria-pressed={mainExpanded}
+              aria-label={mainExpanded ? "사이드바 다시 보기" : "본문 넓게 보기"}
+              title={mainExpanded ? "사이드바 다시 보기" : "본문 넓게 보기"}
+              onClick={toggleMainExpanded}
+            >
+              {mainExpanded ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
+            </button>
             <span>DASHBOARDS</span>
             <ChevronRight size={14} />
             <b>{activeNav}</b>
