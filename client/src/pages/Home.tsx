@@ -265,9 +265,6 @@ function requestBadge(request: RequestRecord): RequestBadge | null {
 // 이름만으로는 예산서 줄을 찾을 수 없는 요구사항을 어느 세부사업에 붙일지 정해 둔 표(사용자 확인).
 // match는 요구 내용·항목명에 들어 있는 말, target은 예산서 세부사업명.
 const REQUEST_TARGETS: { department: string; match: string; target: string }[] = [
-  { department: "문화예술과", match: "봉담권예술의전당", target: "문화예술타운 효행아트홀 건립" },
-  { department: "문화예술과", match: "국제음악제", target: "화성시문화관광재단 지원" },
-  { department: "교육지원과", match: "화성형교육혁신", target: "화성형 교육혁신 프로그램 운영" },
   { department: "체육진흥과", match: "파크골프장확대", target: "오산천 파크골프장 조성사업" },
   { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)반월도서관 건립" },
   { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)화성시 독서문화공간 조성(전환사업)" },
@@ -281,6 +278,9 @@ const REQUEST_NOTE_TARGETS: { match: string; department: string; program: string
   { match: "핫플레이스선정플랫폼", department: "관광진흥과", program: "관광브랜드 강화", note: "AI기반 데이터 활용 관광플랫폼 구축" },
   { match: "선셋콘서트", department: "관광진흥과", program: "화성시문화관광재단 관광진흥본부 지원", note: "화성시문화관광재단 관광진흥본부 지원" },
   { match: "테크노폴해외연수", department: "교육지원과", program: "인재육성재단 운영지원", note: "경영기획본부 운영" },
+  { match: "화성형교육혁신", department: "교육지원과", program: "화성형 교육혁신 프로그램 운영", note: "화성형 교육혁신 프로그램 운영 지원" },
+  { match: "봉담권예술의전당", department: "문화예술과", program: "문화예술타운 효행아트홀 건립", note: "기본구상 및 타당성조사 용역" },
+  { match: "국제음악제", department: "문화예술과", program: "화성시문화관광재단 지원", note: "화성시문화관광재단 지원" },
 ];
 
 // 요구사항에서 예산서 이름과 맞춰 볼 후보들: 예산 항목명·내용의 각 줄, 괄호 안쪽 이름.
