@@ -949,7 +949,7 @@ export default function CouncilMemberRequests() {
                   </th>
                 ))}
               </tr>
-              <tr className="filter-row">
+              <tr className="requests-filter-row">
                 {columns.map((column) => (
                   <th key={column.key}>
                     {TEXT_FILTER_KEYS.includes(column.key) ? (
@@ -2062,7 +2062,7 @@ export default function CouncilMemberRequests() {
           font-size: 17px;
         }
 
-        .requests-table thead .filter-row th {
+        .requests-table thead .requests-filter-row th {
           padding: 6px 8px;
           background: #18212d;
           border-bottom: 1px solid rgba(148, 163, 184, 0.3);
