@@ -256,8 +256,8 @@ function requestBadge(request: RequestRecord): RequestBadge | null {
   // 당정협의회·정책간담회도 요구한 시의원 이름으로 배지를 단다.
   if (["시의원", "당정협의회", "정책간담회"].includes(request.requestType) && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
   if (request.requestType === "민선9기공약") return { label: "공약", tone: "pledge", title };
-  if (request.requestType === "시장") return { label: "시장 지시", tone: "mayor", title };
-  if (request.requestType === "부시장") return { label: `${request.memberName || "부시장"} 지시`, tone: "mayor", title };
+  if (request.requestType === "시장") return { label: "시장", tone: "mayor", title };
+  if (request.requestType === "부시장") return { label: (request.memberName || "부시장").replace(/^제/, ""), tone: "mayor", title };
   if (request.requestType === "당정협의회") return { label: "당정협의회", tone: "party", title };
   return null;
 }
@@ -267,8 +267,6 @@ function requestBadge(request: RequestRecord): RequestBadge | null {
 const REQUEST_TARGETS: { department: string; match: string; target: string }[] = [
   { department: "문화예술과", match: "봉담권예술의전당", target: "문화예술타운 효행아트홀 건립" },
   { department: "문화예술과", match: "국제음악제", target: "화성시문화관광재단 지원" },
-  { department: "관광진흥과", match: "선셋콘서트", target: "화성시문화관광재단 관광진흥본부 지원" },
-  { department: "교육지원과", match: "테크노폴해외연수", target: "인재육성재단 운영지원" },
   { department: "교육지원과", match: "화성형교육혁신", target: "화성형 교육혁신 프로그램 운영" },
   { department: "체육진흥과", match: "파크골프장확대", target: "오산천 파크골프장 조성사업" },
   { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)반월도서관 건립" },
@@ -281,6 +279,8 @@ const REQUEST_NOTE_TARGETS: { match: string; department: string; program: string
   { match: "매향리평화기념관관광조형물", department: "관광진흥과", program: "매향리평화기념관 시설운영", note: "기념관 시설조성비" },
   { match: "영재교육원확대", department: "교육지원과", program: "인재육성재단 운영지원", note: "영재교육원 운영" },
   { match: "핫플레이스선정플랫폼", department: "관광진흥과", program: "관광브랜드 강화", note: "AI기반 데이터 활용 관광플랫폼 구축" },
+  { match: "선셋콘서트", department: "관광진흥과", program: "화성시문화관광재단 관광진흥본부 지원", note: "화성시문화관광재단 관광진흥본부 지원" },
+  { match: "테크노폴해외연수", department: "교육지원과", program: "인재육성재단 운영지원", note: "경영기획본부 운영" },
 ];
 
 // 요구사항에서 예산서 이름과 맞춰 볼 후보들: 예산 항목명·내용의 각 줄, 괄호 안쪽 이름.
@@ -3325,12 +3325,18 @@ export default function Home() {
                             title={markKey ? '클릭하여 강조 표시' : undefined}
                             style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: markPickerKey && markPickerKey === markKey ? 3 : 1, cursor: markKey ? 'pointer' : 'default' }}
                           >
-                            {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).map((badge) => (
+                            {/* 의원·당정협의회 배지는 부기명 왼쪽, 시장·부시장·공약 배지는 부기명 오른쪽 */}
+                            {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).filter((badge) => badge.tone === 'council' || badge.tone === 'party').map((badge) => (
                               <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
                                 {badge.label}
                               </span>
                             ))}
                             {row.statisticsCode || ''}
+                            {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).filter((badge) => badge.tone === 'mayor' || badge.tone === 'pledge').map((badge) => (
+                              <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginLeft: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
+                                {badge.label}
+                              </span>
+                            ))}
                             {markKey && markPickerKey === markKey && (
                               <span
                                 onClick={(event) => event.stopPropagation()}
