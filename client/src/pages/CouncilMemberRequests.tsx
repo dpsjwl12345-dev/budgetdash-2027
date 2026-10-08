@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import type { MouseEvent as ReactMouseEvent } from "react";
+import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -487,40 +487,30 @@ function electoralDistrictLabel(value: string): string {
   return national ? `${trimmed}(${national})` : trimmed;
 }
 
-// 국회의원 지역구(갑~정) 표시 색. 정당 색(파랑·빨강·노랑)과 겹치지 않게 골랐다.
-const NATIONAL_DISTRICT_COLOR = "#f2905e";
-
-// 요구사항 표의 선거구 문구에서 끝의 "(갑)" 같은 지역구만 색을 입혀 보여준다.
-function renderElectoralDistrict(value: string) {
-  const label = electoralDistrictLabel(value);
-  const match = label.match(/^(.*)\((갑|을|병|정)\)$/);
-  if (!match) return label;
-  return (
-    <>
-      {match[1]}(<span style={{ color: NATIONAL_DISTRICT_COLOR, fontWeight: 700 }}>{match[2]}</span>)
-    </>
-  );
-}
 
 // 당정협의회 선거구는 "화성갑"처럼 적혀 있어도 "갑"만 남긴다. "가선거구" 같은 시의원 선거구는 그대로 둔다.
 function stripCityName(value: string): string {
-  return value.trim().replace(/^화성시?s*/, "");
+  return value.trim().replace(/^화성시?\s*/, "");
 }
 
-// 소속 정당명 칸. 선거구가 갑~정 하나뿐이면 "더불어민주당(갑)"처럼 한 줄로, 그 밖엔 정당명 아래 (선거구)로 보여준다.
+// 소속 정당명 칸. 정당명에만 정당 색을 입히고, 선거구가 갑~정 하나뿐이면 "더불어민주당(갑)"처럼 한 줄로,
+// 그 밖엔 정당명 아래 (선거구)로 보여준다.
 function renderPartyWithDistrict(partyName: string, district: string) {
   const national = stripCityName(district);
+  const coloredParty = partyName ? (
+    <span style={{ color: partyColor(partyName as Party), fontWeight: 600 }}>{partyName}</span>
+  ) : null;
   if (/^(갑|을|병|정)$/.test(national)) {
     return (
       <>
-        {partyName}(<span style={{ color: NATIONAL_DISTRICT_COLOR, fontWeight: 700 }}>{national}</span>)
+        {coloredParty}({national})
       </>
     );
   }
   return (
     <>
-      {partyName}
-      {district && <><br />({renderElectoralDistrict(district)})</>}
+      {coloredParty}
+      {district && <><br />({electoralDistrictLabel(district)})</>}
     </>
   );
 }
@@ -654,7 +644,19 @@ function loadColumnWidths(): Record<string, Record<string, number>> {
   }
 }
 
+// 머리글 필터가 각 열에서 비교하는 값. 여기 없는 열(번호·요구액·관리)은 필터가 없다.
+const FILTER_ACCESSORS: Record<string, (item: CouncilRequest) => string> = {
+  member: (item) => item.memberName || "",
+  party: (item) => item.partyName || "",
+  content: (item) => item.content || "",
+  dept: (item) => item.department || "",
+  budget: (item) => item.budgetItemName || "",
+  status: (item) => item.status || "",
+};
+const TEXT_FILTER_KEYS = ["content", "budget"];
+
 export default function CouncilMemberRequests() {
+  const [columnFilters, setColumnFilters] = useState<Record<string, string>>({});
   const [columnWidths, setColumnWidths] = useState<Record<string, Record<string, number>>>(loadColumnWidths);
 
   const saveColumnWidths = (next: Record<string, Record<string, number>>) => {
@@ -900,6 +902,25 @@ export default function CouncilMemberRequests() {
     const keys = columns.map((column) => column.key);
     // 사업명·요구액·반영여부 머리글에는 원래 열 클래스가 없었다(본문 칸 정렬 규칙이 걸리지 않도록).
     const headerClass = (className: string) => (["col-budget-item", "col-amount", "col-status"].includes(className) ? "" : className);
+
+    // 머리글 필터: 이름·정당·부서·반영여부는 목록에서 고르고, 요구내용·사업명은 글자로 찾는다. 탭마다 따로 기억한다.
+    const filterKey = (columnKey: string) => `${activeTab}:${columnKey}`;
+    const filterValue = (columnKey: string) => columnFilters[filterKey(columnKey)] || "";
+    const setFilter = (columnKey: string, value: string) =>
+      setColumnFilters((prev) => ({ ...prev, [filterKey(columnKey)]: value }));
+    const hasFilter = keys.some((key) => filterValue(key));
+    const clearFilters = () =>
+      setColumnFilters((prev) => Object.fromEntries(Object.entries(prev).filter(([key]) => !key.startsWith(`${activeTab}:`))));
+    const optionsFor = (columnKey: string) =>
+      Array.from(new Set(rows.map((item) => FILTER_ACCESSORS[columnKey](item).trim()).filter(Boolean))).sort((a, b) => a.localeCompare(b, "ko"));
+    const filteredRows = rows.filter((item) =>
+      keys.every((key) => {
+        const wanted = filterValue(key);
+        if (!wanted || !FILTER_ACCESSORS[key]) return true;
+        const actual = FILTER_ACCESSORS[key](item).trim();
+        return TEXT_FILTER_KEYS.includes(key) ? actual.toLowerCase().includes(wanted.trim().toLowerCase()) : actual === wanted;
+      }),
+    );
     return (
           <table className="requests-table">
             <caption className="requests-unit-caption">(단위: 백만원)</caption>
@@ -928,10 +949,37 @@ export default function CouncilMemberRequests() {
                   </th>
                 ))}
               </tr>
+              <tr className="filter-row">
+                {columns.map((column) => (
+                  <th key={column.key}>
+                    {TEXT_FILTER_KEYS.includes(column.key) ? (
+                      <input
+                        className="filter-control"
+                        placeholder="검색"
+                        value={filterValue(column.key)}
+                        onChange={(e) => setFilter(column.key, e.target.value)}
+                      />
+                    ) : FILTER_ACCESSORS[column.key] ? (
+                      <select
+                        className={`filter-control${filterValue(column.key) ? " is-set" : ""}`}
+                        value={filterValue(column.key)}
+                        onChange={(e) => setFilter(column.key, e.target.value)}
+                      >
+                        <option value="">전체</option>
+                        {optionsFor(column.key).map((option) => (
+                          <option key={option} value={option}>{option}</option>
+                        ))}
+                      </select>
+                    ) : column.key === "action" && hasFilter ? (
+                      <button type="button" className="filter-clear" onClick={clearFilters}>필터 해제</button>
+                    ) : null}
+                  </th>
+                ))}
+              </tr>
             </thead>
             <tbody>
-              {rows.length > 0 ? (
-                rows.map((item, index) => {
+              {filteredRows.length > 0 ? (
+                filteredRows.map((item, index) => {
                   const isEditing = editingId === item.id && editDraft;
                   return (
                     <tr key={item.id}>
@@ -1065,7 +1113,7 @@ export default function CouncilMemberRequests() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={7 + (showMemberColumn ? 1 : 0) + (showCouncilFields ? 1 : 0)} className="empty-row">{emptyText}</td>
+                  <td colSpan={7 + (showMemberColumn ? 1 : 0) + (showCouncilFields ? 1 : 0)} className="empty-row">{rows.length > 0 ? "필터 조건에 맞는 요구가 없습니다" : emptyText}</td>
                 </tr>
               )}
             </tbody>
@@ -1246,20 +1294,20 @@ export default function CouncilMemberRequests() {
             const isActive = activeTab === tab.key;
             // 시장님 지시사항·민선9기 공약사항·당정협의회는 다른 탭과 구분되게 박스 전체를 색으로 채운다.
             const isFilled = FILLED_TAB_KEYS.includes(tab.key);
+            // 탭 색은 CSS 변수로만 넘기고, 채움·선택 모양은 아래 스타일 규칙이 한곳에서 정한다.
             const tabStyle = tab.color
-              ? {
-                  borderColor: isActive || isFilled ? tab.color : hexToRgba(tab.color, 0.4),
-                  color: isActive ? tab.color : undefined,
-                  background: isFilled
-                    ? hexToRgba(tab.color, isActive ? 0.3 : 0.16)
-                    : isActive ? hexToRgba(tab.color, 0.12) : "transparent",
-                }
+              ? ({
+                  "--tab-color": tab.color,
+                  "--tab-tint": hexToRgba(tab.color, 0.13),
+                  "--tab-tint-strong": hexToRgba(tab.color, 0.24),
+                  "--tab-edge": hexToRgba(tab.color, 0.45),
+                } as CSSProperties)
               : undefined;
             return (
               <button
                 key={tab.key}
                 type="button"
-                className={`tab-button${isActive ? " active" : ""}${tab.key === "원구성 현황" ? " tab-button-detached" : ""}`}
+                className={`tab-button${tab.color ? " tab-colored" : ""}${isFilled ? " tab-filled" : ""}${isActive ? " active" : ""}${tab.key === "원구성 현황" ? " tab-button-detached" : ""}`}
                 style={tabStyle}
                 onClick={() => setActiveTab(tab.key)}
               >
@@ -1736,7 +1784,7 @@ export default function CouncilMemberRequests() {
           border: 1px solid var(--border);
           border-radius: 6px;
           color: var(--text);
-          font-family: inherit;
+          font-family: "Pretendard", system-ui, sans-serif;
           font-size: 15px;
           padding: 10px 12px;
         }
@@ -1773,7 +1821,7 @@ export default function CouncilMemberRequests() {
 
         .content-textarea {
           flex: 1;
-          min-height: 44px;
+          min-height: 56px;
           resize: vertical;
           line-height: 1.5;
         }
@@ -1839,42 +1887,72 @@ export default function CouncilMemberRequests() {
           background: rgba(91, 155, 240, 0.45);
         }
 
+        /* 상단 구분 탭: 모두 같은 높이·같은 바탕. 탭 고유색은 윗변 띠로만 보이고,
+           시장님 지시사항·민선9기 공약·당정협의회(.tab-filled)만 같은 농도로 옅게 채운다. */
         .tab-bar {
           display: flex;
           flex-wrap: wrap;
-          gap: 10px;
-          margin-bottom: 18px;
-          padding: 10px;
-          border: 1px solid var(--border);
-          border-radius: 12px;
-          background: rgba(255, 255, 255, 0.03);
+          align-items: stretch;
+          gap: 8px;
+          margin-bottom: 20px;
         }
 
         .tab-button {
+          position: relative;
           display: flex;
           flex-direction: column;
           align-items: center;
-          gap: 2px;
-          padding: 12px 22px;
+          justify-content: center;
+          gap: 4px;
+          min-height: 76px;
+          padding: 12px 18px;
           border: 1px solid var(--border);
           border-radius: 8px;
-          background: transparent;
+          background: var(--bg-elevated);
           color: var(--text);
-          font-size: 15px;
-          font-weight: 500;
+          font-family: "Pretendard", system-ui, sans-serif;
           cursor: pointer;
+          overflow: hidden;
+          transition: background-color 160ms ease, border-color 160ms ease;
+        }
+
+        .tab-button.tab-colored::before {
+          content: "";
+          position: absolute;
+          inset: 0 0 auto 0;
+          height: 3px;
+          background: var(--tab-color);
+          opacity: 0.85;
+        }
+
+        .tab-button.tab-filled {
+          background: var(--tab-tint);
+          border-color: var(--tab-edge);
         }
 
         .tab-button:hover {
-          color: #5b9bf0;
-          border-color: rgba(91, 155, 240, 0.35);
+          border-color: rgba(203, 213, 225, 0.35);
+        }
+
+        .tab-button.tab-colored:hover {
+          border-color: var(--tab-edge);
         }
 
         .tab-button.active {
-          color: #5b9bf0;
-          border-color: rgba(91, 155, 240, 0.6);
-          background: rgba(91, 155, 240, 0.16);
-          box-shadow: 0 0 0 1px rgba(91, 155, 240, 0.25) inset;
+          border-color: #5b9bf0;
+          background: rgba(91, 155, 240, 0.14);
+          box-shadow: inset 0 0 0 1px #5b9bf0;
+        }
+
+        .tab-button.tab-colored.active {
+          border-color: var(--tab-color);
+          background: var(--tab-tint-strong);
+          box-shadow: inset 0 0 0 1px var(--tab-color);
+        }
+
+        .tab-button:focus-visible {
+          outline: 2px solid #5b9bf0;
+          outline-offset: 2px;
         }
 
         .tab-button-detached {
@@ -1883,26 +1961,31 @@ export default function CouncilMemberRequests() {
 
         .tab-label-row {
           display: flex;
-          align-items: center;
-          font-size: 18px;
-          font-weight: 500;
+          align-items: baseline;
+          gap: 6px;
+          font-size: 17px;
+          font-weight: 600;
+          letter-spacing: -0.01em;
         }
 
         .tab-count {
-          margin-left: 6px;
           font-size: 14px;
-          opacity: 0.85;
+          font-weight: 500;
+          color: var(--text-muted);
+          font-variant-numeric: tabular-nums;
+        }
+
+        .tab-button.active .tab-count {
+          color: var(--text);
         }
 
         .tab-subtitle {
-          font-size: 14px;
+          font-size: 13px;
           font-weight: 400;
           color: var(--text-muted);
-          opacity: 0.85;
           white-space: pre;
-          min-width: 150px;
           text-align: center;
-          line-height: 1.4;
+          line-height: 1.45;
         }
 
         .type-select {
@@ -1928,23 +2011,25 @@ export default function CouncilMemberRequests() {
           border-bottom: 1px solid var(--border);
         }
 
+        /* 요구사항 표: 머리글·본문 모두 Pretendard 한 서체, 회색 계열 하나로 통일. */
         .requests-table {
           width: 100%;
           table-layout: fixed;
           border-collapse: collapse;
-          font-size: 15px;
+          font-family: "Pretendard", system-ui, sans-serif;
+          font-size: 16px;
         }
 
         .requests-table th,
         .requests-table td {
-          padding: 6px 10px;
-          border-bottom: 1px solid var(--border);
-          border-right: 1px solid var(--border);
+          padding: 9px 12px;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.14);
+          border-right: 1px solid rgba(148, 163, 184, 0.1);
           text-align: left;
           vertical-align: middle;
-          word-break: break-word;
-          overflow-wrap: break-word;
-          line-height: 1.35;
+          word-break: keep-all;
+          overflow-wrap: anywhere;
+          line-height: 1.5;
         }
 
         .requests-table th:last-child,
@@ -1954,40 +2039,95 @@ export default function CouncilMemberRequests() {
 
         .requests-table th {
           position: relative;
-          background: #1f3a5c;
-          color: #f1f6fc;
-          border-bottom: 2px solid rgba(91, 155, 240, 0.7);
-          font-weight: 500;
+          background: #1c2735;
+          color: var(--text);
+          border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+          font-weight: 600;
           font-size: 18px;
+          line-height: 1.35;
           text-align: center;
+          letter-spacing: -0.01em;
         }
 
         .pledge-table th {
-          font-size: 17px;
+          font-size: 16px;
         }
 
         .pledge-table td.col-content {
-          font-weight: 500;
+          font-weight: 400;
         }
 
         .requests-table td {
           color: var(--text);
-          font-family: "Pretendard", system-ui, sans-serif;
           font-size: 17px;
-          line-height: 1.5;
+        }
+
+        .requests-table thead .filter-row th {
+          padding: 6px 8px;
+          background: #18212d;
+          border-bottom: 1px solid rgba(148, 163, 184, 0.3);
+          font-size: 14px;
+          font-weight: 400;
+        }
+
+        .filter-control {
+          width: 100%;
+          height: 30px;
+          padding: 0 8px;
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
+          background: var(--bg-surface);
+          color: var(--text);
+          font-family: "Pretendard", system-ui, sans-serif;
+          font-size: 14px;
+        }
+
+        .filter-control::placeholder {
+          color: var(--text-muted);
+        }
+
+        .filter-control:focus {
+          outline: none;
+          border-color: #5b9bf0;
+        }
+
+        .filter-control.is-set,
+        input.filter-control:not(:placeholder-shown) {
+          border-color: #5b9bf0;
+          background: rgba(91, 155, 240, 0.12);
+        }
+
+        .filter-clear {
+          width: 100%;
+          height: 30px;
+          border: 1px solid rgba(148, 163, 184, 0.22);
+          border-radius: 5px;
+          background: transparent;
+          color: var(--text);
+          font-family: "Pretendard", system-ui, sans-serif;
+          font-size: 13px;
+          cursor: pointer;
+        }
+
+        .filter-clear:hover {
+          background: rgba(255, 255, 255, 0.06);
+        }
+
+        .requests-table tbody tr:hover td {
+          background: rgba(91, 155, 240, 0.06);
         }
 
         col.col-num { width: 4%; }
-        col.col-party { width: 8%; }
+        col.col-party { width: 9%; }
         col.col-content { width: 24%; }
-        col.col-status { width: 7%; }
+        col.col-status { width: 8%; }
         col.col-action { width: 8%; }
-        /* 시의원 이름·소관부서·사업명·요구액 - 나머지 칸과 구분되는 배경색 */
+        /* 시의원 이름·소관부서·사업명·요구액 - 나머지 칸과 구분되는 옅은 바탕 */
         col.col-member, col.col-dept, col.col-budget-item, col.col-amount {
-          background-color: rgba(126, 231, 187, 0.12);
+          background-color: rgba(148, 163, 184, 0.05);
         }
         col.col-member { width: 9%; }
-        col.col-dept { width: 7%; }
+        col.col-dept { width: 8%; }
         col.col-budget-item { width: 15%; }
         col.col-amount { width: 7%; }
 
@@ -2035,20 +2175,26 @@ export default function CouncilMemberRequests() {
         .requests-unit-caption {
           caption-side: top;
           text-align: right;
-          padding: 0 4px 6px;
-          font-size: 14px;
+          padding: 10px 14px 8px;
+          font-family: "Pretendard", system-ui, sans-serif;
+          font-size: 13px;
           color: var(--text-muted);
         }
 
         .budget-item-input,
         .amount-input {
+          min-height: 56px;
           resize: vertical;
           line-height: 1.5;
         }
 
+        /* 전역 .col-amount(예산서 표용 14px !important)를 이 표에서만 되돌린다. */
         .requests-table td.col-amount {
           white-space: pre;
           text-align: right;
+          font-size: 17px !important;
+          font-weight: 500;
+          font-variant-numeric: tabular-nums;
         }
 
         .col-date {
@@ -2090,27 +2236,23 @@ export default function CouncilMemberRequests() {
           border: 1px solid var(--border);
           background: var(--bg-surface);
           color: var(--text);
-          font-size: 14px;
+          font-family: "Pretendard", system-ui, sans-serif;
+          font-size: 15px;
+          font-weight: 500;
           padding: 4px 6px;
           cursor: pointer;
         }
 
         .status-badge.status-반영 {
           color: #7ee787;
-          border-color: rgba(126, 231, 135, 0.35);
-          background: rgba(126, 231, 135, 0.08);
         }
 
         .status-badge.status-미반영 {
           color: #ff9aa7;
-          border-color: rgba(255, 107, 125, 0.35);
-          background: rgba(255, 107, 125, 0.08);
         }
 
         .status-badge.status-검토중 {
           color: #d9ad52;
-          border-color: rgba(217, 173, 82, 0.35);
-          background: rgba(217, 173, 82, 0.08);
         }
 
         .edit-button,
