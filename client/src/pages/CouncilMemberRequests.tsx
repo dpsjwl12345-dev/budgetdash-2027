@@ -1,4 +1,5 @@
 import { useState, useEffect } from "react";
+import type { MouseEvent as ReactMouseEvent } from "react";
 import Layout from "@/components/Layout";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -606,7 +607,72 @@ async function loadLegacyMayorRequests(): Promise<LegacyMayorRequest[]> {
   return [];
 }
 
+// 요구사항 표 열 너비. 머리글 오른쪽 끝을 끌어 바꾸고, 표 모양(시의원 칸 유무)별로 브라우저에 기억한다.
+const COLUMN_WIDTHS_STORAGE_KEY = "councilRequests.columnWidths";
+
+function loadColumnWidths(): Record<string, Record<string, number>> {
+  try {
+    return JSON.parse(localStorage.getItem(COLUMN_WIDTHS_STORAGE_KEY) || "{}");
+  } catch {
+    return {};
+  }
+}
+
 export default function CouncilMemberRequests() {
+  const [columnWidths, setColumnWidths] = useState<Record<string, Record<string, number>>>(loadColumnWidths);
+
+  const saveColumnWidths = (next: Record<string, Record<string, number>>) => {
+    setColumnWidths(next);
+    try {
+      localStorage.setItem(COLUMN_WIDTHS_STORAGE_KEY, JSON.stringify(next));
+    } catch {
+      // 저장이 막힌 브라우저에서는 이번 화면에서만 적용된다.
+    }
+  };
+
+  // 끌기 시작할 때 모든 열의 실제 폭을 %로 고정한 뒤, 잡은 열과 바로 오른쪽 열만 서로 주고받는다.
+  const startColumnResize = (event: ReactMouseEvent, layoutKey: string, keys: string[], index: number) => {
+    event.preventDefault();
+    event.stopPropagation();
+    const headerRow = (event.currentTarget as HTMLElement).closest("tr");
+    const table = headerRow?.closest("table");
+    if (!headerRow || !table) return;
+    const tableWidth = table.getBoundingClientRect().width;
+    const cells = Array.from(headerRow.children) as HTMLElement[];
+    const start: Record<string, number> = {};
+    keys.forEach((key, i) => {
+      start[key] = (cells[i].getBoundingClientRect().width / tableWidth) * 100;
+    });
+    const leftKey = keys[index];
+    const rightKey = keys[index + 1];
+    const pairTotal = start[leftKey] + start[rightKey];
+    const minPct = (40 / tableWidth) * 100;
+    const startX = event.clientX;
+    let latest = start;
+
+    const onMove = (moveEvent: MouseEvent) => {
+      const deltaPct = ((moveEvent.clientX - startX) / tableWidth) * 100;
+      const left = Math.min(Math.max(start[leftKey] + deltaPct, minPct), pairTotal - minPct);
+      latest = { ...start, [leftKey]: left, [rightKey]: pairTotal - left };
+      setColumnWidths((prev) => ({ ...prev, [layoutKey]: latest }));
+    };
+    const onUp = () => {
+      document.removeEventListener("mousemove", onMove);
+      document.removeEventListener("mouseup", onUp);
+      document.body.style.cursor = "";
+      saveColumnWidths({ ...loadColumnWidths(), [layoutKey]: latest });
+    };
+    document.body.style.cursor = "col-resize";
+    document.addEventListener("mousemove", onMove);
+    document.addEventListener("mouseup", onUp);
+  };
+
+  const resetColumnWidths = (layoutKey: string) => {
+    const next = { ...loadColumnWidths() };
+    delete next[layoutKey];
+    saveColumnWidths(next);
+  };
+
   const [requests, setRequests] = useState<CouncilRequest[]>([]);
   const [activeTab, setActiveTab] = useState<MainTabKey>("당정협의회");
   const [compositionTab, setCompositionTab] = useState<CompositionTabKey>(COMPOSITION_TABS[0].key);
@@ -781,30 +847,49 @@ export default function CouncilMemberRequests() {
   const visibleRequests = requests.filter((item) => typeOf(item) === activeTab);
   const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
 
-  const renderTable = (rows: CouncilRequest[], emptyText: string, showCouncilFields: boolean, showMemberColumn: boolean = true) => (
+  const renderTable = (rows: CouncilRequest[], emptyText: string, showCouncilFields: boolean, showMemberColumn: boolean = true) => {
+    const columns = [
+      { key: "num", className: "col-num", label: <>번호</> },
+      ...(showMemberColumn ? [{ key: "member", className: "col-member", label: showCouncilFields ? <>이름<br />(위원회)</> : <>이름</> }] : []),
+      ...(showCouncilFields ? [{ key: "party", className: "col-party", label: <>소속 정당명<br />(선거구)</> }] : []),
+      { key: "content", className: "col-content", label: <>요구내용</> },
+      { key: "dept", className: "col-dept", label: <>소관부서</> },
+      { key: "budget", className: "col-budget-item", label: <>사업명 (세부사업+부기명)</> },
+      { key: "amount", className: "col-amount", label: <>요구액</> },
+      { key: "status", className: "col-status", label: <>반영여부</> },
+      { key: "action", className: "col-action", label: <>관리</> },
+    ];
+    const layoutKey = `${showMemberColumn ? "m" : ""}${showCouncilFields ? "c" : ""}`;
+    const widths = columnWidths[layoutKey];
+    const keys = columns.map((column) => column.key);
+    // 사업명·요구액·반영여부 머리글에는 원래 열 클래스가 없었다(본문 칸 정렬 규칙이 걸리지 않도록).
+    const headerClass = (className: string) => (["col-budget-item", "col-amount", "col-status"].includes(className) ? "" : className);
+    return (
           <table className="requests-table">
             <colgroup>
-              <col className="col-num" />
-              {showMemberColumn && <col className="col-member" />}
-              {showCouncilFields && <col className="col-party" />}
-              <col className="col-content" />
-              <col className="col-dept" />
-              <col className="col-budget-item" />
-              <col className="col-amount" />
-              <col className="col-status" />
-              <col className="col-action" />
+              {columns.map((column) => (
+                <col
+                  key={column.key}
+                  className={column.className}
+                  style={widths?.[column.key] ? { width: `${widths[column.key]}%` } : undefined}
+                />
+              ))}
             </colgroup>
             <thead>
               <tr>
-                <th className="col-num">번호</th>
-                {showMemberColumn && <th className="col-member">{showCouncilFields ? <>이름<br />(위원회)</> : "이름"}</th>}
-                {showCouncilFields && <th className="col-party">소속 정당명<br />(선거구)</th>}
-                <th className="col-content">요구내용</th>
-                <th className="col-dept">소관부서</th>
-                <th>사업명 (세부사업+부기명)</th>
-                <th>요구액</th>
-                <th>반영여부</th>
-                <th className="col-action">관리</th>
+                {columns.map((column, index) => (
+                  <th key={column.key} className={`${headerClass(column.className)} resizable-th`.trim()}>
+                    {column.label}
+                    {index < columns.length - 1 && (
+                      <span
+                        className="col-resizer"
+                        title="끌어서 열 너비 조절 · 두 번 클릭하면 원래 너비로"
+                        onMouseDown={(event) => startColumnResize(event, layoutKey, keys, index)}
+                        onDoubleClick={() => resetColumnWidths(layoutKey)}
+                      />
+                    )}
+                  </th>
+                ))}
               </tr>
             </thead>
             <tbody>
@@ -949,7 +1034,8 @@ export default function CouncilMemberRequests() {
               )}
             </tbody>
           </table>
-  );
+    );
+  };
 
   // 민선9기공약 탭 전용 표: 다른 탭과 달리 이름 대신 공약명·사업주체·신규여부·연도별 예산계획을 보여준다.
   const renderPledgeTable = (rows: CouncilRequest[], emptyText: string) => (
@@ -1697,6 +1783,20 @@ export default function CouncilMemberRequests() {
           background: rgba(91, 155, 240, 0.25);
         }
 
+        .col-resizer {
+          position: absolute;
+          top: 0;
+          right: -4px;
+          width: 8px;
+          height: 100%;
+          cursor: col-resize;
+          z-index: 1;
+        }
+
+        .col-resizer:hover {
+          background: rgba(91, 155, 240, 0.45);
+        }
+
         .tab-bar {
           display: flex;
           flex-wrap: wrap;
@@ -1757,8 +1857,8 @@ export default function CouncilMemberRequests() {
           font-weight: 400;
           color: var(--text-muted);
           opacity: 0.85;
-          white-space: pre-line;
-          width: 150px;
+          white-space: pre;
+          min-width: 150px;
           text-align: center;
           line-height: 1.4;
         }
@@ -1811,8 +1911,9 @@ export default function CouncilMemberRequests() {
         }
 
         .requests-table th {
+          position: relative;
           background: rgba(118, 157, 194, 0.08);
-          color: var(--text-muted);
+          color: var(--text);
           font-weight: 500;
           font-size: 17px;
           text-align: center;
@@ -1828,6 +1929,9 @@ export default function CouncilMemberRequests() {
 
         .requests-table td {
           color: var(--text);
+          font-family: "Pretendard", system-ui, sans-serif;
+          font-size: 15.5px;
+          line-height: 1.5;
         }
 
         col.col-num { width: 4%; }
@@ -1839,9 +1943,9 @@ export default function CouncilMemberRequests() {
         col.col-member, col.col-dept, col.col-budget-item, col.col-amount {
           background-color: rgba(126, 231, 187, 0.12);
         }
-        col.col-member { width: 12%; }
+        col.col-member { width: 9%; }
         col.col-dept { width: 7%; }
-        col.col-budget-item { width: 12%; }
+        col.col-budget-item { width: 15%; }
         col.col-amount { width: 7%; }
 
         /* 민선9기공약 전용 표 열 너비 */
@@ -1958,45 +2062,22 @@ export default function CouncilMemberRequests() {
           cursor: pointer;
         }
 
-        .edit-button {
-          border: 1px solid rgba(91, 155, 240, 0.35);
-          background: rgba(91, 155, 240, 0.08);
-          color: #5b9bf0;
-        }
-
-        .edit-button:hover {
-          background: rgba(91, 155, 240, 0.18);
-        }
-
-        .save-button {
-          border: 1px solid rgba(126, 231, 135, 0.35);
-          background: rgba(126, 231, 135, 0.08);
-          color: #7ee787;
-        }
-
-        .save-button:hover {
-          background: rgba(126, 231, 135, 0.18);
-        }
-
-        .cancel-button {
+        /* 관리 버튼: 색 없이 회색 테두리만 */
+        .edit-button,
+        .save-button,
+        .cancel-button,
+        .delete-button {
           border: 1px solid var(--border);
-          background: var(--bg-surface);
-          color: var(--text-muted);
-        }
-
-        .cancel-button:hover {
+          background: transparent;
           color: var(--text);
         }
 
-        .delete-button {
-          border: 1px solid rgba(255, 107, 125, 0.35);
-          background: rgba(255, 107, 125, 0.08);
-          color: #ff9aa7;
-        }
-
+        .edit-button:hover,
+        .save-button:hover,
+        .cancel-button:hover,
         .delete-button:hover {
-          background: rgba(255, 107, 125, 0.18);
-          color: #ffd8dd;
+          background: rgba(255, 255, 255, 0.06);
+          color: var(--text);
         }
 
         .empty-row {
