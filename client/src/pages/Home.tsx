@@ -2750,19 +2750,6 @@ export default function Home() {
                       }}
                     />
                   </label>
-                  <label className="icon-stack-btn" aria-label="추경 내역서 업로드" data-tooltip="추경 내역서 업로드">
-                    <div className="icon-stack-front"><FilePlus2 size={20} /></div>
-                    <input
-                      ref={supplementaryInputRef}
-                      className="upload-input"
-                      type="file"
-                      accept=".xlsx,.xls"
-                      onChange={(event) => {
-                        const file = event.target.files?.[0];
-                        if (file) handleSupplementaryUpload(file);
-                      }}
-                    />
-                  </label>
                 </div>
               </div>
             </div>

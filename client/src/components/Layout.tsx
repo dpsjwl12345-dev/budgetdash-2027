@@ -42,6 +42,7 @@ const navItems: NavItem[] = [
 ];
 
 const toolItems: ToolItem[] = [
+  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests", iconColor: "#60a5fa" },
   {
     label: "예산 편성 가이드",
     icon: SlidersHorizontal,
@@ -53,9 +54,8 @@ const toolItems: ToolItem[] = [
       { label: "산출식(함수) 전체 목록" },
     ],
   },
-  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#60a5fa" },
-  { label: "요구사항 반영", icon: Landmark, path: "/council-member-requests", iconColor: "#60a5fa" },
   { label: "성과평가반영", icon: Award, path: "/performance-evaluation", iconColor: "#60a5fa" },
+  { label: "지방채사업", icon: Banknote, path: "/local-bonds", iconColor: "#60a5fa" },
   { label: "부서별 주요 쟁점사항", icon: AlertCircle, path: "/department-key-issues", iconColor: "#60a5fa" },
 ];
 

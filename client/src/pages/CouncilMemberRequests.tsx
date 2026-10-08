@@ -1992,6 +1992,14 @@ export default function CouncilMemberRequests() {
           outline-offset: 2px;
         }
 
+        /* 원구성 현황을 뺀 탭은 모두 같은 폭 */
+        .tab-button:not(.tab-button-detached) {
+          flex: 1 1 0;
+          min-width: 0;
+          padding-left: 10px;
+          padding-right: 10px;
+        }
+
         .tab-button-detached {
           margin-left: auto;
         }
