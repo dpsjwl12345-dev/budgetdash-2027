@@ -3325,14 +3325,9 @@ export default function Home() {
                             title={markKey ? '클릭하여 강조 표시' : undefined}
                             style={{ background: getBackground(), fontSize: getStatCodeFontSize(), color: getColor(), textAlign: 'left', verticalAlign: 'top', paddingTop: rowSpacing, paddingBottom: rowSpacing, paddingLeft: '16px', whiteSpace: 'nowrap', overflow: 'visible', position: 'relative', zIndex: markPickerKey && markPickerKey === markKey ? 3 : 1, cursor: markKey ? 'pointer' : 'default' }}
                           >
-                            {/* 의원·당정협의회 배지는 부기명 왼쪽, 시장·부시장·공약 배지는 부기명 오른쪽 */}
-                            {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).filter((badge) => badge.tone === 'council' || badge.tone === 'party').map((badge) => (
-                              <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginRight: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
-                                {badge.label}
-                              </span>
-                            ))}
+                            {/* 요구사항 배지(의원·시장·부시장·공약)는 모두 부기명 오른쪽 */}
                             {row.statisticsCode || ''}
-                            {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).filter((badge) => badge.tone === 'mayor' || badge.tone === 'pledge').map((badge) => (
+                            {row.level === 'note' && (requestBadgesByRow.get(row.id) ?? []).map((badge) => (
                               <span key={badge.label} title={badge.title} style={{ display: 'inline-block', padding: '1px 6px', marginLeft: '6px', borderRadius: '4px', ...REQUEST_BADGE_STYLES[badge.tone], fontSize: 'calc(11px + 1pt)', fontWeight: 700, whiteSpace: 'nowrap', verticalAlign: 'middle' }}>
                                 {badge.label}
                               </span>
