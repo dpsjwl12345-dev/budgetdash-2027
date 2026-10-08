@@ -2062,6 +2062,11 @@ export default function CouncilMemberRequests() {
           font-size: 17px;
         }
 
+        /* 전역 .col-action(14px !important) 때문에 '관리' 머리글만 작아지던 것을 맞춘다. */
+        .requests-table thead tr:first-child th.col-action {
+          font-size: 18px !important;
+        }
+
         .requests-table thead .requests-filter-row th {
           padding: 6px 8px;
           background: #18212d;
