@@ -152,6 +152,8 @@ const MAIN_TABS: { key: MainTabKey; label: string; subtitle?: string; emptyText?
   { key: "원구성 현황", label: "원구성 현황" },
 ];
 
+const FILLED_TAB_KEYS: MainTabKey[] = ["시장", "민선9기공약", "당정협의회"];
+
 // hex(#rrggbb 또는 #rgb) 문자열을 rgba()로 변환한다. 탭 테두리/배경에 투명도를 줄 때 사용.
 function hexToRgba(hex: string, alpha: number): string {
   const normalized = hex.replace("#", "");
@@ -1209,11 +1211,15 @@ export default function CouncilMemberRequests() {
         <section className="tab-bar">
           {MAIN_TABS.map((tab) => {
             const isActive = activeTab === tab.key;
+            // 시장님 지시사항·민선9기 공약사항·당정협의회는 다른 탭과 구분되게 박스 전체를 색으로 채운다.
+            const isFilled = FILLED_TAB_KEYS.includes(tab.key);
             const tabStyle = tab.color
               ? {
-                  borderColor: isActive ? tab.color : hexToRgba(tab.color, 0.4),
+                  borderColor: isActive || isFilled ? tab.color : hexToRgba(tab.color, 0.4),
                   color: isActive ? tab.color : undefined,
-                  background: isActive ? hexToRgba(tab.color, 0.12) : "transparent",
+                  background: isFilled
+                    ? hexToRgba(tab.color, isActive ? 0.3 : 0.16)
+                    : isActive ? hexToRgba(tab.color, 0.12) : "transparent",
                 }
               : undefined;
             return (
@@ -1329,7 +1335,7 @@ export default function CouncilMemberRequests() {
             <textarea
               className="form-input amount-input"
               rows={1}
-              placeholder="요구액 (천원 단위, 예: 6000)"
+              placeholder="요구액 (천원)"
               value={form.requestedAmount}
               onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
               onBlur={() => setForm((current) => ({ ...current, requestedAmount: normalizeRequestedAmount(current.requestedAmount) }))}
@@ -1740,11 +1746,11 @@ export default function CouncilMemberRequests() {
         }
 
         .budget-item-input {
-          flex: 0 0 160px;
+          flex: 0 0 240px;
         }
 
         .amount-input {
-          flex: 0 0 130px;
+          flex: 0 0 150px;
         }
 
         .pledge-name-input {
