@@ -515,6 +515,13 @@ function renderPartyWithDistrict(partyName: string, district: string) {
   );
 }
 
+// 필터 목록에 쓰는 "정당명(선거구)" 글자. 표에 보이는 모양과 같게 만든다.
+function partyDistrictLabel(partyName: string, district: string): string {
+  const national = stripCityName(district);
+  const districtText = /^(갑|을|병|정)$/.test(national) ? national : electoralDistrictLabel(district);
+  return districtText ? `${partyName}(${districtText})` : partyName;
+}
+
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
   if (party === "국민의힘") return "#ff6b7d";
@@ -647,7 +654,8 @@ function loadColumnWidths(): Record<string, Record<string, number>> {
 // 머리글 필터가 각 열에서 비교하는 값. 여기 없는 열(번호·요구액·관리)은 필터가 없다.
 const FILTER_ACCESSORS: Record<string, (item: CouncilRequest) => string> = {
   member: (item) => item.memberName || "",
-  party: (item) => item.partyName || "",
+  // 정당명과 선거구는 한 묶음으로 거른다(예: "더불어민주당(갑)").
+  party: (item) => partyDistrictLabel(item.partyName || "", item.electoralDistrict || ""),
   content: (item) => item.content || "",
   dept: (item) => item.department || "",
   budget: (item) => item.budgetItemName || "",
@@ -811,6 +819,19 @@ export default function CouncilMemberRequests() {
     setRequests(updated);
     localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
     await persist(updatedItem);
+  };
+
+  // 순서 화살표: 서버는 등록 순서로 불러오므로, 두 행의 id는 두고 내용만 맞바꿔 저장한다.
+  const handleSwap = async (idA: string, idB: string) => {
+    const a = requests.find((item) => item.id === idA);
+    const b = requests.find((item) => item.id === idB);
+    if (!a || !b) return;
+    const newA = { ...b, id: a.id };
+    const newB = { ...a, id: b.id };
+    const updated = requests.map((item) => (item.id === a.id ? newA : item.id === b.id ? newB : item));
+    setRequests(updated);
+    localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
+    await Promise.all([persist(newA), persist(newB)]);
   };
 
   const handleDelete = async (id: string) => {
@@ -1093,6 +1114,22 @@ export default function CouncilMemberRequests() {
                           </div>
                         ) : (
                           <div className="action-buttons">
+                            <span className="order-buttons">
+                              <button
+                                type="button"
+                                className="order-button"
+                                disabled={index === 0}
+                                onClick={() => handleSwap(item.id, filteredRows[index - 1].id)}
+                                aria-label="한 줄 위로"
+                              >▲</button>
+                              <button
+                                type="button"
+                                className="order-button"
+                                disabled={index === filteredRows.length - 1}
+                                onClick={() => handleSwap(item.id, filteredRows[index + 1].id)}
+                                aria-label="한 줄 아래로"
+                              >▼</button>
+                            </span>
                             <button
                               type="button"
                               className="edit-button"
@@ -2124,9 +2161,9 @@ export default function CouncilMemberRequests() {
 
         col.col-num { width: 4%; }
         col.col-party { width: 9%; }
-        col.col-content { width: 24%; }
+        col.col-content { width: 22%; }
         col.col-status { width: 8%; }
-        col.col-action { width: 8%; }
+        col.col-action { width: 10%; }
         /* 시의원 이름·소관부서·사업명·요구액 - 나머지 칸과 구분되는 옅은 바탕 */
         col.col-member, col.col-dept, col.col-budget-item, col.col-amount {
           background-color: rgba(148, 163, 184, 0.05);
@@ -2233,6 +2270,37 @@ export default function CouncilMemberRequests() {
           gap: 4px;
           align-items: center;
           justify-content: center;
+        }
+
+        /* 순서 화살표: 위아래로 붙여 한 칸 폭만 쓴다. */
+        .order-buttons {
+          display: inline-flex;
+          flex-direction: column;
+          gap: 2px;
+          margin-right: 2px;
+        }
+
+        .order-button {
+          width: 24px;
+          height: 15px;
+          padding: 0;
+          border: 1px solid var(--border);
+          border-radius: 3px;
+          background: transparent;
+          color: var(--text-muted);
+          font-size: 8px;
+          line-height: 1;
+          cursor: pointer;
+        }
+
+        .order-button:hover:not(:disabled) {
+          background: rgba(255, 255, 255, 0.08);
+          color: var(--text);
+        }
+
+        .order-button:disabled {
+          opacity: 0.3;
+          cursor: default;
         }
 
         .status-badge {
