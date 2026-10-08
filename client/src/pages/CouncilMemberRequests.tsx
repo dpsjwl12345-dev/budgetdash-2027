@@ -491,6 +491,29 @@ function renderElectoralDistrict(value: string) {
   );
 }
 
+// 당정협의회 선거구는 "화성갑"처럼 적혀 있어도 "갑"만 남긴다. "가선거구" 같은 시의원 선거구는 그대로 둔다.
+function stripCityName(value: string): string {
+  return value.trim().replace(/^화성시?s*/, "");
+}
+
+// 소속 정당명 칸. 선거구가 갑~정 하나뿐이면 "더불어민주당(갑)"처럼 한 줄로, 그 밖엔 정당명 아래 (선거구)로 보여준다.
+function renderPartyWithDistrict(partyName: string, district: string) {
+  const national = stripCityName(district);
+  if (/^(갑|을|병|정)$/.test(national)) {
+    return (
+      <>
+        {partyName}(<span style={{ color: NATIONAL_DISTRICT_COLOR, fontWeight: 700 }}>{national}</span>)
+      </>
+    );
+  }
+  return (
+    <>
+      {partyName}
+      {district && <><br />({renderElectoralDistrict(district)})</>}
+    </>
+  );
+}
+
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
   if (party === "국민의힘") return "#ff6b7d";
@@ -746,7 +769,7 @@ export default function CouncilMemberRequests() {
     const newItem: CouncilRequest = {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       requestType: form.requestType,
-      electoralDistrict: form.electoralDistrict.trim(),
+      electoralDistrict: stripCityName(form.electoralDistrict),
       partyName: form.partyName.trim(),
       memberName,
       committee: form.committee.trim(),
@@ -820,7 +843,7 @@ export default function CouncilMemberRequests() {
 
     const updatedItem: CouncilRequest = {
       ...target,
-      electoralDistrict: editDraft.electoralDistrict.trim(),
+      electoralDistrict: stripCityName(editDraft.electoralDistrict),
       partyName: editDraft.partyName.trim(),
       memberName,
       committee: editDraft.committee.trim(),
@@ -983,8 +1006,7 @@ export default function CouncilMemberRequests() {
                           )}
                           {showCouncilFields && (
                           <td className="col-party">
-                            {item.partyName}
-                            {item.electoralDistrict && <><br />({renderElectoralDistrict(item.electoralDistrict)})</>}
+                            {renderPartyWithDistrict(item.partyName, item.electoralDistrict || "")}
                           </td>
                           )}
                           <td className="col-content">{item.content}</td>
