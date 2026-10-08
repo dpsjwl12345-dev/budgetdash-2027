@@ -288,6 +288,8 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
    :has(.sidebar)를 붙여 위 collapsed 규칙과 같은 우선순위로 맞추고 뒤에 둬서 이긴다. */
 .app-shell.main-expanded:has(.sidebar) .sidebar { transform: translateX(-100%); pointer-events: none; box-shadow: none; }
 .app-shell.main-expanded:has(.sidebar) .main-area { margin-left: 0; }
+/* 넓힌 상태에서는 좌우 여백도 줄여, 예산서 표(최소 1,440px)가 가로 스크롤 없이 한 화면에 들어오게 한다. */
+.app-shell.main-expanded:has(.sidebar) .page-content { padding-left: 24px; padding-right: 24px; }
 .main-expand-toggle { margin-right: 4px; }
 .main-expand-toggle[aria-pressed="true"] { color: #edf5fd; background: rgba(118, 157, 194, 0.12); border-color: var(--line); }
 @media (prefers-reduced-motion: reduce) {
