@@ -2774,6 +2774,8 @@ export default function Home() {
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
                 <div className="metric-top"><span>2027 요구액</span></div>
+              </div>
+              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
                 {(() => {
                   const base2026Amount = department && budget2026Data[department]?.base2026
                     ? parseBudgetInput(budget2026Data[department].base2026)
@@ -2813,14 +2815,13 @@ export default function Home() {
                     );
                   };
                   return (
-                    <div style={{ display: "flex", justifyContent: "flex-end", gap: "4px", marginLeft: "auto" }}>
+                    // 2027 요구액 아래에 본 → 3추 순서로 세로로 쌓는다.
+                    <div style={{ display: "flex", flexDirection: "column", alignItems: "flex-end", gap: "4px", marginTop: "8px" }}>
                       {basePct && renderChip("본", basePct)}
                       {supp3Pct && renderChip("3추", supp3Pct)}
                     </div>
                   );
                 })()}
-              </div>
-              <strong style={{ textAlign: "right", marginTop: "16px", fontSize: "calc(1rem + 5px)" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
               <div className="metric-header">
