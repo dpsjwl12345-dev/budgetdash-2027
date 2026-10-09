@@ -527,7 +527,8 @@ function partyDistrictLabel(partyName: string, district: string): string {
 function partyColor(party: Party): string {
   if (party === "더불어민주당") return "#5b9bf0";
   if (party === "국민의힘") return "#ff6b7d";
-  return "#d9ad52";
+  if (party === "개혁신당") return "#d9ad52";
+  return "inherit";
 }
 
 // 같은 선거구가 연속으로 이어지는 첫 행에서만 몇 줄을 합칠지(rowSpan) 계산한다.
@@ -568,8 +569,9 @@ Object.entries(PROVINCIAL_MEMBER_BY_DISTRICT).forEach(([councilDistrict, member]
 });
 
 // 정당명을 비워 저장한 행은 명부에서 이름으로 정당을 채워 보여준다.
+// "더불어 민주당"·"국민의 힘"처럼 띄어 쓴 이름도 같은 정당으로 보이도록 공백을 뺀다.
 const resolvePartyName = (item: { partyName?: string; memberName?: string }): string =>
-  (item.partyName || "").trim() || MEMBER_BY_NAME[(item.memberName || "").trim()]?.party || "";
+  (item.partyName || "").replace(/\s/g, "") || MEMBER_BY_NAME[(item.memberName || "").trim()]?.party || "";
 
 const MEMBER_NAMES = Object.keys(MEMBER_BY_NAME);
 const MEMBER_NAME_DATALIST_ID = "council-member-names";
@@ -797,7 +799,7 @@ export default function CouncilMemberRequests() {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       requestType: form.requestType,
       electoralDistrict: stripCityName(form.electoralDistrict),
-      partyName: form.partyName.trim(),
+      partyName: form.partyName.replace(/s/g, ""),
       memberName,
       committee: form.committee.trim(),
       department: form.department,
@@ -884,7 +886,7 @@ export default function CouncilMemberRequests() {
     const updatedItem: CouncilRequest = {
       ...target,
       electoralDistrict: stripCityName(editDraft.electoralDistrict),
-      partyName: editDraft.partyName.trim(),
+      partyName: editDraft.partyName.replace(/s/g, ""),
       memberName,
       committee: editDraft.committee.trim(),
       department: editDraft.department,
