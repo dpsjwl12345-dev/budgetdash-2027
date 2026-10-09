@@ -799,7 +799,7 @@ export default function CouncilMemberRequests() {
       id: `${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       requestType: form.requestType,
       electoralDistrict: stripCityName(form.electoralDistrict),
-      partyName: form.partyName.replace(/s/g, ""),
+      partyName: form.partyName.replace(/\s/g, ""),
       memberName,
       committee: form.committee.trim(),
       department: form.department,
@@ -886,7 +886,7 @@ export default function CouncilMemberRequests() {
     const updatedItem: CouncilRequest = {
       ...target,
       electoralDistrict: stripCityName(editDraft.electoralDistrict),
-      partyName: editDraft.partyName.replace(/s/g, ""),
+      partyName: editDraft.partyName.replace(/\s/g, ""),
       memberName,
       committee: editDraft.committee.trim(),
       department: editDraft.department,
