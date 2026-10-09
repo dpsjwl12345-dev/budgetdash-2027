@@ -3051,6 +3051,7 @@ export default function Home() {
                     const getFontWeight = () => {
                       if (row.level === 'dept') return '600';
                       if (row.level === 'policy') return '500';
+                      if (row.level === 'program') return '700'; // 지마켓 산스 Medium → Bold 한 단계
                       return 'normal';
                     };
 
