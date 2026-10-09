@@ -2776,7 +2776,7 @@ export default function Home() {
                 <div className="metric-top"><span>2027 요구액</span></div>
               </div>
               {/* 왼쪽: 2027 요구액 제목 아래 본·3추 증감률, 오른쪽: 금액(다른 카드와 같은 자리). 카드 높이는 그대로. */}
-              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-end", gap: "8px", marginTop: "4px", minHeight: "42px" }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "flex-start", gap: "8px", marginTop: "4px" }}>
                   {(() => {
                     const base2026Amount = department && budget2026Data[department]?.base2026
                       ? parseBudgetInput(budget2026Data[department].base2026)
@@ -2823,7 +2823,7 @@ export default function Home() {
                       </div>
                     );
                   })()}
-                <span style={{ marginLeft: "auto" }}><strong style={{ margin: 0, color: "#edf5fe", fontSize: "calc(1rem + 5px)", lineHeight: 1.1, letterSpacing: "-0.045em", fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong></span>
+                <span style={{ marginLeft: "auto", paddingTop: "12px" }}><strong style={{ margin: 0, color: "#edf5fe", fontSize: "calc(1rem + 5px)", lineHeight: 1.1, letterSpacing: "-0.045em", fontWeight: 700, fontVariantNumeric: "tabular-nums", whiteSpace: "nowrap" }}>{formatMillion(hierarchyTotals.amount)}<span className="metric-unit">백만원</span></strong></span>
               </div>
             </article>
             <article className="metric-card" style={{ "--tint": "#5b9bf0" } as React.CSSProperties}>
