@@ -241,7 +241,7 @@ function isMajorInvestmentProgram(department: string, label: string): boolean {
 
 // "요구사항 반영" 메뉴의 시의원 요구·민선9기 공약·시장/부시장 지시사항·당정협의회가 예산서에 실려 있으면
 // 그 줄(부기명, 없으면 세부사업)에 배지를 단다. 이름은 공백·괄호·"○"·끝의 "공사"를 빼고 비교한다.
-type RequestRecord = { requestType: string; memberName: string; department: string; content: string; budgetItemName: string; requestedAmount: string; status: string };
+type RequestRecord = { requestType: string; memberName: string; electoralDistrict?: string; department: string; content: string; budgetItemName: string; requestedAmount: string; status: string };
 type RequestBadge = { label: string; tone: "council" | "pledge" | "mayor" | "party"; title: string };
 const REQUEST_BADGE_STYLES: Record<RequestBadge["tone"], { background: string; color: string }> = {
   council: { background: "rgba(144, 133, 233, 0.18)", color: "#6b5fd3" },
@@ -253,12 +253,16 @@ const normalizeBudgetName = (text: string) => text.replace(/^[○◦·\-\s]+/, "
 
 function requestBadge(request: RequestRecord): RequestBadge | null {
   const title = [request.requestType, request.content.replace(/\n/g, " "), request.requestedAmount, request.status].filter(Boolean).join(" · ");
-  // 당정협의회·정책간담회도 요구한 시의원 이름으로 배지를 단다.
-  if (["시의원", "당정협의회", "정책간담회"].includes(request.requestType) && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
+  // 당정협의회는 "당정 병"처럼 국회의원 지역구(갑~정)로 단다("화성갑"으로 적힌 건도 "갑"만).
+  if (request.requestType === "당정협의회") {
+    const district = (request.electoralDistrict || "").trim().replace(/^화성시?\s*/, "");
+    return { label: /^(갑|을|병|정)$/.test(district) ? `당정 ${district}` : "당정", tone: "party", title };
+  }
+  // 시의원·정책간담회는 요구한 시의원 이름으로 배지를 단다.
+  if (["시의원", "정책간담회"].includes(request.requestType) && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
   if (request.requestType === "민선9기공약") return { label: "공약", tone: "pledge", title };
   if (request.requestType === "시장") return { label: "시장", tone: "mayor", title };
   if (request.requestType === "부시장") return { label: (request.memberName || "부시장").replace(/^제/, ""), tone: "mayor", title };
-  if (request.requestType === "당정협의회") return { label: "당정협의회", tone: "party", title };
   return null;
 }
 
