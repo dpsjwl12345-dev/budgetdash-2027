@@ -567,6 +567,10 @@ Object.entries(PROVINCIAL_MEMBER_BY_DISTRICT).forEach(([councilDistrict, member]
   MEMBER_BY_NAME[member.name] = { district, party: member.party, committee: "경기도의원", label: district };
 });
 
+// 정당명을 비워 저장한 행은 명부에서 이름으로 정당을 채워 보여준다.
+const resolvePartyName = (item: { partyName?: string; memberName?: string }): string =>
+  (item.partyName || "").trim() || MEMBER_BY_NAME[(item.memberName || "").trim()]?.party || "";
+
 const MEMBER_NAMES = Object.keys(MEMBER_BY_NAME);
 const MEMBER_NAME_DATALIST_ID = "council-member-names";
 
@@ -657,7 +661,7 @@ function loadColumnWidths(): Record<string, Record<string, number>> {
 const FILTER_ACCESSORS: Record<string, (item: CouncilRequest) => string> = {
   member: (item) => item.memberName || "",
   // 정당명과 선거구는 한 묶음으로 거른다(예: "더불어민주당(갑)").
-  party: (item) => partyDistrictLabel(item.partyName || "", item.electoralDistrict || ""),
+  party: (item) => partyDistrictLabel(resolvePartyName(item), item.electoralDistrict || ""),
   content: (item) => item.content || "",
   dept: (item) => item.department || "",
   budget: (item) => item.budgetItemName || "",
@@ -1100,7 +1104,7 @@ export default function CouncilMemberRequests() {
                           )}
                           {showCouncilFields && (
                           <td className="col-party">
-                            {renderPartyWithDistrict(item.partyName, item.electoralDistrict || "")}
+                            {renderPartyWithDistrict(resolvePartyName(item), item.electoralDistrict || "")}
                           </td>
                           )}
                           <td className="col-content">{item.content}</td>
