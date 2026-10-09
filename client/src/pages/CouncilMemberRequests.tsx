@@ -515,6 +515,8 @@ function renderPartyWithDistrict(partyName: string, district: string) {
   );
 }
 
+const NATIONAL_DISTRICT_ORDER = ["갑", "을", "병", "정"];
+
 // 필터 목록에 쓰는 "정당명(선거구)" 글자. 표에 보이는 모양과 같게 만든다.
 function partyDistrictLabel(partyName: string, district: string): string {
   const national = stripCityName(district);
@@ -903,7 +905,19 @@ export default function CouncilMemberRequests() {
       : (item.partyName || "").replace(/\s/g, "") === "시의원"
         ? "시의원"
         : "당정협의회";
+  // 당정협의회는 갑·을·병·정 → 부서 직제순(DEPARTMENTS 순서)으로 자동 정렬한다. 같은 묶음 안은 저장 순서(▲▼)를 따른다.
   const visibleRequests = requests.filter((item) => typeOf(item) === activeTab);
+  if (activeTab === "당정협의회") {
+    const rank = (list: readonly string[], value: string) => {
+      const index = list.indexOf(value);
+      return index === -1 ? list.length : index;
+    };
+    visibleRequests.sort(
+      (a, b) =>
+        rank(NATIONAL_DISTRICT_ORDER, stripCityName(a.electoralDistrict || "")) - rank(NATIONAL_DISTRICT_ORDER, stripCityName(b.electoralDistrict || "")) ||
+        rank(DEPARTMENTS, a.department) - rank(DEPARTMENTS, b.department),
+    );
+  }
   const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
 
   const renderTable = (rows: CouncilRequest[], emptyText: string, showCouncilFields: boolean, showMemberColumn: boolean = true) => {
