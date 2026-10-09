@@ -3265,6 +3265,8 @@ export default function Home() {
                                   background: getBackground(),
                                   fontSize: getLabelFontSize(),
                                   fontWeight: getFontWeight(),
+                                  // 세부사업명만 지마켓 산스로(크기·굵기는 다른 행과 같은 규칙)
+                                  fontFamily: row.level === 'program' ? '"Gmarket Sans", "Pretendard", system-ui, sans-serif' : undefined,
                                   color: getColor(),
                                   verticalAlign: 'top',
                                   paddingTop: rowSpacing,
