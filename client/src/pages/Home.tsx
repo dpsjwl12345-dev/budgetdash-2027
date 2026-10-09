@@ -258,8 +258,9 @@ function requestBadge(request: RequestRecord): RequestBadge | null {
     const district = (request.electoralDistrict || "").trim().replace(/^화성시?\s*/, "");
     return { label: /^(갑|을|병|정)$/.test(district) ? `당정 ${district}` : "당정", tone: "party", title };
   }
-  // 시의원·정책간담회는 요구한 시의원 이름으로 배지를 단다.
-  if (["시의원", "정책간담회"].includes(request.requestType) && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
+  if (request.requestType === "정책간담회") return { label: "정책간담회", tone: "council", title };
+  // 시의원 요구는 요구한 시의원 이름으로 배지를 단다.
+  if (request.requestType === "시의원" && request.memberName) return { label: `${request.memberName} 의원`, tone: "council", title };
   if (request.requestType === "민선9기공약") return { label: "공약", tone: "pledge", title };
   if (request.requestType === "시장") return { label: "시장", tone: "mayor", title };
   if (request.requestType === "부시장") return { label: (request.memberName || "부시장").replace(/^제/, ""), tone: "mayor", title };
