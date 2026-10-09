@@ -1770,6 +1770,34 @@ export default function Home() {
     return map;
   }, [budgetHierarchyRows]);
 
+  // 부기명 표시·메모 키는 "부서::세부사업::통계목::부기명"이라, 같은 통계목 안에서 "ㅇ인건비"처럼
+  // 같은 이름의 소부기가 여러 ○부기 아래 반복되면 키가 겹쳐 한 줄을 눌러도 여러 줄이 동시에
+  // 편집 상태가 되고(서로 포커스를 뺏어 바로 닫힘), 메모도 공유된다. 두 번째부터는 위 ○부기명을
+  // 덧붙여 키를 나눈다. 첫 번째는 원래 키를 그대로 써서 이미 적어 둔 메모가 유지되게 한다.
+  const noteKeyById = useMemo(() => {
+    const map = new Map<string, string>();
+    const seen = new Map<string, number>();
+    let parentNote = '';
+    for (const row of budgetHierarchyRows) {
+      if (row.level !== 'note') { if (row.level !== 'formula' && row.level !== 'opinion') parentNote = ''; continue; }
+      const code = row.statisticsCode ?? '';
+      if (code.startsWith('○')) parentNote = code;
+      const ancestors = hierarchyAncestors.get(row.id);
+      const base = [ancestors?.deptRow?.label ?? '', ancestors?.programRow?.label ?? '', ancestors?.itemRow?.statisticsCode ?? '', code].join('::');
+      const count = (seen.get(base) ?? 0) + 1;
+      seen.set(base, count);
+      let key = base;
+      if (count > 1) {
+        key = parentNote && parentNote !== code ? `${base}::${parentNote}` : base;
+        if (seen.has(key) && key !== base) key = `${key}#${count}`;
+        if (key === base) key = `${base}#${count}`;
+        seen.set(key, 1);
+      }
+      map.set(row.id, key);
+    }
+    return map;
+  }, [budgetHierarchyRows, hierarchyAncestors]);
+
   const requestBadgesByRow = useMemo(() => {
     const map = new Map<string, RequestBadge[]>();
     if (!department) return map;
@@ -3036,7 +3064,7 @@ export default function Home() {
                     // 잡아야 엑셀을 다시 올려도 표시가 그대로 따라붙는다.
                     const markAncestors = hierarchyAncestors.get(row.id);
                     const markKey = row.level === 'note'
-                      ? [
+                      ? noteKeyById.get(row.id) ?? [
                           department,
                           markAncestors?.programRow?.label ?? '',
                           markAncestors?.itemRow?.statisticsCode ?? '',
