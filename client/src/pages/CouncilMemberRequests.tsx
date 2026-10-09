@@ -1941,8 +1941,8 @@ export default function CouncilMemberRequests() {
           align-items: center;
           justify-content: center;
           gap: 4px;
-          min-height: 76px;
-          padding: 12px 18px;
+          min-height: 64px;
+          padding: 8px 10px;
           border: 1px solid var(--border);
           border-radius: 8px;
           background: var(--bg-elevated);
@@ -1994,7 +1994,7 @@ export default function CouncilMemberRequests() {
 
         /* 원구성 현황을 뺀 탭은 모두 같은 폭 */
         .tab-button:not(.tab-button-detached) {
-          flex: 1 1 0;
+          flex: 0 0 186px;
           min-width: 0;
           padding-left: 10px;
           padding-right: 10px;
@@ -2025,7 +2025,7 @@ export default function CouncilMemberRequests() {
         }
 
         .tab-subtitle {
-          font-size: 13px;
+          font-size: 12.5px;
           font-weight: 400;
           color: var(--text-muted);
           white-space: pre;
