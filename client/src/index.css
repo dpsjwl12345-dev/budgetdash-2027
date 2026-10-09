@@ -946,6 +946,9 @@ table.budget-table.hierarchy-budget-table tbody tr td:nth-child(2), table.budget
   gap: 12px;
 }
 
+
+/* 편성 부서 드롭다운의 부서명만 2pt 크게 */
+.dept-select-field .dropdown-option { font-size: calc(13px + 2pt); }
 .dropdown-option:hover {
   background: rgba(118, 157, 194, 0.15);
   color: #dbe8f5;
