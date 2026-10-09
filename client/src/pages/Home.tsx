@@ -273,6 +273,9 @@ const REQUEST_TARGETS: { department: string; match: string; target: string }[] =
   { department: "체육진흥과", match: "파크골프장확대", target: "오산천 파크골프장 조성사업" },
   { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)반월도서관 건립" },
   { department: "도서관정책과", match: "지역도서관추가건립", target: "(가칭)화성시 독서문화공간 조성(전환사업)" },
+  // 당정협의회(갑) 둥지나래어린이도서관 리모델링 = 예산서 시그니처 리모델링 사업
+  { department: "도서관정책과", match: "지나래", target: "26년 공공건축물 그린리모델링사업(화성시-시그니처 종합형-도서관)" },
+  { department: "도서관정책과", match: "지나래", target: "둥지나래어린이도서관 리모델링(시그니처 종합형)" },
 ];
 
 // 요구사항이 다른 부서로 잘못 등록됐거나 예산서 부기명과 이름이 달라 자동으로 못 찾는 경우,
