@@ -1321,3 +1321,4 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .org-settlement-table td:nth-child(2) { text-align: left; max-width: 420px; overflow: hidden; text-overflow: ellipsis; }
 .org-settlement-table td:nth-child(n+3) { min-width: 140px; }
 .org-settlement-table tr.is-total td { color: #5b9bf0; font-weight: 700; background: rgba(91, 155, 240, 0.055); }
+.org-settlement-table tr.is-over td { color: #ef5b5b; }

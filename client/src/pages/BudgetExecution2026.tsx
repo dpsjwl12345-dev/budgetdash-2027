@@ -1194,7 +1194,8 @@ export default function BudgetExecution2026() {
                     <td>{rate(total.executed, total.granted)}</td>
                   </tr>
                   {orgSettlement.map((row, index) => (
-                    <tr key={index}>
+                    // 집행금액이 교부금액보다 큰 줄은 값을 고치지 않고 빨간색으로만 표시한다.
+                    <tr key={index} className={row.executed > row.granted ? "is-over" : undefined}>
                       <td>{index + 1}</td>
                       <td>{row.program}</td>
                       <td>{won(row.granted)}</td>
