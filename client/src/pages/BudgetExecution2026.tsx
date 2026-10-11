@@ -1165,24 +1165,41 @@ export default function BudgetExecution2026() {
             </div>
           </div>
 
-          {/* 정산: 올린 정산서 값을 그대로, 올린 순서대로 보여준다(계산·합산하지 않음). */}
-          {orgSettlement.length > 0 && (
-            <table className="org-settlement-table">
-              <thead>
-                <tr><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th></tr>
-              </thead>
-              <tbody>
-                {orgSettlement.map((row, index) => (
-                  <tr key={index}>
-                    <td>{row.program}</td>
-                    <td>{new Intl.NumberFormat("ko-KR").format(row.granted)}</td>
-                    <td>{new Intl.NumberFormat("ko-KR").format(row.executed)}</td>
-                    <td>{new Intl.NumberFormat("ko-KR").format(row.balance)}</td>
+          {/* 정산: 올린 정산서 값을 올린 순서대로 보여주고, 맨 위에 합계 줄, 오른쪽 끝에 집행률(집행금액 ÷ 교부금액)을 둔다. */}
+          {orgSettlement.length > 0 && (() => {
+            const won = (value: number) => new Intl.NumberFormat("ko-KR").format(value);
+            const rate = (executed: number, granted: number) => granted > 0 ? `${(executed / granted * 100).toFixed(1)}%` : "-";
+            const total = orgSettlement.reduce((sum, row) => ({
+              granted: sum.granted + row.granted,
+              executed: sum.executed + row.executed,
+              balance: sum.balance + row.balance,
+            }), { granted: 0, executed: 0, balance: 0 });
+            return (
+              <table className="org-settlement-table">
+                <thead>
+                  <tr><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th><th>집행률</th></tr>
+                </thead>
+                <tbody>
+                  <tr className="is-total">
+                    <td>합계 ({orgSettlement.length}개 사업)</td>
+                    <td>{won(total.granted)}</td>
+                    <td>{won(total.executed)}</td>
+                    <td>{won(total.balance)}</td>
+                    <td>{rate(total.executed, total.granted)}</td>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          )}
+                  {orgSettlement.map((row, index) => (
+                    <tr key={index}>
+                      <td>{row.program}</td>
+                      <td>{won(row.granted)}</td>
+                      <td>{won(row.executed)}</td>
+                      <td>{won(row.balance)}</td>
+                      <td>{rate(row.executed, row.granted)}</td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            );
+          })()}
 
           <div className="table-scroll">
             <table className="budget-table org-exec-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
