@@ -51,6 +51,12 @@ type ExecutionDetail = {
   vendorName: string;
 };
 
+// 체육회·장애인체육회 같은 보조단체의 보조사업별 집행내역. 단체 회계라 시 지출결의와 칸이 달라
+// 탭을 따로 두지만, 저장은 같은 budget_execution_details 표에 구분="보조단체"로 넣는다
+// (부서명 자리에 단체명, 세부사업 자리에 사업명, 적요 자리에 내용, 단위사업 자리에 기타).
+const ORG_DIVISION = "보조단체";
+const ORGANIZATIONS = ["화성시체육회", "화성시장애인체육회"];
+
 function formatAmount(value: number) {
   const thousands = Math.round(value / 1000);
   return new Intl.NumberFormat("ko-KR").format(thousands);
@@ -236,7 +242,13 @@ export default function BudgetExecution2026() {
   const fileInputRef = useRef<HTMLInputElement>(null);
 
   // "예산 집행내역" 탭(지출결의 단위) - 위 요약표와 별개 데이터.
-  const [execView, setExecView] = useState<"summary" | "details">("summary");
+  const [execView, setExecView] = useState<"summary" | "details" | "org">("summary");
+  const [orgYear, setOrgYear] = useState("2026");
+  const [orgName, setOrgName] = useState(ORGANIZATIONS[0]);
+  const [orgProgramFilter, setOrgProgramFilter] = useState("");
+  const [orgStatisticsFilter, setOrgStatisticsFilter] = useState("");
+  const [orgSearch, setOrgSearch] = useState("");
+  const [orgPage, setOrgPage] = useState(1);
   const [executionDetails, setExecutionDetails] = useState<ExecutionDetail[]>([]);
   const [detailSearch, setDetailSearch] = useState("");
   const [detailYear, setDetailYear] = useState("2026");
@@ -345,6 +357,76 @@ export default function BudgetExecution2026() {
       showToast(results.every(Boolean)
         ? `${nextRows.length}개 집행내역을 서버에 저장했습니다.`
         : '저장에 일부 실패했습니다 (로컬에만 반영됨)');
+    } catch (error) {
+      showToast('엑셀 파일을 읽지 못했습니다');
+      console.error(error);
+    } finally {
+      if (fileInputRef.current) fileInputRef.current.value = '';
+    }
+  };
+
+  // 보조단체 집행내역: 첫 줄 머리글 = 사업명 · 통계목 · 집행일자 · 내용 · 집행액 · 거래처명 · 기타.
+  // 화면에서 고른 연도·단체 몫을 통째로 교체한다.
+  const handleOrgExecutionUpload = async (file?: File) => {
+    if (!file) return;
+    try {
+      const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
+      const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+      const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+
+      const field = (record: Record<string, unknown>, name: string) => {
+        const key = Object.keys(record).find((header) => header.replace(/\s/g, "") === name);
+        return key ? record[key] : "";
+      };
+      const text = (value: unknown) => (value == null ? "" : String(value).trim());
+      const amount = (value: unknown) => {
+        if (typeof value === "number") return Math.round(value);
+        const parsed = parseInt(String(value || "0").replace(/[^0-9-]/g, ""), 10);
+        return isNaN(parsed) ? 0 : parsed;
+      };
+      // 엑셀 날짜 칸은 일련번호로 읽히므로 yyyy-mm-dd로 바꾼다.
+      const date = (value: unknown) => typeof value === "number" ? XLSX.SSF.format("yyyy-mm-dd", value) : text(value);
+
+      // 사업명이 병합 셀이면 첫 줄에만 값이 있으므로 위 줄 값을 이어받는다.
+      let lastProgram = "";
+      const nextRows: ExecutionDetail[] = imported
+        .map((record, index) => {
+          const program = text(field(record, "사업명"));
+          if (program) lastProgram = program;
+          return {
+            id: Date.now() + index,
+            year: orgYear,
+            department: orgName,
+            division: ORG_DIVISION,
+            policyProgram: "",
+            unitProgram: text(field(record, "기타")),
+            detailProgram: program || lastProgram,
+            statisticsAccount: text(field(record, "통계목")),
+            note: text(field(record, "내용")),
+            resolutionAmount: amount(field(record, "집행액")),
+            resolutionDate: date(field(record, "집행일자")),
+            vendorName: text(field(record, "거래처명")),
+          };
+        })
+        .filter((row) => row.note || row.resolutionAmount);
+
+      if (!nextRows.length) throw new Error("empty");
+
+      setExecutionDetails((previous) => [
+        ...previous.filter((row) => !(row.division === ORG_DIVISION && row.year === orgYear && row.department === orgName)),
+        ...nextRows,
+      ]);
+      setOrgPage(1);
+
+      const response = await fetch('/api/cloud-sync?type=execution-details', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ year: orgYear, department: orgName, data: nextRows }),
+      });
+      const result = await response.json().catch(() => ({}));
+      showToast(response.ok && result.success === true
+        ? `${orgName} ${orgYear}년 집행내역 ${nextRows.length}건을 저장했습니다.`
+        : '저장에 실패했습니다 (로컬에만 반영됨)');
     } catch (error) {
       showToast('엑셀 파일을 읽지 못했습니다');
       console.error(error);
@@ -568,9 +650,35 @@ export default function BudgetExecution2026() {
 
   // 예산 집행내역은 회계연도별로 따로 보여준다(예전 자료는 연도 값이 없어 2026으로 본다).
   const yearDetails = useMemo(
-    () => executionDetails.filter((row) => (row.year || "2026") === detailYear),
+    () => executionDetails.filter((row) => (row.year || "2026") === detailYear && row.division !== ORG_DIVISION),
     [executionDetails, detailYear]
   );
+
+  const orgDetails = useMemo(
+    () => executionDetails.filter((row) => row.division === ORG_DIVISION && row.year === orgYear && row.department === orgName),
+    [executionDetails, orgYear, orgName]
+  );
+  const orgPrograms = useMemo(
+    () => Array.from(new Set(orgDetails.map((row) => row.detailProgram).filter(Boolean))).sort(),
+    [orgDetails]
+  );
+  const orgStatisticsCodes = useMemo(
+    () => Array.from(new Set(orgDetails
+      .filter((row) => orgProgramFilter === "" || row.detailProgram === orgProgramFilter)
+      .map((row) => row.statisticsAccount).filter(Boolean))).sort(),
+    [orgDetails, orgProgramFilter]
+  );
+  const filteredOrgDetails = useMemo(() => {
+    const keyword = orgSearch.toLowerCase();
+    return orgDetails.filter((row) =>
+      (orgProgramFilter === "" || row.detailProgram === orgProgramFilter) &&
+      (orgStatisticsFilter === "" || row.statisticsAccount === orgStatisticsFilter) &&
+      (keyword === "" || [row.detailProgram, row.note, row.vendorName, row.unitProgram].some((value) => value.toLowerCase().includes(keyword)))
+    );
+  }, [orgDetails, orgProgramFilter, orgStatisticsFilter, orgSearch]);
+  const orgTotalPages = Math.max(1, Math.ceil(filteredOrgDetails.length / detailRowsPerPage));
+  const paginatedOrgDetails = filteredOrgDetails.slice((orgPage - 1) * detailRowsPerPage, orgPage * detailRowsPerPage);
+  const orgTotalAmount = filteredOrgDetails.reduce((sum, row) => sum + row.resolutionAmount, 0);
 
   const detailDepartments = useMemo(
     () => Array.from(new Set(yearDetails.map((row) => row.department))).sort(),
@@ -682,7 +790,7 @@ export default function BudgetExecution2026() {
             <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                {([["summary", "부서별 예산집행현황"], ["details", "예산 집행내역"]] as const).map(([view, label]) => (
+                {([["summary", "부서별 예산집행현황"], ["details", "예산 집행내역"], ["org", "보조단체 집행내역"]] as const).map(([view, label]) => (
                   <button
                     key={view}
                     type="button"
@@ -708,7 +816,7 @@ export default function BudgetExecution2026() {
                   className="upload-input"
                   type="file"
                   accept=".xlsx,.xls,.csv"
-                  onChange={(event) => execView === "details" ? handleExecutionDetailUpload(event.target.files?.[0]) : handleExcelUpload(event.target.files?.[0])}
+                  onChange={(event) => execView === "org" ? handleOrgExecutionUpload(event.target.files?.[0]) : execView === "details" ? handleExecutionDetailUpload(event.target.files?.[0]) : handleExcelUpload(event.target.files?.[0])}
                 />
               </label>
             </div>
@@ -948,6 +1056,116 @@ export default function BudgetExecution2026() {
             </div>
             <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
               {filteredDetails.length === 0 ? '0' : (detailPage - 1) * detailRowsPerPage + 1}–{Math.min(detailPage * detailRowsPerPage, filteredDetails.length)} of {filteredDetails.length}
+            </div>
+          </div>
+        </section>
+        )}
+
+        {execView === "org" && (
+        <section className="table-panel" style={{ marginTop: "8px" }}>
+          <div className="table-heading" style={{ borderBottom: 'none', justifyContent: 'space-between' }}>
+            <div className="table-title">
+              <div className="execution-filter-bar">
+                <ExecutionFilterDropdown
+                  label="회계연도"
+                  value={orgYear}
+                  options={[
+                    { value: "2025", label: "2025년" },
+                    { value: "2026", label: "2026년" },
+                  ]}
+                  onChange={(value) => { setOrgYear(value); setOrgProgramFilter(""); setOrgStatisticsFilter(""); setOrgPage(1); }}
+                  placeholder="연도 선택"
+                  clearable={false}
+                />
+                <ExecutionFilterDropdown
+                  label="단체"
+                  value={orgName}
+                  options={ORGANIZATIONS.map((name) => ({ value: name, label: name }))}
+                  onChange={(value) => { setOrgName(value); setOrgProgramFilter(""); setOrgStatisticsFilter(""); setOrgPage(1); }}
+                  placeholder="단체 선택"
+                  clearable={false}
+                />
+                <ExecutionFilterDropdown
+                  label="사업명"
+                  value={orgProgramFilter}
+                  options={orgPrograms.map((name) => ({ value: name, label: name }))}
+                  onChange={(value) => { setOrgProgramFilter(value); setOrgStatisticsFilter(""); setOrgPage(1); }}
+                  placeholder="사업명 선택"
+                  wide
+                />
+                <ExecutionFilterDropdown
+                  label="통계목"
+                  value={orgStatisticsFilter}
+                  options={orgStatisticsCodes.map((code) => ({ value: code, label: code }))}
+                  onChange={(value) => { setOrgStatisticsFilter(value); setOrgPage(1); }}
+                  placeholder="통계목 선택"
+                />
+              </div>
+            </div>
+
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+              <div className="search-box">
+                <Search size={17} />
+                <input
+                  value={orgSearch}
+                  onChange={(event) => { setOrgSearch(event.target.value); setOrgPage(1); }}
+                  placeholder="사업명·내용·거래처명 검색"
+                  aria-label="검색"
+                />
+                {orgSearch && (
+                  <button aria-label="검색어 지우기" onClick={() => setOrgSearch("")}>
+                    <X size={14} />
+                  </button>
+                )}
+              </div>
+              <span className="unit-note">(단위: 원)</span>
+            </div>
+          </div>
+
+          <div className="table-scroll">
+            <table className="budget-table" style={{ tableLayout: 'auto', width: 'auto', minWidth: '100%' }}>
+              <thead>
+                <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
+                  {["사업명", "통계목", "집행일자", "내용", "집행액", "거래처명", "기타"].map((label) => (
+                    <th key={label} style={{ textAlign: 'center', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>{label}</th>
+                  ))}
+                </tr>
+              </thead>
+              <tbody>
+                {paginatedOrgDetails.length > 0 && (
+                  <tr key="org-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredOrgDetails.length}건)</td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(orgTotalAmount)}</td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                    <td style={{ padding: '12px 10px' }}></td>
+                  </tr>
+                )}
+                {paginatedOrgDetails.length === 0 ? (
+                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>{orgName} {orgYear}년 집행내역이 없습니다. 위 업로드 버튼으로 엑셀을 올려 주세요.</td></tr>
+                ) : paginatedOrgDetails.map((row) => (
+                  <tr key={row.id} className="budget-row">
+                    <td title={row.detailProgram} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px' }}>{row.detailProgram}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.statisticsAccount}</td>
+                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{row.resolutionDate}</td>
+                    <td title={row.note} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '320px' }}>{row.note}</td>
+                    <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
+                    <td title={row.vendorName} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{row.vendorName}</td>
+                    <td title={row.unitProgram} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{row.unitProgram}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+
+          <div className="table-footer" style={{ marginTop: '16px' }}>
+            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
+              <Pagination page={orgPage} totalPages={orgTotalPages} onChange={setOrgPage} />
+            </div>
+            <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
+              {filteredOrgDetails.length === 0 ? '0' : (orgPage - 1) * detailRowsPerPage + 1}–{Math.min(orgPage * detailRowsPerPage, filteredOrgDetails.length)} of {filteredOrgDetails.length}
             </div>
           </div>
         </section>
