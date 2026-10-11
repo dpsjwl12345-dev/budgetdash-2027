@@ -58,6 +58,7 @@ const ORG_DIVISION = "보조단체";
 const ORG_SETTLEMENT = "보조단체정산";
 const SETTLEMENT_OPTION = "__settlement__";
 const ORGANIZATIONS = ["화성시체육회", "화성시장애인체육회"];
+const NEW_ORGANIZATION = "__new_organization__";
 // [머리글, 폭, 정렬]
 const ORG_COLUMNS = [
   ["사업명", "12%", "left"],
@@ -257,6 +258,9 @@ export default function BudgetExecution2026() {
   const [execView, setExecView] = useState<"summary" | "details" | "org">("summary");
   const [orgYear, setOrgYear] = useState("2026");
   const [orgName, setOrgName] = useState(ORGANIZATIONS[0]);
+  // 새 단체: 업로드로 생긴 단체 + "단체 추가"로 직접 넣은 이름.
+  const [extraOrganizations, setExtraOrganizations] = useState<string[]>([]);
+  const [newOrganization, setNewOrganization] = useState<string | null>(null);
   const [orgProgramFilter, setOrgProgramFilter] = useState("");
   const [orgStatisticsFilter, setOrgStatisticsFilter] = useState("");
   const [orgSearch, setOrgSearch] = useState("");
@@ -426,7 +430,9 @@ export default function BudgetExecution2026() {
         .map((cells, index) => {
           const program = text(cell(cells, isSettlement ? "보조사업명" : "사업명"));
           if (program) lastProgram = program;
-          const base = { id: Date.now() + index, year: orgYear, department: orgName, division, policyProgram: "", resolutionDate: "", vendorName: "", statisticsAccount: "" };
+          // 파일에 보조사업자명 칸이 있으면 그 단체로 저장한다(화면에서 고른 단체에 덮어쓰지 않도록).
+          const department = text(cell(cells, "보조사업자명")) || orgName;
+          const base = { id: Date.now() + index, year: orgYear, department, division, policyProgram: "", resolutionDate: "", vendorName: "", statisticsAccount: "" };
           // 정산 줄은 금액 칸이 하나뿐인 표에 담으므로 교부금액은 적요(note), 집행잔액은 단위사업(unitProgram) 자리에 숫자로 둔다.
           return isSettlement
             ? { ...base, detailProgram: program, note: String(amount(cell(cells, "교부금액"))), unitProgram: String(amount(cell(cells, "집행잔액"))), resolutionAmount: amount(cell(cells, "집행금액")) }
@@ -450,20 +456,30 @@ export default function BudgetExecution2026() {
         return;
       }
 
+      // 단체별로 나눠 저장한다(서버는 연도·단체·구분이 같은 몫만 지우고 다시 넣는다).
+      const byOrganization = new Map<string, ExecutionDetail[]>();
+      for (const row of nextRows) byOrganization.set(row.department, [...(byOrganization.get(row.department) ?? []), row]);
+      const organizations = Array.from(byOrganization.keys());
+
       setExecutionDetails((previous) => [
-        ...previous.filter((row) => !(row.division === division && row.year === orgYear && row.department === orgName)),
+        ...previous.filter((row) => !(row.division === division && row.year === orgYear && organizations.includes(row.department))),
         ...nextRows,
       ]);
+      setExtraOrganizations((previous) => Array.from(new Set([...previous, ...organizations])));
+      if (organizations.length === 1) setOrgName(organizations[0]);
       setOrgPage(1);
 
-      const response = await fetch('/api/cloud-sync?type=execution-details', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: orgYear, department: orgName, division, data: nextRows }),
-      });
-      const result = await response.json().catch(() => ({}));
-      showToast(response.ok && result.success === true
-        ? `${orgName} ${orgYear}년 ${isSettlement ? "정산" : "집행내역"} ${nextRows.length}건을 저장했습니다.`
+      const results = await Promise.all(organizations.map(async (department) => {
+        const response = await fetch('/api/cloud-sync?type=execution-details', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ year: orgYear, department, division, data: byOrganization.get(department) }),
+        });
+        const result = await response.json().catch(() => ({}));
+        return response.ok && result.success === true;
+      }));
+      showToast(results.every(Boolean)
+        ? `${organizations.join(", ")} ${orgYear}년 ${isSettlement ? "정산" : "집행내역"} ${nextRows.length}건을 저장했습니다.`
         : '저장에 실패했습니다 (로컬에만 반영됨)');
     } catch (error) {
       showToast('엑셀 파일을 읽지 못했습니다');
@@ -692,6 +708,13 @@ export default function BudgetExecution2026() {
     [executionDetails, detailYear]
   );
 
+  // 단체 목록: 기본 두 곳 + 저장된 자료에 있는 단체 + 이번에 추가한 단체.
+  const organizationOptions = useMemo(() => Array.from(new Set([
+    ...ORGANIZATIONS,
+    ...executionDetails.filter((row) => row.division === ORG_DIVISION || row.division === ORG_SETTLEMENT).map((row) => row.department),
+    ...extraOrganizations,
+    orgName,
+  ])), [executionDetails, extraOrganizations, orgName]);
   const orgDetails = useMemo(
     () => executionDetails.filter((row) => row.division === ORG_DIVISION && row.year === orgYear && row.department === orgName),
     [executionDetails, orgYear, orgName]
@@ -1138,11 +1161,39 @@ export default function BudgetExecution2026() {
                 <ExecutionFilterDropdown
                   label="단체"
                   value={orgName}
-                  options={ORGANIZATIONS.map((name) => ({ value: name, label: name }))}
-                  onChange={(value) => { setOrgName(value); setOrgProgramFilter(""); setOrgStatisticsFilter(""); setOrgPage(1); }}
+                  options={[
+                    ...organizationOptions.map((name) => ({ value: name, label: name })),
+                    { value: NEW_ORGANIZATION, label: "+ 단체 추가" },
+                  ]}
+                  onChange={(value) => {
+                    if (value === NEW_ORGANIZATION) { setNewOrganization(""); return; }
+                    setOrgName(value); setOrgProgramFilter(""); setOrgStatisticsFilter(""); setOrgPage(1);
+                  }}
                   placeholder="단체 선택"
                   clearable={false}
                 />
+                {newOrganization !== null && (
+                  // 새 단체 이름을 넣고 Enter → 그 단체가 선택되고, 이어서 올리는 엑셀이 그 단체로 저장된다.
+                  <div className="search-box" style={{ width: 200 }}>
+                    <input
+                      autoFocus
+                      value={newOrganization}
+                      onChange={(event) => setNewOrganization(event.target.value)}
+                      onKeyDown={(event) => {
+                        if (event.key === "Escape") setNewOrganization(null);
+                        if (event.key !== "Enter") return;
+                        const name = newOrganization.trim();
+                        if (!name) return;
+                        setExtraOrganizations((previous) => Array.from(new Set([...previous, name])));
+                        setOrgName(name); setOrgProgramFilter(""); setOrgStatisticsFilter(""); setOrgPage(1);
+                        setNewOrganization(null);
+                      }}
+                      placeholder="새 단체명 입력 후 Enter"
+                      aria-label="새 단체명"
+                    />
+                    <button aria-label="취소" onClick={() => setNewOrganization(null)}><X size={14} /></button>
+                  </div>
+                )}
                 <ExecutionFilterDropdown
                   label="사업명"
                   value={orgProgramFilter}
