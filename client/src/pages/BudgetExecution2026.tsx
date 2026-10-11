@@ -440,9 +440,8 @@ export default function BudgetExecution2026() {
                 vendorName: text(cell(cells, "거래처명")),
               };
         })
-        // 정산표의 합계·소계 줄은 화면에서 다시 더하므로 뺀다.
         .filter((row) => isSettlement
-          ? row.detailProgram && !/^(합계|소계|계|총계)$/.test(row.detailProgram.replace(/\s/g, "")) && (Number(row.note) || row.resolutionAmount)
+          ? Boolean(row.detailProgram)
           : row.note || row.resolutionAmount);
 
       if (!nextRows.length) {
@@ -702,7 +701,6 @@ export default function BudgetExecution2026() {
       .map((row) => ({ program: row.detailProgram, granted: Number(row.note) || 0, executed: row.resolutionAmount, balance: Number(row.unitProgram) || 0 })),
     [executionDetails, orgYear, orgName]
   );
-  const [settlementOpen, setSettlementOpen] = useState(false);
   const orgPrograms = useMemo(
     () => Array.from(new Set(orgDetails.map((row) => row.detailProgram).filter(Boolean))).sort(),
     [orgDetails]
@@ -1167,49 +1165,24 @@ export default function BudgetExecution2026() {
             </div>
           </div>
 
-          {orgSettlement.length > 0 && (() => {
-            const won = (value: number) => new Intl.NumberFormat("ko-KR").format(value);
-            const sum = (key: "granted" | "executed" | "balance") => orgSettlement.reduce((total, row) => total + row[key], 0);
-            const granted = sum("granted");
-            const executed = sum("executed");
-            // 정산서 집행금액과 거래 단위 집행내역 합계를 보조사업별로 맞대 본다(같은 사업명끼리).
-            const ledgerByProgram = new Map<string, number>();
-            for (const row of orgDetails) ledgerByProgram.set(row.detailProgram, (ledgerByProgram.get(row.detailProgram) ?? 0) + row.resolutionAmount);
-            return (
-              <div className="org-settlement">
-                <button type="button" className="org-settlement-summary" aria-expanded={settlementOpen} onClick={() => setSettlementOpen((open) => !open)}>
-                  <span className="org-settlement-title">{orgYear}년 정산</span>
-                  <span>교부 <b>{won(granted)}</b></span>
-                  <span>집행 <b>{won(executed)}</b></span>
-                  <span>잔액 <b>{won(sum("balance"))}</b></span>
-                  <span>집행률 <b>{granted > 0 ? (executed / granted * 100).toFixed(1) : "0.0"}%</b></span>
-                  <span className="org-settlement-toggle">보조사업별 {orgSettlement.length}개 <ChevronDown size={15} className={`dropdown-icon ${settlementOpen ? "open" : ""}`} /></span>
-                </button>
-                {settlementOpen && (
-                  <table className="org-settlement-table">
-                    <thead>
-                      <tr><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th><th>집행률</th><th>집행내역 합계</th></tr>
-                    </thead>
-                    <tbody>
-                      {orgSettlement.map((row) => {
-                        const ledger = ledgerByProgram.get(row.program);
-                        return (
-                          <tr key={row.program}>
-                            <td>{row.program}</td>
-                            <td>{won(row.granted)}</td>
-                            <td>{won(row.executed)}</td>
-                            <td>{won(row.balance)}</td>
-                            <td>{row.granted > 0 ? (row.executed / row.granted * 100).toFixed(1) : "0.0"}%</td>
-                            <td className={ledger != null && ledger !== row.executed ? "is-mismatch" : undefined} title={ledger != null && ledger !== row.executed ? `정산 집행금액과 ${won(row.executed - ledger)}원 차이` : undefined}>{ledger != null ? won(ledger) : "-"}</td>
-                          </tr>
-                        );
-                      })}
-                    </tbody>
-                  </table>
-                )}
-              </div>
-            );
-          })()}
+          {/* 정산: 올린 정산서 값을 그대로, 올린 순서대로 보여준다(계산·합산하지 않음). */}
+          {orgSettlement.length > 0 && (
+            <table className="org-settlement-table">
+              <thead>
+                <tr><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th></tr>
+              </thead>
+              <tbody>
+                {orgSettlement.map((row, index) => (
+                  <tr key={index}>
+                    <td>{row.program}</td>
+                    <td>{new Intl.NumberFormat("ko-KR").format(row.granted)}</td>
+                    <td>{new Intl.NumberFormat("ko-KR").format(row.executed)}</td>
+                    <td>{new Intl.NumberFormat("ko-KR").format(row.balance)}</td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          )}
 
           <div className="table-scroll">
             <table className="budget-table org-exec-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
