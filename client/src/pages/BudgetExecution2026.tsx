@@ -834,7 +834,7 @@ export default function BudgetExecution2026() {
             <div className="title-area" style={{ alignItems: "flex-end", justifyContent: "space-between", gap: "24px" }}>
             <div className="title-wrapper" style={{ flexDirection: "column", alignItems: "flex-start", gap: "0px" }}>
               <div style={{ display: "flex", alignItems: "center", gap: "2px" }}>
-                {([["summary", "부서별 예산집행현황"], ["details", "예산 집행내역"], ["org", "보조단체 집행내역"]] as const).map(([view, label]) => (
+                {([["summary", "부서별 예산집행현황"], ["details", "예산 집행내역"]] as const).map(([view, label]) => (
                   <button
                     key={view}
                     type="button"
@@ -853,6 +853,20 @@ export default function BudgetExecution2026() {
               </div>
             </div>
             <div style={{ display: "flex", alignItems: "flex-end", gap: "24px" }}>
+              {/* 보조단체 집행내역은 소관부서 자료와 성격이 달라 제목 탭과 떼어 업로드 버튼 옆에 둔다. */}
+              <button
+                type="button"
+                onClick={() => setExecView("org")}
+                style={{
+                  fontSize: '26px', fontWeight: 700, padding: '6.25px 12px 0.75px', lineHeight: 1.15, borderRadius: '6px',
+                  border: 'none', cursor: 'pointer',
+                  background: 'transparent',
+                  color: execView === "org" ? '#3d70b8' : '#8b9099',
+                  boxShadow: execView === "org" ? 'inset 0 0 0 1px #3d70b8' : 'none',
+                }}
+              >
+                보조단체 집행내역
+              </button>
               <label className="icon-stack-btn" aria-label="업로드" data-tooltip="업로드">
                 <div className="icon-stack-front"><Upload size={20} /></div>
                 <input
