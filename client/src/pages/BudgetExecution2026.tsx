@@ -56,6 +56,7 @@ type ExecutionDetail = {
 // (부서명 자리에 단체명, 세부사업 자리에 사업명, 적요 자리에 내용, 단위사업 자리에 기타).
 const ORG_DIVISION = "보조단체";
 const ORG_SETTLEMENT = "보조단체정산";
+const SETTLEMENT_OPTION = "__settlement__";
 const ORGANIZATIONS = ["화성시체육회", "화성시장애인체육회"];
 // [머리글, 폭, 정렬]
 const ORG_COLUMNS = [
@@ -1131,18 +1132,22 @@ export default function BudgetExecution2026() {
                 <ExecutionFilterDropdown
                   label="사업명"
                   value={orgProgramFilter}
-                  options={orgPrograms.map((name) => ({ value: name, label: name }))}
+                  options={[
+                    // 정산을 올린 연도·단체면 맨 앞에 "○년 ○○ 정산"을 두고, 고르면 정산표만 보여준다.
+                    ...(orgSettlement.length > 0 ? [{ value: SETTLEMENT_OPTION, label: `${orgYear} ${orgName} 정산` }] : []),
+                    ...orgPrograms.map((name) => ({ value: name, label: name })),
+                  ]}
                   onChange={(value) => { setOrgProgramFilter(value); setOrgStatisticsFilter(""); setOrgPage(1); }}
                   placeholder="사업명 선택"
                   wide
                 />
-                <ExecutionFilterDropdown
+                {orgProgramFilter !== SETTLEMENT_OPTION && <ExecutionFilterDropdown
                   label="통계목"
                   value={orgStatisticsFilter}
                   options={orgStatisticsCodes.map((code) => ({ value: code, label: code }))}
                   onChange={(value) => { setOrgStatisticsFilter(value); setOrgPage(1); }}
                   placeholder="통계목 선택"
-                />
+                />}
               </div>
             </div>
 
@@ -1166,7 +1171,7 @@ export default function BudgetExecution2026() {
           </div>
 
           {/* 정산: 올린 정산서 값을 올린 순서대로 보여주고, 맨 위에 합계 줄, 오른쪽 끝에 집행률(집행금액 ÷ 교부금액)을 둔다. */}
-          {orgSettlement.length > 0 && (() => {
+          {orgProgramFilter === SETTLEMENT_OPTION && (() => {
             const won = (value: number) => new Intl.NumberFormat("ko-KR").format(value);
             const rate = (executed: number, granted: number) => granted > 0 ? `${(executed / granted * 100).toFixed(1)}%` : "-";
             const total = orgSettlement.reduce((sum, row) => ({
@@ -1177,10 +1182,11 @@ export default function BudgetExecution2026() {
             return (
               <table className="org-settlement-table">
                 <thead>
-                  <tr><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th><th>집행률</th></tr>
+                  <tr><th>연번</th><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th><th>집행률</th></tr>
                 </thead>
                 <tbody>
                   <tr className="is-total">
+                    <td></td>
                     <td>합계 ({orgSettlement.length}개 사업)</td>
                     <td>{won(total.granted)}</td>
                     <td>{won(total.executed)}</td>
@@ -1189,6 +1195,7 @@ export default function BudgetExecution2026() {
                   </tr>
                   {orgSettlement.map((row, index) => (
                     <tr key={index}>
+                      <td>{index + 1}</td>
                       <td>{row.program}</td>
                       <td>{won(row.granted)}</td>
                       <td>{won(row.executed)}</td>
@@ -1201,52 +1208,56 @@ export default function BudgetExecution2026() {
             );
           })()}
 
-          <div className="table-scroll">
-            <table className="budget-table org-exec-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
-              {/* 페이지를 넘겨도 칸 폭이 흔들리지 않게 폭을 고정하고, 머리글 정렬을 내용 정렬과 맞춘다:
-                  글자는 왼쪽, 날짜·증빙은 가운데, 금액은 오른쪽. */}
-              <colgroup>
-                {ORG_COLUMNS.map(([label, width]) => <col key={label} style={{ width }} />)}
-              </colgroup>
-              <thead>
-                <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  {ORG_COLUMNS.map(([label]) => (
-                    <th key={label}>{label}</th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {paginatedOrgDetails.length > 0 && (
-                  <tr key="org-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
-                    <td colSpan={4} className="is-left" style={{ fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredOrgDetails.length.toLocaleString("ko-KR")}건)</td>
-                    <td className="is-right" style={{ color: '#5b9bf0' }}>{new Intl.NumberFormat("ko-KR").format(orgTotalAmount)}</td>
-                    <td colSpan={2} style={{ padding: '12px 10px' }}></td>
+          {orgProgramFilter !== SETTLEMENT_OPTION && (
+          <>
+            <div className="table-scroll">
+              <table className="budget-table org-exec-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
+                {/* 페이지를 넘겨도 칸 폭이 흔들리지 않게 폭을 고정하고, 머리글 정렬을 내용 정렬과 맞춘다:
+                    글자는 왼쪽, 날짜·증빙은 가운데, 금액은 오른쪽. */}
+                <colgroup>
+                  {ORG_COLUMNS.map(([label, width]) => <col key={label} style={{ width }} />)}
+                </colgroup>
+                <thead>
+                  <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
+                    {ORG_COLUMNS.map(([label]) => (
+                      <th key={label}>{label}</th>
+                    ))}
                   </tr>
-                )}
-                {paginatedOrgDetails.length === 0 ? (
-                  <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>{orgName} {orgYear}년 집행내역이 없습니다. 위 업로드 버튼으로 엑셀을 올려 주세요.</td></tr>
-                ) : paginatedOrgDetails.map((row) => {
-                  const values = [row.detailProgram, row.statisticsAccount, row.resolutionDate, row.note, new Intl.NumberFormat("ko-KR").format(row.resolutionAmount), row.vendorName, row.unitProgram];
-                  return (
-                    <tr key={row.id} className="budget-row">
-                      {ORG_COLUMNS.map(([label, , align], index) => (
-                        <td key={label} title={values[index]} className={`is-${align}`}>{values[index]}</td>
-                      ))}
+                </thead>
+                <tbody>
+                  {paginatedOrgDetails.length > 0 && (
+                    <tr key="org-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
+                      <td colSpan={4} className="is-left" style={{ fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredOrgDetails.length.toLocaleString("ko-KR")}건)</td>
+                      <td className="is-right" style={{ color: '#5b9bf0' }}>{new Intl.NumberFormat("ko-KR").format(orgTotalAmount)}</td>
+                      <td colSpan={2} style={{ padding: '12px 10px' }}></td>
                     </tr>
-                  );
-                })}
-              </tbody>
-            </table>
-          </div>
+                  )}
+                  {paginatedOrgDetails.length === 0 ? (
+                    <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>{orgName} {orgYear}년 집행내역이 없습니다. 위 업로드 버튼으로 엑셀을 올려 주세요.</td></tr>
+                  ) : paginatedOrgDetails.map((row) => {
+                    const values = [row.detailProgram, row.statisticsAccount, row.resolutionDate, row.note, new Intl.NumberFormat("ko-KR").format(row.resolutionAmount), row.vendorName, row.unitProgram];
+                    return (
+                      <tr key={row.id} className="budget-row">
+                        {ORG_COLUMNS.map(([label, , align], index) => (
+                          <td key={label} title={values[index]} className={`is-${align}`}>{values[index]}</td>
+                        ))}
+                      </tr>
+                    );
+                  })}
+                </tbody>
+              </table>
+            </div>
 
-          <div className="table-footer" style={{ marginTop: '16px' }}>
-            <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
-              <Pagination page={orgPage} totalPages={orgTotalPages} onChange={setOrgPage} />
+            <div className="table-footer" style={{ marginTop: '16px' }}>
+              <div style={{ display: 'flex', justifyContent: 'center', paddingBottom: '8px' }}>
+                <Pagination page={orgPage} totalPages={orgTotalPages} onChange={setOrgPage} />
+              </div>
+              <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
+                {filteredOrgDetails.length === 0 ? '0' : (orgPage - 1) * detailRowsPerPage + 1}–{Math.min(orgPage * detailRowsPerPage, filteredOrgDetails.length)} of {filteredOrgDetails.length}
+              </div>
             </div>
-            <div style={{ textAlign: 'center', fontSize: '13px', color: '#9fb0c8', marginTop: '4px' }}>
-              {filteredOrgDetails.length === 0 ? '0' : (orgPage - 1) * detailRowsPerPage + 1}–{Math.min(orgPage * detailRowsPerPage, filteredOrgDetails.length)} of {filteredOrgDetails.length}
-            </div>
-          </div>
+          </>
+          )}
         </section>
         )}
 
