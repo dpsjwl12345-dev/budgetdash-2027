@@ -55,6 +55,7 @@ type ExecutionDetail = {
 // 탭을 따로 두지만, 저장은 같은 budget_execution_details 표에 구분="보조단체"로 넣는다
 // (부서명 자리에 단체명, 세부사업 자리에 사업명, 적요 자리에 내용, 단위사업 자리에 기타).
 const ORG_DIVISION = "보조단체";
+const ORG_SETTLEMENT = "보조단체정산";
 const ORGANIZATIONS = ["화성시체육회", "화성시장애인체육회"];
 // [머리글, 폭, 정렬]
 const ORG_COLUMNS = [
@@ -375,18 +376,26 @@ export default function BudgetExecution2026() {
     }
   };
 
-  // 보조단체 집행내역: 첫 줄 머리글 = 사업명 · 통계목 · 집행일자 · 내용 · 집행액 · 거래처명 · 기타.
-  // 화면에서 고른 연도·단체 몫을 통째로 교체한다.
+  // 보조단체 업로드는 버튼 하나로 받고, 머리글을 보고 두 형식을 가른다.
+  // - 집행내역: 사업명 · 통계목 · 집행일자 · 내용 · 집행액 · 거래처명 · 기타 (거래 한 건씩)
+  // - 정산: 보조사업명 · 보조사업자명 · 교부금액 · 집행금액 · 집행잔액 (보조사업 한 줄씩)
+  // 제목 줄이 위에 있어도 되도록 머리글 줄을 찾아 그 아래부터 읽는다. 화면에서 고른 연도·단체 몫을 교체한다.
   const handleOrgExecutionUpload = async (file?: File) => {
     if (!file) return;
     try {
       const workbook = XLSX.read(await file.arrayBuffer(), { type: "array" });
       const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
-      const imported = XLSX.utils.sheet_to_json<Record<string, unknown>>(firstSheet, { defval: "" });
+      const grid = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
+      const squash = (value: unknown) => String(value ?? "").replace(/\s/g, "");
+      const headerIndex = grid.findIndex((cells) => cells.some((cell) => ["사업명", "보조사업명"].includes(squash(cell))));
+      if (headerIndex < 0) throw new Error("no header");
+      const headers = grid[headerIndex].map(squash);
+      const records = grid.slice(headerIndex + 1);
+      const isSettlement = headers.includes("교부금액");
 
-      const field = (record: Record<string, unknown>, name: string) => {
-        const key = Object.keys(record).find((header) => header.replace(/\s/g, "") === name);
-        return key ? record[key] : "";
+      const cell = (cells: unknown[], name: string) => {
+        const column = headers.indexOf(name);
+        return column >= 0 ? cells[column] : "";
       };
       const text = (value: unknown) => (value == null ? "" : String(value).trim());
       const amount = (value: unknown) => {
@@ -397,33 +406,37 @@ export default function BudgetExecution2026() {
       // 엑셀 날짜 칸은 일련번호로 읽히므로 yyyy-mm-dd로 바꾼다.
       const date = (value: unknown) => typeof value === "number" ? XLSX.SSF.format("yyyy-mm-dd", value) : text(value);
 
+      const division = isSettlement ? ORG_SETTLEMENT : ORG_DIVISION;
       // 사업명이 병합 셀이면 첫 줄에만 값이 있으므로 위 줄 값을 이어받는다.
       let lastProgram = "";
-      const nextRows: ExecutionDetail[] = imported
-        .map((record, index) => {
-          const program = text(field(record, "사업명"));
+      const nextRows: ExecutionDetail[] = records
+        .map((cells, index) => {
+          const program = text(cell(cells, isSettlement ? "보조사업명" : "사업명"));
           if (program) lastProgram = program;
-          return {
-            id: Date.now() + index,
-            year: orgYear,
-            department: orgName,
-            division: ORG_DIVISION,
-            policyProgram: "",
-            unitProgram: text(field(record, "기타")),
-            detailProgram: program || lastProgram,
-            statisticsAccount: text(field(record, "통계목")),
-            note: text(field(record, "내용")),
-            resolutionAmount: amount(field(record, "집행액")),
-            resolutionDate: date(field(record, "집행일자")),
-            vendorName: text(field(record, "거래처명")),
-          };
+          const base = { id: Date.now() + index, year: orgYear, department: orgName, division, policyProgram: "", resolutionDate: "", vendorName: "", statisticsAccount: "" };
+          // 정산 줄은 금액 칸이 하나뿐인 표에 담으므로 교부금액은 적요(note), 집행잔액은 단위사업(unitProgram) 자리에 숫자로 둔다.
+          return isSettlement
+            ? { ...base, detailProgram: program, note: String(amount(cell(cells, "교부금액"))), unitProgram: String(amount(cell(cells, "집행잔액"))), resolutionAmount: amount(cell(cells, "집행금액")) }
+            : {
+                ...base,
+                detailProgram: program || lastProgram,
+                unitProgram: text(cell(cells, "기타")),
+                statisticsAccount: text(cell(cells, "통계목")),
+                note: text(cell(cells, "내용")),
+                resolutionAmount: amount(cell(cells, "집행액")),
+                resolutionDate: date(cell(cells, "집행일자")),
+                vendorName: text(cell(cells, "거래처명")),
+              };
         })
-        .filter((row) => row.note || row.resolutionAmount);
+        // 정산표의 합계·소계 줄은 화면에서 다시 더하므로 뺀다.
+        .filter((row) => isSettlement
+          ? row.detailProgram && !/^(합계|소계|계|총계)$/.test(row.detailProgram.replace(/\s/g, "")) && (Number(row.note) || row.resolutionAmount)
+          : row.note || row.resolutionAmount);
 
       if (!nextRows.length) throw new Error("empty");
 
       setExecutionDetails((previous) => [
-        ...previous.filter((row) => !(row.division === ORG_DIVISION && row.year === orgYear && row.department === orgName)),
+        ...previous.filter((row) => !(row.division === division && row.year === orgYear && row.department === orgName)),
         ...nextRows,
       ]);
       setOrgPage(1);
@@ -431,11 +444,11 @@ export default function BudgetExecution2026() {
       const response = await fetch('/api/cloud-sync?type=execution-details', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ year: orgYear, department: orgName, data: nextRows }),
+        body: JSON.stringify({ year: orgYear, department: orgName, division, data: nextRows }),
       });
       const result = await response.json().catch(() => ({}));
       showToast(response.ok && result.success === true
-        ? `${orgName} ${orgYear}년 집행내역 ${nextRows.length}건을 저장했습니다.`
+        ? `${orgName} ${orgYear}년 ${isSettlement ? "정산" : "집행내역"} ${nextRows.length}건을 저장했습니다.`
         : '저장에 실패했습니다 (로컬에만 반영됨)');
     } catch (error) {
       showToast('엑셀 파일을 읽지 못했습니다');
@@ -660,7 +673,7 @@ export default function BudgetExecution2026() {
 
   // 예산 집행내역은 회계연도별로 따로 보여준다(예전 자료는 연도 값이 없어 2026으로 본다).
   const yearDetails = useMemo(
-    () => executionDetails.filter((row) => (row.year || "2026") === detailYear && row.division !== ORG_DIVISION),
+    () => executionDetails.filter((row) => (row.year || "2026") === detailYear && row.division !== ORG_DIVISION && row.division !== ORG_SETTLEMENT),
     [executionDetails, detailYear]
   );
 
@@ -668,6 +681,13 @@ export default function BudgetExecution2026() {
     () => executionDetails.filter((row) => row.division === ORG_DIVISION && row.year === orgYear && row.department === orgName),
     [executionDetails, orgYear, orgName]
   );
+  const orgSettlement = useMemo(
+    () => executionDetails
+      .filter((row) => row.division === ORG_SETTLEMENT && row.year === orgYear && row.department === orgName)
+      .map((row) => ({ program: row.detailProgram, granted: Number(row.note) || 0, executed: row.resolutionAmount, balance: Number(row.unitProgram) || 0 })),
+    [executionDetails, orgYear, orgName]
+  );
+  const [settlementOpen, setSettlementOpen] = useState(false);
   const orgPrograms = useMemo(
     () => Array.from(new Set(orgDetails.map((row) => row.detailProgram).filter(Boolean))).sort(),
     [orgDetails]
@@ -1131,6 +1151,50 @@ export default function BudgetExecution2026() {
               <span className="unit-note">(단위: 원)</span>
             </div>
           </div>
+
+          {orgSettlement.length > 0 && (() => {
+            const won = (value: number) => new Intl.NumberFormat("ko-KR").format(value);
+            const sum = (key: "granted" | "executed" | "balance") => orgSettlement.reduce((total, row) => total + row[key], 0);
+            const granted = sum("granted");
+            const executed = sum("executed");
+            // 정산서 집행금액과 거래 단위 집행내역 합계를 보조사업별로 맞대 본다(같은 사업명끼리).
+            const ledgerByProgram = new Map<string, number>();
+            for (const row of orgDetails) ledgerByProgram.set(row.detailProgram, (ledgerByProgram.get(row.detailProgram) ?? 0) + row.resolutionAmount);
+            return (
+              <div className="org-settlement">
+                <button type="button" className="org-settlement-summary" aria-expanded={settlementOpen} onClick={() => setSettlementOpen((open) => !open)}>
+                  <span className="org-settlement-title">{orgYear}년 정산</span>
+                  <span>교부 <b>{won(granted)}</b></span>
+                  <span>집행 <b>{won(executed)}</b></span>
+                  <span>잔액 <b>{won(sum("balance"))}</b></span>
+                  <span>집행률 <b>{granted > 0 ? (executed / granted * 100).toFixed(1) : "0.0"}%</b></span>
+                  <span className="org-settlement-toggle">보조사업별 {orgSettlement.length}개 <ChevronDown size={15} className={`dropdown-icon ${settlementOpen ? "open" : ""}`} /></span>
+                </button>
+                {settlementOpen && (
+                  <table className="org-settlement-table">
+                    <thead>
+                      <tr><th>보조사업명</th><th>교부금액</th><th>집행금액</th><th>집행잔액</th><th>집행률</th><th>집행내역 합계</th></tr>
+                    </thead>
+                    <tbody>
+                      {orgSettlement.map((row) => {
+                        const ledger = ledgerByProgram.get(row.program);
+                        return (
+                          <tr key={row.program}>
+                            <td>{row.program}</td>
+                            <td>{won(row.granted)}</td>
+                            <td>{won(row.executed)}</td>
+                            <td>{won(row.balance)}</td>
+                            <td>{row.granted > 0 ? (row.executed / row.granted * 100).toFixed(1) : "0.0"}%</td>
+                            <td className={ledger != null && ledger !== row.executed ? "is-mismatch" : undefined} title={ledger != null && ledger !== row.executed ? `정산 집행금액과 ${won(row.executed - ledger)}원 차이` : undefined}>{ledger != null ? won(ledger) : "-"}</td>
+                          </tr>
+                        );
+                      })}
+                    </tbody>
+                  </table>
+                )}
+              </div>
+            );
+          })()}
 
           <div className="table-scroll">
             <table className="budget-table org-exec-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>

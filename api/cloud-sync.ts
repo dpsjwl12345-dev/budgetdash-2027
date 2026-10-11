@@ -749,11 +749,14 @@ async function saveExecutionDetails(req: any, res: any) {
   const year = String(req.body?.year || '2026');
 
   // 이번 업로드로 해당 연도·부서의 기존 집행내역을 통째로 교체한다(다른 부서·연도는 그대로 둔다).
-  const { error: deleteError } = await supabase
+  // 보조단체는 집행내역과 정산을 같은 단체명으로 따로 올리므로 구분(division)까지 맞는 것만 지운다.
+  let deleteQuery = supabase
     .from('budget_execution_details')
     .delete()
     .eq('department', department)
     .eq('year', year);
+  if (req.body?.division) deleteQuery = deleteQuery.eq('division', req.body.division);
+  const { error: deleteError } = await deleteQuery;
   if (deleteError) {
     res.status(200).json({ success: false, message: "기존 데이터 삭제 실패", error: deleteError.message });
     return;

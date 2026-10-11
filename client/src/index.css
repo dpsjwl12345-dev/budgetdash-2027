@@ -1313,3 +1313,15 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .budget-table.org-exec-table td:nth-child(5) { padding-right: 32px !important; }
 .budget-table.org-exec-table td:nth-child(6) { padding-left: 16px !important; }
 .budget-table.org-exec-table tr:first-child td:nth-child(2) { padding-right: 32px !important; }
+/* 보조단체 정산 요약: 표 위 한 줄, 누르면 보조사업별 정산표가 펼쳐진다. */
+.org-settlement { margin: 0 0 10px; border-top: 1px solid rgba(164, 192, 221, 0.1); border-bottom: 1px solid rgba(164, 192, 221, 0.1); }
+.org-settlement-summary { display: flex; flex-wrap: wrap; align-items: baseline; gap: 6px 26px; width: 100%; padding: 14px 10px; border: 0; background: transparent; color: #9fb0c8; font-size: 14px; text-align: left; cursor: pointer; }
+.org-settlement-summary b { color: #e6eef8; font-weight: 700; font-variant-numeric: tabular-nums; margin-left: 4px; }
+.org-settlement-title { color: #d9ad52; font-size: 15px; font-weight: 700; }
+.org-settlement-toggle { margin-left: auto; display: inline-flex; align-items: center; gap: 4px; color: #7ab8f2; }
+.org-settlement-summary:focus-visible { outline: 2px solid #5b9bf0; outline-offset: -2px; }
+.org-settlement-table { width: 100%; border-collapse: collapse; margin: 0 0 8px; font-variant-numeric: tabular-nums; }
+.org-settlement-table th { padding: 10px; font-size: 14px; font-weight: 700; color: #e6eef8; text-align: center; border-bottom: 1px solid rgba(164, 192, 221, 0.14); }
+.org-settlement-table td { padding: 10px; font-size: 14px; color: #b8cade; text-align: right; border-bottom: 1px solid rgba(164, 192, 221, 0.07); }
+.org-settlement-table td:first-child { text-align: left; }
+.org-settlement-table td.is-mismatch { color: #f0b232; }
