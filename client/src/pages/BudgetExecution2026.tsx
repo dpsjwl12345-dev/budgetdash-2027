@@ -56,6 +56,16 @@ type ExecutionDetail = {
 // (부서명 자리에 단체명, 세부사업 자리에 사업명, 적요 자리에 내용, 단위사업 자리에 기타).
 const ORG_DIVISION = "보조단체";
 const ORGANIZATIONS = ["화성시체육회", "화성시장애인체육회"];
+// [머리글, 폭, 정렬]
+const ORG_COLUMNS = [
+  ["사업명", "12%", "left"],
+  ["통계목", "13%", "left"],
+  ["집행일자", "9%", "center"],
+  ["내용", "34%", "left"],
+  ["집행액", "10%", "right"],
+  ["거래처명", "13%", "left"],
+  ["기타", "9%", "center"],
+] as const;
 
 function formatAmount(value: number) {
   const thousands = Math.round(value / 1000);
@@ -1123,39 +1133,39 @@ export default function BudgetExecution2026() {
           </div>
 
           <div className="table-scroll">
-            <table className="budget-table" style={{ tableLayout: 'auto', width: 'auto', minWidth: '100%' }}>
+            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
+              {/* 페이지를 넘겨도 칸 폭이 흔들리지 않게 폭을 고정하고, 머리글 정렬을 내용 정렬과 맞춘다:
+                  글자는 왼쪽, 날짜·증빙은 가운데, 금액은 오른쪽. */}
+              <colgroup>
+                {ORG_COLUMNS.map(([label, width]) => <col key={label} style={{ width }} />)}
+              </colgroup>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  {["사업명", "통계목", "집행일자", "내용", "집행액", "거래처명", "기타"].map((label) => (
-                    <th key={label} style={{ textAlign: 'center', padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>{label}</th>
+                  {ORG_COLUMNS.map(([label, , align]) => (
+                    <th key={label} style={{ textAlign: align, padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>{label}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {paginatedOrgDetails.length > 0 && (
                   <tr key="org-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
-                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredOrgDetails.length}건)</td>
-                    <td style={{ padding: '12px 10px' }}></td>
-                    <td style={{ padding: '12px 10px' }}></td>
-                    <td style={{ padding: '12px 10px' }}></td>
+                    <td colSpan={4} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredOrgDetails.length.toLocaleString("ko-KR")}건)</td>
                     <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(orgTotalAmount)}</td>
-                    <td style={{ padding: '12px 10px' }}></td>
-                    <td style={{ padding: '12px 10px' }}></td>
+                    <td colSpan={2} style={{ padding: '12px 10px' }}></td>
                   </tr>
                 )}
                 {paginatedOrgDetails.length === 0 ? (
                   <tr><td colSpan={7} style={{ textAlign: 'center', padding: '32px', color: 'var(--text-muted)' }}>{orgName} {orgYear}년 집행내역이 없습니다. 위 업로드 버튼으로 엑셀을 올려 주세요.</td></tr>
-                ) : paginatedOrgDetails.map((row) => (
-                  <tr key={row.id} className="budget-row">
-                    <td title={row.detailProgram} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '260px' }}>{row.detailProgram}</td>
-                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap' }}>{row.statisticsAccount}</td>
-                    <td style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', fontVariantNumeric: 'tabular-nums' }}>{row.resolutionDate}</td>
-                    <td title={row.note} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '320px' }}>{row.note}</td>
-                    <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(row.resolutionAmount)}</td>
-                    <td title={row.vendorName} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{row.vendorName}</td>
-                    <td title={row.unitProgram} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: '180px' }}>{row.unitProgram}</td>
-                  </tr>
-                ))}
+                ) : paginatedOrgDetails.map((row) => {
+                  const values = [row.detailProgram, row.statisticsAccount, row.resolutionDate, row.note, new Intl.NumberFormat("ko-KR").format(row.resolutionAmount), row.vendorName, row.unitProgram];
+                  return (
+                    <tr key={row.id} className="budget-row">
+                      {ORG_COLUMNS.map(([label, , align], index) => (
+                        <td key={label} title={values[index]} style={{ textAlign: align, padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{values[index]}</td>
+                      ))}
+                    </tr>
+                  );
+                })}
               </tbody>
             </table>
           </div>
