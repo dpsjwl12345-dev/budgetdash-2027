@@ -1311,5 +1311,5 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .budget-table.org-exec-table td.is-right { text-align: right !important; }
 /* 금액(오른쪽 끝)과 거래처명(왼쪽 시작)이 맞붙지 않게 사이를 띄운다. */
 .budget-table.org-exec-table td:nth-child(5) { padding-right: 32px !important; }
-.budget-table.org-exec-table td:nth-child(6) { padding-left: 32px !important; }
+.budget-table.org-exec-table td:nth-child(6) { padding-left: 16px !important; }
 .budget-table.org-exec-table tr:first-child td:nth-child(2) { padding-right: 32px !important; }

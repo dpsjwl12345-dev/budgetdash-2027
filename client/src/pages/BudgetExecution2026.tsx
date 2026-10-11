@@ -63,7 +63,7 @@ const ORG_COLUMNS = [
   ["집행일자", "9%", "center"],
   ["내용", "34%", "left"],
   ["집행액", "10%", "right"],
-  ["거래처명", "13%", "left"],
+  ["거래처명", "13%", "center"],
   ["기타", "9%", "center"],
 ] as const;
 
