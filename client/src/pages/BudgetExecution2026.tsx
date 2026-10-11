@@ -1133,7 +1133,7 @@ export default function BudgetExecution2026() {
           </div>
 
           <div className="table-scroll">
-            <table className="budget-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
+            <table className="budget-table org-exec-table" style={{ tableLayout: 'fixed', width: '100%', minWidth: '1180px' }}>
               {/* 페이지를 넘겨도 칸 폭이 흔들리지 않게 폭을 고정하고, 머리글 정렬을 내용 정렬과 맞춘다:
                   글자는 왼쪽, 날짜·증빙은 가운데, 금액은 오른쪽. */}
               <colgroup>
@@ -1141,16 +1141,16 @@ export default function BudgetExecution2026() {
               </colgroup>
               <thead>
                 <tr style={{ background: '#141a22', position: 'sticky', top: 0, zIndex: 2 }}>
-                  {ORG_COLUMNS.map(([label, , align]) => (
-                    <th key={label} style={{ textAlign: align, padding: '12px 10px', fontWeight: '600', color: 'var(--text)', fontSize: '15px', whiteSpace: 'nowrap' }}>{label}</th>
+                  {ORG_COLUMNS.map(([label]) => (
+                    <th key={label}>{label}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
                 {paginatedOrgDetails.length > 0 && (
                   <tr key="org-total" style={{ fontWeight: '600', background: 'rgba(91, 155, 240, 0.055)', borderBottom: '1px solid rgba(91, 155, 240, 0.16)' }}>
-                    <td colSpan={4} style={{ textAlign: 'left', padding: '12px 10px', fontSize: '15px', color: '#5b9bf0', whiteSpace: 'nowrap' }}>합계 ({filteredOrgDetails.length.toLocaleString("ko-KR")}건)</td>
-                    <td style={{ textAlign: 'right', padding: '12px 10px', fontSize: '14px', color: '#5b9bf0', fontVariantNumeric: 'tabular-nums', whiteSpace: 'nowrap' }}>{new Intl.NumberFormat("ko-KR").format(orgTotalAmount)}</td>
+                    <td colSpan={4} className="is-left" style={{ fontSize: '15px', color: '#5b9bf0' }}>합계 ({filteredOrgDetails.length.toLocaleString("ko-KR")}건)</td>
+                    <td className="is-right" style={{ color: '#5b9bf0' }}>{new Intl.NumberFormat("ko-KR").format(orgTotalAmount)}</td>
                     <td colSpan={2} style={{ padding: '12px 10px' }}></td>
                   </tr>
                 )}
@@ -1161,7 +1161,7 @@ export default function BudgetExecution2026() {
                   return (
                     <tr key={row.id} className="budget-row">
                       {ORG_COLUMNS.map(([label, , align], index) => (
-                        <td key={label} title={values[index]} style={{ textAlign: align, padding: '12px 10px', fontSize: '14px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontVariantNumeric: 'tabular-nums' }}>{values[index]}</td>
+                        <td key={label} title={values[index]} className={`is-${align}`}>{values[index]}</td>
                       ))}
                     </tr>
                   );
