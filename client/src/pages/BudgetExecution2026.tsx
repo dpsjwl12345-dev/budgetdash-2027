@@ -388,13 +388,25 @@ export default function BudgetExecution2026() {
       const grid = XLSX.utils.sheet_to_json<unknown[]>(firstSheet, { header: 1, defval: "" });
       const squash = (value: unknown) => String(value ?? "").replace(/\s/g, "");
       const headerIndex = grid.findIndex((cells) => cells.some((cell) => ["사업명", "보조사업명"].includes(squash(cell))));
-      if (headerIndex < 0) throw new Error("no header");
+      if (headerIndex < 0) {
+        showToast('첫 줄에서 "사업명" 또는 "보조사업명" 머리글을 찾지 못했습니다');
+        return;
+      }
       const headers = grid[headerIndex].map(squash);
       const records = grid.slice(headerIndex + 1);
-      const isSettlement = headers.includes("교부금액");
+      // 정산서마다 머리글 이름이 조금씩 달라("교부액"·"교부결정액"·"잔액" 등) 비슷한 이름을 함께 받는다.
+      const SETTLEMENT_NAMES: Record<string, string[]> = {
+        보조사업명: ["보조사업명", "사업명"],
+        교부금액: ["교부금액", "교부액", "교부결정액", "보조금교부액", "보조금액"],
+        집행금액: ["집행금액", "집행액"],
+        집행잔액: ["집행잔액", "잔액"],
+      };
+      const isSettlement = headers.some((name) => name.includes("교부"));
 
       const cell = (cells: unknown[], name: string) => {
-        const column = headers.indexOf(name);
+        const column = isSettlement && SETTLEMENT_NAMES[name]
+          ? headers.findIndex((header) => SETTLEMENT_NAMES[name].includes(header))
+          : headers.indexOf(name);
         return column >= 0 ? cells[column] : "";
       };
       const text = (value: unknown) => (value == null ? "" : String(value).trim());
@@ -433,7 +445,10 @@ export default function BudgetExecution2026() {
           ? row.detailProgram && !/^(합계|소계|계|총계)$/.test(row.detailProgram.replace(/\s/g, "")) && (Number(row.note) || row.resolutionAmount)
           : row.note || row.resolutionAmount);
 
-      if (!nextRows.length) throw new Error("empty");
+      if (!nextRows.length) {
+        showToast(`읽은 줄이 없습니다. 머리글: ${headers.filter(Boolean).join(", ")}`);
+        return;
+      }
 
       setExecutionDetails((previous) => [
         ...previous.filter((row) => !(row.division === division && row.year === orgYear && row.department === orgName)),
@@ -668,7 +683,7 @@ export default function BudgetExecution2026() {
 
   const showToast = (message: string) => {
     setToast(message);
-    window.setTimeout(() => setToast(""), 2200);
+    window.setTimeout(() => setToast(""), 5000);
   };
 
   // 예산 집행내역은 회계연도별로 따로 보여준다(예전 자료는 연도 값이 없어 2026으로 본다).
