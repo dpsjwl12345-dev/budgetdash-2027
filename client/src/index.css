@@ -1305,7 +1305,7 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 /* 보조단체 집행내역 표: 공통 budget-table의 n번째 칸 정렬·여백(!important)을 이 표에서만 되돌린다.
    머리글은 가운데·조금 크게, 내용은 글자 왼쪽 / 날짜·증빙 가운데 / 금액 오른쪽. */
 .budget-table.org-exec-table th { text-align: center !important; padding: 13px 10px !important; font-size: 17px; font-weight: 700; color: var(--text) !important; }
-.budget-table.org-exec-table td { padding: 12px 10px !important; font-size: 14px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.budget-table.org-exec-table td { padding: 12px 10px !important; font-size: 15px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
 .budget-table.org-exec-table td.is-left { text-align: left !important; }
 .budget-table.org-exec-table td.is-center { text-align: center !important; }
 .budget-table.org-exec-table td.is-right { text-align: right !important; }
