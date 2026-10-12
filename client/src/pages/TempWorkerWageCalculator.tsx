@@ -313,7 +313,6 @@ export default function TempWorkerWageCalculator() {
                   <span>◦ 공정수당</span>
                   <strong>{won(result.fairPay)}</strong>
                 </div>
-                <p className="calc-footnote">월 평균 기준일수(주휴일 포함) 27일 · 4대 보험료는 임금 총액을 원 단위까지 정확하게 입력</p>
               </div>
           </div>
           </div>
@@ -555,10 +554,6 @@ export default function TempWorkerWageCalculator() {
 
         .calc-budget-example h4 {
           font-size: 18px;
-        }
-
-        .calc-budget-example .calc-footnote {
-          font-size: 15px;
         }
 
         .calc-be-title {
