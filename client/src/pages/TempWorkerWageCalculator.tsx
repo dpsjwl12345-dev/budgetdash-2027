@@ -18,26 +18,23 @@ const JOB_RATES: JobRate[] = [
   { key: "construction", label: "건설실무원 (도로보수, 수거 등)", dailyWage: 161920, note: "건설기계 운전 등 포함" },
 ];
 
-type FairPayTier = { label: string; rate: string; amount: number; minMonths: number };
+type FairPayTier = { label: string; rate: string; amount: number; maxMonths: number };
 
+// 구간은 표의 "~N개월 미만" 상한으로 판정한다 - 예) 6개월 근무는 "5~6개월 미만"이 아니라
+// "7~8개월 미만"(1,699천원) 구간이다.
 const FAIR_PAY_TIERS: FairPayTier[] = [
-  { label: "1~2개월 미만", rate: "10%", amount: 400000, minMonths: 1 },
-  { label: "3~4개월 미만", rate: "9.5%", amount: 886000, minMonths: 3 },
-  { label: "5~6개월 미만", rate: "9%", amount: 1319000, minMonths: 5 },
-  { label: "7~8개월 미만", rate: "8.5%", amount: 1699000, minMonths: 7 },
-  { label: "9~10개월 미만", rate: "8.5%", amount: 2152000, minMonths: 9 },
-  { label: "11~12개월 미만", rate: "8.5%", amount: 2605000, minMonths: 11 },
+  { label: "1~2개월 미만", rate: "10%", amount: 400000, maxMonths: 2 },
+  { label: "3~4개월 미만", rate: "9.5%", amount: 886000, maxMonths: 4 },
+  { label: "5~6개월 미만", rate: "9%", amount: 1319000, maxMonths: 6 },
+  { label: "7~8개월 미만", rate: "8.5%", amount: 1699000, maxMonths: 8 },
+  { label: "9~10개월 미만", rate: "8.5%", amount: 2152000, maxMonths: 10 },
+  { label: "11~12개월 미만", rate: "8.5%", amount: 2605000, maxMonths: 12 },
 ];
 
 function getFairPayTier(months: number): FairPayTier | null {
-  // 공정수당은 근무기간이 12개월 미만인 경우에만 지급된다 - 표의 마지막 구간이
-  // "11~12개월 미만"이라도 12개월 이상은 이 구간에 걸리면 안 된다.
+  // 공정수당은 근무기간이 12개월 미만인 경우에만 지급된다.
   if (!months || months < 1 || months >= 12) return null;
-  let matched: FairPayTier | null = null;
-  for (const tier of FAIR_PAY_TIERS) {
-    if (months >= tier.minMonths) matched = tier;
-  }
-  return matched;
+  return FAIR_PAY_TIERS.find((tier) => months < tier.maxMonths) ?? null;
 }
 
 function won(value: number): string {
