@@ -553,8 +553,16 @@ export default function TempWorkerWageCalculator() {
           color: var(--text);
         }
 
+        .calc-budget-example h4 {
+          font-size: 18px;
+        }
+
+        .calc-budget-example .calc-footnote {
+          font-size: 15px;
+        }
+
         .calc-be-title {
-          font-size: 17px;
+          font-size: 22px;
           font-weight: 700;
           padding-bottom: 10px;
           border-bottom: 1px solid var(--border);
@@ -566,7 +574,7 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-be-row {
-          font-size: 15px;
+          font-size: 19px;
           padding: 10px 0 2px 16px;
         }
 
