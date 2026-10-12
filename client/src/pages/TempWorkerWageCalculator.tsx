@@ -293,6 +293,28 @@ export default function TempWorkerWageCalculator() {
                 </p>
               </div>
             </div>
+
+              {/* 예산요구 작성요령(지침 p.44)의 부기명 형식 그대로, 위 계산 결과를 넣어 보여준다. */}
+              <div className="calc-reference calc-budget-example">
+                <h4>예산서 부기명 작성 예시</h4>
+                <div className="calc-be-title">
+                  <span>○ 사업명</span>
+                  <strong>{won(result.total)}</strong>
+                </div>
+                <div className="calc-be-row">
+                  <span>◦ 기본급, 주휴수당, 연차수당</span>
+                  <strong>{won(result.wageSubtotal)}</strong>
+                </div>
+                <div className="calc-be-row">
+                  <span>◦ 4대 보험료</span>
+                  <strong>{won(result.insurance)}</strong>
+                </div>
+                <div className="calc-be-row">
+                  <span>◦ 공정수당</span>
+                  <strong>{won(result.fairPay)}</strong>
+                </div>
+                <p className="calc-footnote">월 평균 기준일수(주휴일 포함) 27일 · 4대 보험료는 임금 총액을 원 단위까지 정확하게 입력</p>
+              </div>
           </div>
           </div>
         </section>
@@ -522,6 +544,32 @@ export default function TempWorkerWageCalculator() {
         .calc-tier-active {
           background: rgba(91, 155, 240, 0.12);
         }
+
+        .calc-be-title,
+        .calc-be-row {
+          display: flex;
+          justify-content: space-between;
+          align-items: baseline;
+          color: var(--text);
+        }
+
+        .calc-be-title {
+          font-size: 17px;
+          font-weight: 700;
+          padding-bottom: 10px;
+          border-bottom: 1px solid var(--border);
+          margin-bottom: 6px;
+        }
+
+        .calc-be-title strong {
+          color: #f0c94d;
+        }
+
+        .calc-be-row {
+          font-size: 15px;
+          padding: 10px 0 2px 16px;
+        }
+
 
         .calc-footnote {
           margin-top: 10px;
