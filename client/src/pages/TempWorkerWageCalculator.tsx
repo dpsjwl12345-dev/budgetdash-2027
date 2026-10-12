@@ -37,6 +37,9 @@ function getFairPayTier(months: number): FairPayTier | null {
   return FAIR_PAY_TIERS.find((tier) => months < tier.maxMonths) ?? null;
 }
 
+// 4대 보험료 기관 부담 요율 - 2027 예산요구 작성요령상 임금 총액의 12%로 고정.
+const INSURANCE_RATE = 12;
+
 function won(value: number): string {
   return `${Math.round(value).toLocaleString()}원`;
 }
@@ -49,7 +52,6 @@ export default function TempWorkerWageCalculator() {
   const [workDaysOverride, setWorkDaysOverride] = useState<string>("");
   const [basePayOverride, setBasePayOverride] = useState<string>("");
   const [unusedLeaveDays, setUnusedLeaveDays] = useState<string>("0");
-  const [insuranceRate, setInsuranceRate] = useState<12 | 11.75>(12);
 
   const selectedJob = JOB_RATES.find((job) => job.key === jobKey);
 
@@ -69,15 +71,15 @@ export default function TempWorkerWageCalculator() {
     // 연차수당: 일일단가(원) × 인원(명) × 미사용 연차 일수(일)
     const leavePay = dailyWage * people * leaveDays;
     const wageSubtotal = basePlusWeeklyPay + leavePay;
-    // 4대 보험료(기관 부담금): 임금 총액(원) × 12% (또는 11.75%)
-    const insurance = wageSubtotal * (insuranceRate / 100);
+    // 4대 보험료(기관 부담금): 임금 총액(원) × 12% (지침 고정 요율)
+    const insurance = wageSubtotal * (INSURANCE_RATE / 100);
     // 공정수당: 기간제근로자 인원수(명) × 구간별 보상지급액(원)
     const tier = getFairPayTier(monthsNum);
     const fairPay = (tier?.amount ?? 0) * people;
     const total = wageSubtotal + insurance + fairPay;
 
     return { dailyWage, people, monthsNum, autoWorkDays, workDays, leaveDays, autoBasePlusWeeklyPay, basePlusWeeklyPay, leavePay, wageSubtotal, insurance, tier, fairPay, total };
-  }, [dailyWageInput, headcount, months, workDaysOverride, basePayOverride, unusedLeaveDays, insuranceRate]);
+  }, [dailyWageInput, headcount, months, workDaysOverride, basePayOverride, unusedLeaveDays]);
 
   return (
     <Layout>
@@ -166,15 +168,6 @@ export default function TempWorkerWageCalculator() {
                   <label>미사용 연차 일수(일)</label>
                   <input type="number" min="0" step="1" value={unusedLeaveDays} onChange={(e) => setUnusedLeaveDays(e.target.value)} />
                 </div>
-
-                <div className="calc-field">
-                  <label>4대 보험료(기관 부담금) 요율</label>
-                  <div className="calc-toggle">
-                    <button type="button" className={insuranceRate === 12 ? "active" : ""} onClick={() => setInsuranceRate(12)}>12%</button>
-                    <button type="button" className={insuranceRate === 11.75 ? "active" : ""} onClick={() => setInsuranceRate(11.75)}>11.75%</button>
-                  </div>
-                  <span className="calc-hint">국민연금 사업주 부담 비율 4.75%→5% 인상분 반영 여부에 따라 선택합니다.</span>
-                </div>
               </div>
 
               <div className="calc-output">
@@ -207,7 +200,7 @@ export default function TempWorkerWageCalculator() {
                 </div>
 
                 <div className="calc-result-row">
-                  <span><span className="calc-result-no">③</span>4대 보험료 (기관 부담금, {insuranceRate}%)</span>
+                  <span><span className="calc-result-no">③</span>4대 보험료 (기관 부담금, {INSURANCE_RATE}%)</span>
                   <strong>{won(result.insurance)}</strong>
                 </div>
 
@@ -223,7 +216,7 @@ export default function TempWorkerWageCalculator() {
               </div>
 
               <div className="calc-reference">
-              <h4>참고 - 2027년 화성형 공정수당 지급 기준</h4>
+              <h4>2027년 화성형 공정수당 지급 기준</h4>
               <table className="content-table">
                 <thead>
                   <tr>
@@ -246,7 +239,7 @@ export default function TempWorkerWageCalculator() {
               </div>
 
               <div className="calc-reference">
-              <h4>참고 - 4대 보험료 개별 항목(기관 부담) 요율</h4>
+              <h4>4대 보험료 개별 항목(기관 부담) 요율</h4>
               <table className="content-table">
                 <thead>
                   <tr>
@@ -283,11 +276,6 @@ export default function TempWorkerWageCalculator() {
                   </tr>
                 </tbody>
               </table>
-                <p className="calc-footnote">
-                  위 요율 중 국민연금·건강보험은 2027년 기준으로 확정되었고, 장기요양보험료·고용보험(고용안정·직업능력개발사업분 별도)·산재보험은
-                  아직 미정이거나 입법 절차가 진행 중입니다. 좌측 "4대 보험료(기관 부담금) 요율" 입력의 12%/11.75%는 이 개별 항목들을
-                  합산한 참고용 총 부담률이며, 확정되는 대로 갱신이 필요합니다.
-                </p>
               </div>
             </div>
 
@@ -355,7 +343,7 @@ export default function TempWorkerWageCalculator() {
         }
 
         .calc-inputs-amount {
-          grid-template-columns: repeat(3, minmax(0, 1fr));
+          grid-template-columns: repeat(2, minmax(0, 1fr));
           background: rgba(217, 173, 82, 0.14);
           border: 1px solid rgba(217, 173, 82, 0.4);
           border-radius: 8px;
