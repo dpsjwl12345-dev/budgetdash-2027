@@ -14,6 +14,8 @@ import {
   PanelLeftOpen,
   PanelLeftClose,
   LayoutDashboard,
+  Menu,
+  X,
 } from "lucide-react";
 import { DEPARTMENTS } from "@/lib/departments";
 
@@ -68,6 +70,30 @@ export default function Layout({
 }) {
   const [location, setLocation] = useLocation();
   const [searchParams] = useSearchParams();
+  const [isTablet, setIsTablet] = useState(() => window.matchMedia("(max-width: 1280px)").matches);
+  const [tabletMenuOpen, setTabletMenuOpen] = useState(false);
+  const closeTabletMenu = () => {
+    setTabletMenuOpen(false);
+    requestAnimationFrame(() => document.getElementById("tablet-menu-toggle")?.focus());
+  };
+  useEffect(() => {
+    const media = window.matchMedia("(max-width: 1280px)");
+    const update = () => { setIsTablet(media.matches); setTabletMenuOpen(false); };
+    media.addEventListener("change", update);
+    return () => media.removeEventListener("change", update);
+  }, []);
+  useEffect(() => { setTabletMenuOpen(false); }, [location, searchParams.toString()]);
+  useEffect(() => {
+    if (!tabletMenuOpen) return;
+    document.querySelector<HTMLButtonElement>(".tablet-menu-close")?.focus();
+    const close = (event: KeyboardEvent) => {
+      if (event.key === "Escape") {
+        closeTabletMenu();
+      }
+    };
+    window.addEventListener("keydown", close);
+    return () => window.removeEventListener("keydown", close);
+  }, [tabletMenuOpen]);
   const isBudgetExplainerPage = location === "/budget-explainer";
   const isCityOverviewPage = location === "/";
   const currentDept = isBudgetExplainerPage ? searchParams.get("dept") : null;
@@ -116,13 +142,17 @@ export default function Layout({
   }, [location]);
 
   return (
-    <div className={`app-shell ${mainExpanded ? "main-expanded" : ""}`}>
+    <div className={`app-shell ${mainExpanded ? "main-expanded" : ""} ${tabletMenuOpen ? "tablet-menu-open" : ""}`}>
+      {isTablet && tabletMenuOpen && <button className="tablet-menu-backdrop no-print" aria-label="메뉴 닫기" onClick={closeTabletMenu} />}
       <aside
-        aria-hidden={mainExpanded || undefined}
-        className={`sidebar no-print ${sidebarCollapsed ? "collapsed" : ""}`}
-        onMouseEnter={() => setSidebarCollapsed(false)}
-        onMouseLeave={() => setSidebarCollapsed(true)}
+        id="workspace-navigation"
+        aria-hidden={(isTablet ? !tabletMenuOpen : mainExpanded) || undefined}
+        inert={isTablet ? !tabletMenuOpen : mainExpanded}
+        className={`sidebar no-print ${!isTablet && sidebarCollapsed ? "collapsed" : ""}`}
+        onMouseEnter={() => { if (!isTablet) setSidebarCollapsed(false); }}
+        onMouseLeave={() => { if (!isTablet) setSidebarCollapsed(true); }}
       >
+        <button type="button" className="icon-button tablet-menu-close" aria-label="메뉴 닫기" onClick={closeTabletMenu}><X size={22} /></button>
         <button
           type="button"
           className="brand-lockup"
@@ -354,9 +384,10 @@ export default function Layout({
         </div>
       </aside>
 
-      <main className="main-area">
+      <main className="main-area" inert={isTablet && tabletMenuOpen}>
         <header className="topbar no-print">
           <div className="breadcrumbs">
+            <button id="tablet-menu-toggle" type="button" className="icon-button tablet-menu-toggle" aria-label="메뉴 열기" aria-expanded={tabletMenuOpen} aria-controls="workspace-navigation" onClick={() => setTabletMenuOpen(true)}><Menu size={22} /></button>
             <button
               type="button"
               className="icon-button main-expand-toggle"

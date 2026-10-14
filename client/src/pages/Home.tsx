@@ -2752,7 +2752,7 @@ export default function Home() {
       // "다음 페이지로 넘기면 다른 행 위에 그대로 겹쳐 보이는" 문제가 안 생긴다.
 
     >
-      <div className="page-content">
+      <div className="page-content budget-request-page">
           <section className="page-heading">
             <div className="title-area">
               <div className="title-wrapper budget-page-title">
@@ -2892,7 +2892,7 @@ export default function Home() {
 
           <section className="table-panel ledger-paper" style={{ background: '#ece7db' }}>
             <div className="table-heading" style={{ minHeight: 0, padding: '8px 19px 8px 30px' }}>
-              <div className="table-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
+              <div className="table-title budget-statement-toolbar" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', width: '100%' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
                   <div className="no-print" style={{ display: 'flex', alignItems: 'center', gap: '2px' }}>
                     {([["revenue", "세입예산내역서"], ["expenditure", "세출예산내역서"]] as const).map(([view, label]) => (
@@ -2965,7 +2965,7 @@ export default function Home() {
               </div>
             </div>
 
-            <div className="table-scroll ledger-scrollbar" ref={tableRef} style={{ overflowX: 'auto', overflowY: 'visible', border: '1px solid #b7c2cf' }}>
+            <div className="table-scroll ledger-scrollbar" role="region" aria-label="예산 내역서 — 좌우로 스크롤하여 전체 열 보기" tabIndex={0} ref={tableRef} style={{ overflowX: 'auto', overflowY: 'visible', border: '1px solid #b7c2cf' }}>
               <table className="budget-table hierarchy-budget-table" style={{ width: '100%', minWidth: '1440px', borderCollapse: 'collapse', tableLayout: 'fixed' }}>
                 <colgroup>
                   {(['label', 'budget', 'previous', 'difference', 'statisticsCode', 'description', 'review'] as const).map((key) => (
