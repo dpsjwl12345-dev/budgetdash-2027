@@ -19,6 +19,9 @@ export default function DepartmentKeyIssues() {
   const [selectedDept, setSelectedDept] = useState<string>(DEPARTMENTS[0] || "");
   const [issues, setIssues] = useState<Record<string, IssueData>>({});
   const [currentText, setCurrentText] = useState("");
+  // 저장된 메모 수정: 수정 중인 메모의 위치와 편집 중인 내용
+  const [editingIndex, setEditingIndex] = useState<number | null>(null);
+  const [editingText, setEditingText] = useState("");
 
   // 서버 데이터를 우선 로드하고, 서버를 사용할 수 없는 경우 localStorage를 사용한다.
   useEffect(() => {
@@ -51,6 +54,8 @@ export default function DepartmentKeyIssues() {
   // 부서 변경 시 textarea 초기화
   useEffect(() => {
     setCurrentText("");
+    setEditingIndex(null);
+    setEditingText("");
   }, [selectedDept]);
 
   // 메모 저장 (기존 메모에 추가)
@@ -112,6 +117,35 @@ export default function DepartmentKeyIssues() {
     }
   };
 
+  // 저장된 메모 내용 수정 (작성일은 그대로 두고 내용만 바꾼다)
+  const handleEditSave = async (memoIndex: number) => {
+    if (!editingText.trim()) return;
+    const existingData = issues[selectedDept] || { memos: [] };
+    const updatedIssues = {
+      ...issues,
+      [selectedDept]: {
+        memos: existingData.memos.map((memo, index) =>
+          index === memoIndex ? { ...memo, text: editingText } : memo
+        ),
+      },
+    };
+    setIssues(updatedIssues);
+    localStorage.setItem("departmentIssues", JSON.stringify(updatedIssues));
+    setEditingIndex(null);
+    setEditingText("");
+
+    try {
+      const response = await fetch("/api/cloud-sync?type=issues", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ data: updatedIssues }),
+      });
+      if (!response.ok) throw new Error("서버 수정 저장 실패");
+    } catch (error) {
+      console.warn("쟁점사항 수정 서버 저장 실패:", error);
+    }
+  };
+
   return (
     <Layout>
       <div className="page-content">
@@ -167,14 +201,46 @@ export default function DepartmentKeyIssues() {
                     <div key={memo.id || `${memo.date}-${memoIndex}`} className="saved-memo-box">
                       <div className="memo-header">
                         <span className="memo-date">{memo.date}</span>
-                        <button
-                          type="button"
-                          className="delete-memo-button"
-                          onClick={() => handleDelete(memoIndex)}
-                          aria-label="쟁점사항 삭제"
-                        >삭제</button>
+                        {editingIndex === memoIndex ? (
+                          <>
+                            <button
+                              type="button"
+                              className="edit-memo-button"
+                              onClick={() => handleEditSave(memoIndex)}
+                            >저장</button>
+                            <button
+                              type="button"
+                              className="cancel-memo-button"
+                              onClick={() => { setEditingIndex(null); setEditingText(""); }}
+                            >취소</button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              type="button"
+                              className="edit-memo-button"
+                              onClick={() => { setEditingIndex(memoIndex); setEditingText(memo.text); }}
+                              aria-label="쟁점사항 수정"
+                            >수정</button>
+                            <button
+                              type="button"
+                              className="delete-memo-button"
+                              onClick={() => handleDelete(memoIndex)}
+                              aria-label="쟁점사항 삭제"
+                            >삭제</button>
+                          </>
+                        )}
                       </div>
-                      <div className="memo-content">{memo.text}</div>
+                      {editingIndex === memoIndex ? (
+                        <textarea
+                          className="memo-edit-textarea"
+                          value={editingText}
+                          onChange={(e) => setEditingText(e.target.value)}
+                          autoFocus
+                        />
+                      ) : (
+                        <div className="memo-content">{memo.text}</div>
+                      )}
                     </div>
                     );
                   })
@@ -422,8 +488,48 @@ export default function DepartmentKeyIssues() {
           gap: 8px;
         }
 
-        .delete-memo-button {
+        .edit-memo-button,
+        .cancel-memo-button {
+          border: 1px solid rgba(91, 155, 240, 0.35);
+          border-radius: 5px;
+          padding: 3px 8px;
+          background: rgba(91, 155, 240, 0.08);
+          color: #8bb8f5;
+          font-size: 12px;
+          cursor: pointer;
+        }
+
+        .edit-memo-button {
           margin-left: auto;
+        }
+
+        .edit-memo-button:hover,
+        .cancel-memo-button:hover {
+          background: rgba(91, 155, 240, 0.18);
+          color: #d6e6fc;
+        }
+
+        .memo-edit-textarea {
+          width: 100%;
+          min-height: 90px;
+          padding: 10px 12px;
+          background: var(--bg-elevated);
+          border: 1px solid #5b9bf0;
+          border-radius: 6px;
+          color: var(--text);
+          font-family: inherit;
+          font-size: 14px;
+          line-height: 1.6;
+          resize: vertical;
+          box-sizing: border-box;
+        }
+
+        .memo-edit-textarea:focus {
+          outline: none;
+          box-shadow: 0 0 0 2px rgba(91, 155, 240, 0.1);
+        }
+
+        .delete-memo-button {
           border: 1px solid rgba(255, 107, 125, 0.35);
           border-radius: 5px;
           padding: 3px 8px;
