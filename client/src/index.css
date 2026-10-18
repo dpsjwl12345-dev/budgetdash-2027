@@ -1456,4 +1456,4 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .party-review-table th:not(:last-child), .party-review-table td:not(:last-child) { border-right: 1px solid rgb(164 192 221 / 28%); }
 
 .party-review-table th:first-child, .party-review-table .party-row-number { text-align: center; font-variant-numeric: tabular-nums; }
-.party-review-table thead th { text-align: center; }
+.party-review-table thead th:nth-child(n) { text-align: center; }
