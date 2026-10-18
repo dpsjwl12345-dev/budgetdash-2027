@@ -1406,7 +1406,7 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .party-review-controls input { flex: 1 1 260px; max-width: 420px; min-width: 0; }
 .party-review-help { color: #a3b6c8; font-size: 13px; margin: 10px 0; line-height: 1.6; }
 .party-review-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
-.party-review-table { width: 100%; min-width: 900px; table-layout: fixed; border-collapse: collapse; font-size: 14px; }
+.party-review-table { width: 100%; min-width: 1160px; table-layout: fixed; border-collapse: collapse; font-size: 18px; color: #edf5fe; }
 .party-review-table caption { text-align: right; padding: 12px; color: #a3b6c8; }
 .party-review-table th { background: #1c354e; text-align: left; padding: 14px 12px; }
 .party-review-table td { padding: 16px 12px; vertical-align: top; border-top: 1px solid var(--line); overflow-wrap: anywhere; line-height: 1.65; }
@@ -1414,12 +1414,14 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .party-review-table small { display: block; color: #a3b6c8; margin-top: 5px; }
 .party-content, .party-amount { white-space: pre-line; }
 .party-content::first-line { font-weight: 700; }
-.party-review-table details { margin-top: 8px; color: #b7c9da; font-size: 13px; }
+.party-review-table details { margin-top: 8px; color: #d5e2ee; font-size: 17px; }
 .party-review-table summary { cursor: pointer; padding: 6px 0; }
 .party-review-table details p { margin: 4px 0; }
-.party-review-table select, .party-review-table textarea { width: 100%; font-size: 14px; }
+.party-review-table select, .party-review-table textarea { width: 100%; font-size: 18px; }
 .party-review-table textarea { min-height: 76px; margin-top: 10px; resize: vertical; }
-@media (max-width: 1280px) { .party-review-table select, .party-review-table textarea, .party-review-controls input { font-size: 16px; } }
+.party-review-controls, .party-review-table caption { font-size: 17px; }
+.party-review-table th { font-size: 19px; }
+.request-registration .form-input { font-size: 18px; }
 .request-registration { margin-top: 18px; }
 .request-registration > summary { cursor: pointer; padding: 12px; color: #a7d2ff; }
 .request-registration .form-row { flex-wrap: wrap; }

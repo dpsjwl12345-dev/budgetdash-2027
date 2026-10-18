@@ -744,7 +744,8 @@ export default function CouncilMemberRequests() {
         const response = await fetch("/api/cloud-sync?type=council-requests");
         if (!response.ok) throw new Error("서버 로드 실패");
         const { data } = await response.json();
-        if (Array.isArray(data)) loaded = data;
+        if (!Array.isArray(data)) throw new Error("서버 자료를 불러올 수 없습니다");
+        loaded = data;
       } catch (error) {
         console.warn("서버에서 시의원 요구사항 로드 실패:", error);
         const saved = localStorage.getItem("councilMemberRequests");
@@ -772,10 +773,14 @@ export default function CouncilMemberRequests() {
 
       // Stable source IDs preserve saved edits; unrelated existing requests remain intact.
       const knownIds = new Set(loaded.map(item => item.id));
+      const previousCache = localStorage.getItem("councilMemberRequests");
+      if (previousCache && !localStorage.getItem("councilMemberRequests.beforeListMerge")) {
+        localStorage.setItem("councilMemberRequests.beforeListMerge", previousCache);
+      }
       try {
         const cached: CouncilRequest[] = JSON.parse(localStorage.getItem("councilMemberRequests") || "[]");
         for (const item of cached) {
-          if (PARTY_REQUESTS_JEONG.some(seed => seed.id === item.id) && !knownIds.has(item.id)) {
+          if (item && typeof item.id === "string" && !knownIds.has(item.id)) {
             loaded.push(item);
             knownIds.add(item.id);
           }
@@ -823,7 +828,12 @@ export default function CouncilMemberRequests() {
       department: form.department,
       content: form.content.trim(),
       budgetItemName: form.budgetItemName.trim(),
-      requestedAmount: normalizeRequestedAmount(form.requestedAmount),
+      requestedAmount: form.requestType === "당정협의회"
+        ? form.requestedAmount.split("\n").map(line => {
+            const number = line.trim().replace(/,/g, "");
+            return number && /^\d+(?:\.\d+)?$/.test(number) ? String(Math.round(Number(number) * 1000)) : line;
+          }).join("\n")
+        : normalizeRequestedAmount(form.requestedAmount),
       status: form.status,
       requestedDate: form.requestedDate,
       note: isPledge ? serializePledgeExtra(pledgeToSave) : undefined,
@@ -1493,10 +1503,10 @@ export default function CouncilMemberRequests() {
             <textarea
               className="form-input amount-input"
               rows={1}
-              placeholder="요구액 (천원)"
+              placeholder={form.requestType === "당정협의회" ? "요구액 (백만원)" : "요구액 (천원)"}
               value={form.requestedAmount}
               onChange={(e) => setForm({ ...form, requestedAmount: e.target.value })}
-              onBlur={() => setForm((current) => ({ ...current, requestedAmount: normalizeRequestedAmount(current.requestedAmount) }))}
+              onBlur={() => { if (form.requestType !== "당정협의회") setForm((current) => ({ ...current, requestedAmount: normalizeRequestedAmount(current.requestedAmount) })); }}
             />
             <button className="add-button" onClick={handleAdd}>추가</button>
           </div>

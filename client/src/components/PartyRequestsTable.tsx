@@ -11,7 +11,7 @@ export default function PartyRequestsTable({ rows, onUpdate }: { rows: CouncilRe
   const [search, setSearch] = useState("");
   const [message, setMessage] = useState("");
   const mine = (row: CouncilRequest) => (DEPARTMENTS as readonly string[]).includes(row.department);
-  const visible = rows.filter(row => (scope !== "mine" || mine(row)) && `${row.department} ${row.partyName} ${row.electoralDistrict} ${row.content}`.includes(search.trim()));
+  const visible = rows.filter(row => (scope !== "mine" || mine(row)) && `${row.department} ${row.partyName} ${row.electoralDistrict} ${row.content} ${row.budgetItemName}`.includes(search.trim()));
   const update = async (item: CouncilRequest) => {
     const saved = await onUpdate(item);
     setMessage(saved ? "저장했습니다." : "이 브라우저에 저장했습니다. 서버 저장은 실패하여 다른 기기에는 반영되지 않습니다.");
@@ -32,11 +32,14 @@ export default function PartyRequestsTable({ rows, onUpdate }: { rows: CouncilRe
         <thead><tr>{["부서", "정당", "요구내용", "요구액", "검토결과"].map(label => <th key={label}>{label}</th>)}</tr></thead>
         <tbody>{visible.map(item => {
           const info = metadata(item.note);
-          const amount = item.requestedAmount ? item.requestedAmount.split("\n").map(line => /^[\d,]+$/.test(line) ? (Number(line.replace(/,/g,""))/1000).toLocaleString("ko-KR", {maximumFractionDigits: 3}) : line).join("\n") : info.sourceAmount || "미기재";
+          const amount = item.requestedAmount ? item.requestedAmount.split("\n").map(line => {
+            const value = line.trim().replace(/\s*천원$/, "").replace(/,/g, "");
+            return /^\d+(?:\.\d+)?$/.test(value) ? (Number(value)/1000).toLocaleString("ko-KR", {maximumFractionDigits: 3}) : line;
+          }).join("\n") : info.sourceAmount || "미기재";
           return <tr key={item.id}>
             <td><strong>{item.department}</strong></td>
             <td><span className="party-name-region">{item.partyName}{item.electoralDistrict && `(${item.electoralDistrict})`}</span></td>
-            <td><div className="party-content">{item.content}</div>{info.source && <details><summary>출처 보기</summary>{info.source} · 정-{String(info.sourceNumber).padStart(2,"0")}</details>}</td>
+            <td><div className="party-content">{item.budgetItemName && !item.content.includes(item.budgetItemName) && <strong>{item.budgetItemName}<br /></strong>}{item.content}</div>{info.source && <details><summary>출처 보기</summary>{info.source} · 정-{String(info.sourceNumber).padStart(2,"0")}</details>}</td>
             <td className="party-amount">{amount}</td>
             <td><label><span className="sr-only">{item.budgetItemName || item.content} 심사 상태</span><select value={item.status} onChange={e => void update({...item, status:e.target.value as CouncilRequest["status"]})}>{["검토중","반영","미반영"].map(status=><option key={status}>{status}</option>)}</select></label>
               {info.sourceReview && <details open><summary>자료상 의견</summary><p>{info.sourceReview}</p></details>}
