@@ -182,19 +182,19 @@ button:focus-visible, input:focus-visible, select:focus-visible { outline: 2px s
 }
 .sidebar.collapsed .nav-list { padding-top: 50px; }
 .sidebar.collapsed .nav-item svg { margin-top: 0; }
-/* Keyboard users tabbing into a collapsed sidebar must see the same labels mouse users get on hover */
-.sidebar.collapsed:focus-within {
+/* Reveal focused navigation labels, but keep the explicit collapse button from reopening the sidebar. */
+.sidebar.collapsed:focus-within:not(:has(.sidebar-toggle:focus)) {
   width: 258px;
   padding: 60px 16px 22px;
   overflow: visible;
 }
-.sidebar.collapsed:focus-within .nav-item span:not(svg),
-.sidebar.collapsed:focus-within .nav-subitem span:not(svg),
-.sidebar.collapsed:focus-within .sidebar-label {
+.sidebar.collapsed:focus-within:not(:has(.sidebar-toggle:focus)) .nav-item span:not(svg),
+.sidebar.collapsed:focus-within:not(:has(.sidebar-toggle:focus)) .nav-subitem span:not(svg),
+.sidebar.collapsed:focus-within:not(:has(.sidebar-toggle:focus)) .sidebar-label {
   display: inline;
 }
-.sidebar.collapsed:focus-within .sidebar-title { display: flex; }
-.sidebar.collapsed:focus-within .nav-list { padding-top: 0; }
+.sidebar.collapsed:focus-within:not(:has(.sidebar-toggle:focus)) .sidebar-title { display: flex; }
+.sidebar.collapsed:focus-within:not(:has(.sidebar-toggle:focus)) .nav-list { padding-top: 0; }
 
 .brand-lockup {
   display: flex;

@@ -24,8 +24,6 @@ export default function PartyRequestsTable({ rows, onUpdate }: { rows: CouncilRe
       </div>
       <input aria-label="당정협의회 검색" placeholder="부서·정당·지역·요구내용 검색" value={search} onChange={e => setSearch(e.target.value)} />
     </div>
-    <p className="party-review-help">담당 9개 부서를 먼저 표시합니다. 자료에 있는 소요예산·총사업비는 2027년 요구액과 구분해 표시했습니다.</p>
-    <p className="party-review-help">정 수정자료: 삭제된 01·02·04번 제외, 12번은 상세자료 확인 필요. 검토결과의 ‘자료상 의견’은 부서 회신이며 심사 확정 결과가 아닙니다.</p>
     <p role="status">{message}</p>
     <div className="party-review-scroll" tabIndex={0} role="region" aria-label="당정협의회 요구사업 목록">
       <table className="party-review-table">
