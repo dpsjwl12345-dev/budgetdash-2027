@@ -1396,3 +1396,32 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
   .cw-flow-row { flex-wrap: wrap; }
   .cw-flow-row > .cw-flow-box { flex-basis: 100%; }
 }
+
+.party-review-section { margin-top: 22px; min-width: 0; }
+.party-review-controls { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 12px; }
+.party-review-controls [role="group"] { display: flex; gap: 8px; flex-wrap: wrap; }
+.party-review-controls button, .party-review-controls input, .party-review-table select, .party-review-table textarea { min-height: 44px; border: 1px solid var(--line); border-radius: 7px; background: #142333; color: #edf5fe; padding: 9px 12px; font: inherit; }
+.party-review-controls button { cursor: pointer; }
+.party-review-controls button[aria-pressed="true"] { background: #244b77; border-color: #69a4ee; }
+.party-review-controls input { flex: 1 1 260px; max-width: 420px; min-width: 0; }
+.party-review-help { color: #a3b6c8; font-size: 13px; margin: 10px 0; line-height: 1.6; }
+.party-review-scroll { overflow-x: auto; max-width: 100%; border: 1px solid var(--line); border-radius: 10px; }
+.party-review-table { width: 100%; min-width: 900px; table-layout: fixed; border-collapse: collapse; font-size: 14px; }
+.party-review-table caption { text-align: right; padding: 12px; color: #a3b6c8; }
+.party-review-table th { background: #1c354e; text-align: left; padding: 14px 12px; }
+.party-review-table td { padding: 16px 12px; vertical-align: top; border-top: 1px solid var(--line); overflow-wrap: anywhere; line-height: 1.65; }
+.party-review-table tbody tr:nth-child(even) { background: rgb(140 155 170 / 5%); }
+.party-review-table small { display: block; color: #a3b6c8; margin-top: 5px; }
+.party-review-table .party-owned-badge { color: #8dc3ff; font-size: 12px; }
+.party-content, .party-amount { white-space: pre-line; }
+.party-content::first-line { font-weight: 700; }
+.party-review-table details { margin-top: 8px; color: #b7c9da; font-size: 13px; }
+.party-review-table summary { cursor: pointer; padding: 6px 0; }
+.party-review-table details p { margin: 4px 0; }
+.party-review-table select, .party-review-table textarea { width: 100%; font-size: 14px; }
+.party-review-table textarea { min-height: 76px; margin-top: 10px; resize: vertical; }
+@media (max-width: 1280px) { .party-review-table select, .party-review-table textarea, .party-review-controls input { font-size: 16px; } }
+.request-registration { margin-top: 18px; }
+.request-registration > summary { cursor: pointer; padding: 12px; color: #a7d2ff; }
+.request-registration .form-row { flex-wrap: wrap; }
+.request-registration .form-input { min-width: 0; }

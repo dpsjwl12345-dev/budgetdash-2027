@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 import Layout from "@/components/Layout";
+import PartyRequestsTable from "@/components/PartyRequestsTable";
+import { PARTY_REQUESTS_JEONG } from "@/data/partyRequestsJeong";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
@@ -11,7 +13,7 @@ type RequestType = "당정협의회" | "정책간담회" | "시의원" | "특별
 // 시장·부시장·민선9기공약 탭은 선거구/소속정당명/위원회 칸이 없다(시의원이 아니므로).
 const isMayorType = (type: RequestType) => type === "시장" || type === "부시장" || type === "민선9기공약";
 
-type CouncilRequest = {
+export type CouncilRequest = {
   id: string;
   requestType: RequestType;
   electoralDistrict: string;
@@ -768,6 +770,18 @@ export default function CouncilMemberRequests() {
         localStorage.setItem(MAYOR_MIGRATION_FLAG, "1");
       }
 
+      // Stable source IDs preserve saved edits; unrelated existing requests remain intact.
+      const knownIds = new Set(loaded.map(item => item.id));
+      try {
+        const cached: CouncilRequest[] = JSON.parse(localStorage.getItem("councilMemberRequests") || "[]");
+        for (const item of cached) {
+          if (PARTY_REQUESTS_JEONG.some(seed => seed.id === item.id) && !knownIds.has(item.id)) {
+            loaded.push(item);
+            knownIds.add(item.id);
+          }
+        }
+      } catch { /* Invalid local cache must not block the source list. */ }
+      loaded = [...loaded, ...PARTY_REQUESTS_JEONG.filter(item => !knownIds.has(item.id))];
       setRequests(loaded);
       localStorage.setItem("councilMemberRequests", JSON.stringify(loaded));
     };
@@ -782,8 +796,12 @@ export default function CouncilMemberRequests() {
         body: JSON.stringify({ data: updatedItem }),
       });
       if (!response.ok) throw new Error("서버 저장 실패");
+      const result = await response.json();
+      if (result.success === false) throw new Error(result.message || "서버 저장 실패");
+      return true;
     } catch (error) {
       console.warn("시의원 요구사항 서버 저장 실패:", error);
+      return false;
     }
   };
 
@@ -791,7 +809,7 @@ export default function CouncilMemberRequests() {
     // 민선9기공약 탭은 이름 대신 공약명이 필수 항목이다(이름 칸을 쓰지 않으므로).
     const isPledge = form.requestType === "민선9기공약";
     const memberName = isPledge ? form.budgetItemName.trim() : form.memberName.trim();
-    if (!memberName || !form.content.trim()) return;
+    if ((!memberName && form.requestType !== "당정협의회") || !form.content.trim()) return;
 
     const pledgeToSave = { ...form.pledge, total: String(calcPledgeTotal(form.pledge)) };
 
@@ -918,10 +936,10 @@ export default function CouncilMemberRequests() {
       const index = list.indexOf(value);
       return index === -1 ? list.length : index;
     };
-    visibleRequests.sort(
-      (a, b) =>
-        rank(NATIONAL_DISTRICT_ORDER, stripCityName(a.electoralDistrict || "")) - rank(NATIONAL_DISTRICT_ORDER, stripCityName(b.electoralDistrict || "")) ||
-        rank(DEPARTMENTS, a.department) - rank(DEPARTMENTS, b.department),
+    visibleRequests.sort((a, b) =>
+      rank(DEPARTMENTS, a.department) - rank(DEPARTMENTS, b.department) ||
+      a.department.localeCompare(b.department, "ko") ||
+      rank(NATIONAL_DISTRICT_ORDER, stripCityName(a.electoralDistrict || "")) - rank(NATIONAL_DISTRICT_ORDER, stripCityName(b.electoralDistrict || ""))
     );
   }
   const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
@@ -1381,6 +1399,8 @@ export default function CouncilMemberRequests() {
         </section>
 
         {activeTab !== "원구성 현황" && activeTab !== "민선9기공약" && (
+        <details className="request-registration" open={activeTab !== "당정협의회"}>
+        <summary>요구사업 등록</summary>
         <section className="request-form-section">
           <div className="form-row">
             <select
@@ -1408,13 +1428,13 @@ export default function CouncilMemberRequests() {
               onChange={(e) => setForm({ ...form, partyName: e.target.value })}
             />
             )}
-            <input
+            {form.requestType !== "당정협의회" && <input
               className="form-input member-input"
               placeholder="이름"
               list={MEMBER_NAME_DATALIST_ID}
               value={form.memberName}
               onChange={(e) => setForm(fillFromRoster(form, e.target.value))}
-            />
+            />}
             <datalist id={MEMBER_NAME_DATALIST_ID}>
               {MEMBER_NAMES.map((name) => (
                 <option key={name} value={name}>
@@ -1422,7 +1442,7 @@ export default function CouncilMemberRequests() {
                 </option>
               ))}
             </datalist>
-            {!isMayorType(form.requestType) && (
+            {!isMayorType(form.requestType) && form.requestType !== "당정협의회" && (
             <input
               className="form-input committee-input"
               placeholder="위원회"
@@ -1435,7 +1455,7 @@ export default function CouncilMemberRequests() {
               value={form.department}
               onChange={(e) => setForm({ ...form, department: e.target.value })}
             >
-              {DEPARTMENTS.map((dept) => (
+              {Array.from(new Set([...DEPARTMENTS, ...requests.map(item => item.department)])).map((dept) => (
                 <option key={dept} value={dept}>{dept}</option>
               ))}
             </select>
@@ -1481,6 +1501,7 @@ export default function CouncilMemberRequests() {
             <button className="add-button" onClick={handleAdd}>추가</button>
           </div>
         </section>
+        </details>
         )}
 
         {activeTab === "민선9기공약" && (
@@ -1570,7 +1591,13 @@ export default function CouncilMemberRequests() {
         </section>
         )}
 
-        {activeTab !== "원구성 현황" && activeTab !== "민선9기공약" && (
+        {activeTab === "당정협의회" && <PartyRequestsTable rows={visibleRequests} onUpdate={async item => {
+          const updated = requests.map(row => row.id === item.id ? item : row);
+          setRequests(updated);
+          localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
+          return await persist(item);
+        }} />}
+        {activeTab !== "원구성 현황" && activeTab !== "민선9기공약" && activeTab !== "당정협의회" && (
         <section className="table-section">
           {renderTable(visibleRequests, MAIN_TABS.find((tab) => tab.key === activeTab)?.emptyText ?? "등록된 요구가 없습니다", !isMayorType(activeTab as RequestType), activeTab !== "시장")}
         </section>
