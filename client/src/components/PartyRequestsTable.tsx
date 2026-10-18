@@ -31,9 +31,9 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
     <div className="party-review-scroll" tabIndex={0} role="region" aria-label="당정협의회 요구사업 목록">
       <table className="party-review-table">
         <caption>당정협의회 요구사업 {visible.length}건 · 금액 단위: 백만원</caption>
-        <colgroup><col style={{width:"12%"}}/><col style={{width:"14%"}}/><col style={{width:"25%"}}/><col style={{width:"16%"}}/><col style={{width:"23%"}}/><col style={{width:"10%"}}/></colgroup>
-        <thead><tr>{["부서", "정당", "요구내용", "요구액", "검토결과", "관리"].map(label => <th key={label}>{label}</th>)}</tr></thead>
-        <tbody>{visible.map(item => {
+        <colgroup><col style={{width:"5%"}}/><col style={{width:"11%"}}/><col style={{width:"14%"}}/><col style={{width:"24%"}}/><col style={{width:"15%"}}/><col style={{width:"21%"}}/><col style={{width:"10%"}}/></colgroup>
+        <thead><tr>{["연번", "부서", "정당", "요구내용", "요구액", "검토결과", "관리"].map(label => <th key={label}>{label}</th>)}</tr></thead>
+        <tbody>{visible.map((item, index) => {
           const info = metadata(item.note);
           const contentLines = item.content.split(/\r?\n/);
           const separateTitle = item.budgetItemName && !item.content.includes(item.budgetItemName);
@@ -43,7 +43,7 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
             const value = line.trim().replace(/\s*천원$/, "").replace(/,/g, "");
             return /^\d+(?:\.\d+)?$/.test(value) ? (Number(value)/1000).toLocaleString("ko-KR", {maximumFractionDigits: 3}) : line;
           }).join("\n") : info.sourceAmount || "미기재";
-          if (draft?.id === item.id) return <tr key={item.id}><td colSpan={6}>
+          if (draft?.id === item.id) return <tr key={item.id}><td colSpan={7}>
             <form className="party-edit-form" onSubmit={async e => {
               e.preventDefault(); setBusy(true);
               try {
@@ -63,6 +63,7 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
             </form>
           </td></tr>;
           return <tr key={item.id} data-district={(item.electoralDistrict || "").trim().replace(/^화성시?\s*/, "")}>
+            <td className="party-row-number">{index + 1}</td>
             <td><strong>{item.department}</strong></td>
             <td><span className="party-name-region">{item.partyName}{item.electoralDistrict && `(${item.electoralDistrict})`}</span></td>
             <td><div className="party-content"><strong className="party-content-title">{contentTitle}</strong>{contentBody && <span className="party-content-body">{contentBody}</span>}</div>{info.source && <details><summary>출처 보기</summary>{info.source} · 정-{String(info.sourceNumber).padStart(2,"0")}</details>}</td>
@@ -80,7 +81,7 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
               }}>삭제</button>
             </div></td>
           </tr>;
-        })}{!visible.length && <tr><td colSpan={6}>조건에 맞는 요구사업이 없습니다.</td></tr>}</tbody>
+        })}{!visible.length && <tr><td colSpan={7}>조건에 맞는 요구사업이 없습니다.</td></tr>}</tbody>
       </table>
     </div>
   </section>;
