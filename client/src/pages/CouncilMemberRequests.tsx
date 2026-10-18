@@ -787,7 +787,12 @@ export default function CouncilMemberRequests() {
         }
       } catch { /* Invalid local cache must not block the source list. */ }
       loaded = [...loaded, ...PARTY_REQUESTS_JEONG.filter(item => !knownIds.has(item.id))];
-      setRequests(loaded);
+      let deletedIds: string[] = [];
+      try { deletedIds = JSON.parse(localStorage.getItem("councilRequests.deletedIds") || "[]"); } catch { /* Ignore invalid deletion cache. */ }
+      setRequests(loaded.filter(item => {
+        if (deletedIds.includes(item.id)) return false;
+        try { return !JSON.parse(item.note || "{}").deleted; } catch { return true; }
+      }));
       localStorage.setItem("councilMemberRequests", JSON.stringify(loaded));
     };
     loadRequests();
@@ -1601,7 +1606,17 @@ export default function CouncilMemberRequests() {
         </section>
         )}
 
-        {activeTab === "당정협의회" && <PartyRequestsTable rows={visibleRequests} onUpdate={async item => {
+        {activeTab === "당정협의회" && <PartyRequestsTable rows={visibleRequests} onDelete={async item => {
+          let deletedIds: string[] = [];
+          try { deletedIds = JSON.parse(localStorage.getItem("councilRequests.deletedIds") || "[]"); } catch { /* Ignore invalid deletion cache. */ }
+          localStorage.setItem("councilRequests.deletedIds", JSON.stringify([...new Set([...deletedIds, item.id])]));
+          const updated = requests.filter(row => row.id !== item.id);
+          setRequests(updated);
+          localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
+          let info = {};
+          try { info = JSON.parse(item.note || "{}"); } catch { /* Preserve old plain text notes below. */ }
+          return await persist({...item, note: JSON.stringify({...info, deleted: true})});
+        }} onUpdate={async item => {
           const updated = requests.map(row => row.id === item.id ? item : row);
           setRequests(updated);
           localStorage.setItem("councilMemberRequests", JSON.stringify(updated));
