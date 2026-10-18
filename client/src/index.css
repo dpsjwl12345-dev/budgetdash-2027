@@ -1428,3 +1428,13 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .request-registration .form-input { min-width: 0; }
 
 .party-name-region { white-space: nowrap; }
+
+/* Subtle district tints keep every cell readable while separating 갑·을·병·정. */
+.party-review-table tbody tr[data-district="갑"] { background: rgb(96 165 250 / 12%); }
+.party-review-table tbody tr[data-district="을"] { background: rgb(52 211 153 / 12%); }
+.party-review-table tbody tr[data-district="병"] { background: rgb(251 191 36 / 12%); }
+.party-review-table tbody tr[data-district="정"] { background: rgb(192 132 252 / 12%); }
+.party-review-table tbody tr[data-district="갑"] td:first-child { border-left: 3px solid rgb(96 165 250 / 55%); }
+.party-review-table tbody tr[data-district="을"] td:first-child { border-left: 3px solid rgb(52 211 153 / 55%); }
+.party-review-table tbody tr[data-district="병"] td:first-child { border-left: 3px solid rgb(251 191 36 / 55%); }
+.party-review-table tbody tr[data-district="정"] td:first-child { border-left: 3px solid rgb(192 132 252 / 55%); }

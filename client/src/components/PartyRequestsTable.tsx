@@ -36,7 +36,7 @@ export default function PartyRequestsTable({ rows, onUpdate }: { rows: CouncilRe
             const value = line.trim().replace(/\s*천원$/, "").replace(/,/g, "");
             return /^\d+(?:\.\d+)?$/.test(value) ? (Number(value)/1000).toLocaleString("ko-KR", {maximumFractionDigits: 3}) : line;
           }).join("\n") : info.sourceAmount || "미기재";
-          return <tr key={item.id}>
+          return <tr key={item.id} data-district={(item.electoralDistrict || "").trim().replace(/^화성시?\s*/, "")}>
             <td><strong>{item.department}</strong></td>
             <td><span className="party-name-region">{item.partyName}{item.electoralDistrict && `(${item.electoralDistrict})`}</span></td>
             <td><div className="party-content">{item.budgetItemName && !item.content.includes(item.budgetItemName) && <strong>{item.budgetItemName}<br /></strong>}{item.content}</div>{info.source && <details><summary>출처 보기</summary>{info.source} · 정-{String(info.sourceNumber).padStart(2,"0")}</details>}</td>

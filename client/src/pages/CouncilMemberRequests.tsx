@@ -939,7 +939,7 @@ export default function CouncilMemberRequests() {
       : (item.partyName || "").replace(/\s/g, "") === "시의원"
         ? "시의원"
         : "당정협의회";
-  // 당정협의회는 갑·을·병·정 → 부서 직제순(DEPARTMENTS 순서)으로 자동 정렬한다. 같은 묶음 안은 저장 순서(▲▼)를 따른다.
+  // 당정협의회는 갑·을·병·정 순서, 같은 지역 안에서는 담당 부서 직제순으로 정렬한다.
   const visibleRequests = requests.filter((item) => typeOf(item) === activeTab);
   if (activeTab === "당정협의회") {
     const rank = (list: readonly string[], value: string) => {
@@ -947,9 +947,9 @@ export default function CouncilMemberRequests() {
       return index === -1 ? list.length : index;
     };
     visibleRequests.sort((a, b) =>
+      rank(NATIONAL_DISTRICT_ORDER, stripCityName(a.electoralDistrict || "")) - rank(NATIONAL_DISTRICT_ORDER, stripCityName(b.electoralDistrict || "")) ||
       rank(DEPARTMENTS, a.department) - rank(DEPARTMENTS, b.department) ||
-      a.department.localeCompare(b.department, "ko") ||
-      rank(NATIONAL_DISTRICT_ORDER, stripCityName(a.electoralDistrict || "")) - rank(NATIONAL_DISTRICT_ORDER, stripCityName(b.electoralDistrict || ""))
+      a.department.localeCompare(b.department, "ko")
     );
   }
   const countOf = (type: RequestType) => requests.filter((item) => typeOf(item) === type).length;
