@@ -1413,7 +1413,8 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .party-review-table tbody tr:nth-child(even) { background: rgb(140 155 170 / 5%); }
 .party-review-table small { display: block; color: #a3b6c8; margin-top: 5px; }
 .party-content, .party-amount { white-space: pre-line; }
-.party-content::first-line { font-weight: 700; }
+.party-content-title { display: block; font-weight: 700; }
+.party-content-body { display: block; font-weight: 400; }
 .party-review-table details { margin-top: 4px; color: #d5e2ee; font-size: 17px; }
 .party-review-table summary { cursor: pointer; padding: 2px 0; }
 .party-review-table details p { margin: 4px 0; }
@@ -1450,3 +1451,6 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 /* Budget amounts are always right aligned; other columns retain their alignment. */
 .party-review-table th:nth-child(4), .party-review-table .party-amount { text-align: right; font-variant-numeric: tabular-nums; }
 .party-edit-form .party-edit-amount { text-align: right; font-variant-numeric: tabular-nums; }
+
+.party-row-actions button { font-size: calc(18px - 2pt); }
+.party-review-table th:not(:last-child), .party-review-table td:not(:last-child) { border-right: 1px solid rgb(164 192 221 / 28%); }
