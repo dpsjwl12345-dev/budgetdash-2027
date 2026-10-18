@@ -1412,7 +1412,6 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .party-review-table td { padding: 16px 12px; vertical-align: top; border-top: 1px solid var(--line); overflow-wrap: anywhere; line-height: 1.65; }
 .party-review-table tbody tr:nth-child(even) { background: rgb(140 155 170 / 5%); }
 .party-review-table small { display: block; color: #a3b6c8; margin-top: 5px; }
-.party-review-table .party-owned-badge { color: #8dc3ff; font-size: 12px; }
 .party-content, .party-amount { white-space: pre-line; }
 .party-content::first-line { font-weight: 700; }
 .party-review-table details { margin-top: 8px; color: #b7c9da; font-size: 13px; }
@@ -1425,3 +1424,5 @@ tr:hover .pledge-toggle-off, .pledge-toggle-off:focus-visible { opacity: 0.6; }
 .request-registration > summary { cursor: pointer; padding: 12px; color: #a7d2ff; }
 .request-registration .form-row { flex-wrap: wrap; }
 .request-registration .form-input { min-width: 0; }
+
+.party-name-region { white-space: nowrap; }

@@ -28,14 +28,14 @@ export default function PartyRequestsTable({ rows, onUpdate }: { rows: CouncilRe
     <div className="party-review-scroll" tabIndex={0} role="region" aria-label="당정협의회 요구사업 목록">
       <table className="party-review-table">
         <caption>당정협의회 요구사업 {visible.length}건 · 금액 단위: 백만원</caption>
-        <colgroup><col style={{width:"13%"}}/><col style={{width:"13%"}}/><col style={{width:"32%"}}/><col style={{width:"17%"}}/><col style={{width:"25%"}}/></colgroup>
+        <colgroup><col style={{width:"13%"}}/><col style={{width:"16%"}}/><col style={{width:"29%"}}/><col style={{width:"17%"}}/><col style={{width:"25%"}}/></colgroup>
         <thead><tr>{["부서", "정당", "요구내용", "요구액", "검토결과"].map(label => <th key={label}>{label}</th>)}</tr></thead>
         <tbody>{visible.map(item => {
           const info = metadata(item.note);
           const amount = item.requestedAmount ? item.requestedAmount.split("\n").map(line => /^[\d,]+$/.test(line) ? (Number(line.replace(/,/g,""))/1000).toLocaleString("ko-KR", {maximumFractionDigits: 3}) : line).join("\n") : info.sourceAmount || "미기재";
           return <tr key={item.id}>
-            <td><strong>{item.department}</strong>{mine(item) && <small className="party-owned-badge">담당 부서</small>}</td>
-            <td>{item.partyName}<small>{item.electoralDistrict && `지역: ${item.electoralDistrict}`}</small></td>
+            <td><strong>{item.department}</strong></td>
+            <td><span className="party-name-region">{item.partyName}{item.electoralDistrict && `(${item.electoralDistrict})`}</span></td>
             <td><div className="party-content">{item.content}</div>{info.source && <details><summary>출처 보기</summary>{info.source} · 정-{String(info.sourceNumber).padStart(2,"0")}</details>}</td>
             <td className="party-amount">{amount}</td>
             <td><label><span className="sr-only">{item.budgetItemName || item.content} 심사 상태</span><select value={item.status} onChange={e => void update({...item, status:e.target.value as CouncilRequest["status"]})}>{["검토중","반영","미반영"].map(status=><option key={status}>{status}</option>)}</select></label>
