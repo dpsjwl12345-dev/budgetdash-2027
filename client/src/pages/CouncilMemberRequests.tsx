@@ -3,6 +3,7 @@ import type { CSSProperties, MouseEvent as ReactMouseEvent } from "react";
 import Layout from "@/components/Layout";
 import PartyRequestsTable from "@/components/PartyRequestsTable";
 import { PARTY_REQUESTS_JEONG } from "@/data/partyRequestsJeong";
+import { normalizeRequestDistrict } from "@/lib/requestDistrict";
 import { DEPARTMENTS } from "@/lib/departments";
 
 type RequestStatus = "검토중" | "반영" | "미반영";
@@ -492,7 +493,7 @@ function electoralDistrictLabel(value: string): string {
 
 // 당정협의회 선거구는 "화성갑"처럼 적혀 있어도 "갑"만 남긴다. "가선거구" 같은 시의원 선거구는 그대로 둔다.
 function stripCityName(value: string): string {
-  return value.trim().replace(/^화성시?\s*/, "");
+  return normalizeRequestDistrict(value);
 }
 
 // 소속 정당명 칸. 정당명에만 정당 색을 입히고, 선거구가 갑~정 하나뿐이면 "더불어민주당(갑)"처럼 한 줄로,

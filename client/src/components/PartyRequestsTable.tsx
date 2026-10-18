@@ -1,5 +1,6 @@
 import { useState } from "react";
 import type { CouncilRequest } from "@/pages/CouncilMemberRequests";
+import { normalizeRequestDistrict } from "@/lib/requestDistrict";
 import { DEPARTMENTS } from "@/lib/departments";
 
 function metadata(note?: string): Record<string, string> {
@@ -35,6 +36,7 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
         <thead><tr>{["연번", "부서", "정당", "요구내용", "요구액", "검토결과", "관리"].map(label => <th key={label}>{label}</th>)}</tr></thead>
         <tbody>{visible.map((item, index) => {
           const info = metadata(item.note);
+          const district = normalizeRequestDistrict(item.electoralDistrict);
           const contentLines = item.content.split(/\r?\n/);
           const separateTitle = item.budgetItemName && !item.content.includes(item.budgetItemName);
           const contentTitle = separateTitle ? item.budgetItemName : contentLines[0];
@@ -50,7 +52,7 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
                 const numeric = editAmount.split("\n").every(line => !line.trim() || /^\d+(?:\.\d+)?$/.test(line.trim().replace(/,/g, "")));
                 const details = metadata(draft.note);
                 if (!numeric) details.sourceAmount = editAmount;
-                const saved = {...draft, requestedAmount: numeric ? editAmount.split("\n").map(line => line.trim() ? String(Math.round(Number(line.replace(/,/g,"")) * 1000)) : "").join("\n") : "", note: JSON.stringify(details)};
+                const saved = {...draft, electoralDistrict: normalizeRequestDistrict(draft.electoralDistrict), requestedAmount: numeric ? editAmount.split("\n").map(line => line.trim() ? String(Math.round(Number(line.replace(/,/g,"")) * 1000)) : "").join("\n") : "", note: JSON.stringify(details)};
                 await update(saved); setDraft(null);
               } finally { setBusy(false); }
             }}>
@@ -62,17 +64,17 @@ export default function PartyRequestsTable({ rows, onUpdate, onDelete }: { rows:
               <div className="party-row-actions"><button disabled={busy} type="submit">저장</button><button disabled={busy} type="button" onClick={()=>setDraft(null)}>취소</button></div>
             </form>
           </td></tr>;
-          return <tr key={item.id} data-district={(item.electoralDistrict || "").trim().replace(/^화성시?\s*/, "")}>
+          return <tr key={item.id} data-district={district}>
             <td className="party-row-number">{index + 1}</td>
             <td><strong>{item.department}</strong></td>
-            <td><span className="party-name-region">{item.partyName}{item.electoralDistrict && `(${item.electoralDistrict})`}</span></td>
+            <td><span className="party-name-region">{normalizeRequestDistrict(item.partyName)}{district && `(${district})`}</span></td>
             <td><div className="party-content"><strong className="party-content-title">{contentTitle}</strong>{contentBody && <span className="party-content-body">{contentBody}</span>}</div>{info.source && <details><summary>출처 보기</summary>{info.source} · 정-{String(info.sourceNumber).padStart(2,"0")}</details>}</td>
             <td className="party-amount">{amount}</td>
             <td><label><span className="sr-only">{item.budgetItemName || item.content} 심사 상태</span><select value={item.status} onChange={e => void update({...item, status:e.target.value as CouncilRequest["status"]})}>{["검토중","반영","미반영"].map(status=><option key={status}>{status}</option>)}</select></label>
               {info.sourceReview && <details open><summary>자료상 의견</summary><p>{info.sourceReview}</p></details>}
             </td>
             <td><div className="party-row-actions">
-              <button type="button" disabled={busy} onClick={()=>{setDraft({...item});setEditAmount(amount === "미기재" ? "" : amount);}}>수정</button>
+              <button type="button" disabled={busy} onClick={()=>{setDraft({...item, electoralDistrict: district});setEditAmount(amount === "미기재" ? "" : amount);}}>수정</button>
               <button type="button" disabled={busy} className="party-delete-button" onClick={async ()=>{
                 if (!window.confirm(`‘${item.budgetItemName || item.content}’ 요구사항을 삭제하시겠습니까?`)) return;
                 setBusy(true);
